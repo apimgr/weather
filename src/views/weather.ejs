@@ -434,17 +434,29 @@
                 const item = document.createElement('div');
                 item.className = 'autocomplete-item';
                 item.innerHTML = `
-                    <div class="city-name">${result.name}</div>
-                    <div class="location-details">${result.country} ${result.admin1 ? ', ' + result.admin1 : ''}</div>
+                    <div class="city-name">${result.shortName || result.name}</div>
+                    <div class="location-details">${result.fullName}</div>
                 `;
                 
                 item.addEventListener('click', function() {
                     const locationInput = document.getElementById('location-input');
-                    locationInput.value = result.name;
+                    const unitsSelect = document.getElementById('units-select');
+                    
+                    // Use short name with state/country code
+                    const locationName = result.shortName || result.name;
+                    locationInput.value = locationName;
                     hideAutocomplete();
                     
-                    // Auto-submit form when location is selected
-                    document.getElementById('weather-form').dispatchEvent(new Event('submit'));
+                    // Build proper URL directly (don't use form submit to avoid issues)
+                    const encodedLocation = encodeURIComponent(locationName);
+                    const units = unitsSelect.value;
+                    const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                    const newUrl = `${window.location.origin}/${encodedLocation}${unitsParam}`;
+                    
+                    console.log('Autocomplete selected:', locationName, 'redirecting to:', newUrl);
+                    
+                    // Direct navigation instead of form submission
+                    window.location.href = newUrl;
                 });
                 
                 dropdown.appendChild(item);
