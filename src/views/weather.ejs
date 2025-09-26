@@ -361,13 +361,13 @@
                     return;
                 }
                 
-                // Build proper URL: /location?units=metric instead of ?location=...
-                const encodedLocation = encodeURIComponent(location);
+                // Build clean URL: /Albany,NY instead of /Albany%2CNY
+                const cleanLocation = location.replace(/ /g, '+'); // Only encode spaces as +
                 const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
                 
                 // Use absolute URL to avoid inheriting current path
                 const baseUrl = window.location.origin;
-                const newUrl = `${baseUrl}/${encodedLocation}${unitsParam}`;
+                const newUrl = `${baseUrl}/${cleanLocation}${unitsParam}`;
                 
                 console.log('Redirecting to:', newUrl);
                 
@@ -447,11 +447,11 @@
                     locationInput.value = locationName;
                     hideAutocomplete();
                     
-                    // Build proper URL directly (don't use form submit to avoid issues)
-                    const encodedLocation = encodeURIComponent(locationName);
+                    // Build clean URL without encoding commas (they work fine in URLs)
+                    const cleanLocation = locationName.replace(/ /g, '+'); // Only encode spaces as +
                     const units = unitsSelect.value;
                     const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
-                    const newUrl = `${window.location.origin}/${encodedLocation}${unitsParam}`;
+                    const newUrl = `${window.location.origin}/${cleanLocation}${unitsParam}`;
                     
                     console.log('Autocomplete selected:', locationName, 'redirecting to:', newUrl);
                     
