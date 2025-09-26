@@ -1,0 +1,58 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Console Weather Service ${{ github.ref }}
+        body: |
+          ## 🌤️ Console Weather Service Release
+          
+          ### What's New
+          - Enhanced location detection with external databases
+          - Perfect wttr.in format compatibility (format=1,2,3,4)
+          - Dracula-themed web interface with mobile-first design
+          - Complete Docker deployment with nginx proxy
+          - Production-ready with security headers and rate limiting
+          
+          ### Quick Deployment
+          ```bash
+          # Using Docker registry
+          docker run -d -p 3000:3000 ghcr.io/apimgr/weather:${{ github.ref_name }}
+          
+          # Or clone and build
+          git clone https://github.com/apimgr/weather.git
+          cd weather
+          ./docker-start.sh prod
+          ```
+          
+          ### Live Service
+          Try the service instantly at [wthr.top](http://wthr.top)
+          
+          ### Features
+          - 🌍 Global weather data (no API key needed)
+          - 🎨 ASCII art for console, HTML for browsers
+          - 🌙 Moon phases with beautiful ASCII art
+          - 📱 Mobile-first responsive design
+          - 🔒 Production-ready security
+          
+          See the [README](https://github.com/apimgr/weather/blob/main/README.md) for complete documentation.
+        draft: false
+        prerelease: false

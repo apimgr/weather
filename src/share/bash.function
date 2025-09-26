@@ -1,0 +1,41 @@
+wttr()
+{
+    # Check if location is passed as argument
+    local request="wttr.in/${1-}"
+    
+    # If we have a parameter, use it; otherwise, detect location automatically
+    if [ "$#" -eq 0 ]; then
+        # No location specified - let server detect from IP
+        request="wttr.in/"
+    else
+        # Location specified
+        request="wttr.in/${1}"
+    fi
+    
+    # Use curl to fetch weather data
+    # Handle different terminal environments
+    if [[ -t 1 ]] && [[ "${TERM-}" != "dumb" ]]; then
+        # Interactive terminal with color support
+        curl -H "User-Agent: curl" -s "$request" 2>/dev/null || echo "Weather service unavailable"
+    else  
+        # Non-interactive or dumb terminal
+        curl -H "User-Agent: curl" -s "$request?format=simple" 2>/dev/null || echo "Weather service unavailable"
+    fi
+}
+
+# Alternative short function name
+w() { wttr "$@"; }
+
+# Examples:
+# wttr              # Weather for current location
+# wttr London       # Weather for London  
+# wttr "New York"   # Weather for New York (spaces need quotes)
+# wttr ~Eiffel      # Search for Eiffel Tower
+# w Paris           # Short version
+
+# Install instructions:
+# 1. Add this function to your ~/.bashrc or ~/.zshrc
+# 2. Or download directly:
+#    curl -o ~/.wttr 'https://your-weather-api.com/:bash.function'
+#    echo 'source ~/.wttr' >> ~/.bashrc
+# 3. Reload your shell: source ~/.bashrc

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
+</head>
+<body>
+    <div class="weather-container">
+        <div class="weather-header">
+            🌤️ Console Weather Service
+        </div>
+
+        <!-- Location Search Form - Mobile First -->
+        <form id="weather-form" style="margin: 1rem 0; width: 100%;">
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+                <!-- First row: Location input and units -->
+                <div style="display: flex; gap: 0.5rem; width: 100%;">
+                    <div style="position: relative; flex: 1;">
+                        <input 
+                            type="text" 
+                            id="location-input"
+                            name="location" 
+                            class="location-input" 
+                            placeholder="Enter city or coordinates"
+                            value="<%= location %>"
+                            style="flex: 1; min-width: 0; width: 100%;" 
+                            autocomplete="off"
+                        >
+                        <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                    </div>
+                    <select name="units" id="units-select" class="location-input" style="flex-shrink: 0; width: 5rem;">
+                        <option value="imperial" <%= units === 'imperial' ? 'selected' : '' %>>°F</option>
+                        <option value="metric" <%= units === 'metric' ? 'selected' : '' %>>°C</option>
+                    </select>
+                </div>
+                
+                <!-- Second row: Buttons -->
+                <div style="display: flex; gap: 0.5rem; width: 100%;">
+                    <button type="submit" class="search-button" style="flex: 1;">
+                        🌤️ Get Weather
+                    </button>
+                    <button type="button" id="location-btn" class="search-button" 
+                            style="flex: 1; background-color: var(--dracula-cyan);">
+                        📍 My Location
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div style="background-color: var(--dracula-red); color: var(--dracula-bg); padding: 10px; border-radius: 6px; margin: 20px 0;">
+                <strong>Error:</strong> <%= error %>
+            </div>
+        <% } %>
+
+        <% if (weatherData) { %>
+            <!-- Current Weather -->
+            <div class="current-weather">
+                <div class="weather-icon">
+                    <%= weatherData.current.icon %>
+                </div>
+                <div class="weather-details">
+                    <div class="temperature">
+                        <%= Math.round(weatherData.current.temperature) %><%= units === 'imperial' ? '°F' : '°C' %>
+                    </div>
+                    <div class="description">
+                        <%= weatherData.current.description %>
+                    </div>
+                    <div class="weather-stats">
+                        <div class="stat">Feels like: <span class="stat-value"><%= Math.round(weatherData.current.feelsLike) %><%= units === 'imperial' ? '°F' : '°C' %></span></div>
+                        <div class="stat">Wind: <span class="stat-value"><%= Math.round(weatherData.current.windSpeed) %> <%= units === 'imperial' ? 'mph' : 'km/h' %></span></div>
+                        <div class="stat">Humidity: <span class="stat-value"><%= weatherData.current.humidity %>%</span></div>
+                        <div class="stat">Pressure: <span class="stat-value"><%= units === 'imperial' ? weatherData.current.pressure.toFixed(2) + ' inHg' : Math.round(weatherData.current.pressure) + ' hPa' %></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile-Optimized Forecast -->
+            <div class="forecast-section">
+                <!-- Desktop Table (hidden on mobile) -->
+                <table class="forecast-table desktop-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Morning</th>
+                            <th>Noon</th>
+                            <th>Evening</th>
+                            <th>Night</th>
+                            <th>Wind</th>
+                            <th>Rain</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <% weatherData.forecast.days.slice(0, 7).forEach(day => { %>
+                        <% 
+                            const date = new Date(day.date);
+                            const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                            const tempHigh = Math.round(day.tempMax);
+                            const tempLow = Math.round(day.tempMin);
+                            const tempMorn = Math.round(tempLow + (tempHigh - tempLow) * 0.3);
+                            const tempNoon = tempHigh;
+                            const tempEven = Math.round(tempLow + (tempHigh - tempLow) * 0.7);
+                            const tempNight = tempLow;
+                            const tempUnit = units === 'imperial' ? '°F' : '°C';
+                            const windSpeed = Math.round(day.windSpeedMax);
+                            const speedUnit = units === 'imperial' ? 'mph' : 'km/h';
+                            const precipProb = day.precipitationProbability || 0;
+                        %>
+                        <tr>
+                            <td class="day-header"><%= dateStr %></td>
+                            <td class="forecast-condition">
+                                <%= day.icon %> <span class="forecast-temp"><%= tempMorn %><%= tempUnit %></span>
+                            </td>
+                            <td class="forecast-condition">
+                                <%= day.icon %> <span class="forecast-temp"><%= tempNoon %><%= tempUnit %></span>
+                            </td>
+                            <td class="forecast-condition">
+                                <%= day.icon %> <span class="forecast-temp"><%= tempEven %><%= tempUnit %></span>
+                            </td>
+                            <td class="forecast-condition">
+                                <%= day.icon %> <span class="forecast-temp"><%= tempNight %><%= tempUnit %></span>
+                            </td>
+                            <td class="wind-info"><%= windSpeed %> <%= speedUnit %></td>
+                            <td class="precipitation"><%= precipProb %>%</td>
+                        </tr>
+                    <% }); %>
+                    </tbody>
+                </table>
+                
+                <!-- Mobile Cards (shown on mobile, hidden on desktop) -->
+                <div class="mobile-forecast">
+                    <% weatherData.forecast.days.slice(0, 5).forEach(day => { %>
+                        <% 
+                            const date = new Date(day.date);
+                            const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                            const tempHigh = Math.round(day.tempMax);
+                            const tempLow = Math.round(day.tempMin);
+                            const tempUnit = units === 'imperial' ? '°F' : '°C';
+                            const windSpeed = Math.round(day.windSpeedMax);
+                            const speedUnit = units === 'imperial' ? 'mph' : 'km/h';
+                            const precipProb = day.precipitationProbability || 0;
+                        %>
+                        <div class="forecast-card">
+                            <div class="forecast-card-header">
+                                <%= dateStr %>
+                            </div>
+                            <div class="forecast-card-content">
+                                <div class="forecast-main">
+                                    <span class="forecast-icon"><%= day.icon %></span>
+                                    <span class="forecast-temp"><%= tempLow %>°-<%= tempHigh %><%= tempUnit %></span>
+                                </div>
+                                <div class="forecast-details">
+                                    <div class="wind-info">💨 <%= windSpeed %> <%= speedUnit %></div>
+                                    <div class="precipitation">☔ <%= precipProb %>%</div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Console Command Examples -->
+            <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-bg); border-radius: 6px;">
+                <h3 style="color: var(--dracula-purple); text-align: center; margin-top: 0;">Console Access</h3>
+                <div style="font-family: monospace; color: var(--dracula-cyan);">
+                    <div style="margin: 10px 0;">
+                        <strong style="color: var(--dracula-green);">Weather:</strong> 
+                        <code>curl <%= hostInfo.fullHost %>/<%= encodeURIComponent(location || 'london') %></code>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong style="color: var(--dracula-green);">Simple:</strong> 
+                        <code>curl <%= hostInfo.fullHost %>/<%= encodeURIComponent(location || 'london') %>?format=simple</code>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong style="color: var(--dracula-green);">Moon:</strong> 
+                        <code>curl <%= hostInfo.fullHost %>/moon</code>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong style="color: var(--dracula-green);">JSON API:</strong> 
+                        <code>curl <%= hostInfo.fullHost %>/api/v1/weather?location=<%= encodeURIComponent(location || 'london') %></code>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; color: var(--dracula-comment); margin: 30px 0;">
+                <h2 style="color: var(--dracula-cyan); font-size: 18px; margin-bottom: 15px;">Welcome to Console Weather Service</h2>
+                <p style="font-size: 14px; margin-bottom: 20px;">Your location has been detected and pre-filled above. Try these examples:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
+                    <a href="?location=London" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇬🇧 London</a>
+                    <a href="?location=Tokyo" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇯🇵 Tokyo</a>
+                    <a href="?location=Paris" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇫🇷 Paris</a>
+                    <a href="?location=Sydney" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇦🇺 Sydney</a>
+                </div>
+                
+                <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-current-line); border-radius: 6px;">
+                    <h4 style="color: var(--dracula-green);">Console Access:</h4>
+                    <code style="color: var(--dracula-yellow);">curl <%= hostInfo.fullHost %>/London</code><br>
+                    <code style="color: var(--dracula-yellow);">curl <%= hostInfo.fullHost %>/api/v1/weather?location=Paris</code>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (!hideFooter) { %>
+        <div class="footer">
+            <p>Free weather data from Open-Meteo.com • No API key required</p>
+            <p>Console access: <code style="color: var(--dracula-cyan);"><%= hostInfo.fullHost %>/:help</code></p>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+        async function getLocation() {
+            const button = document.getElementById('location-btn');
+            if (!button) {
+                console.error('Location button not found');
+                return;
+            }
+            const originalText = button.textContent;
+            button.textContent = '📍 Getting...';
+            button.disabled = true;
+            
+            try {
+                // console.log('Starting geolocation process...');
+                
+                // Check permissions first
+                if (navigator.permissions) {
+                    const permission = await navigator.permissions.query({name: 'geolocation'});
+                    // console.log('Geolocation permission state:', permission.state);
+                }
+                
+                if (!navigator.geolocation) {
+                    throw new Error('Geolocation not supported');
+                }
+                
+                // Test with a simple position request
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        resolve,
+                        reject,
+                        {
+                            timeout: 10000,
+                            enableHighAccuracy: false, // Try with lower accuracy first
+                            maximumAge: 600000 // 10 minute cache
+                        }
+                    );
+                });
+                
+                console.log('Geolocation success:', position);
+                const lat = position.coords.latitude.toFixed(4);
+                const lon = position.coords.longitude.toFixed(4);
+                const locationInput = document.querySelector('input[name="location"]');
+                
+                console.log('Setting coordinates:', lat + ',' + lon);
+                locationInput.value = lat + ',' + lon;
+                
+                // Visual feedback before submit
+                button.textContent = '📍 Found!';
+                setTimeout(() => {
+                    document.querySelector('form').submit();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Geolocation failed:', error);
+                button.textContent = originalText;
+                button.disabled = false;
+                
+                let userMessage = 'Unable to get your location';
+                
+                if (error.code === 1) {
+                    userMessage = 'Please allow location access when prompted and try again';
+                } else if (error.code === 2) {
+                    userMessage = 'GPS location unavailable (common on desktop computers). Using your IP-based location instead';
+                    // Fall back to IP-based detection
+                    console.log('GPS failed, attempting IP-based location fallback');
+                    tryIPLocationFallback(button, originalText);
+                    return;
+                } else if (error.code === 3) {
+                    userMessage = 'Location request timed out. Please try again or enter manually';
+                } else if (error.message) {
+                    userMessage = 'Geolocation error: ' + error.message;
+                }
+                
+                // Show error in a more user-friendly way
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'background: #ff5555; color: #282a36; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: center;';
+                errorDiv.textContent = userMessage + '. Please enter a location manually.';
+                
+                const form = document.querySelector('form');
+                form.parentNode.insertBefore(errorDiv, form.nextSibling);
+                
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+        }
+        
+        function tryIPLocationFallback(button, originalText) {
+            console.log('Attempting IP-based location detection via our server');
+            button.textContent = '📍 Finding...';
+            
+            // Use our own server's IP detection endpoint
+            fetch('/debug/ip')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Server IP location data:', data);
+                    if (data.location && data.location.value) {
+                        const locationInput = document.querySelector('input[name="location"]');
+                        const detectedLocation = data.location.value;
+                        
+                        console.log('Using server-detected location:', detectedLocation);
+                        locationInput.value = detectedLocation;
+                        
+                        button.textContent = '📍 Found!';
+                        setTimeout(() => {
+                            document.querySelector('form').submit();
+                        }, 800);
+                    } else {
+                        throw new Error('No location in server response');
+                    }
+                })
+                .catch(ipError => {
+                    console.log('IP location fallback failed:', ipError);
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    
+                    // Show helpful message about already detected location
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'background: #ffb86c; color: #282a36; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: center; font-size: 0.875rem;';
+                    errorDiv.innerHTML = '📍 Location detection not available on this device.<br>The form above is pre-filled with your detected location: <strong>New York City, NY</strong>';
+                    
+                    const form = document.querySelector('form');
+                    form.parentNode.insertBefore(errorDiv, form.nextSibling);
+                    
+                    setTimeout(() => errorDiv.remove(), 6000);
+                });
+        }
+        
+        // Form handling and autocomplete functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const locationInput = document.getElementById('location-input');
+            const unitsSelect = document.getElementById('units-select');
+            const weatherForm = document.getElementById('weather-form');
+            const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+            
+            if (locationInput && !locationInput.value) {
+                locationInput.focus();
+            }
+            
+            // Handle form submission - redirect to proper URL path format
+            weatherForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const location = locationInput.value.trim();
+                const units = unitsSelect.value;
+                
+                console.log('Form submitted with location:', location, 'units:', units);
+                
+                if (!location) {
+                    alert('Please enter a location');
+                    return;
+                }
+                
+                // Build proper URL: /location?units=metric instead of ?location=...
+                const encodedLocation = encodeURIComponent(location);
+                const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                
+                // Use absolute URL to avoid inheriting current path
+                const baseUrl = window.location.origin;
+                const newUrl = `${baseUrl}/${encodedLocation}${unitsParam}`;
+                
+                console.log('Redirecting to:', newUrl);
+                
+                // Navigate to the proper URL format
+                window.location.href = newUrl;
+            });
+            
+            // Autocomplete functionality
+            let autocompleteTimeout;
+            locationInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                
+                clearTimeout(autocompleteTimeout);
+                
+                if (query.length < 3) {
+                    hideAutocomplete();
+                    return;
+                }
+                
+                autocompleteTimeout = setTimeout(() => {
+                    searchLocations(query);
+                }, 300); // Debounce search
+            });
+            
+            // Hide autocomplete when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#location-input') && !e.target.closest('#autocomplete-dropdown')) {
+                    hideAutocomplete();
+                }
+            });
+            
+            // Attach geolocation button event listener
+            const locationBtn = document.getElementById('location-btn');
+            if (locationBtn) {
+                locationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    getLocation();
+                });
+            }
+        });
+        
+        function searchLocations(query) {
+            // Use our search API endpoint
+            fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        showAutocomplete(data.results);
+                    } else {
+                        hideAutocomplete();
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    hideAutocomplete();
+                });
+        }
+        
+        function showAutocomplete(results) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            dropdown.innerHTML = '';
+            
+            results.slice(0, 5).forEach(result => { // Show max 5 results
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `
+                    <div class="city-name">${result.name}</div>
+                    <div class="location-details">${result.country} ${result.admin1 ? ', ' + result.admin1 : ''}</div>
+                `;
+                
+                item.addEventListener('click', function() {
+                    const locationInput = document.getElementById('location-input');
+                    locationInput.value = result.name;
+                    hideAutocomplete();
+                    
+                    // Auto-submit form when location is selected
+                    document.getElementById('weather-form').dispatchEvent(new Event('submit'));
+                });
+                
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.classList.add('show');
+        }
+        
+        function hideAutocomplete() {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            dropdown.classList.remove('show');
+        }
+    </script>
+</body>
+</html>

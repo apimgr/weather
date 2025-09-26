@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌙</text></svg>">
+</head>
+<body>
+    <div class="weather-container">
+        <div class="weather-header">
+            🌙 Moon Phase Report
+        </div>
+
+        <!-- Location Search Form -->
+        <form method="GET" action="/moon" style="margin: 1rem 0;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <input 
+                    type="text" 
+                    name="location" 
+                    class="location-input" 
+                    placeholder="Enter location for moon phase"
+                    value="<%= location %>"
+                    style="flex: 1; max-width: 300px;"
+                    autocomplete="off"
+                >
+                <button type="submit" class="search-button">
+                    🌙 Get Moon Phase
+                </button>
+            </div>
+        </form>
+
+        <% if (moonData) { %>
+            <!-- Current Moon Phase -->
+            <div class="current-weather">
+                <div class="weather-icon" style="font-size: 4rem;">
+                    <%= moonData.moon.icon %>
+                </div>
+                <div class="weather-details">
+                    <div class="temperature" style="color: var(--dracula-purple);">
+                        <%= moonData.moon.phase %>
+                    </div>
+                    <div class="description">
+                        <%= moonData.moon.illumination %>% illuminated
+                    </div>
+                    <div class="weather-stats">
+                        <div class="stat">Age: <span class="stat-value"><%= moonData.moon.age %> days</span></div>
+                        <div class="stat">Next Phase: <span class="stat-value">
+                            <% if (moonData.moon.age < 7) { %>First Quarter<% } 
+                               else if (moonData.moon.age < 14) { %>Full Moon<% } 
+                               else if (moonData.moon.age < 21) { %>Last Quarter<% } 
+                               else { %>New Moon<% } %>
+                        </span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moon and Sun Times -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <!-- Moon Times -->
+                <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+                    <h3 style="color: var(--dracula-purple); margin-top: 0; text-align: center;">🌙 Lunar Information</h3>
+                    <div style="color: var(--dracula-foreground);">
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Phase:</strong> 
+                            <span style="color: var(--dracula-yellow);"><%= moonData.moon.phase %></span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Illumination:</strong> 
+                            <span style="color: var(--dracula-green);"><%= moonData.moon.illumination %>%</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Age:</strong> 
+                            <span style="color: var(--dracula-pink);"><%= moonData.moon.age %> days</span>
+                        </div>
+                        <% if (moonData.moon.rise && moonData.moon.set) { %>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Moonrise:</strong> 
+                            <span style="color: var(--dracula-orange);"><%= moonData.moon.rise.toLocaleTimeString() %></span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Moonset:</strong> 
+                            <span style="color: var(--dracula-orange);"><%= moonData.moon.set.toLocaleTimeString() %></span>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Sun Times -->
+                <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+                    <h3 style="color: var(--dracula-yellow); margin-top: 0; text-align: center;">☀️ Solar Information</h3>
+                    <div style="color: var(--dracula-foreground);">
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Sunrise:</strong> 
+                            <span style="color: var(--dracula-yellow);"><%= moonData.sun.sunrise.toLocaleTimeString() %></span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Sunset:</strong> 
+                            <span style="color: var(--dracula-red);"><%= moonData.sun.sunset.toLocaleTimeString() %></span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Solar Noon:</strong> 
+                            <span style="color: var(--dracula-green);"><%= moonData.sun.solarNoon.toLocaleTimeString() %></span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Day Length:</strong> 
+                            <span style="color: var(--dracula-pink);">
+                                <% 
+                                const length = moonData.sun.sunset - moonData.sun.sunrise;
+                                const hours = Math.floor(length / (1000 * 60 * 60));
+                                const minutes = Math.floor((length % (1000 * 60 * 60)) / (1000 * 60));
+                                %>
+                                <%= hours %>h <%= minutes %>m
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <a href="<%= hostInfo.fullHost %>/<%= encodeURIComponent(moonData.location.name) %>" 
+                   style="color: var(--dracula-cyan); text-decoration: none; margin: 0 1rem;">
+                    🌤️ View Weather for <%= moonData.location.name %>
+                </a>
+                <a href="<%= hostInfo.fullHost %>/" 
+                   style="color: var(--dracula-pink); text-decoration: none; margin: 0 1rem;">
+                    🏠 Home
+                </a>
+            </div>
+
+        <% } else { %>
+            <div style="text-align: center; color: var(--dracula-comment); margin: 40px 0;">
+                <h2 style="color: var(--dracula-purple);">🌙 Moon Phase Information</h2>
+                <p>Enter a location above to see moon phase information, or try these examples:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
+                    <a href="?location=London" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇬🇧 London</a>
+                    <a href="?location=Tokyo" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇯🇵 Tokyo</a>
+                    <a href="?location=New York" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇺🇸 New York</a>
+                    <a href="?location=Sydney" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇦🇺 Sydney</a>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (!hideFooter) { %>
+        <div class="footer">
+            <p>Moon and sun calculations powered by SunCalc • Console Weather Service</p>
+            <p>Console access: <code style="color: var(--dracula-cyan);"><%= hostInfo.fullHost %>/moon</code></p>
+        </div>
+        <% } %>
+    </div>
+</body>
+</html>
