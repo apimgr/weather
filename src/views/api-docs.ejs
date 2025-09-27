@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
+</head>
+<body>
+    <div class="weather-container">
+        <div class="weather-header">
+            📡 API Documentation
+        </div>
+
+        <!-- API Overview -->
+        <div style="margin: 2rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+            <h2 style="color: var(--dracula-cyan); margin-top: 0;">Console Weather Service API</h2>
+            <p style="color: var(--dracula-foreground); line-height: 1.6;">
+                Free weather API with no API key required. Provides global weather data, location search, 
+                and moon phase information with both JSON responses and console-friendly formats.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
+                    <strong style="color: var(--dracula-green);">Base URL:</strong><br>
+                    <code style="color: var(--dracula-cyan);"><%= hostInfo.fullHost %></code>
+                </div>
+                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
+                    <strong style="color: var(--dracula-green);">Data Source:</strong><br>
+                    <span style="color: var(--dracula-yellow);">Open-Meteo.com</span>
+                </div>
+                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
+                    <strong style="color: var(--dracula-green);">Rate Limits:</strong><br>
+                    <span style="color: var(--dracula-orange);">No API key needed</span>
+                </div>
+                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
+                    <strong style="color: var(--dracula-green);">JSON Docs:</strong><br>
+                    <a href="/api/v1/docs" style="color: var(--dracula-pink); text-decoration: none;">/api/v1/docs</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoints -->
+        <div style="margin: 2rem 0;">
+            <h2 style="color: var(--dracula-purple);">API Endpoints</h2>
+            
+            <!-- Current Weather -->
+            <div class="api-endpoint" style="margin: 1.5rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border-left: 4px solid var(--dracula-green);">
+                <h3 style="color: var(--dracula-green); margin-top: 0;">GET /api/v1/weather</h3>
+                <p style="color: var(--dracula-comment);">Get current weather with today's forecast</p>
+                
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Example:</strong><br>
+                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow);">
+                        curl -q -LSs <%= hostInfo.fullHost %>/api/v1/weather?location=London,GB
+                    </code>
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Parameters:</strong>
+                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
+                        <li><code style="color: var(--dracula-pink);">location</code> - City name or coordinates (optional)</li>
+                        <li><code style="color: var(--dracula-pink);">lat, lon</code> - Latitude and longitude (optional)</li>
+                        <li><code style="color: var(--dracula-pink);">units</code> - imperial or metric (auto-detected)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Forecast -->
+            <div class="api-endpoint" style="margin: 1.5rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border-left: 4px solid var(--dracula-cyan);">
+                <h3 style="color: var(--dracula-cyan); margin-top: 0;">GET /api/v1/forecast</h3>
+                <p style="color: var(--dracula-comment);">Get multi-day weather forecast (up to 16 days)</p>
+                
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Example:</strong><br>
+                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow);">
+                        curl -q -LSs <%= hostInfo.fullHost %>/api/v1/forecast?location=Tokyo,JP&days=7
+                    </code>
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Parameters:</strong>
+                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
+                        <li><code style="color: var(--dracula-pink);">location</code> - City name or coordinates (optional)</li>
+                        <li><code style="color: var(--dracula-pink);">days</code> - Number of forecast days (1-16, default: 7)</li>
+                        <li><code style="color: var(--dracula-pink);">units</code> - imperial or metric (auto-detected)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="api-endpoint" style="margin: 1.5rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border-left: 4px solid var(--dracula-purple);">
+                <h3 style="color: var(--dracula-purple); margin-top: 0;">GET /api/v1/search</h3>
+                <p style="color: var(--dracula-comment);">Search for locations (used by autocomplete)</p>
+                
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Example:</strong><br>
+                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow);">
+                        curl -q -LSs <%= hostInfo.fullHost %>/api/v1/search?q=alb
+                    </code>
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Parameters:</strong>
+                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
+                        <li><code style="color: var(--dracula-pink);">q</code> - Search query (required, 3+ characters)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Console Interface -->
+        <div style="margin: 2rem 0;">
+            <h2 style="color: var(--dracula-purple);">Console Interface</h2>
+            
+            <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+                <h3 style="color: var(--dracula-orange); margin-top: 0;">wttr.in Compatible Formats</h3>
+                
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Format Examples:</strong><br>
+                    <div style="font-family: monospace; margin: 0.5rem 0;">
+                        <code style="color: var(--dracula-yellow);">curl -q -LSs <%= hostInfo.fullHost %>/London,GB?format=1</code><br>
+                        <span style="color: var(--dracula-comment);">→ ☁️  +12⁰C</span>
+                    </div>
+                    <div style="font-family: monospace; margin: 0.5rem 0;">
+                        <code style="color: var(--dracula-yellow);">curl -q -LSs <%= hostInfo.fullHost %>/London,GB?format=3</code><br>
+                        <span style="color: var(--dracula-comment);">→ London, GB: ☁️  +12⁰C</span>
+                    </div>
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <strong style="color: var(--dracula-cyan);">Available Formats:</strong>
+                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
+                        <li><strong style="color: var(--dracula-pink);">format=1:</strong> Icon + temperature</li>
+                        <li><strong style="color: var(--dracula-pink);">format=2:</strong> Icon + temperature + wind</li>
+                        <li><strong style="color: var(--dracula-pink);">format=3:</strong> Location + icon + temperature</li>
+                        <li><strong style="color: var(--dracula-pink);">format=4:</strong> Location + icon + temperature + wind</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <a href="<%= hostInfo.fullHost %>/" style="color: var(--dracula-cyan); text-decoration: none; margin: 0 1rem;">
+                🏠 Home
+            </a>
+            <a href="/api/v1/docs" style="color: var(--dracula-pink); text-decoration: none; margin: 0 1rem;">
+                📋 JSON API Docs
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Free weather data from Open-Meteo.com • Console Weather Service</p>
+            <p>API access: <code style="color: var(--dracula-cyan);"><%= hostInfo.fullHost %>/api/v1/</code></p>
+        </div>
+    </div>
+</body>
+</html>

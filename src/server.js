@@ -100,8 +100,18 @@ app.get('/debug/ip', (req, res) => {
   });
 });
 
-// Main application routes - order matters!
+// API routes first - all /api/** should return JSON
 app.use('/api/v1', apiRoutes);
+
+// Add /api/docs endpoint for HTML documentation
+app.get('/api/docs', (req, res) => {
+  res.render('api-docs', {
+    title: 'Console Weather Service - API Documentation',
+    hostInfo: hostDetector.getHostInfo(req)
+  });
+});
+
+// Main application routes
 app.use('/web', webRoutes);
 
 // Removed test endpoints for production
