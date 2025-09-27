@@ -11,6 +11,16 @@ const parameterParser = require('../utils/parameterParser');
 
 const router = express.Router();
 
+// Moon phase endpoint - matches weather pattern
+router.get('/moon', async (req, res) => {
+  return handleMoonRequest(req, res, 'moon');
+});
+
+router.get('/moon@:location(*)', async (req, res) => {
+  const location = req.params.location;
+  return handleMoonRequest(req, res, `moon@${location}`);
+});
+
 router.get('/', async (req, res) => {
   try {
     const clientIp = locationParser.getClientIP(req);
@@ -108,6 +118,7 @@ EXAMPLES:
     curl -q -LSs ${baseUrl}/London,GB?format=3
     curl -q -LSs ${baseUrl}/Albany,NY?u&format=4
     curl -q -LSs ${baseUrl}/33.0392,-80.1805
+    curl -q -LSs ${baseUrl}/moon
     curl -q -LSs ${baseUrl}/moon@Tokyo,JP
     
 SPECIAL ENDPOINTS:
@@ -151,8 +162,11 @@ async function handleLocationRequest(req, res) {
     const params = parameterParser.parseWttrParams(req.query);
     // console.log('Format requested:', req.query.format);
     
-    // Check for moon queries
-    if (locationInput && (locationInput.toLowerCase() === 'moon' || locationInput.toLowerCase().startsWith('moon@'))) {
+    // Check for moon queries - support both /moon and /moon@location formats
+    if (locationInput && locationInput.toLowerCase() === 'moon') {
+      return handleMoonRequest(req, res, 'moon');
+    }
+    if (locationInput && locationInput.toLowerCase().startsWith('moon@')) {
       return handleMoonRequest(req, res, locationInput);
     }
     
