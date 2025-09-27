@@ -72,14 +72,8 @@
                         </div>
                     <% } %>
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌍 <strong style="color: var(--dracula-cyan);">Region:</strong> 
-                        <span style="color: var(--dracula-green);">
-                            <% if (weatherData.location.admin1 && !weatherData.location.admin1.includes(',') && !weatherData.location.admin1.match(/[\d.-]+/)) { %>
-                                <%= weatherData.location.admin1 %>, <%= weatherData.location.country %>
-                            <% } else { %>
-                                <%= weatherData.location.country %>
-                            <% } %>
-                        </span>
+                        🌍 <strong style="color: var(--dracula-cyan);">Country:</strong>
+                        <span style="color: var(--dracula-green);"><%= weatherData.location.country %></span>
                     </div>
                     <% if (weatherData.location.population) { %>
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">

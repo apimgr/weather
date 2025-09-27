@@ -177,17 +177,35 @@ class LocationEnhancer {
   }
 
   buildEnhancedShortName(data) {
-    // Build short location name using real country code from database
+    // Build short location name with state/province/region when available
     const city = data.name;
     const countryCode = data.countryCode || data.country_code?.toUpperCase() || 'XX';
-    
+
     // For US locations, use state abbreviation if available
     if (countryCode === 'US' && data.admin1) {
       const stateAbbrev = this.lookupStateAbbreviation(data.admin1);
       return `${city}, ${stateAbbrev || countryCode}`;
     }
-    
-    // For all other locations, use country code from database
+
+    // For Canadian locations, use province abbreviation if available
+    if (countryCode === 'CA' && data.admin1) {
+      const provinceAbbrev = this.lookupProvinceAbbreviation(data.admin1);
+      return `${city}, ${provinceAbbrev || countryCode}`;
+    }
+
+    // For UK locations, try to use region/country within UK
+    if (countryCode === 'GB' && data.admin1) {
+      const regionAbbrev = this.lookupUKRegion(data.admin1);
+      return `${city}, ${regionAbbrev || countryCode}`;
+    }
+
+    // For other countries with regions, show region if available and useful
+    if (data.admin1 && this.shouldShowRegion(countryCode, data.admin1, city)) {
+      const regionAbbrev = this.getRegionAbbreviation(data.admin1, countryCode);
+      return `${city}, ${regionAbbrev}`;
+    }
+
+    // For all other locations, use country code
     return `${city}, ${countryCode}`;
   }
 
@@ -207,6 +225,55 @@ class LocationEnhancer {
     };
     
     return commonStates[stateName.toLowerCase()];
+  }
+
+  lookupProvinceAbbreviation(provinceName) {
+    // Canadian provinces and territories
+    const canadianProvinces = {
+      'alberta': 'AB', 'british columbia': 'BC', 'manitoba': 'MB', 'new brunswick': 'NB',
+      'newfoundland and labrador': 'NL', 'northwest territories': 'NT', 'nova scotia': 'NS',
+      'nunavut': 'NU', 'ontario': 'ON', 'prince edward island': 'PE', 'quebec': 'QC',
+      'saskatchewan': 'SK', 'yukon': 'YT'
+    };
+
+    return canadianProvinces[provinceName.toLowerCase()];
+  }
+
+  lookupUKRegion(regionName) {
+    // UK countries and regions
+    const ukRegions = {
+      'england': 'EN', 'scotland': 'SC', 'wales': 'WA', 'northern ireland': 'NI',
+      'london': 'EN', 'greater london': 'EN'
+    };
+
+    return ukRegions[regionName.toLowerCase()] || 'GB';
+  }
+
+  shouldShowRegion(countryCode, admin1, city) {
+    // Don't show region if it's the same as city name or very generic
+    if (!admin1 || admin1.toLowerCase() === city.toLowerCase()) {
+      return false;
+    }
+
+    // Show regions for large countries where it's helpful
+    const largeCountries = ['AU', 'BR', 'CN', 'IN', 'RU', 'DE', 'FR', 'ES', 'IT'];
+    return largeCountries.includes(countryCode);
+  }
+
+  getRegionAbbreviation(admin1, countryCode) {
+    // For now, return first 2-3 characters of region name as abbreviation
+    // This could be enhanced with proper regional abbreviation databases
+    if (admin1.length <= 3) {
+      return admin1.toUpperCase();
+    }
+
+    // Create abbreviation from region name
+    const words = admin1.split(' ').filter(word => word.length > 2);
+    if (words.length > 1) {
+      return words.map(word => word.charAt(0).toUpperCase()).join('');
+    }
+
+    return admin1.substring(0, 3).toUpperCase();
   }
 
   async findBestCityMatch(searchTerm) {

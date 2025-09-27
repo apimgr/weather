@@ -53,12 +53,17 @@ class WttrRenderer {
   }
 
   getFullLocationName(location) {
+    // Use the enhanced short name for header display (e.g. "New York, NY" or "London, GB")
+    if (location.shortName) {
+      return location.shortName;
+    }
+
     // Use the pre-built full name from geocoding API if available
     if (location.fullName) {
       return location.fullName;
     }
-    
-    // Fallback: build full name
+
+    // Fallback: build basic name
     return `${location.name}, ${location.country}`;
   }
 

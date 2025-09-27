@@ -11,7 +11,8 @@
       "WebFetch(domain:mb.pste.us)",
       "Read(//tmp/**)",
       "Bash(netstat:*)",
-      "WebFetch(domain:wthr.top)"
+      "WebFetch(domain:wthr.top)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
