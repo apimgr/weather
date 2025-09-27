@@ -252,25 +252,34 @@ class LocationEnhancer {
     let nearestCity = null;
     let minDistance = Infinity;
     
-    // Search through a subset of cities for performance (top 10,000 by population)
-    const topCities = cities
-      .filter(city => city.coord && city.coord.lat && city.coord.lon)
-      .sort((a, b) => (b.population || 0) - (a.population || 0))
-      .slice(0, 10000);
-    
-    for (const city of topCities) {
+    // Improved search: prioritize actual cities over counties/administrative areas
+    const allCities = cities.filter(city => city.coord && city.coord.lat && city.coord.lon);
+
+    // First pass: Look for cities within 25km, prioritizing by closeness then population
+    const nearbyCities = [];
+    for (const city of allCities) {
       const distance = this.calculateDistance(
         latitude, longitude,
         city.coord.lat, city.coord.lon
       );
-      
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestCity = city;
+
+      if (distance <= 25) { // Within 25km
+        nearbyCities.push({ city, distance });
       }
-      
-      // If we find a very close city (within 5km), use it
-      if (distance < 5) break;
+    }
+
+    // Sort by distance first (closest wins), then by population for tie-breaking
+    nearbyCities.sort((a, b) => {
+      const distDiff = a.distance - b.distance;
+      if (Math.abs(distDiff) < 2) { // If very close in distance (<2km), prefer larger population
+        return (b.city.population || 0) - (a.city.population || 0);
+      }
+      return distDiff;
+    });
+
+    if (nearbyCities.length > 0) {
+      nearestCity = nearbyCities[0].city;
+      minDistance = nearbyCities[0].distance;
     }
 
     if (nearestCity) {
