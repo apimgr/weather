@@ -23,43 +23,43 @@ class OneLineRenderer {
 
   // Exact wttr.in format implementations
   renderFormat1(currentWeather, units) {
-    // Format 1: Just weather icon + temp: "🌦 +11⁰C"
+    // Format 1: Just weather icon + temp: "🌦  +11⁰C"
     const temp = Math.round(currentWeather.temperature);
     const icon = weatherService.getWeatherIcon(currentWeather.weatherCode, currentWeather.isDay);
     const tempUnit = unitConverter.getTemperatureUnit(units).replace('°', '');
     
-    return `${icon} ${chalk.hex('#f1fa8c')('+' + temp + '⁰' + tempUnit)}\n`;
+    return `${icon}  ${chalk.hex('#f1fa8c')('+' + temp + '⁰' + tempUnit)}\n`;
   }
 
   renderFormat2(currentWeather, units) {
-    // Format 2: Weather + details: "🌦 🌡️+11°C 🌬️↓4km/h" (uniform 1 space)
+    // Format 2: Weather + details: "🌦  🌡️+11°C  🌬️↓4km/h"
     const temp = Math.round(currentWeather.temperature);
     const icon = weatherService.getWeatherIcon(currentWeather.weatherCode, currentWeather.isDay);
     const tempUnit = unitConverter.getTemperatureUnit(units);
     const windSpeed = Math.round(currentWeather.windSpeed);
     const speedUnit = unitConverter.getSpeedUnit(units);
     
-    return `${icon} 🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)} 🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + windSpeed + speedUnit)}\n`;
+    return `${icon}  🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)}  🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + windSpeed + speedUnit)}\n`;
   }
 
   renderFormat3(location, currentWeather, units) {
-    // Format 3: Location + weather: "London, UK: 🌦 +11⁰C"
+    // Format 3: Location + weather: "London, GB:  🌦  +11⁰C"
     const temp = Math.round(currentWeather.temperature);
     const icon = weatherService.getWeatherIcon(currentWeather.weatherCode, currentWeather.isDay);
     const tempUnit = unitConverter.getTemperatureUnit(units).replace('°', '');
     
-    return `${chalk.hex('#8be9fd')(this.getShortLocationName(location))}: ${icon} ${chalk.hex('#f1fa8c')('+' + temp + '⁰' + tempUnit)}\n`;
+    return `${chalk.hex('#8be9fd')(this.getShortLocationName(location))}: ${icon}  ${chalk.hex('#f1fa8c')('+' + temp + '⁰' + tempUnit)}\n`;
   }
 
   renderFormat4(location, currentWeather, units) {
-    // Format 4: Location + weather + details: "London: 🌦 🌡️+11°C 🌬️↓4km/h" (uniform 1 space)
+    // Format 4: Location + weather + details: "London, GB:  🌦  🌡️+11°C  🌬️↓4km/h"
     const temp = Math.round(currentWeather.temperature);
     const icon = weatherService.getWeatherIcon(currentWeather.weatherCode, currentWeather.isDay);
     const tempUnit = unitConverter.getTemperatureUnit(units);
     const windSpeed = Math.round(currentWeather.windSpeed);
     const speedUnit = unitConverter.getSpeedUnit(units);
     
-    return `${chalk.hex('#8be9fd')(this.getShortLocationName(location))}: ${icon} 🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)} 🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + windSpeed + speedUnit)}\n`;
+    return `${chalk.hex('#8be9fd')(this.getShortLocationName(location))}: ${icon}  🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)}  🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + windSpeed + speedUnit)}\n`;
   }
 
   getWindDirection(degrees) {
