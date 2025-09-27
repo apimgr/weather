@@ -61,8 +61,8 @@
                     <% if (isCoordinates) { %>
                         <!-- When coordinates are used, show the actual location name -->
                         <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                            📍 <strong style="color: var(--dracula-cyan);">Location:</strong> 
-                            <span style="color: var(--dracula-yellow);"><%= weatherData.location.fullName || weatherData.location.name + ', ' + weatherData.location.country %></span>
+                            📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
+                            <span style="color: var(--dracula-yellow);"><%= weatherData.location.shortName || weatherData.location.name + ', ' + weatherData.location.country %></span>
                         </div>
                     <% } else { %>
                         <!-- When location name is used, show the coordinates -->

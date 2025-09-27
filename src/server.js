@@ -272,10 +272,22 @@ Thank you for your patience! ☕
 // Weather routes last (catch-all)
 app.use('/', weatherRoutes);
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Weather API server running on port ${PORT}`);
   console.log(`Visit http://localhost:${PORT}/examples for usage examples`);
   console.log(`API documentation: http://localhost:${PORT}/api/v1/docs`);
+
+  // Proactively load location data to complete initialization
+  try {
+    const locationEnhancer = require('./services/locationEnhancer');
+    await Promise.all([
+      locationEnhancer.loadCountriesData(),
+      locationEnhancer.loadCitiesData()
+    ]);
+  } catch (error) {
+    console.error('⚠️ Error during startup initialization:', error.message);
+    // Don't block startup, the timeout will handle it
+  }
 });
 
 module.exports = app;
