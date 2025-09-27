@@ -5,6 +5,79 @@ const hostDetector = require('../utils/hostDetector');
 
 const router = express.Router();
 
+// Weather endpoint with path parameter support
+router.get('/weather/:location(*)', async (req, res) => {
+  try {
+    const locationFromPath = req.params.location;
+    const { units } = req.query;
+    
+    // Decode location from path
+    const location = decodeURIComponent(locationFromPath).replace(/\+/g, ' ');
+    
+    // Use same logic as query parameter route
+    let selectedUnits = units || 'imperial';
+    let coords;
+    
+    const clientIp = locationParser.getClientIP(req);
+    const parsedLocation = locationParser.parseLocation(location, clientIp);
+    
+    if (parsedLocation.type === 'coordinates') {
+      coords = parsedLocation.value;
+      coords.name = `${coords.latitude}, ${coords.longitude}`;
+      coords.country = '';
+    } else {
+      coords = await weatherService.getCoordinates(parsedLocation.value);
+      if (!units && coords.country) {
+        selectedUnits = locationParser.getUnitsForCountry(coords.country);
+      }
+    }
+
+    const currentWeather = await weatherService.getCurrentWeather(coords.latitude, coords.longitude, selectedUnits);
+    
+    const response = {
+      location: {
+        name: coords.name,
+        country: coords.country,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        timezone: coords.timezone || currentWeather.timezone
+      },
+      current: {
+        temperature: currentWeather.temperature,
+        feelsLike: currentWeather.feelsLike,
+        humidity: currentWeather.humidity,
+        pressure: currentWeather.pressure,
+        windSpeed: currentWeather.windSpeed,
+        windDirection: currentWeather.windDirection,
+        windGusts: currentWeather.windGusts,
+        precipitation: currentWeather.precipitation,
+        cloudCover: currentWeather.cloudCover,
+        weatherCode: currentWeather.weatherCode,
+        description: weatherService.getWeatherDescription(currentWeather.weatherCode),
+        icon: weatherService.getWeatherIcon(currentWeather.weatherCode, currentWeather.isDay),
+        isDay: currentWeather.isDay,
+        units: currentWeather.units
+      },
+      meta: {
+        source: 'Open-Meteo',
+        timestamp: new Date().toISOString(),
+        api_version: '1.0',
+        units: selectedUnits
+      }
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    res.status(400).json({
+      error: {
+        code: 'WEATHER_ERROR',
+        message: error.message
+      }
+    });
+  }
+});
+
 router.get('/weather', async (req, res) => {
   try {
     const { location, lat, lon, format = 'json', units } = req.query;
@@ -75,6 +148,91 @@ router.get('/weather', async (req, res) => {
     res.status(400).json({
       error: {
         code: 'WEATHER_ERROR',
+        message: error.message
+      }
+    });
+  }
+});
+
+// Forecast endpoint with path parameter support  
+router.get('/forecast/:location(*)', async (req, res) => {
+  try {
+    const locationFromPath = req.params.location;
+    const { days = 7, units } = req.query;
+    
+    // Decode location from path
+    const location = decodeURIComponent(locationFromPath).replace(/\+/g, ' ');
+    const forecastDays = Math.min(parseInt(days), 16);
+    
+    let selectedUnits = units || 'imperial';
+    let coords;
+    
+    const clientIp = locationParser.getClientIP(req);
+    const parsedLocation = locationParser.parseLocation(location, clientIp);
+    
+    if (parsedLocation.type === 'coordinates') {
+      coords = parsedLocation.value;
+      coords.name = `${coords.latitude}, ${coords.longitude}`;
+      coords.country = '';
+    } else {
+      coords = await weatherService.getCoordinates(parsedLocation.value);
+      if (!units && coords.country) {
+        selectedUnits = locationParser.getUnitsForCountry(coords.country);
+      }
+    }
+
+    const forecast = await weatherService.getForecast(coords.latitude, coords.longitude, forecastDays, selectedUnits);
+    
+    const response = {
+      location: {
+        name: coords.name,
+        country: coords.country,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        timezone: coords.timezone || forecast.timezone
+      },
+      forecast: {
+        days: forecast.days.map(day => ({
+          date: day.date,
+          weatherCode: day.weatherCode,
+          description: weatherService.getWeatherDescription(day.weatherCode),
+          icon: weatherService.getWeatherIcon(day.weatherCode),
+          temperature: {
+            min: day.tempMin,
+            max: day.tempMax
+          },
+          feelsLike: {
+            min: day.feelsLikeMin,
+            max: day.feelsLikeMax
+          },
+          precipitation: {
+            sum: day.precipitation,
+            hours: day.precipitationHours,
+            probability: day.precipitationProbability
+          },
+          wind: {
+            speedMax: day.windSpeedMax,
+            gustsMax: day.windGustsMax,
+            direction: day.windDirection
+          },
+          solarRadiation: day.solarRadiation
+        })),
+        units: forecast.units
+      },
+      meta: {
+        source: 'Open-Meteo',
+        timestamp: new Date().toISOString(),
+        api_version: '1.0',
+        units: selectedUnits
+      }
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    res.status(400).json({
+      error: {
+        code: 'FORECAST_ERROR',
         message: error.message
       }
     });
