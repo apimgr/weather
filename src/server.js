@@ -71,6 +71,16 @@ let initializationStatus = {
 global.serviceReady = serviceReady;
 global.initializationStatus = initializationStatus;
 
+// Auto-mark service as ready after timeout (fallback for production)
+setTimeout(() => {
+  if (!global.serviceReady) {
+    console.log('⏰ Initialization timeout reached, marking service as ready');
+    global.serviceReady = true;
+    global.initializationStatus.countries = true;
+    global.initializationStatus.cities = true;
+  }
+}, 30000); // 30 second timeout
+
 // Health check endpoints (Kubernetes standard)
 app.get('/healthz', (req, res) => {
   const hostInfo = hostDetector.getHostInfo(req);

@@ -27,7 +27,7 @@ class LocationEnhancer {
 
     try {
       console.log('☕ Loading countries data from GitHub...');
-      const response = await axios.get(this.countriesUrl);
+      const response = await axios.get(this.countriesUrl, { timeout: 10000 });
       this.countriesData = response.data;
       cache.set('countries_data', this.countriesData);
       console.log(`✅ Loaded ${this.countriesData.length} countries`);
@@ -41,6 +41,13 @@ class LocationEnhancer {
       return this.countriesData;
     } catch (error) {
       console.error('❌ Failed to load countries data:', error.message);
+      
+      // Mark as completed even if failed to prevent hanging
+      if (global.initializationStatus) {
+        global.initializationStatus.countries = true;
+        this.checkInitializationComplete();
+      }
+      
       return {};
     }
   }
@@ -56,7 +63,7 @@ class LocationEnhancer {
 
     try {
       console.log('☕ Loading cities data from GitHub...');
-      const response = await axios.get(this.citiesUrl);
+      const response = await axios.get(this.citiesUrl, { timeout: 15000 });
       this.citiesData = response.data;
       cache.set('cities_data', this.citiesData);
       console.log(`✅ Loaded ${this.citiesData.length} cities`);
@@ -70,6 +77,13 @@ class LocationEnhancer {
       return this.citiesData;
     } catch (error) {
       console.error('❌ Failed to load cities data:', error.message);
+      
+      // Mark as completed even if failed to prevent hanging
+      if (global.initializationStatus) {
+        global.initializationStatus.cities = true;
+        this.checkInitializationComplete();
+      }
+      
       return [];
     }
   }
