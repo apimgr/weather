@@ -485,14 +485,14 @@ router.get('/location', (req, res) => {
       location: {
         city: locationData.value,
         country: locationData.country,
-        countryCode: locationData.country === 'United States' ? 'US' : 
+        countryCode: locationData.country === 'United States' ? 'US' :
                      locationData.country === 'United Kingdom' ? 'GB' :
                      locationData.country === 'Canada' ? 'CA' : 'XX',
         units: locationData.units,
-        coordinates: null // Will be enhanced if geocoding available
+        coordinates: locationData.coordinates || null // Use coordinates from IP geolocation if available
       },
       timestamp: new Date().toISOString(),
-      source: 'IP Geolocation'
+      source: locationData.coordinates ? 'IP Geolocation with Coordinates' : 'IP Geolocation'
     };
     
     // Helper function to send formatted JSON

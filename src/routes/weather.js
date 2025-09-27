@@ -154,24 +154,69 @@ More info: ${baseUrl}/api/v1/docs
 
 async function getLocationFromExternalIP(ip) {
   // Use external IP geolocation for accurate location detection
-  try {
-    const axios = require('axios');
-    const response = await axios.get(`https://ipapi.co/${ip}/json/`, { timeout: 5000 });
-    
-    if (response.data && response.data.city) {
-      return {
-        city: response.data.city,
-        region: response.data.region,
-        country_name: response.data.country_name,
-        country_code: response.data.country_code,
-        latitude: response.data.latitude,
-        longitude: response.data.longitude
-      };
+  const axios = require('axios');
+
+  // Try multiple services for better coordinate availability
+  const services = [
+    {
+      name: 'ipapi.co',
+      url: `https://ipapi.co/${ip}/json/`,
+      timeout: 5000,
+      extract: (data) => data.city ? {
+        city: data.city,
+        region: data.region,
+        country_name: data.country_name,
+        country_code: data.country_code,
+        latitude: data.latitude,
+        longitude: data.longitude
+      } : null
+    },
+    {
+      name: 'ip-api.com',
+      url: `http://ip-api.com/json/${ip}?fields=status,city,regionName,country,countryCode,lat,lon`,
+      timeout: 4000,
+      extract: (data) => data.status === 'success' ? {
+        city: data.city,
+        region: data.regionName,
+        country_name: data.country,
+        country_code: data.countryCode,
+        latitude: data.lat,
+        longitude: data.lon
+      } : null
+    },
+    {
+      name: 'ipwho.is',
+      url: `http://ipwho.is/${ip}`,
+      timeout: 4000,
+      extract: (data) => data.success ? {
+        city: data.city,
+        region: data.region,
+        country_name: data.country,
+        country_code: data.country_code,
+        latitude: data.latitude,
+        longitude: data.longitude
+      } : null
     }
-  } catch (error) {
-    console.log('External IP lookup failed:', error.message);
+  ];
+
+  for (const service of services) {
+    try {
+      console.log(`🌐 Trying ${service.name} for IP ${ip}...`);
+      const response = await axios.get(service.url, { timeout: service.timeout });
+
+      if (response.data) {
+        const result = service.extract(response.data);
+        if (result) {
+          console.log(`✅ ${service.name} success:`, result);
+          return result;
+        }
+      }
+    } catch (error) {
+      console.log(`❌ ${service.name} failed:`, error.message);
+    }
   }
-  
+
+  console.log('❌ All external IP services failed');
   return null;
 }
 

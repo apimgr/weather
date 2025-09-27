@@ -47,17 +47,32 @@ class LocationParser {
     }
 
     const geo = geoip.lookup(ip);
-    // console.log('GeoIP lookup result:', geo);
-    
+    console.log('🗺️ GeoIP lookup result for', ip + ':', geo);
+
     if (geo) {
       const location = geo.city || this.getLocationFromCountry(geo.country);
-      // console.log('Location resolved to:', location, 'Country:', geo.country);
-      return { 
-        type: 'name', 
+      console.log('📍 Location resolved to:', location, 'Country:', geo.country);
+
+      // Include coordinates if available from geoip-lite
+      const result = {
+        type: 'name',
         value: location,
         country: geo.country,
         units: this.getUnitsForCountry(geo.country)
       };
+
+      // Add coordinates if available (geo.ll = [latitude, longitude])
+      if (geo.ll && geo.ll.length === 2) {
+        result.coordinates = {
+          latitude: geo.ll[0],
+          longitude: geo.ll[1]
+        };
+        console.log('✅ Coordinates from geoip-lite:', geo.ll[0], geo.ll[1]);
+      } else {
+        console.log('⚠️ No coordinates available from geoip-lite');
+      }
+
+      return result;
     }
 
     // console.log('GeoIP lookup failed, using New York as fallback');

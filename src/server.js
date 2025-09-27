@@ -79,7 +79,7 @@ setTimeout(() => {
     global.initializationStatus.countries = true;
     global.initializationStatus.cities = true;
   }
-}, 30000); // 30 second timeout
+}, 120000); // 2 minute timeout
 
 // Health check endpoints (Kubernetes standard)
 app.get('/healthz', (req, res) => {

@@ -115,25 +115,40 @@
 
     <script>
         let countdown = 15;
-        
+        let countdownInterval;
+
         function updateCountdown() {
             document.getElementById('countdown').textContent = Math.max(countdown, 0);
             countdown--;
-            
+
             if (countdown < 0) {
                 clearInterval(countdownInterval);
                 retryConnection();
             }
         }
-        
+
+        function startCountdown() {
+            // Clear any existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            // Start new countdown
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
         function retryConnection() {
             console.log('Retrying connection...');
-            
+
+            // Clear countdown interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
             // Show loading state
             const retryBtn = document.getElementById('retry-btn');
             retryBtn.textContent = '☕ Checking...';
             retryBtn.disabled = true;
-            
+
             // Check if service is ready
             fetch('/healthz')
                 .then(response => {
@@ -147,26 +162,25 @@
                 })
                 .catch(error => {
                     console.log('Service still initializing:', error.message);
-                    
+
                     // Reset countdown and try again
                     countdown = 15;
                     retryBtn.textContent = '🔄 Try Again Now';
                     retryBtn.disabled = false;
-                    
-                    // Restart countdown
-                    const countdownInterval = setInterval(updateCountdown, 1000);
+
+                    // Restart countdown properly
+                    startCountdown();
                 });
         }
-        
-        // Auto-retry countdown
-        const countdownInterval = setInterval(updateCountdown, 1000);
-        
+
+        // Start initial countdown
+        startCountdown();
+
         // Manual retry button
         document.getElementById('retry-btn').addEventListener('click', function() {
-            clearInterval(countdownInterval);
             retryConnection();
         });
-        
+
         // Initial health check in case service becomes ready quickly
         setTimeout(() => {
             fetch('/healthz')

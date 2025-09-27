@@ -7,7 +7,11 @@
       "Bash(npm run download-data:*)",
       "Bash(pkill:*)",
       "Bash(PORT=3007 npm start)",
-      "Bash(PORT=3008 npm start)"
+      "Bash(PORT=3008 npm start)",
+      "WebFetch(domain:mb.pste.us)",
+      "Read(//tmp/**)",
+      "Bash(netstat:*)",
+      "WebFetch(domain:wthr.top)"
     ],
     "deny": [],
     "ask": []

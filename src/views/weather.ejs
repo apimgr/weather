@@ -206,26 +206,26 @@
             <!-- Console Command Examples -->
             <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-bg); border-radius: 6px;">
                 <h3 style="color: var(--dracula-purple); text-align: center; margin-top: 0;">Console Access</h3>
-                <div style="font-family: monospace; color: var(--dracula-cyan);">
-                    <div style="margin: 10px 0;">
-                        <strong style="color: var(--dracula-green);">Weather:</strong> 
-                        <code>curl -q -LSs <%= hostInfo.fullHost %>/<%= (location || 'london').replace(/ /g, '+') %></code>
+                <div class="console-commands">
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Weather:</strong>
+                        <code class="mobile-code">curl -q -LSs <%= hostInfo.fullHost %>/<%= (location || 'london').replace(/ /g, '+') %></code>
                     </div>
-                    <div style="margin: 10px 0;">
-                        <strong style="color: var(--dracula-green);">Format 3:</strong> 
-                        <code>curl -q -LSs <%= hostInfo.fullHost %>/<%= (location || 'london').replace(/ /g, '+') %>?format=3</code>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Format 3:</strong>
+                        <code class="mobile-code">curl -q -LSs <%= hostInfo.fullHost %>/<%= (location || 'london').replace(/ /g, '+') %>?format=3</code>
                     </div>
-                    <div style="margin: 10px 0;">
-                        <strong style="color: var(--dracula-green);">Moon:</strong> 
-                        <code>curl -q -LSs <%= hostInfo.fullHost %>/moon</code>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Moon:</strong>
+                        <code class="mobile-code">curl -q -LSs <%= hostInfo.fullHost %>/moon</code>
                     </div>
-                    <div style="margin: 10px 0;">
-                        <strong style="color: var(--dracula-green);">Moon Location:</strong> 
-                        <code>curl -q -LSs <%= hostInfo.fullHost %>/moon/<%= (location || 'Tokyo,JP').replace(/ /g, '+') %></code>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Moon Location:</strong>
+                        <code class="mobile-code">curl -q -LSs <%= hostInfo.fullHost %>/moon/<%= (location || 'Tokyo,JP').replace(/ /g, '+') %></code>
                     </div>
-                    <div style="margin: 10px 0;">
-                        <strong style="color: var(--dracula-green);">JSON API:</strong> 
-                        <code>curl -q -LSs <%= hostInfo.fullHost %>/api/v1/weather?location=<%= (location || 'london').replace(/ /g, '+') %></code>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">JSON API:</strong>
+                        <code class="mobile-code">curl -q -LSs <%= hostInfo.fullHost %>/api/v1/weather?location=<%= (location || 'london').replace(/ /g, '+') %></code>
                     </div>
                 </div>
             </div>
@@ -242,8 +242,10 @@
                 
                 <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-current-line); border-radius: 6px;">
                     <h4 style="color: var(--dracula-green);">Console Access:</h4>
-                    <code style="color: var(--dracula-yellow);">curl <%= hostInfo.fullHost %>/London</code><br>
-                    <code style="color: var(--dracula-yellow);">curl <%= hostInfo.fullHost %>/api/v1/weather?location=Paris</code>
+                    <div class="console-commands">
+                        <code class="mobile-code">curl <%= hostInfo.fullHost %>/London</code>
+                        <code class="mobile-code">curl <%= hostInfo.fullHost %>/api/v1/weather?location=Paris</code>
+                    </div>
                 </div>
             </div>
         <% } %>
@@ -285,36 +287,53 @@
                 let position = null;
 
                 try {
+                    console.log('📡 Attempting high-accuracy GPS location (protocol:', window.location.protocol + ')');
                     position = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(
-                            resolve,
-                            reject,
+                            (pos) => {
+                                console.log('✅ GPS success! Accuracy:', pos.coords.accuracy + 'm');
+                                console.log('📍 GPS coordinates:', pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6));
+                                resolve(pos);
+                            },
+                            (err) => {
+                                console.log('❌ GPS failed - Code:', err.code, 'Message:', err.message);
+                                console.log('Error codes: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT');
+                                reject(err);
+                            },
                             {
-                                timeout: 8000,
+                                timeout: 15000, // Increased from 8 to 15 seconds
                                 enableHighAccuracy: true, // Try GPS first
                                 maximumAge: 300000 // 5 minute cache
                             }
                         );
                     });
                 } catch (gpsError) {
-                    console.log('High-accuracy GPS failed, trying network location...');
+                    console.log('🔄 High-accuracy GPS failed, trying network location...');
                     button.textContent = '📍 Location...';
 
                     // Fallback to network-based location
                     try {
+                        console.log('🌐 Attempting network-based location...');
                         position = await new Promise((resolve, reject) => {
                             navigator.geolocation.getCurrentPosition(
-                                resolve,
-                                reject,
+                                (pos) => {
+                                    console.log('✅ Network location success! Accuracy:', pos.coords.accuracy + 'm');
+                                    console.log('📍 Network coordinates:', pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6));
+                                    resolve(pos);
+                                },
+                                (err) => {
+                                    console.log('❌ Network location failed - Code:', err.code, 'Message:', err.message);
+                                    reject(err);
+                                },
                                 {
-                                    timeout: 10000,
+                                    timeout: 12000, // Increased from 10 to 12 seconds
                                     enableHighAccuracy: false, // Network-based
                                     maximumAge: 600000 // 10 minute cache
                                 }
                             );
                         });
                     } catch (networkError) {
-                        console.log('Network location failed, trying IP-based detection...');
+                        console.log('🔄 Network location failed, trying IP-based detection...');
                         throw networkError; // This will trigger IP fallback
                     }
                 }
@@ -373,16 +392,21 @@
         }
         
         function tryIPLocationFallback(button, originalText) {
-            console.log('Attempting IP-based location detection via our server');
+            console.log('🌐 Attempting IP-based location detection via our server');
+            console.log('ℹ️ This indicates GPS/Network location failed or was denied');
             button.textContent = '📍 IP Location...';
-            
+
             // Use our own server's IP detection endpoint
             fetch('/debug/ip')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 IP detection response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
-                    console.log('Server IP location data:', data);
+                    console.log('🗺️ Server IP location data:', data);
                     if (data.location && data.location.value) {
                         const detectedLocation = data.location.value;
+                        console.log('✅ IP-based location detected:', detectedLocation);
                         const units = document.getElementById('units-select').value;
 
                         console.log('Using server-detected location:', detectedLocation);
