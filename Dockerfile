@@ -1,4 +1,4 @@
-# Use Node.js LTS (Long Term Support) version  
+# Use Node.js LTS (Long Term Support) version
 FROM node:20-alpine
 
 # Set working directory
@@ -28,7 +28,7 @@ USER weatherapp
 EXPOSE 3000
 
 # Health check using Kubernetes standard endpoint
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=1 \
   CMD node -e "const http=require('http'); \
     http.get('http://localhost:3000/healthz', (res) => { \
       process.exit(res.statusCode === 200 ? 0 : 1); \
