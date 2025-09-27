@@ -84,38 +84,42 @@ router.get('/:help', (req, res) => {
     res.send(`Console Weather Service
 
 USAGE:
-    ${examples.console.current}
-    ${examples.console.location}
+    curl -q -LSs ${baseUrl}/
+    curl -q -LSs ${baseUrl}/London,GB
     
 PARAMETERS:
     F                 Remove footer
-    format=simple     Simple output format  
-    units=imperial    Imperial units (°F, mph, inHg, in)
-    units=metric      Metric units (°C, km/h, hPa, mm)
+    format=1          Icon + temperature: 🌦 +11⁰C
+    format=2          Icon + temp + wind: 🌦 🌡️+11°C 🌬️↓4km/h
+    format=3          Location + weather: London, GB: 🌦 +11⁰C
+    format=4          Location + detailed: London, GB: 🌦 🌡️+11°C 🌬️↓4km/h
+    u                 Imperial units (°F, mph)
+    m                 Metric units (°C, km/h)
     
 LOCATION FORMATS:
-    /London           City name
-    /New+York         City with spaces
-    /40.7128,-74.0060 GPS coordinates
+    /London,GB        City with country code
+    /Albany,NY        City with state code
+    /New+York,NY      Spaces as + symbols
+    /33.0392,-80.1805 GPS coordinates (resolves to nearest city)
     /moon             Moon phase (current location)
-    /moon@London      Moon phase for specific location
+    /moon@London,GB   Moon phase for specific location
     
 EXAMPLES:
-    ${examples.console.simple}
-    ${examples.console.units}
-    ${baseUrl}/moon
-    ${baseUrl}/moon@tokyo
+    curl -q -LSs ${baseUrl}/London,GB?format=3
+    curl -q -LSs ${baseUrl}/Albany,NY?u&format=4
+    curl -q -LSs ${baseUrl}/33.0392,-80.1805
+    curl -q -LSs ${baseUrl}/moon@Tokyo,JP
     
 SPECIAL ENDPOINTS:
     /:help            This help message
     /:bash.function   Bash integration function
     
 JSON API:
-    ${examples.api.weather}
-    ${examples.api.forecast}
+    curl -q -LSs ${baseUrl}/api/v1/weather?location=paris
+    curl -q -LSs ${baseUrl}/api/v1/search?q=alb
     
 WEB INTERFACE:
-    ${baseUrl}/web
+    ${baseUrl} (browser interface with autocomplete)
     
 More info: ${baseUrl}/api/v1/docs
 `);

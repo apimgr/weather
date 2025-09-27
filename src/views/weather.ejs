@@ -209,19 +209,19 @@
                 <div style="font-family: monospace; color: var(--dracula-cyan);">
                     <div style="margin: 10px 0;">
                         <strong style="color: var(--dracula-green);">Weather:</strong> 
-                        <code>curl <%= hostInfo.fullHost %>/<%= encodeURIComponent(location || 'london') %></code>
+                        <code>curl -q -LSs <%= hostInfo.fullHost %>/<%= (location || 'london').replace(/ /g, '+') %></code>
                     </div>
                     <div style="margin: 10px 0;">
-                        <strong style="color: var(--dracula-green);">Simple:</strong> 
-                        <code>curl <%= hostInfo.fullHost %>/<%= encodeURIComponent(location || 'london') %>?format=simple</code>
+                        <strong style="color: var(--dracula-green);">Format 3:</strong> 
+                        <code>curl -q -LSs <%= hostInfo.fullHost %>/<%= (location || 'london').replace(/ /g, '+') %>?format=3</code>
                     </div>
                     <div style="margin: 10px 0;">
                         <strong style="color: var(--dracula-green);">Moon:</strong> 
-                        <code>curl <%= hostInfo.fullHost %>/moon</code>
+                        <code>curl -q -LSs <%= hostInfo.fullHost %>/moon</code>
                     </div>
                     <div style="margin: 10px 0;">
                         <strong style="color: var(--dracula-green);">JSON API:</strong> 
-                        <code>curl <%= hostInfo.fullHost %>/api/v1/weather?location=<%= encodeURIComponent(location || 'london') %></code>
+                        <code>curl -q -LSs <%= hostInfo.fullHost %>/api/v1/weather?location=<%= (location || 'london').replace(/ /g, '+') %></code>
                     </div>
                 </div>
             </div>

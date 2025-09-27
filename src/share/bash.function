@@ -12,14 +12,17 @@ wttr()
         request="wttr.in/${1}"
     fi
     
-    # Use curl to fetch weather data
-    # Handle different terminal environments
+    # Use curl to fetch weather data with proper flags
+    # -q: quiet mode (no .curlrc)
+    # -L: follow redirects
+    # -S: show errors
+    # -s: silent mode (no progress)
     if [[ -t 1 ]] && [[ "${TERM-}" != "dumb" ]]; then
         # Interactive terminal with color support
-        curl -H "User-Agent: curl" -s "$request" 2>/dev/null || echo "Weather service unavailable"
+        curl -q -LSs "$request" 2>/dev/null || echo "Weather service unavailable"
     else  
-        # Non-interactive or dumb terminal
-        curl -H "User-Agent: curl" -s "$request?format=simple" 2>/dev/null || echo "Weather service unavailable"
+        # Non-interactive or dumb terminal  
+        curl -q -LSs "$request?format=3" 2>/dev/null || echo "Weather service unavailable"
     fi
 }
 
@@ -28,10 +31,10 @@ w() { wttr "$@"; }
 
 # Examples:
 # wttr              # Weather for current location
-# wttr London       # Weather for London  
+# wttr London,GB    # Weather for London, UK
+# wttr Albany,NY    # Weather for Albany, New York
 # wttr "New York"   # Weather for New York (spaces need quotes)
-# wttr ~Eiffel      # Search for Eiffel Tower
-# w Paris           # Short version
+# w Tokyo,JP        # Short version for Tokyo
 
 # Install instructions:
 # 1. Add this function to your ~/.bashrc or ~/.zshrc
