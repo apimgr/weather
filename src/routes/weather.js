@@ -11,12 +11,12 @@ const parameterParser = require('../utils/parameterParser');
 
 const router = express.Router();
 
-// Moon phase endpoint - matches weather pattern
+// Moon phase endpoints - matches weather pattern exactly
 router.get('/moon', async (req, res) => {
   return handleMoonRequest(req, res, 'moon');
 });
 
-router.get('/moon@:location(*)', async (req, res) => {
+router.get('/moon/:location(*)', async (req, res) => {
   const location = req.params.location;
   return handleMoonRequest(req, res, `moon@${location}`);
 });
@@ -112,14 +112,14 @@ LOCATION FORMATS:
     /New+York,NY      Spaces as + symbols
     /33.0392,-80.1805 GPS coordinates (resolves to nearest city)
     /moon             Moon phase (current location)
-    /moon@London,GB   Moon phase for specific location
+    /moon/{location}  Moon phase for specific location
     
 EXAMPLES:
     curl -q -LSs ${baseUrl}/London,GB?format=3
     curl -q -LSs ${baseUrl}/Albany,NY?u&format=4
     curl -q -LSs ${baseUrl}/33.0392,-80.1805
     curl -q -LSs ${baseUrl}/moon
-    curl -q -LSs ${baseUrl}/moon@Tokyo,JP
+    curl -q -LSs ${baseUrl}/moon/Tokyo,JP
     
 SPECIAL ENDPOINTS:
     /:help            This help message

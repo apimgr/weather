@@ -221,7 +221,7 @@
                     </div>
                     <div style="margin: 10px 0;">
                         <strong style="color: var(--dracula-green);">Moon Location:</strong> 
-                        <code>curl -q -LSs <%= hostInfo.fullHost %>/moon@<%= (location || 'Tokyo,JP').replace(/ /g, '+') %></code>
+                        <code>curl -q -LSs <%= hostInfo.fullHost %>/moon/<%= (location || 'Tokyo,JP').replace(/ /g, '+') %></code>
                     </div>
                     <div style="margin: 10px 0;">
                         <strong style="color: var(--dracula-green);">JSON API:</strong> 
