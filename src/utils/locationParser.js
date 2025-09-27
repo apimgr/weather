@@ -58,6 +58,7 @@ class LocationParser {
         type: 'name',
         value: location,
         country: geo.country,
+        countryCode: geo.country, // geoip-lite provides 2-letter country codes
         units: this.getUnitsForCountry(geo.country)
       };
 

@@ -479,15 +479,66 @@ router.get('/location', (req, res) => {
     const clientIp = locationParser.getClientIP(req);
     const locationData = locationParser.getLocationFromIP(clientIp);
     
+    // Helper function to resolve country code properly
+    const resolveCountryInfo = (locationData) => {
+      let country = locationData.country;
+      let countryCode = 'XX';
+
+      // If we have explicit country code from IP service, use it
+      if (locationData.countryCode && locationData.countryCode !== 'XX') {
+        countryCode = locationData.countryCode.toUpperCase();
+      } else {
+        // Fallback to mapping common country names
+        const countryMapping = {
+          'United States': 'US',
+          'United Kingdom': 'GB',
+          'Canada': 'CA',
+          'Germany': 'DE',
+          'France': 'FR',
+          'Japan': 'JP',
+          'Australia': 'AU',
+          'Brazil': 'BR',
+          'India': 'IN',
+          'China': 'CN'
+        };
+        countryCode = countryMapping[country] || 'XX';
+      }
+
+      // If countryCode is XX but we have a country, try to get the code
+      if (countryCode === 'XX' && country && country !== 'XX') {
+        // Use country name as fallback
+        countryCode = country.length === 2 ? country.toUpperCase() : 'XX';
+      }
+
+      // If country is missing but we have a valid countryCode, try to reverse map
+      if ((!country || country === 'XX') && countryCode && countryCode !== 'XX') {
+        const codeToCountry = {
+          'US': 'United States',
+          'GB': 'United Kingdom',
+          'CA': 'Canada',
+          'DE': 'Germany',
+          'FR': 'France',
+          'JP': 'Japan',
+          'AU': 'Australia',
+          'BR': 'Brazil',
+          'IN': 'India',
+          'CN': 'China'
+        };
+        country = codeToCountry[countryCode] || country || 'Unknown';
+      }
+
+      return { country, countryCode };
+    };
+
+    const { country, countryCode } = resolveCountryInfo(locationData);
+
     // Enhanced location response based on country
     const response = {
       ip: clientIp,
       location: {
         city: locationData.value,
-        country: locationData.country,
-        countryCode: locationData.country === 'United States' ? 'US' :
-                     locationData.country === 'United Kingdom' ? 'GB' :
-                     locationData.country === 'Canada' ? 'CA' : 'XX',
+        country: country,
+        countryCode: countryCode,
         units: locationData.units,
         coordinates: locationData.coordinates || null // Use coordinates from IP geolocation if available
       },

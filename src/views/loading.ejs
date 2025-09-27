@@ -181,7 +181,7 @@
             retryConnection();
         });
 
-        // Initial health check in case service becomes ready quickly
+        // Initial health check after giving service time to start (30 seconds)
         setTimeout(() => {
             fetch('/healthz')
                 .then(response => {
@@ -192,7 +192,7 @@
                 .catch(() => {
                     // Service still loading, continue with countdown
                 });
-        }, 2000);
+        }, 30000); // Wait 30 seconds before first health check
     </script>
 </body>
 </html>
