@@ -136,6 +136,44 @@ app.get('/debug/ip', (req, res) => {
 // API routes first - all /api/** should return JSON
 app.use('/api/v1', apiRoutes);
 
+// Main /api endpoint - JSON overview
+app.get('/api', (req, res) => {
+  const hostInfo = hostDetector.getHostInfo(req);
+  
+  res.json({
+    service: 'Console Weather Service API',
+    version: '1.0.0',
+    description: 'Free weather API with no API key required',
+    base_url: hostInfo.fullHost,
+    endpoints: {
+      weather: `${hostInfo.fullHost}/api/v1/weather[/{location}]`,
+      forecast: `${hostInfo.fullHost}/api/v1/forecast[/{location}]`,
+      search: `${hostInfo.fullHost}/api/v1/search?q={query}`,
+      ip: `${hostInfo.fullHost}/api/v1/ip`,
+      location: `${hostInfo.fullHost}/api/v1/location`
+    },
+    documentation: {
+      json: `${hostInfo.fullHost}/api/v1/docs`,
+      html: `${hostInfo.fullHost}/api/docs`
+    },
+    health_check: `${hostInfo.fullHost}/healthz`,
+    features: [
+      'No API key required',
+      'Global weather data from Open-Meteo.com',
+      'Automatic IP-based location detection',
+      'Multiple API patterns (query and path parameters)',
+      'Clean URLs and JSON responses',
+      'Rate limiting and security headers'
+    ],
+    data_sources: {
+      weather: 'Open-Meteo.com',
+      countries: 'github.com/apimgr/countries',
+      cities: 'github.com/apimgr/citylist'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Add /api/docs endpoint for HTML documentation
 app.get('/api/docs', (req, res) => {
   res.render('api-docs', {
