@@ -228,9 +228,8 @@ app.use((req, res, next) => {
                     userAgent.toLowerCase().includes('firefox') || 
                     userAgent.toLowerCase().includes('safari'));
   
-  // Skip for API routes, health checks, and static files
-  if (req.path.startsWith('/api') || 
-      req.path.startsWith('/healthz') || 
+  // Skip only for health checks, debug endpoints, and static files
+  if (req.path.startsWith('/healthz') ||
       req.path.startsWith('/health') ||
       req.path.startsWith('/debug') ||
       req.path.includes('.')) {
