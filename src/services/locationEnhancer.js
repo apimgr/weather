@@ -1,5 +1,7 @@
 const axios = require('axios');
 const NodeCache = require('node-cache');
+const fs = require('fs');
+const path = require('path');
 
 // Cache for external location data (one week TTL since this data doesn't change often)
 const cache = new NodeCache({ stdTTL: 604800 }); // 1 week (7 days * 24 hours * 60 minutes * 60 seconds)
@@ -10,6 +12,11 @@ class LocationEnhancer {
     this.citiesUrl = 'https://github.com/apimgr/citylist/raw/refs/heads/master/api/city.list.json';
     this.countriesData = null;
     this.citiesData = null;
+
+    // Local file paths
+    this.dataDir = path.join(__dirname, '../public/api');
+    this.localCountriesPath = path.join(this.dataDir, 'countries.json');
+    this.localCitiesPath = path.join(this.dataDir, 'cities.json');
   }
 
   async loadCountriesData() {
@@ -26,11 +33,21 @@ class LocationEnhancer {
     }
 
     try {
-      console.log('☕ Loading countries data from GitHub...');
-      const response = await axios.get(this.countriesUrl, { timeout: 10000 });
-      this.countriesData = response.data;
-      cache.set('countries_data', this.countriesData);
-      console.log(`✅ Loaded ${this.countriesData.length} countries`);
+      // Try local file first
+      if (fs.existsSync(this.localCountriesPath)) {
+        console.log('📁 Loading countries data from local cache...');
+        const fileData = fs.readFileSync(this.localCountriesPath, 'utf8');
+        this.countriesData = JSON.parse(fileData);
+        cache.set('countries_data', this.countriesData);
+        console.log(`✅ Loaded ${this.countriesData.length} countries from local cache`);
+      } else {
+        // Fallback to external URL
+        console.log('☁️ Loading countries data from GitHub...');
+        const response = await axios.get(this.countriesUrl, { timeout: 10000 });
+        this.countriesData = response.data;
+        cache.set('countries_data', this.countriesData);
+        console.log(`✅ Loaded ${this.countriesData.length} countries from GitHub`);
+      }
       
       // Update global initialization status
       if (global.initializationStatus) {
@@ -58,22 +75,37 @@ class LocationEnhancer {
     const cached = cache.get('cities_data');
     if (cached) {
       this.citiesData = cached;
-      return cached;
-    }
-
-    try {
-      console.log('☕ Loading cities data from GitHub...');
-      const response = await axios.get(this.citiesUrl, { timeout: 15000 });
-      this.citiesData = response.data;
-      cache.set('cities_data', this.citiesData);
-      console.log(`✅ Loaded ${this.citiesData.length} cities`);
-      
       // Update global initialization status
       if (global.initializationStatus) {
         global.initializationStatus.cities = true;
         this.checkInitializationComplete();
       }
-      
+      return cached;
+    }
+
+    try {
+      // Try local file first
+      if (fs.existsSync(this.localCitiesPath)) {
+        console.log('📁 Loading cities data from local cache...');
+        const fileData = fs.readFileSync(this.localCitiesPath, 'utf8');
+        this.citiesData = JSON.parse(fileData);
+        cache.set('cities_data', this.citiesData);
+        console.log(`✅ Loaded ${this.citiesData.length} cities from local cache`);
+      } else {
+        // Fallback to external URL
+        console.log('☁️ Loading cities data from GitHub...');
+        const response = await axios.get(this.citiesUrl, { timeout: 15000 });
+        this.citiesData = response.data;
+        cache.set('cities_data', this.citiesData);
+        console.log(`✅ Loaded ${this.citiesData.length} cities from GitHub`);
+      }
+
+      // Update global initialization status
+      if (global.initializationStatus) {
+        global.initializationStatus.cities = true;
+        this.checkInitializationComplete();
+      }
+
       return this.citiesData;
     } catch (error) {
       console.error('❌ Failed to load cities data:', error.message);

@@ -3,7 +3,11 @@
     "allow": [
       "Bash(curl:*)",
       "Bash(npm install)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(npm run download-data:*)",
+      "Bash(pkill:*)",
+      "Bash(PORT=3007 npm start)",
+      "Bash(PORT=3008 npm start)"
     ],
     "deny": [],
     "ask": []
