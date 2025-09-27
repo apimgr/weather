@@ -313,8 +313,54 @@ async function handleLocationRequest(req, res) {
   } catch (error) {
     console.error('Weather route error:', error.message);
     console.error('Query:', req.query);
-    res.status(500).set('Content-Type', 'text/plain');
-    res.send(`Error: ${error.message}`);
+    console.error('Stack:', error.stack);
+    
+    // Provide helpful error messages based on error type
+    let errorMessage = `Error: ${error.message}`;
+    const hostInfo = hostDetector.getHostInfo(req);
+    
+    if (error.message.includes('Failed to fetch weather data')) {
+      errorMessage = `☁️ Weather service temporarily unavailable. Please try again in a moment.
+
+The weather API might be experiencing issues. Try:
+• A different location: curl -q -LSs ${hostInfo.fullHost}/London,GB
+• Our JSON API: curl -q -LSs ${hostInfo.fullHost}/api/v1/weather?location=london
+• Check service status: curl -q -LSs ${hostInfo.fullHost}/healthz
+
+Thank you for your patience! ☁️`;
+    } else if (error.message.includes('Location') && error.message.includes('not found')) {
+      const requestedLocation = req.path.substring(1) || 'unknown';
+      errorMessage = `📍 Location not found: "${requestedLocation}"
+
+Try these alternatives:
+• Use city with country: London,GB or Albany,NY
+• Try coordinates: 40.7128,-74.0060
+• Search for locations: ${hostInfo.fullHost}/api/v1/search?q=your-city
+• Current location: ${hostInfo.fullHost}/
+
+📍 Need help? ${hostInfo.fullHost}/:help`;
+    } else if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+      errorMessage = `⏰ Request timeout - services are busy. Please try again.
+
+Quick alternatives:
+• Try again: curl -q -LSs ${hostInfo.fullHost}${req.path}
+• Different location: curl -q -LSs ${hostInfo.fullHost}/London,GB  
+• Service status: curl -q -LSs ${hostInfo.fullHost}/healthz
+
+⏰ Usually resolves within a few moments.`;
+    } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
+      errorMessage = `🌐 Network connectivity issue. External services may be unavailable.
+
+Try these options:
+• Wait a moment and retry: curl -q -LSs ${hostInfo.fullHost}${req.path}
+• Use a major city: curl -q -LSs ${hostInfo.fullHost}/London,GB
+• Check our status: curl -q -LSs ${hostInfo.fullHost}/healthz
+
+🌐 Network issues usually resolve quickly.`;
+    }
+    
+    res.status(500).set('Content-Type', 'text/plain; charset=utf-8');
+    res.send(errorMessage + '\n\n');
   }
 }
 
@@ -350,20 +396,25 @@ async function handleMoonRequest(req, res, locationInput) {
 
     // If it's a browser, serve HTML moon interface
     if (clientInfo.isBrowser && !req.query.format) {
-      const moonData = moonService.getMoonPhase(new Date(), coords.latitude, coords.longitude);
-      const sunTimes = require('suncalc').getTimes(new Date(), coords.latitude, coords.longitude);
-      
-      return res.render('moon', {
-        title: 'Moon Phase Report - Console Weather Service',
-        moonData: {
-          location: coords,
-          moon: moonData,
-          sun: sunTimes
-        },
-        hostInfo: hostDetector.getHostInfo(req),
-        location: locationInput === 'moon' ? '' : locationInput.substring(5),
-        hideFooter: req.query.F !== undefined
-      });
+      try {
+        const moonData = moonService.getMoonPhase(new Date(), coords.latitude, coords.longitude);
+        const sunTimes = require('suncalc').getTimes(new Date(), coords.latitude, coords.longitude);
+        
+        return res.render('moon', {
+          title: 'Moon Phase Report - Console Weather Service',
+          moonData: {
+            location: coords,
+            moon: moonData,
+            sun: sunTimes
+          },
+          hostInfo: hostDetector.getHostInfo(req),
+          location: locationInput === 'moon' ? '' : locationInput.substring(5),
+          hideFooter: req.query.F !== undefined
+        });
+      } catch (renderError) {
+        console.error('Moon HTML render error:', renderError.message);
+        // Fall through to ASCII output if HTML fails
+      }
     }
 
     // Console clients get ASCII
@@ -373,8 +424,26 @@ async function handleMoonRequest(req, res, locationInput) {
     res.send(moonReport);
 
   } catch (error) {
-    res.status(500).set('Content-Type', 'text/plain');
-    res.send(`Error: ${error.message}`);
+    console.error('Moon route error:', error.message);
+    console.error('Stack:', error.stack);
+    
+    const hostInfo = hostDetector.getHostInfo(req);
+    let errorMessage = `🌙 Moon phase service error: ${error.message}`;
+    
+    if (error.message.includes('Location') && error.message.includes('not found')) {
+      const requestedLocation = locationInput.replace('moon@', '') || 'unknown';
+      errorMessage = `🌙 Moon phase location not found: "${requestedLocation}"
+
+Try these alternatives:
+• Use city with country: ${hostInfo.fullHost}/moon/London,GB
+• Try coordinates: ${hostInfo.fullHost}/moon/40.7128,-74.0060
+• Current location: ${hostInfo.fullHost}/moon
+
+🌙 Need help? ${hostInfo.fullHost}/:help`;
+    }
+    
+    res.status(500).set('Content-Type', 'text/plain; charset=utf-8');
+    res.send(errorMessage + '\n\n');
   }
 }
 

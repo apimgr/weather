@@ -529,12 +529,24 @@ router.get('/location', (req, res) => {
     }
     
   } catch (error) {
-    res.status(500).json({
+    console.error('Location API error:', error.message);
+    console.error('Stack:', error.stack);
+    
+    const errorResponse = {
       error: {
         code: 'LOCATION_ERROR',
-        message: error.message
+        message: error.message,
+        suggestions: [
+          'Check your internet connection',
+          'Try again in a few moments',
+          'Use IP endpoint: /api/v1/ip for basic info'
+        ],
+        timestamp: new Date().toISOString()
       }
-    });
+    };
+    
+    res.status(500).set('Content-Type', 'application/json; charset=utf-8');
+    res.send(JSON.stringify(errorResponse, null, 2) + '\n');
   }
 });
 
