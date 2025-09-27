@@ -117,10 +117,11 @@
         let countdown = 15;
         
         function updateCountdown() {
-            document.getElementById('countdown').textContent = countdown;
+            document.getElementById('countdown').textContent = Math.max(countdown, 0);
             countdown--;
             
             if (countdown < 0) {
+                clearInterval(countdownInterval);
                 retryConnection();
             }
         }
