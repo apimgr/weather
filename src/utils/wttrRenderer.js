@@ -10,7 +10,7 @@ class WttrRenderer {
     this.width = 120;
   }
 
-  renderWttrStyle(locationData, currentWeather, forecast, units = 'imperial', hideFooter = false, formatInfo = null) {
+  renderWttrStyle(locationData, currentWeather, forecast, units = 'imperial', hideFooter = false, formatInfo = null, hostInfo = null, originalLocation = null) {
     const lines = [];
     
     // Header (skip if quiet mode)
@@ -37,12 +37,12 @@ class WttrRenderer {
       lines.push(''); // Extra spacing before forecast table
       lines.push(...this.renderForecastTable(forecast, units));
     }
-    
+
     if (!hideFooter) {
       lines.push('');
-      lines.push(this.renderFooter());
+      lines.push(this.renderFooter(locationData, hostInfo, originalLocation));
     }
-    
+
     // Add two newlines at the end for proper terminal spacing
     return lines.join('\n') + '\n\n';
   }
@@ -288,7 +288,7 @@ class WttrRenderer {
     return arrows[index];
   }
 
-  renderCurrentOnly(locationData, currentWeather, units, hideFooter = false) {
+  renderCurrentOnly(locationData, currentWeather, units, hideFooter = false, hostInfo = null, originalLocation = null) {
     const lines = [];
     
     // Header
@@ -297,17 +297,37 @@ class WttrRenderer {
     
     // Current weather with ASCII art only (no forecast)
     lines.push(...this.renderCurrentWeatherArt(currentWeather, units));
-    
+
     if (!hideFooter) {
       lines.push('');
-      lines.push(this.renderFooter());
+      lines.push(this.renderFooter(locationData, hostInfo, originalLocation));
     }
-    
+
     return lines.join('\n') + '\n\n';
   }
 
-  renderFooter() {
-    return chalk.hex('#6272a4')('Console Weather Service • Free weather data from Open-Meteo.com');
+  renderFooter(locationData = null, hostInfo = null, originalLocation = null) {
+    let footer = chalk.hex('#6272a4')('Console Weather Service • Free weather data from Open-Meteo.com');
+
+    // Add helpful URL examples if we have location and host info
+    if (locationData && hostInfo && originalLocation) {
+      const baseUrl = hostInfo.fullHost.replace(/^https?:\/\//, '');
+
+      // Only show quoting tip if the original URL actually had URL encoding (like %2C or %20)
+      // This means someone accessed an ugly encoded URL and would benefit from knowing the clean way
+      const wasUrlEncoded = originalLocation.includes('%') ||
+                          originalLocation.includes('+') ||
+                          originalLocation.includes(',') ||
+                          originalLocation.includes(' ');
+
+      if (wasUrlEncoded) {
+        const cleanLocationName = this.getCleanLocationForUrl(locationData);
+        const quotedUrl = `"${baseUrl}/${cleanLocationName}"`;
+        footer += '\n' + chalk.hex('#6272a4')(`Use: curl ${quotedUrl}`);
+      }
+    }
+
+    return footer;
   }
 
   padToWidth(text, width) {
@@ -328,8 +348,21 @@ class WttrRenderer {
     const totalPadding = Math.max(0, width - textLength);
     const leftPadding = Math.floor(totalPadding / 2);
     const rightPadding = totalPadding - leftPadding;
-    
+
     return ' '.repeat(leftPadding) + text + ' '.repeat(rightPadding);
+  }
+
+  getCleanLocationForUrl(locationData) {
+    // Get clean location name for URL examples
+    if (locationData.fullName) {
+      return locationData.fullName;
+    }
+
+    if (locationData.state) {
+      return `${locationData.name}, ${locationData.state}`;
+    }
+
+    return `${locationData.name}, ${locationData.country}`;
   }
 }
 

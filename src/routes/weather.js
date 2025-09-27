@@ -56,12 +56,13 @@ router.get('/', async (req, res) => {
 
     // Console clients get ASCII
     const hideFooter = req.query.F !== undefined;
+    const hostInfo = hostDetector.getHostInfo(req);
     let output;
 
     if (req.query.format === 'simple') {
       output = asciiWeather.renderSimple(coords, currentWeather, units, hideFooter);
     } else {
-      output = wttrRenderer.renderWttrStyle(coords, currentWeather, forecast, units, hideFooter);
+      output = wttrRenderer.renderWttrStyle(coords, currentWeather, forecast, units, hideFooter, null, hostInfo, '');
     }
 
     res.set('Content-Type', 'text/plain; charset=utf-8');
@@ -238,12 +239,14 @@ async function handleLocationRequest(req, res) {
       output = oneLineRenderer.renderFormat4(coords, currentWeather, units);
     } else if (req.query.format === '0') {
       // Format 0: Current weather only (no forecast)
-      output = wttrRenderer.renderCurrentOnly(coords, currentWeather, units, !params.showFooter);
+      const hostInfo = hostDetector.getHostInfo(req);
+      output = wttrRenderer.renderCurrentOnly(coords, currentWeather, units, !params.showFooter, hostInfo, locationInput);
     } else if (req.query.format === 'simple') {
       output = asciiWeather.renderSimple(coords, currentWeather, units, !params.showFooter);
     } else {
       // Default full ASCII art weather report
-      output = wttrRenderer.renderWttrStyle(coords, currentWeather, forecast, units, !params.showFooter);
+      const hostInfo = hostDetector.getHostInfo(req);
+      output = wttrRenderer.renderWttrStyle(coords, currentWeather, forecast, units, !params.showFooter, null, hostInfo, locationInput);
     }
 
     res.set('Content-Type', 'text/plain; charset=utf-8');
