@@ -30,9 +30,8 @@ router.get('/', async (req, res) => {
     let units = req.query.units || parsedLocation.units || 'imperial';
     
     if (parsedLocation.type === 'coordinates') {
-      coords = parsedLocation.value;
-      coords.name = `${coords.latitude}, ${coords.longitude}`;
-      coords.country = '';
+      // For coordinates, use the weatherService to get proper location data with reverse geocoding
+      coords = await weatherService.getCoordinates(`${parsedLocation.value.latitude},${parsedLocation.value.longitude}`);
     } else {
       coords = await weatherService.getCoordinates(parsedLocation.value);
       if (!req.query.units && coords.country) {
@@ -205,9 +204,8 @@ async function handleLocationRequest(req, res) {
 
       let coords;
       if (parsedLocation.type === 'coordinates') {
-        coords = parsedLocation.value;
-        coords.name = `${coords.latitude}, ${coords.longitude}`;
-        coords.country = '';
+        // For coordinates, use the weatherService to get proper location data with reverse geocoding
+        coords = await weatherService.getCoordinates(`${parsedLocation.value.latitude},${parsedLocation.value.longitude}`);
       } else {
         const country = parsedLocation.country || null;
         coords = await weatherService.getCoordinates(parsedLocation.value, country);
@@ -257,9 +255,8 @@ async function handleLocationRequest(req, res) {
       units = parameterParser.getUnitsFromParams(params, parsedLocation.units);
       
       if (parsedLocation.type === 'coordinates') {
-        coords = parsedLocation.value;
-        coords.name = `${coords.latitude}, ${coords.longitude}`;
-        coords.country = '';
+        // For coordinates, use the weatherService to get proper location data with reverse geocoding
+        coords = await weatherService.getCoordinates(`${parsedLocation.value.latitude},${parsedLocation.value.longitude}`);
       } else {
         const country = parsedLocation.country || null;
         coords = await weatherService.getCoordinates(parsedLocation.value, country);

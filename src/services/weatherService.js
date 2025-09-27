@@ -482,7 +482,12 @@ class WeatherService {
     // Reverse geocode coordinates to get nearest city name
     const cacheKey = `reverse_${latitude}_${longitude}`;
     const cached = cache.get(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      console.log(`🔄 Using cached reverse geocode for ${latitude}, ${longitude}`);
+      return cached;
+    }
+
+    console.log(`🌍 Starting reverse geocoding for ${latitude}, ${longitude}`);
 
     try {
       // Find nearest city using our external city database
@@ -508,6 +513,7 @@ class WeatherService {
       }
 
       // Fallback: return coordinates with minimal info
+      console.log(`⚠️ No nearest city found for ${latitude}, ${longitude}, using fallback data`);
       return {
         latitude: latitude,
         longitude: longitude,

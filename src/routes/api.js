@@ -22,9 +22,8 @@ router.get('/weather/:location(*)', async (req, res) => {
     const parsedLocation = locationParser.parseLocation(location, clientIp);
     
     if (parsedLocation.type === 'coordinates') {
-      coords = parsedLocation.value;
-      coords.name = `${coords.latitude}, ${coords.longitude}`;
-      coords.country = '';
+      // For coordinates, use the weatherService to get proper location data with reverse geocoding
+      coords = await weatherService.getCoordinates(`${parsedLocation.value.latitude},${parsedLocation.value.longitude}`);
     } else {
       coords = await weatherService.getCoordinates(parsedLocation.value);
       if (!units && coords.country) {
@@ -171,9 +170,8 @@ router.get('/forecast/:location(*)', async (req, res) => {
     const parsedLocation = locationParser.parseLocation(location, clientIp);
     
     if (parsedLocation.type === 'coordinates') {
-      coords = parsedLocation.value;
-      coords.name = `${coords.latitude}, ${coords.longitude}`;
-      coords.country = '';
+      // For coordinates, use the weatherService to get proper location data with reverse geocoding
+      coords = await weatherService.getCoordinates(`${parsedLocation.value.latitude},${parsedLocation.value.longitude}`);
     } else {
       coords = await weatherService.getCoordinates(parsedLocation.value);
       if (!units && coords.country) {
