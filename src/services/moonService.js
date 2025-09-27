@@ -68,8 +68,9 @@ class MoonService {
     
     const lines = [];
     
-    // Header with Dracula colors
-    lines.push(chalk.hex('#f1fa8c').bold(`Moon phase report: ${location.name.toLowerCase()}`));
+    // Header with Dracula colors - match weather report format exactly
+    const fullLocation = location.fullName || `${location.name}, ${location.country}`;
+    lines.push(chalk.hex('#f1fa8c').bold(`Moon report: ${fullLocation.toLowerCase()}`));
     lines.push('');
     
     // Current moon phase with enhanced ASCII art

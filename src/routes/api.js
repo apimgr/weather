@@ -457,6 +457,78 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// IP address endpoint
+router.get('/ip', (req, res) => {
+  const clientIp = locationParser.getClientIP(req);
+  
+  res.json({
+    ip: clientIp,
+    timestamp: new Date().toISOString(),
+    headers: {
+      'x-forwarded-for': req.headers['x-forwarded-for'],
+      'x-real-ip': req.headers['x-real-ip'],
+      'cf-connecting-ip': req.headers['cf-connecting-ip']
+    }
+  });
+});
+
+// Location detection endpoint  
+router.get('/location', (req, res) => {
+  try {
+    const clientIp = locationParser.getClientIP(req);
+    const locationData = locationParser.getLocationFromIP(clientIp);
+    
+    // Enhanced location response based on country
+    const response = {
+      ip: clientIp,
+      location: {
+        city: locationData.value,
+        country: locationData.country,
+        countryCode: locationData.country === 'United States' ? 'US' : 
+                     locationData.country === 'United Kingdom' ? 'GB' :
+                     locationData.country === 'Canada' ? 'CA' : 'XX',
+        units: locationData.units,
+        coordinates: null // Will be enhanced if geocoding available
+      },
+      timestamp: new Date().toISOString(),
+      source: 'IP Geolocation'
+    };
+    
+    // Try to get precise coordinates if possible
+    if (locationData.value && locationData.value !== 'New York City, NY') {
+      weatherService.getCoordinates(locationData.value)
+        .then(coords => {
+          response.location.coordinates = {
+            latitude: coords.latitude,
+            longitude: coords.longitude
+          };
+          response.location.city = coords.name;
+          response.location.state = coords.admin1;
+          response.location.country = coords.country;
+          response.location.countryCode = coords.countryCode;
+          response.location.fullName = coords.fullName;
+          response.location.shortName = coords.shortName;
+          response.location.population = coords.population;
+          res.json(response);
+        })
+        .catch(() => {
+          // Return basic response if geocoding fails
+          res.json(response);
+        });
+    } else {
+      res.json(response);
+    }
+    
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        code: 'LOCATION_ERROR',
+        message: error.message
+      }
+    });
+  }
+});
+
 router.get('/docs', (req, res) => {
   const baseUrl = hostDetector.getBaseUrl(req);
   const examples = hostDetector.generateExampleUrls(req);
