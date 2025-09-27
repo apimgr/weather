@@ -18,18 +18,29 @@ class LocationEnhancer {
     const cached = cache.get('countries_data');
     if (cached) {
       this.countriesData = cached;
+      // Update global initialization status
+      if (global.initializationStatus) {
+        global.initializationStatus.countries = true;
+      }
       return cached;
     }
 
     try {
-      console.log('Loading countries data from GitHub...');
+      console.log('☕ Loading countries data from GitHub...');
       const response = await axios.get(this.countriesUrl);
       this.countriesData = response.data;
       cache.set('countries_data', this.countriesData);
-      console.log(`Loaded ${Object.keys(this.countriesData).length} countries`);
+      console.log(`✅ Loaded ${this.countriesData.length} countries`);
+      
+      // Update global initialization status
+      if (global.initializationStatus) {
+        global.initializationStatus.countries = true;
+        this.checkInitializationComplete();
+      }
+      
       return this.countriesData;
     } catch (error) {
-      console.error('Failed to load countries data:', error.message);
+      console.error('❌ Failed to load countries data:', error.message);
       return {};
     }
   }
@@ -44,14 +55,21 @@ class LocationEnhancer {
     }
 
     try {
-      console.log('Loading cities data from GitHub...');
+      console.log('☕ Loading cities data from GitHub...');
       const response = await axios.get(this.citiesUrl);
       this.citiesData = response.data;
       cache.set('cities_data', this.citiesData);
-      console.log(`Loaded ${this.citiesData.length} cities`);
+      console.log(`✅ Loaded ${this.citiesData.length} cities`);
+      
+      // Update global initialization status
+      if (global.initializationStatus) {
+        global.initializationStatus.cities = true;
+        this.checkInitializationComplete();
+      }
+      
       return this.citiesData;
     } catch (error) {
-      console.error('Failed to load cities data:', error.message);
+      console.error('❌ Failed to load cities data:', error.message);
       return [];
     }
   }
@@ -239,6 +257,18 @@ class LocationEnhancer {
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c; // Distance in kilometers
+  }
+
+  checkInitializationComplete() {
+    // Check if all components are ready
+    if (global.initializationStatus && 
+        global.initializationStatus.countries && 
+        global.initializationStatus.cities && 
+        global.initializationStatus.weather) {
+      
+      global.serviceReady = true;
+      console.log('🌤️ Service fully initialized and ready!');
+    }
   }
 }
 

@@ -58,14 +58,47 @@ app.use(express.json());
 app.use(express.text({ type: 'text/plain' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Debug and utility endpoints first
-app.get('/health', (req, res) => {
+// Service initialization state
+let serviceReady = false;
+let initializationStatus = {
+  countries: false,
+  cities: false,
+  weather: true, // Weather API is always ready
+  started: new Date().toISOString()
+};
+
+// Make initialization status available globally
+global.serviceReady = serviceReady;
+global.initializationStatus = initializationStatus;
+
+// Health check endpoints (Kubernetes standard)
+app.get('/healthz', (req, res) => {
   const hostInfo = hostDetector.getHostInfo(req);
+  
+  if (!global.serviceReady) {
+    return res.status(503).json({ 
+      status: 'INITIALIZING', 
+      timestamp: new Date().toISOString(),
+      host: hostInfo.fullHost,
+      service: 'Console Weather Service',
+      version: '1.0.0',
+      initialization: global.initializationStatus
+    });
+  }
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    host: hostInfo.fullHost
+    host: hostInfo.fullHost,
+    service: 'Console Weather Service',
+    version: '1.0.0',
+    uptime: Date.now() - new Date(global.initializationStatus.started).getTime()
   });
+});
+
+// Legacy health endpoint for backward compatibility
+app.get('/health', (req, res) => {
+  res.redirect(301, '/healthz');
 });
 
 app.get('/debug/params', (req, res) => {
@@ -133,6 +166,36 @@ ${examples.api.current}
 ${examples.api.forecast}
 ${examples.api.search}
 `);
+});
+
+// Initialization check middleware for web requests
+app.use((req, res, next) => {
+  // Only show loading page for browser requests to main routes
+  const userAgent = req.headers['user-agent'] || '';
+  const isBrowser = userAgent.toLowerCase().includes('mozilla') && 
+                   (userAgent.toLowerCase().includes('chrome') || 
+                    userAgent.toLowerCase().includes('firefox') || 
+                    userAgent.toLowerCase().includes('safari'));
+  
+  // Skip for API routes, health checks, and static files
+  if (req.path.startsWith('/api') || 
+      req.path.startsWith('/healthz') || 
+      req.path.startsWith('/health') ||
+      req.path.startsWith('/debug') ||
+      req.path.includes('.')) {
+    return next();
+  }
+  
+  // Show loading page for browsers if service not ready
+  if (isBrowser && !global.serviceReady) {
+    return res.render('loading', {
+      title: 'Console Weather Service - Initializing',
+      hostInfo: hostDetector.getHostInfo(req),
+      status: global.initializationStatus
+    });
+  }
+  
+  next();
 });
 
 // Weather routes last (catch-all)
