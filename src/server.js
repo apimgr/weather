@@ -140,7 +140,7 @@ app.use('/api/v1', apiRoutes);
 app.get('/api', (req, res) => {
   const hostInfo = hostDetector.getHostInfo(req);
   
-  res.json({
+  const response = {
     service: 'Console Weather Service API',
     version: '1.0.0',
     description: 'Free weather API with no API key required',
@@ -171,7 +171,10 @@ app.get('/api', (req, res) => {
       cities: 'github.com/apimgr/citylist'
     },
     timestamp: new Date().toISOString()
-  });
+  };
+  
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  res.send(JSON.stringify(response, null, 2) + '\n');
 });
 
 // Add /api/docs endpoint for HTML documentation

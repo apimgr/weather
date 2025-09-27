@@ -461,7 +461,7 @@ router.get('/search', async (req, res) => {
 router.get('/ip', (req, res) => {
   const clientIp = locationParser.getClientIP(req);
   
-  res.json({
+  const response = {
     ip: clientIp,
     timestamp: new Date().toISOString(),
     headers: {
@@ -469,7 +469,10 @@ router.get('/ip', (req, res) => {
       'x-real-ip': req.headers['x-real-ip'],
       'cf-connecting-ip': req.headers['cf-connecting-ip']
     }
-  });
+  };
+  
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  res.send(JSON.stringify(response, null, 2) + '\n');
 });
 
 // Location detection endpoint  
@@ -494,6 +497,12 @@ router.get('/location', (req, res) => {
       source: 'IP Geolocation'
     };
     
+    // Helper function to send formatted JSON
+    const sendFormattedJSON = (data) => {
+      res.set('Content-Type', 'application/json; charset=utf-8');
+      res.send(JSON.stringify(data, null, 2) + '\n');
+    };
+    
     // Try to get precise coordinates if possible
     if (locationData.value && locationData.value !== 'New York City, NY') {
       weatherService.getCoordinates(locationData.value)
@@ -509,14 +518,14 @@ router.get('/location', (req, res) => {
           response.location.fullName = coords.fullName;
           response.location.shortName = coords.shortName;
           response.location.population = coords.population;
-          res.json(response);
+          sendFormattedJSON(response);
         })
         .catch(() => {
           // Return basic response if geocoding fails
-          res.json(response);
+          sendFormattedJSON(response);
         });
     } else {
-      res.json(response);
+      sendFormattedJSON(response);
     }
     
   } catch (error) {
