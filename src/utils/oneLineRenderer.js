@@ -39,7 +39,7 @@ class OneLineRenderer {
     const windSpeed = Math.round(currentWeather.windSpeed);
     const speedUnit = unitConverter.getSpeedUnit(units);
     
-    return `${icon}  🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)}  🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + windSpeed + speedUnit)}\n`;
+    return `${icon}  🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)}  🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + ' ' + windSpeed + speedUnit)}\n`;
   }
 
   renderFormat3(location, currentWeather, units) {
@@ -59,7 +59,7 @@ class OneLineRenderer {
     const windSpeed = Math.round(currentWeather.windSpeed);
     const speedUnit = unitConverter.getSpeedUnit(units);
     
-    return `${chalk.hex('#8be9fd')(this.getShortLocationName(location))}: ${icon}  🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)}  🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + windSpeed + speedUnit)}\n`;
+    return `${chalk.hex('#8be9fd')(this.getShortLocationName(location))}: ${icon}  🌡️${chalk.hex('#f1fa8c')('+' + temp + tempUnit)}  🌬️${chalk.hex('#50fa7b')(this.getWindArrow(currentWeather.windDirection) + ' ' + windSpeed + speedUnit)}\n`;
   }
 
   getWindDirection(degrees) {
