@@ -483,11 +483,15 @@ class WeatherService {
     const cacheKey = `reverse_${latitude}_${longitude}`;
     const cached = cache.get(cacheKey);
     if (cached) {
-      console.log(`🔄 Using cached reverse geocode for ${latitude}, ${longitude}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`🔄 Using cached reverse geocode for ${latitude}, ${longitude}`);
+      }
       return cached;
     }
 
-    console.log(`🌍 Starting reverse geocoding for ${latitude}, ${longitude}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🌍 Starting reverse geocoding for ${latitude}, ${longitude}`);
+    }
 
     try {
       // Find nearest city using our external city database
@@ -513,7 +517,9 @@ class WeatherService {
       }
 
       // Fallback: return coordinates with minimal info
-      console.log(`⚠️ No nearest city found for ${latitude}, ${longitude}, using fallback data`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`⚠️ No nearest city found for ${latitude}, ${longitude}, using fallback data`);
+      }
       return {
         latitude: latitude,
         longitude: longitude,
@@ -532,6 +538,9 @@ class WeatherService {
       console.error('Reverse geocoding error:', error.message);
       
       // Fallback: return coordinates with minimal info
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`⚠️ No nearest city found for ${latitude}, ${longitude}, using fallback data`);
+      }
       return {
         latitude: latitude,
         longitude: longitude,

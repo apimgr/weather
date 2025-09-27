@@ -280,18 +280,44 @@
                     throw new Error('Geolocation not supported');
                 }
                 
-                // Test with a simple position request
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(
-                        resolve,
-                        reject,
-                        {
-                            timeout: 10000,
-                            enableHighAccuracy: false, // Try with lower accuracy first
-                            maximumAge: 600000 // 10 minute cache
-                        }
-                    );
-                });
+                // Try high-accuracy GPS first
+                button.textContent = '📍 GPS...';
+                let position = null;
+
+                try {
+                    position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            resolve,
+                            reject,
+                            {
+                                timeout: 8000,
+                                enableHighAccuracy: true, // Try GPS first
+                                maximumAge: 300000 // 5 minute cache
+                            }
+                        );
+                    });
+                } catch (gpsError) {
+                    console.log('High-accuracy GPS failed, trying network location...');
+                    button.textContent = '📍 Location...';
+
+                    // Fallback to network-based location
+                    try {
+                        position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(
+                                resolve,
+                                reject,
+                                {
+                                    timeout: 10000,
+                                    enableHighAccuracy: false, // Network-based
+                                    maximumAge: 600000 // 10 minute cache
+                                }
+                            );
+                        });
+                    } catch (networkError) {
+                        console.log('Network location failed, trying IP-based detection...');
+                        throw networkError; // This will trigger IP fallback
+                    }
+                }
                 
                 console.log('Geolocation success:', position);
                 const lat = position.coords.latitude.toFixed(4);
@@ -321,17 +347,17 @@
                 let userMessage = 'Unable to get your location';
                 
                 if (error.code === 1) {
-                    userMessage = 'Please allow location access when prompted and try again';
-                } else if (error.code === 2) {
-                    userMessage = 'GPS location unavailable (common on desktop computers). Using your IP-based location instead';
-                    // Fall back to IP-based detection
-                    console.log('GPS failed, attempting IP-based location fallback');
+                    userMessage = 'Location access denied. Using IP-based location instead';
+                    // Try IP fallback even for permission denied
+                    console.log('Location permission denied, attempting IP-based fallback');
                     tryIPLocationFallback(button, originalText);
                     return;
-                } else if (error.code === 3) {
-                    userMessage = 'Location request timed out. Please try again or enter manually';
-                } else if (error.message) {
-                    userMessage = 'Geolocation error: ' + error.message;
+                } else {
+                    // For all other errors (GPS unavailable, timeout, etc), try IP fallback
+                    userMessage = 'Location services unavailable. Using IP-based location instead';
+                    console.log('All location services failed, attempting IP-based fallback');
+                    tryIPLocationFallback(button, originalText);
+                    return;
                 }
                 
                 // Show error in a more user-friendly way
@@ -348,7 +374,7 @@
         
         function tryIPLocationFallback(button, originalText) {
             console.log('Attempting IP-based location detection via our server');
-            button.textContent = '📍 Finding...';
+            button.textContent = '📍 IP Location...';
             
             // Use our own server's IP detection endpoint
             fetch('/debug/ip')

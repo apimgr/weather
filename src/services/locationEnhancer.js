@@ -203,11 +203,16 @@ class LocationEnhancer {
     const cities = await this.loadCitiesData();
     const countries = await this.loadCountriesData();
 
-    console.log(`🔍 Looking for nearest city to ${latitude}, ${longitude}`);
-    console.log(`📊 Cities loaded: ${cities?.length || 0}, Countries loaded: ${countries?.length || 0}`);
+    // Debug logging only in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🔍 Looking for nearest city to ${latitude}, ${longitude}`);
+      console.log(`📊 Cities loaded: ${cities?.length || 0}, Countries loaded: ${countries?.length || 0}`);
+    }
 
     if (!cities || cities.length === 0) {
-      console.log('❌ No cities data available for lookup');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('❌ No cities data available for lookup');
+      }
       return null;
     }
 
@@ -237,7 +242,10 @@ class LocationEnhancer {
     }
 
     if (nearestCity) {
-      console.log(`✅ Found nearest city: ${nearestCity.name} (${minDistance.toFixed(2)}km away)`);
+      // Debug logging only in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`✅ Found nearest city: ${nearestCity.name} (${minDistance.toFixed(2)}km away)`);
+      }
 
       // Get country info
       const countryInfo = countries.find(c => c.country_code === nearestCity.country);
@@ -263,7 +271,10 @@ class LocationEnhancer {
       };
     }
 
-    console.log(`❌ No suitable city found near ${latitude}, ${longitude}`);
+    // Debug logging only in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`❌ No suitable city found near ${latitude}, ${longitude}`);
+    }
     return null;
   }
 

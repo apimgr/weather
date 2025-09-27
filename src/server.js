@@ -273,34 +273,10 @@ Thank you for your patience! ☕
 // Weather routes last (catch-all)
 app.use('/', weatherRoutes);
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`Weather API server running on port ${PORT}`);
   console.log(`Visit http://localhost:${PORT}/examples for usage examples`);
   console.log(`API documentation: http://localhost:${PORT}/api/v1/docs`);
-
-  // Start data loading immediately on startup
-  try {
-    const locationEnhancer = require('./services/locationEnhancer');
-    console.log('🌍 Starting data initialization...');
-
-    // Start loading both datasets in parallel
-    const [countries, cities] = await Promise.all([
-      locationEnhancer.loadCountriesData(),
-      locationEnhancer.loadCitiesData()
-    ]);
-
-    console.log('✅ Data initialization complete');
-    console.log(`📍 Loaded ${countries?.length || 0} countries and ${cities?.length || 0} cities`);
-
-    // Mark as ready
-    global.serviceReady = true;
-    global.initializationStatus.countries = true;
-    global.initializationStatus.cities = true;
-
-  } catch (error) {
-    console.error('⚠️ Data initialization failed:', error.message);
-    console.log('🔄 Service will continue with reduced functionality');
-  }
 });
 
 module.exports = app;
