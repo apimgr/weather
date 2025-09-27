@@ -224,13 +224,34 @@ app.use((req, res, next) => {
     return next();
   }
   
-  // Show loading page for browsers if service not ready
-  if (isBrowser && !global.serviceReady) {
-    return res.render('loading', {
-      title: 'Console Weather Service - Initializing',
-      hostInfo: hostDetector.getHostInfo(req),
-      status: global.initializationStatus
-    });
+  // Handle service initialization
+  if (!global.serviceReady) {
+    if (isBrowser) {
+      // Show loading page for browsers
+      return res.render('loading', {
+        title: 'Console Weather Service - Initializing',
+        hostInfo: hostDetector.getHostInfo(req),
+        status: global.initializationStatus
+      });
+    } else {
+      // Send helpful message for console clients
+      res.set('Content-Type', 'text/plain; charset=utf-8');
+      return res.send(`☕ Console Weather Service is warming up...
+
+🌍 Loading global location database (247 countries, 209K+ cities)
+🌤️ Connecting to weather services
+🎨 Preparing beautiful interfaces
+
+This usually takes 10-15 seconds. Please try again in a moment:
+
+curl -q -LSs ${hostDetector.getHostInfo(req).fullHost}/
+
+For immediate access, try our API endpoints:
+curl -q -LSs ${hostDetector.getHostInfo(req).fullHost}/api/v1/weather?location=london
+
+Thank you for your patience! ☕
+`);
+    }
   }
   
   next();

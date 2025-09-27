@@ -138,10 +138,11 @@
             fetch('/healthz')
                 .then(response => {
                     if (response.ok) {
-                        // Service is ready, reload the page
-                        window.location.reload();
+                        // Service is ready, redirect to main page
+                        console.log('Service ready, redirecting...');
+                        window.location.href = window.location.origin + '/';
                     } else {
-                        throw new Error('Service not ready');
+                        throw new Error(`Service not ready (HTTP ${response.status})`);
                     }
                 })
                 .catch(error => {
@@ -151,6 +152,9 @@
                     countdown = 15;
                     retryBtn.textContent = '🔄 Try Again Now';
                     retryBtn.disabled = false;
+                    
+                    // Restart countdown
+                    const countdownInterval = setInterval(updateCountdown, 1000);
                 });
         }
         
