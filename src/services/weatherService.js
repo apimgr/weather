@@ -18,6 +18,12 @@ class WeatherService {
     if (cached) return cached;
 
     try {
+      // Check if location is coordinates for reverse geocoding
+      if (this.isCoordinates(location)) {
+        const [lat, lon] = location.split(',').map(coord => parseFloat(coord.trim()));
+        return await this.reverseGeocode(lat, lon);
+      }
+      
       // Parse the location to extract city and state/country info
       const locationParts = this.parseLocationString(location);
       let searchName = location;
@@ -464,6 +470,76 @@ class WeatherService {
     };
     
     return states[stateName.toLowerCase()];
+  }
+
+  isCoordinates(location) {
+    // Check if location string is coordinates (lat,lon format)
+    const coordRegex = /^-?\d+\.?\d*,-?\d+\.?\d*$/;
+    return coordRegex.test(location.trim());
+  }
+
+  async reverseGeocode(latitude, longitude) {
+    // Reverse geocode coordinates to get nearest city name
+    const cacheKey = `reverse_${latitude}_${longitude}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // Find nearest city using our external city database
+      const nearestCity = await locationEnhancer.findNearestCity(latitude, longitude);
+      
+      if (nearestCity) {
+        const coords = {
+          latitude: latitude, // Use original coordinates
+          longitude: longitude,
+          name: nearestCity.name,
+          country: nearestCity.country || 'Unknown',
+          timezone: nearestCity.timezone || 'UTC',
+          admin1: nearestCity.admin1,
+          admin2: nearestCity.admin2,
+          countryCode: nearestCity.countryCode,
+          population: nearestCity.population,
+          fullName: nearestCity.fullName,
+          shortName: nearestCity.shortName
+        };
+        
+        cache.set(cacheKey, coords, 3600); // Cache for 1 hour
+        return coords;
+      }
+
+      // Fallback: return coordinates with minimal info
+      return {
+        latitude: latitude,
+        longitude: longitude,
+        name: `${latitude}, ${longitude}`,
+        country: 'Unknown',
+        timezone: 'UTC',
+        admin1: null,
+        admin2: null,
+        countryCode: 'XX',
+        population: null,
+        fullName: `Coordinates ${latitude}, ${longitude}`,
+        shortName: `${latitude}, ${longitude}`
+      };
+
+    } catch (error) {
+      console.error('Reverse geocoding error:', error.message);
+      
+      // Fallback: return coordinates with minimal info
+      return {
+        latitude: latitude,
+        longitude: longitude,
+        name: `${latitude}, ${longitude}`,
+        country: 'Unknown',
+        timezone: 'UTC',
+        admin1: null,
+        admin2: null,
+        countryCode: 'XX',
+        population: null,
+        fullName: `Coordinates ${latitude}, ${longitude}`,
+        shortName: `${latitude}, ${longitude}`
+      };
+    }
   }
 }
 
