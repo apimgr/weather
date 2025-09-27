@@ -251,15 +251,21 @@
                 console.log('Geolocation success:', position);
                 const lat = position.coords.latitude.toFixed(4);
                 const lon = position.coords.longitude.toFixed(4);
-                const locationInput = document.querySelector('input[name="location"]');
-                
+                const units = document.getElementById('units-select').value;
+
                 console.log('Setting coordinates:', lat + ',' + lon);
-                locationInput.value = lat + ',' + lon;
-                
-                // Visual feedback before submit
+
+                // Build clean coordinate URL and redirect directly
+                const coordinateLocation = `${lat},${lon}`;
+                const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                const newUrl = `${window.location.origin}/${coordinateLocation}${unitsParam}`;
+
+                console.log('Geolocation redirecting to:', newUrl);
+
+                // Visual feedback before redirect
                 button.textContent = '📍 Found!';
                 setTimeout(() => {
-                    document.querySelector('form').submit();
+                    window.location.href = newUrl;
                 }, 500);
                 
             } catch (error) {
@@ -305,15 +311,21 @@
                 .then(data => {
                     console.log('Server IP location data:', data);
                     if (data.location && data.location.value) {
-                        const locationInput = document.querySelector('input[name="location"]');
                         const detectedLocation = data.location.value;
-                        
+                        const units = document.getElementById('units-select').value;
+
                         console.log('Using server-detected location:', detectedLocation);
-                        locationInput.value = detectedLocation;
-                        
+
+                        // Build clean URL and redirect directly
+                        const cleanLocation = detectedLocation.replace(/ /g, '+');
+                        const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                        const newUrl = `${window.location.origin}/${cleanLocation}${unitsParam}`;
+
+                        console.log('IP fallback redirecting to:', newUrl);
+
                         button.textContent = '📍 Found!';
                         setTimeout(() => {
-                            document.querySelector('form').submit();
+                            window.location.href = newUrl;
                         }, 800);
                     } else {
                         throw new Error('No location in server response');
