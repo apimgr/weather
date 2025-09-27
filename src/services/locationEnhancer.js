@@ -202,8 +202,12 @@ class LocationEnhancer {
   async findNearestCity(latitude, longitude) {
     const cities = await this.loadCitiesData();
     const countries = await this.loadCountriesData();
-    
+
+    console.log(`🔍 Looking for nearest city to ${latitude}, ${longitude}`);
+    console.log(`📊 Cities loaded: ${cities?.length || 0}, Countries loaded: ${countries?.length || 0}`);
+
     if (!cities || cities.length === 0) {
+      console.log('❌ No cities data available for lookup');
       return null;
     }
 
@@ -233,9 +237,11 @@ class LocationEnhancer {
     }
 
     if (nearestCity) {
+      console.log(`✅ Found nearest city: ${nearestCity.name} (${minDistance.toFixed(2)}km away)`);
+
       // Get country info
       const countryInfo = countries.find(c => c.country_code === nearestCity.country);
-      
+
       return {
         name: nearestCity.name,
         country: countryInfo ? countryInfo.name : nearestCity.country,
@@ -257,6 +263,7 @@ class LocationEnhancer {
       };
     }
 
+    console.log(`❌ No suitable city found near ${latitude}, ${longitude}`);
     return null;
   }
 
