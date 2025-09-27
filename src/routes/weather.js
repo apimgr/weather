@@ -153,6 +153,29 @@ More info: ${baseUrl}/api/v1/docs
   handleLocationRequest(req, res);
 });
 
+async function getLocationFromExternalIP(ip) {
+  // Use external IP geolocation for accurate location detection
+  try {
+    const axios = require('axios');
+    const response = await axios.get(`https://ipapi.co/${ip}/json/`, { timeout: 5000 });
+    
+    if (response.data && response.data.city) {
+      return {
+        city: response.data.city,
+        region: response.data.region,
+        country_name: response.data.country_name,
+        country_code: response.data.country_code,
+        latitude: response.data.latitude,
+        longitude: response.data.longitude
+      };
+    }
+  } catch (error) {
+    console.log('External IP lookup failed:', error.message);
+  }
+  
+  return null;
+}
+
 async function handleLocationRequest(req, res) {
   try {
     const locationInput = locationParser.extractLocationFromPath(req.path);
@@ -212,20 +235,37 @@ async function handleLocationRequest(req, res) {
     
     // Console clients get ASCII
     const clientIp = locationParser.getClientIP(req);
-    const parsedLocation = locationParser.parseLocation(locationInput, clientIp);
-
-    let coords;
-    let units = parameterParser.getUnitsFromParams(params, parsedLocation.units);
+    let parsedLocation, coords, units;
     
-    if (parsedLocation.type === 'coordinates') {
-      coords = parsedLocation.value;
-      coords.name = `${coords.latitude}, ${coords.longitude}`;
-      coords.country = '';
+    // Check if locationInput is an IP address
+    if (locationInput && locationParser.isIPAddress(locationInput)) {
+      // Handle IP address lookup
+      try {
+        const ipLocationData = await getLocationFromExternalIP(locationInput);
+        coords = await weatherService.getCoordinates(`${ipLocationData.city}, ${ipLocationData.region}`);
+        coords.sourceIP = locationInput;
+        units = locationParser.getUnitsForCountry(ipLocationData.country_code);
+      } catch (error) {
+        // Fallback to default if IP lookup fails
+        parsedLocation = locationParser.parseLocation('', clientIp);
+        coords = await weatherService.getCoordinates(parsedLocation.value);
+        units = parsedLocation.units || 'imperial';
+      }
     } else {
-      const country = parsedLocation.country || null;
-      coords = await weatherService.getCoordinates(parsedLocation.value, country);
-      if (params.units === 'auto' && coords.country) {
-        units = locationParser.getUnitsForCountry(coords.country);
+      // Handle regular location input
+      parsedLocation = locationParser.parseLocation(locationInput, clientIp);
+      units = parameterParser.getUnitsFromParams(params, parsedLocation.units);
+      
+      if (parsedLocation.type === 'coordinates') {
+        coords = parsedLocation.value;
+        coords.name = `${coords.latitude}, ${coords.longitude}`;
+        coords.country = '';
+      } else {
+        const country = parsedLocation.country || null;
+        coords = await weatherService.getCoordinates(parsedLocation.value, country);
+        if (params.units === 'auto' && coords.country) {
+          units = locationParser.getUnitsForCountry(coords.country);
+        }
       }
     }
 
