@@ -381,6 +381,10 @@ Try these alternatives:
 • Current location: ${hostInfo.fullHost}/
 
 📍 Need help? ${hostInfo.fullHost}/:help`;
+
+      res.status(404).set('Content-Type', 'text/plain; charset=utf-8');
+      res.send(errorMessage + '\n\n');
+      return;
     } else if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
       errorMessage = `⏰ Request timeout - services are busy. Please try again.
 
@@ -482,8 +486,12 @@ Try these alternatives:
 • Current location: ${hostInfo.fullHost}/moon
 
 🌙 Need help? ${hostInfo.fullHost}/:help`;
+
+      res.status(404).set('Content-Type', 'text/plain; charset=utf-8');
+      res.send(errorMessage + '\n\n');
+      return;
     }
-    
+
     res.status(500).set('Content-Type', 'text/plain; charset=utf-8');
     res.send(errorMessage + '\n\n');
   }
