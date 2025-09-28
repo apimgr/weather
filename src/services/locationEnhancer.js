@@ -181,9 +181,16 @@ class LocationEnhancer {
     const city = data.name;
     const countryCode = data.countryCode || data.country_code?.toUpperCase() || 'XX';
 
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🏙️ Building short name for: ${city}, countryCode: ${countryCode}, admin1: "${data.admin1}"`);
+    }
+
     // For US locations, use state abbreviation if available
     if (countryCode === 'US' && data.admin1) {
       const stateAbbrev = this.lookupStateAbbreviation(data.admin1);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`🇺🇸 US State lookup: "${data.admin1}" → "${stateAbbrev}" (fallback: ${countryCode})`);
+      }
       return `${city}, ${stateAbbrev || countryCode}`;
     }
 

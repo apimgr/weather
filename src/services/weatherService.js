@@ -494,9 +494,40 @@ class WeatherService {
     }
 
     try {
-      // Find nearest city using our external city database
+      // First try Open-Meteo geocoding to get proper admin1 state data
+      const geocodingUrl = `${this.baseUrl}/geocoding/search?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`;
+
+      try {
+        const response = await fetch(geocodingUrl);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            const geocodingData = {
+              latitude: latitude,
+              longitude: longitude,
+              name: result.name,
+              country: result.country,
+              country_code: result.country_code,
+              admin1: result.admin1,
+              admin2: result.admin2,
+              timezone: result.timezone
+            };
+
+            // Enhance with external database (cities, population, etc.)
+            const enhancedData = await locationEnhancer.enhanceLocationData(geocodingData);
+
+            cache.set(cacheKey, enhancedData, 3600); // Cache for 1 hour
+            return enhancedData;
+          }
+        }
+      } catch (geocodingError) {
+        console.log('⚠️ Open-Meteo geocoding failed, trying cities database:', geocodingError.message);
+      }
+
+      // Fallback: Find nearest city using our external city database
       const nearestCity = await locationEnhancer.findNearestCity(latitude, longitude);
-      
+
       if (nearestCity) {
         const coords = {
           latitude: latitude, // Use original coordinates
@@ -511,7 +542,7 @@ class WeatherService {
           fullName: nearestCity.fullName,
           shortName: nearestCity.shortName
         };
-        
+
         cache.set(cacheKey, coords, 3600); // Cache for 1 hour
         return coords;
       }

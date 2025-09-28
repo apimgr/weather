@@ -54,26 +54,18 @@
             <!-- Location Details Section -->
             <div class="location-details-section" style="margin: 1.5rem 0; padding: 1rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
                 <div class="location-info">
-                    <% 
-                    const inputLocation = location || '';
-                    const isCoordinates = inputLocation.match(/^-?\d+\.?\d*,-?\d+\.?\d*$/);
-                    %>
-                    <% if (isCoordinates) { %>
-                        <!-- When coordinates are used, show the actual location name -->
-                        <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                            📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
-                            <span style="color: var(--dracula-yellow);"><%= weatherData.location.shortName || weatherData.location.name + ', ' + weatherData.location.country %></span>
-                        </div>
-                    <% } else { %>
-                        <!-- When location name is used, show the coordinates -->
-                        <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                            🗺️ <strong style="color: var(--dracula-cyan);">Coordinates:</strong> 
-                            <span style="color: var(--dracula-pink);"><%= weatherData.location.latitude.toFixed(4) %>, <%= weatherData.location.longitude.toFixed(4) %></span>
-                        </div>
-                    <% } %>
+                    <!-- Always show location name -->
+                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
+                        📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
+                        <span style="color: var(--dracula-yellow);"><%= weatherData.location.shortName || weatherData.location.name + ', ' + weatherData.location.country %></span>
+                    </div>
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
                         🌍 <strong style="color: var(--dracula-cyan);">Country:</strong>
                         <span style="color: var(--dracula-green);"><%= weatherData.location.country %></span>
+                    </div>
+                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
+                        🗺️ <strong style="color: var(--dracula-cyan);">Coordinates:</strong>
+                        <span style="color: var(--dracula-pink);"><%= weatherData.location.latitude.toFixed(4) %>, <%= weatherData.location.longitude.toFixed(4) %></span>
                     </div>
                     <% if (weatherData.location.population) { %>
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
