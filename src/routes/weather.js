@@ -497,6 +497,30 @@ Try these alternatives:
   }
 }
 
-router.get('/:location(*)', handleLocationRequest);
+// Filter out invalid paths that should return 404
+router.get('/:location(*)', (req, res, next) => {
+  const path = req.path;
+
+  // Block common invalid paths that should not be processed as locations
+  const invalidPaths = [
+    /^\/wp-/,           // WordPress paths
+    /^\/admin/,         // Admin panels
+    /^\/\.well-known/,  // Well-known URIs
+    /^\/favicon\.ico/,  // Favicon
+    /^\/robots\.txt/,   // Robots.txt
+    /^\/sitemap/,       // Sitemaps
+    /\.(php|asp|jsp|cgi)/, // Server-side scripts
+    /\.(js|css|png|jpg|gif|ico|svg)$/, // Static files
+    /^\/[a-z0-9]+\.(html?|xml|json)$/ // Static documents
+  ];
+
+  // Check if path matches any invalid pattern
+  if (invalidPaths.some(pattern => pattern.test(path))) {
+    return res.status(404).set('Content-Type', 'text/plain; charset=utf-8').send('404 Not Found\n');
+  }
+
+  // Continue to location handler for valid paths
+  handleLocationRequest(req, res, next);
+});
 
 module.exports = router;
