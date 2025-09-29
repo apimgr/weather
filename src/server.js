@@ -62,7 +62,7 @@ app.use(express.urlencoded({ extended: true }));
 let serviceReady = false;
 let initializationStatus = {
   countries: false,
-  cities: false,
+  cities: false, // Cities must be loaded for full functionality
   weather: true, // Weather API is always ready
   started: new Date().toISOString()
 };
@@ -272,22 +272,40 @@ Thank you for your patience! ☕
 // Weather routes last (catch-all)
 app.use('/', weatherRoutes);
 
-app.listen(PORT, async () => {
-  console.log(`Weather API server running on port ${PORT}`);
-  console.log(`Visit http://localhost:${PORT}/examples for usage examples`);
-  console.log(`API documentation: http://localhost:${PORT}/api/v1/docs`);
+// Start loading all location data immediately on startup
+const locationEnhancer = require('./services/locationEnhancer');
 
-  // Proactively load location data to complete initialization
-  try {
-    const locationEnhancer = require('./services/locationEnhancer');
-    await Promise.all([
-      locationEnhancer.loadCountriesData(),
-      locationEnhancer.loadCitiesData()
-    ]);
-  } catch (error) {
-    console.error('⚠️ Error during startup initialization:', error.message);
-    // Don't block startup, the timeout will handle it
-  }
+// Start server immediately but wait for data before showing ready messages
+const server = app.listen(PORT, () => {
+  // Don't show server info until data is loaded
+});
+
+// Load both countries and cities data in parallel at startup
+Promise.all([
+  locationEnhancer.loadCountriesData(),
+  locationEnhancer.loadCitiesData()
+]).then(() => {
+  console.log('✅ All location data loaded at startup');
+
+  // Now show server ready messages with proper hostname detection
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const hostname = process.env.HOST || process.env.HOSTNAME || 'localhost';
+  const baseUrl = `${protocol}://${hostname}${PORT !== 80 && PORT !== 443 ? ':' + PORT : ''}`;
+
+  console.log(`Weather API server running on port ${PORT}`);
+  console.log(`Visit ${baseUrl}/examples for usage examples`);
+  console.log(`API documentation: ${baseUrl}/api/v1/docs`);
+}).catch(error => {
+  console.error('⚠️ Location data failed to load at startup:', error.message);
+
+  // Still show server info even if data loading failed
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const hostname = process.env.HOST || process.env.HOSTNAME || 'localhost';
+  const baseUrl = `${protocol}://${hostname}${PORT !== 80 && PORT !== 443 ? ':' + PORT : ''}`;
+
+  console.log(`Weather API server running on port ${PORT} (data loading failed)`);
+  console.log(`Visit ${baseUrl}/examples for usage examples`);
+  console.log(`API documentation: ${baseUrl}/api/v1/docs`);
 });
 
 module.exports = app;

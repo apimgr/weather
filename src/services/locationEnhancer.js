@@ -87,7 +87,7 @@ class LocationEnhancer {
       // Try local file first
       if (fs.existsSync(this.localCitiesPath)) {
         console.log('📁 Loading cities data from local cache...');
-        const fileData = fs.readFileSync(this.localCitiesPath, 'utf8');
+        const fileData = await fs.promises.readFile(this.localCitiesPath, 'utf8');
         this.citiesData = JSON.parse(fileData);
         cache.set('cities_data', this.citiesData);
         console.log(`✅ Loaded ${this.citiesData.length} cities from local cache`);
@@ -141,9 +141,9 @@ class LocationEnhancer {
 
     // Find matching city data for better population/coordinates
     if (cities && cities.length > 0) {
-      const cityMatch = cities.find(city => 
+      const cityMatch = cities.find(city =>
         city.name.toLowerCase() === enhanced.name.toLowerCase() ||
-        (Math.abs(city.coord.lat - enhanced.latitude) < 0.1 && 
+        (Math.abs(city.coord.lat - enhanced.latitude) < 0.1 &&
          Math.abs(city.coord.lon - enhanced.longitude) < 0.1)
       );
 
@@ -309,6 +309,11 @@ class LocationEnhancer {
     const cities = await this.loadCitiesData();
     const countries = await this.loadCountriesData();
 
+    if (!cities || cities.length === 0) {
+      console.log('🔍 No cities data available for nearest city lookup');
+      return null;
+    }
+
     // Debug logging only in development
     if (process.env.NODE_ENV !== 'production') {
       console.log(`🔍 Looking for nearest city to ${latitude}, ${longitude}`);
@@ -407,16 +412,17 @@ class LocationEnhancer {
   }
 
   checkInitializationComplete() {
-    // Check if all components are ready
-    if (global.initializationStatus && 
-        global.initializationStatus.countries && 
-        global.initializationStatus.cities && 
+    // Check if ALL essential components are ready (countries + cities + weather)
+    if (global.initializationStatus &&
+        global.initializationStatus.countries &&
+        global.initializationStatus.cities &&
         global.initializationStatus.weather) {
-      
+
       global.serviceReady = true;
-      console.log('🌤️ Service fully initialized and ready!');
+      console.log('🌤️ Service ready! All data loaded successfully.');
     }
   }
+
 }
 
 module.exports = new LocationEnhancer();

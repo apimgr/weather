@@ -495,7 +495,7 @@ class WeatherService {
 
     try {
       // First try Open-Meteo geocoding to get proper admin1 state data
-      const geocodingUrl = `${this.baseUrl}/geocoding/search?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`;
+      const geocodingUrl = `${this.geocodingUrl}/search?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`;
 
       try {
         const response = await fetch(geocodingUrl);

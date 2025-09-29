@@ -12,7 +12,12 @@
       "Read(//tmp/**)",
       "Bash(netstat:*)",
       "WebFetch(domain:wthr.top)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(PORT=3020 npm start)",
+      "Bash(PORT=3030 npm start)",
+      "Bash(PORT=3040 npm start)",
+      "Bash(PORT=3041 npm start)",
+      "Bash(PORT=3042 npm start)"
     ],
     "deny": [],
     "ask": []
