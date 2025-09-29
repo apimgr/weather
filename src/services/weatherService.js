@@ -329,18 +329,36 @@ class WeatherService {
     // If location has state/country info, try to match it
     if (locationParts.hasStateOrCountry) {
       const stateCountryPart = locationParts.state.toLowerCase();
-      
-      // Look for exact state/country matches
+
+      // Priority 1: Check ALL results for US state abbreviation matches first
+      for (const result of results) {
+        const admin1 = (result.admin1 || '').toLowerCase();
+        const countryCode = (result.country_code || '').toLowerCase();
+
+        if (this.matchesStateAbbreviation(stateCountryPart, admin1, countryCode.toUpperCase())) {
+          return result;
+        }
+      }
+
+      // Priority 2: Check ALL results for Canadian province abbreviation matches
+      for (const result of results) {
+        const admin1 = (result.admin1 || '').toLowerCase();
+        const countryCode = (result.country_code || '').toLowerCase();
+
+        if (this.matchesCanadianProvince(stateCountryPart, admin1, countryCode.toUpperCase())) {
+          return result;
+        }
+      }
+
+      // Priority 3: Check for general matches (admin1, country, country code)
       for (const result of results) {
         const admin1 = (result.admin1 || '').toLowerCase();
         const country = (result.country || '').toLowerCase();
         const countryCode = (result.country_code || '').toLowerCase();
-        
-        if (admin1.includes(stateCountryPart) || 
+
+        if (admin1.includes(stateCountryPart) ||
             country.includes(stateCountryPart) ||
-            countryCode === stateCountryPart ||
-            this.matchesStateAbbreviation(stateCountryPart, admin1, countryCode)) {
-          // console.log(`Found best match: ${result.name}, ${result.admin1}, ${result.country}`);
+            countryCode === stateCountryPart) {
           return result;
         }
       }
@@ -363,8 +381,8 @@ class WeatherService {
   }
 
   matchesStateAbbreviation(input, admin1, countryCode) {
-    if (countryCode !== 'us') return false;
-    
+    if (countryCode !== 'US') return false;
+
     const stateAbbreviations = {
       'al': 'alabama', 'ak': 'alaska', 'az': 'arizona', 'ar': 'arkansas', 'ca': 'california',
       'co': 'colorado', 'ct': 'connecticut', 'de': 'delaware', 'fl': 'florida', 'ga': 'georgia',
@@ -380,6 +398,20 @@ class WeatherService {
 
     const fullStateName = stateAbbreviations[input.toLowerCase()];
     return fullStateName && admin1.toLowerCase().includes(fullStateName);
+  }
+
+  matchesCanadianProvince(input, admin1, countryCode) {
+    if (countryCode !== 'CA') return false;
+
+    const provinceAbbreviations = {
+      'ab': 'alberta', 'bc': 'british columbia', 'mb': 'manitoba', 'nb': 'new brunswick',
+      'nl': 'newfoundland and labrador', 'nt': 'northwest territories', 'ns': 'nova scotia',
+      'nu': 'nunavut', 'on': 'ontario', 'pe': 'prince edward island', 'qc': 'quebec',
+      'sk': 'saskatchewan', 'yt': 'yukon'
+    };
+
+    const fullProvinceName = provinceAbbreviations[input.toLowerCase()];
+    return fullProvinceName && admin1.toLowerCase().includes(fullProvinceName);
   }
 
   async searchLocations(query, limit = 10) {

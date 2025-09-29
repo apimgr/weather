@@ -17,7 +17,11 @@
       "Bash(PORT=3030 npm start)",
       "Bash(PORT=3040 npm start)",
       "Bash(PORT=3041 npm start)",
-      "Bash(PORT=3042 npm start)"
+      "Bash(PORT=3042 npm start)",
+      "Bash(PORT=3050 npm start)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(PORT=3051 npm start)"
     ],
     "deny": [],
     "ask": []
