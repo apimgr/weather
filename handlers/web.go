@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -40,10 +41,19 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 
 	var weatherData interface{}
 	var errorMsg string
+	clientIP := utils.GetClientIP(c)
 
-	// If location is provided, fetch weather
+	// Auto-detect location from IP if not provided
+	if location == "" {
+		coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
+		if err == nil {
+			enhanced := h.locationEnhancer.EnhanceLocation(coords)
+			location = enhanced.ShortName
+		}
+	}
+
+	// If location is available (provided or auto-detected), fetch weather
 	if location != "" {
-		clientIP := utils.GetClientIP(c)
 		coords, err := h.weatherService.ParseAndResolveLocation(location, clientIP)
 		if err != nil {
 			errorMsg = err.Error()
@@ -58,11 +68,39 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 			} else {
 				forecast, _ := h.weatherService.GetForecast(enhanced.Latitude, enhanced.Longitude, 7, units)
 
+				// Enrich current weather with icon and description
+				currentData := gin.H{
+					"Temperature":   current.Temperature,
+					"FeelsLike":     current.FeelsLike,
+					"Humidity":      current.Humidity,
+					"Pressure":      current.Pressure,
+					"WindSpeed":     current.WindSpeed,
+					"WindDirection": current.WindDirection,
+					"Precipitation": current.Precipitation,
+					"WeatherCode":   current.WeatherCode,
+					"Icon":          h.weatherService.GetWeatherIcon(current.WeatherCode, current.IsDay == 1),
+					"Description":   h.weatherService.GetWeatherDescription(current.WeatherCode),
+				}
+
+				// Format location data
+				locationData := gin.H{
+					"Name":                enhanced.Name,
+					"ShortName":           enhanced.ShortName,
+					"FullName":            enhanced.FullName,
+					"Latitude":            enhanced.Latitude,
+					"Longitude":           enhanced.Longitude,
+					"Country":             enhanced.Country,
+					"CountryCode":         enhanced.CountryCode,
+					"Population":          enhanced.Population,
+					"PopulationFormatted": fmt.Sprintf("%d", enhanced.Population),
+					"Timezone":            enhanced.Timezone,
+				}
+
 				weatherData = gin.H{
-					"location": enhanced,
-					"current":  current,
-					"forecast": forecast,
-					"units":    units,
+					"Location": locationData,
+					"Current":  currentData,
+					"Forecast": forecast,
+					"Units":    units,
 				}
 			}
 		}
@@ -70,13 +108,18 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 
 	hostInfo := utils.GetHostInfo(c)
 
+	// Format location for URLs (replace spaces with +)
+	locationFormatted := strings.ReplaceAll(location, " ", "+")
+
 	c.HTML(http.StatusOK, "weather.html", gin.H{
-		"title":       "Console Weather Service",
-		"weatherData": weatherData,
-		"hostInfo":    hostInfo,
-		"location":    location,
-		"units":       units,
-		"error":       errorMsg,
+		"Title":             "Console Weather Service",
+		"WeatherData":       weatherData,
+		"HostInfo":          hostInfo,
+		"Location":          location,
+		"LocationFormatted": locationFormatted,
+		"Units":             units,
+		"Error":             errorMsg,
+		"HideFooter":        false,
 	})
 }
 
@@ -102,7 +145,16 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 
 	clientIP := utils.GetClientIP(c)
 
-	// If no location specified, show empty moon page
+	// Auto-detect location from IP if not provided
+	if location == "" {
+		coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
+		if err == nil {
+			enhanced := h.locationEnhancer.EnhanceLocation(coords)
+			location = enhanced.ShortName
+		}
+	}
+
+	// If still no location, show empty moon page
 	if location == "" {
 		c.HTML(http.StatusOK, "moon.html", gin.H{
 			"Title":      "Moon Phase - Console Weather Service",

@@ -35,7 +35,12 @@
       "Bash(awk:*)",
       "Bash(xargs:*)",
       "Bash(killall:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(git log:*)",
+      "Bash(gh workflow:*)",
+      "Bash(/usr/bin/gh:*)",
+      "Bash(~/.local/bin/gh:*)",
+      "Bash(~/bin/gh:*)"
     ],
     "deny": [],
     "ask": []

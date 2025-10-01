@@ -185,7 +185,7 @@
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}</code>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Format 3:</strong>
+                        <strong style="color: var(--dracula-green);">One-Line:</strong>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3</code>
                     </div>
                     <div class="command-item">
@@ -225,14 +225,12 @@
 
         {{if not .HideFooter}}
         <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
-            <p style="margin: 0.5rem 0;">🌤️ Free weather data from <a href="https://open-meteo.com" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Open-Meteo.com</a> • No API key required</p>
-            <p style="margin: 0.5rem 0;">📍 Location data from <a href="https://nominatim.openstreetmap.org" target="_blank" style="color: var(--dracula-green); text-decoration: none;">OpenStreetMap Nominatim</a></p>
-            <p style="margin: 0.5rem 0;">💻 Console access: <code style="color: var(--dracula-cyan);">curl -q -LSs {{.HostInfo.FullHost}}</code></p>
-            <p style="margin: 1rem 0 0.5rem; font-size: 0.875rem;">
-                <a href="/" style="color: var(--dracula-purple); text-decoration: none; margin: 0 0.5rem;">Home</a> •
-                <a href="/moon" style="color: var(--dracula-purple); text-decoration: none; margin: 0 0.5rem;">Moon Phase</a> •
-                <a href="/api/v1/docs" style="color: var(--dracula-purple); text-decoration: none; margin: 0 0.5rem;">API Docs</a> •
-                <a href="/examples" style="color: var(--dracula-purple); text-decoration: none; margin: 0 0.5rem;">Examples</a>
+            <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
+                <span style="color: var(--dracula-cyan);">Console Weather Service</span>
+                <span style="color: var(--dracula-pink);">•</span>
+                <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
+                <span style="color: var(--dracula-pink);">•</span>
+                <span style="color: var(--dracula-green);">v2.0.0</span>
             </p>
         </div>
         {{end}}

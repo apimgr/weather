@@ -541,85 +541,9 @@ func (h *APIHandler) GetLocation(c *gin.Context) {
 // GetDocs returns API documentation (GET /api/v1/docs)
 func (h *APIHandler) GetDocs(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
-	baseURL := hostInfo.FullHost
 
-	c.JSON(http.StatusOK, gin.H{
-		"api":         "Weather API v1",
-		"version":     "1.0.0",
-		"description": "A free weather API using open data sources",
-		"base_url":    baseURL,
-		"endpoints": gin.H{
-			"GET /api/v1/weather": gin.H{
-				"description": "Get current weather with today forecast",
-				"parameters": gin.H{
-					"location": "Location name (optional)",
-					"lat":      "Latitude (optional, use with lon)",
-					"lon":      "Longitude (optional, use with lat)",
-					"units":    "Unit system: imperial or metric (auto-detected by location if not specified)",
-				},
-				"example": fmt.Sprintf("%s/api/v1/weather?location=paris", baseURL),
-			},
-			"GET /api/v1/forecast": gin.H{
-				"description": "Get weather forecast",
-				"parameters": gin.H{
-					"location": "Location name (optional)",
-					"lat":      "Latitude (optional, use with lon)",
-					"lon":      "Longitude (optional, use with lat)",
-					"days":     "Number of forecast days (1-16, default: 7)",
-					"units":    "Unit system: imperial or metric (auto-detected by location if not specified)",
-				},
-				"example": fmt.Sprintf("%s/api/v1/forecast?location=london&days=5", baseURL),
-			},
-			"GET /api/v1/search": gin.H{
-				"description": "Search for locations",
-				"parameters": gin.H{
-					"q": "Search query (required)",
-				},
-				"example": fmt.Sprintf("%s/api/v1/search?q=alb", baseURL),
-			},
-			"GET /api/v1/ip": gin.H{
-				"description": "Get client IP information",
-				"parameters":  gin.H{},
-				"example":     fmt.Sprintf("%s/api/v1/ip", baseURL),
-			},
-			"GET /api/v1/location": gin.H{
-				"description": "Get detected location from IP",
-				"parameters":  gin.H{},
-				"example":     fmt.Sprintf("%s/api/v1/location", baseURL),
-			},
-		},
-		"console_endpoints": gin.H{
-			"GET /": gin.H{
-				"description": "Console weather for current location (IP-based detection)",
-				"parameters": gin.H{
-					"format": "Display format (0-4)",
-					"units":  "Unit system: imperial or metric",
-					"F":      "Hide footer",
-				},
-				"example": fmt.Sprintf("curl -q -LSs %s/", baseURL),
-			},
-			"GET /:location": gin.H{
-				"description": "Console weather for specific location",
-				"parameters": gin.H{
-					"format": "Display format (0-4)",
-					"units":  "Unit system: imperial or metric",
-					"F":      "Hide footer",
-				},
-				"example": fmt.Sprintf("curl -q -LSs %s/London,GB", baseURL),
-			},
-		},
-		"data_source": "Open-Meteo.com",
-		"features": []string{
-			"No API key required",
-			"Free for non-commercial use",
-			"Global weather data",
-			"Up to 16-day forecasts",
-			"Imperial and metric units",
-			"Automatic location and unit detection from IP",
-			"Dynamic host and protocol detection",
-			"Caching for better performance",
-			"Console-friendly ASCII output",
-			"JSON API responses",
-		},
+	c.HTML(http.StatusOK, "api-docs.html", gin.H{
+		"Title":    "API Documentation - Console Weather Service",
+		"HostInfo": hostInfo,
 	})
 }
