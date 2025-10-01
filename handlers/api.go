@@ -585,7 +585,8 @@ func (h *APIHandler) GetDocsHTML(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
 	c.HTML(http.StatusOK, "api-docs.html", gin.H{
-		"Title":    "API Documentation - Console Weather Service",
-		"HostInfo": hostInfo,
+		"Title":      "API Documentation - Console Weather Service",
+		"HostInfo":   hostInfo,
+		"HideFooter": false,
 	})
 }
