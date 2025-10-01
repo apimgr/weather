@@ -22,6 +22,7 @@ type WeatherService struct {
 	openMeteoBaseURL string
 	geocodingURL     string
 	locationEnhancer *LocationEnhancer
+	zipcodeService   *ZipcodeService
 	mu               sync.RWMutex
 }
 
@@ -164,6 +165,7 @@ func NewWeatherService(locationEnhancer *LocationEnhancer) *WeatherService {
 		openMeteoBaseURL: "https://api.open-meteo.com/v1",
 		geocodingURL:     "https://geocoding-api.open-meteo.com/v1",
 		locationEnhancer: locationEnhancer,
+		zipcodeService:   NewZipcodeService(),
 	}
 }
 
@@ -172,6 +174,18 @@ func (ws *WeatherService) GetCoordinates(location string, country string) (*Coor
 	cacheKey := fmt.Sprintf("coords_%s_%s", location, country)
 	if cached, found := ws.cache.Get(cacheKey); found {
 		return cached.(*Coordinates), nil
+	}
+
+	// Check if location is a US zipcode
+	if IsZipcode(location) {
+		zipcode, _ := ParseZipcode(location)
+		coords, err := ws.zipcodeService.LookupZipcode(zipcode)
+		if err == nil {
+			// Zipcode data already has correct city, state info - don't enhance
+			ws.cache.Set(cacheKey, coords, cache.DefaultExpiration)
+			return coords, nil
+		}
+		// If zipcode lookup fails, fall through to regular geocoding
 	}
 
 	// Check if location is coordinates for reverse geocoding

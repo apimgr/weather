@@ -538,8 +538,50 @@ func (h *APIHandler) GetLocation(c *gin.Context) {
 	})
 }
 
-// GetDocs returns API documentation (GET /api/v1/docs)
-func (h *APIHandler) GetDocs(c *gin.Context) {
+// GetDocsJSON returns API documentation in JSON format (GET /api/v1/docs)
+func (h *APIHandler) GetDocsJSON(c *gin.Context) {
+	hostInfo := utils.GetHostInfo(c)
+
+	c.JSON(http.StatusOK, gin.H{
+		"service":     "Console Weather Service API",
+		"version":     "2.0.0",
+		"description": "Free weather API with no API key required",
+		"base_url":    hostInfo.FullHost,
+		"endpoints": gin.H{
+			"weather": gin.H{
+				"GET /api/v1/weather":           "Get weather for current location (IP-based)",
+				"GET /api/v1/weather/:location": "Get weather for specific location",
+			},
+			"forecast": gin.H{
+				"GET /api/v1/forecast":           "Get forecast for current location (IP-based)",
+				"GET /api/v1/forecast/:location": "Get forecast for specific location",
+			},
+			"location": gin.H{
+				"GET /api/v1/location": "Get current location from IP",
+				"GET /api/v1/search":   "Search for locations by name",
+			},
+			"utility": gin.H{
+				"GET /api/v1/ip":   "Get client IP address",
+				"GET /api/v1/docs": "API documentation (JSON)",
+			},
+		},
+		"parameters": gin.H{
+			"location": "City name, coordinates (lat,lon), or zipcode",
+			"units":    "imperial (°F, mph) or metric (°C, km/h). Default: imperial",
+			"days":     "Number of forecast days (1-7). Default: 7",
+			"q":        "Search query for location search",
+		},
+		"examples": []string{
+			hostInfo.FullHost + "/api/v1/weather?location=London",
+			hostInfo.FullHost + "/api/v1/forecast?location=Paris&days=5",
+			hostInfo.FullHost + "/api/v1/search?q=New+York",
+			hostInfo.FullHost + "/api/v1/ip",
+		},
+	})
+}
+
+// GetDocsHTML returns API documentation as HTML page (GET /docs)
+func (h *APIHandler) GetDocsHTML(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
 	c.HTML(http.StatusOK, "api-docs.html", gin.H{

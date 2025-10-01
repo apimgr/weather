@@ -160,22 +160,43 @@ func main() {
 		apiV1.GET("/search", apiHandler.SearchLocations)
 		apiV1.GET("/ip", apiHandler.GetIP)
 		apiV1.GET("/location", apiHandler.GetLocation)
-		apiV1.GET("/docs", apiHandler.GetDocs)
+		apiV1.GET("/docs", apiHandler.GetDocsJSON)
+
+		// Root /api/v1 endpoint - return all endpoints
+		apiV1.GET("", func(c *gin.Context) {
+			hostInfo := utils.GetHostInfo(c)
+			c.JSON(http.StatusOK, gin.H{
+				"version": "v1",
+				"endpoints": []string{
+					hostInfo.FullHost + "/api/v1/weather",
+					hostInfo.FullHost + "/api/v1/weather/:location",
+					hostInfo.FullHost + "/api/v1/forecast",
+					hostInfo.FullHost + "/api/v1/forecast/:location",
+					hostInfo.FullHost + "/api/v1/search",
+					hostInfo.FullHost + "/api/v1/ip",
+					hostInfo.FullHost + "/api/v1/location",
+					hostInfo.FullHost + "/api/v1/docs",
+				},
+				"documentation": hostInfo.FullHost + "/docs",
+			})
+		})
 	}
 
-	// Main /api endpoint - JSON overview
+	// Main /api endpoint - API version information
 	r.GET("/api", func(c *gin.Context) {
-		hostInfo := utils.GetHostInfo(c)
 		c.JSON(http.StatusOK, gin.H{
-			"service":       "Console Weather Service API",
-			"version":       "2.0.0-go",
-			"description":   "Free weather API with no API key required",
-			"base_url":      hostInfo.FullHost,
-			"documentation": hostInfo.FullHost + "/api/v1/docs",
-			"health_check":  hostInfo.FullHost + "/healthz",
+			"service": "Console Weather Service API",
+			"version": "2.0.0",
+			"api_versions": []string{
+				"v1",
+			},
+			"current_version": "v1",
+			"documentation":   "http://" + c.Request.Host + "/docs",
 		})
 	})
-	r.GET("/api/docs", apiHandler.GetDocs)
+
+	// HTML documentation page at /docs
+	r.GET("/docs", apiHandler.GetDocsHTML)
 
 	// Examples endpoint
 	r.GET("/examples", func(c *gin.Context) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -196,6 +197,42 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 		"Timezone":             location.Timezone,
 	}
 
+	// Enrich forecast days with icon and formatted date
+	enrichedDays := make([]gin.H, len(forecast.Days))
+	for i, day := range forecast.Days {
+		// Parse date for formatting (format as "Mon 2 Jan")
+		dateFormatted := day.Date
+		if t, err := time.Parse("2006-01-02", day.Date); err == nil {
+			dateFormatted = t.Format("Mon 2 Jan")
+		}
+
+		enrichedDays[i] = gin.H{
+			"Date":                     day.Date,
+			"DateFormatted":            dateFormatted,
+			"WeatherCode":              day.WeatherCode,
+			"Icon":                     h.weatherService.GetWeatherIcon(day.WeatherCode, true),
+			"Description":              h.weatherService.GetWeatherDescription(day.WeatherCode),
+			"TempMax":                  day.TempMax,
+			"TempMin":                  day.TempMin,
+			"TempMorn":                 day.TempMin, // Use TempMin as morning temp
+			"FeelsLikeMax":             day.FeelsLikeMax,
+			"FeelsLikeMin":             day.FeelsLikeMin,
+			"Precipitation":            day.Precipitation,
+			"PrecipitationHours":       day.PrecipitationHours,
+			"PrecipitationProbability": day.PrecipitationProbability,
+			"WindSpeedMax":             day.WindSpeedMax,
+			"WindGustsMax":             day.WindGustsMax,
+			"WindDirection":            day.WindDirection,
+			"SolarRadiation":           day.SolarRadiation,
+		}
+	}
+
+	// Create enriched forecast
+	enrichedForecast := gin.H{
+		"Days":     enrichedDays,
+		"Timezone": forecast.Timezone,
+	}
+
 	// Format location for URLs (replace spaces with +)
 	locationFormatted := strings.ReplaceAll(location.ShortName, " ", "+")
 
@@ -204,13 +241,14 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 		"WeatherData": gin.H{
 			"Location": locationData,
 			"Current":  currentData,
-			"Forecast": forecast,
+			"Forecast": enrichedForecast,
 			"Units":    units,
 		},
 		"HostInfo":          utils.GetHostInfo(c),
 		"Location":          location.Name,
 		"LocationFormatted": locationFormatted,
 		"Units":             units,
+		"HideFooter":        false,
 	})
 }
 
