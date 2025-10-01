@@ -119,14 +119,33 @@ func main() {
 		})
 	})
 	r.GET("/debug/ip", func(c *gin.Context) {
-		// IP detection debug
+		// IP detection for My Location button
+		clientIP := utils.GetClientIP(c)
+
+		// Try to get location from IP
+		coords, err := weatherService.GetCoordinatesFromIP(clientIP)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"clientIP": clientIP,
+				"location": gin.H{
+					"value": "", // Empty means fallback to manual entry
+				},
+				"error": err.Error(),
+			})
+			return
+		}
+
+		// Enhance location
+		enhanced := locationEnhancer.EnhanceLocation(coords)
+
 		c.JSON(http.StatusOK, gin.H{
-			"clientIP": c.ClientIP(),
-			"headers": gin.H{
-				"x-forwarded-for": c.GetHeader("X-Forwarded-For"),
-				"x-real-ip":       c.GetHeader("X-Real-IP"),
-				"cf-connecting-ip": c.GetHeader("CF-Connecting-IP"),
-				"user-agent":      c.GetHeader("User-Agent"),
+			"clientIP": clientIP,
+			"location": gin.H{
+				"value": enhanced.ShortName, // e.g., "Albany, NY"
+			},
+			"coordinates": gin.H{
+				"latitude":  coords.Latitude,
+				"longitude": coords.Longitude,
 			},
 		})
 	})
@@ -184,6 +203,10 @@ JSON API:
 	// Web interface routes
 	r.GET("/web", webHandler.ServeWebInterface)
 	r.GET("/web/:location", webHandler.ServeWebInterface)
+
+	// Moon interface routes
+	r.GET("/moon", webHandler.ServeMoonInterface)
+	r.GET("/moon/:location", webHandler.ServeMoonInterface)
 
 	// Initialization check middleware - show loading page if not ready
 	r.Use(func(c *gin.Context) {

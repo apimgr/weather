@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -87,23 +88,45 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 		return
 	}
 
-	location := c.Query("location")
+	// Get location from path parameter or query
+	location := c.Param("location")
+	if location == "" {
+		location = c.Query("location")
+	}
+
+	// Get units from query parameter (default to imperial)
+	units := c.Query("units")
+	if units == "" {
+		units = "imperial"
+	}
+
 	clientIP := utils.GetClientIP(c)
+
+	// If no location specified, show empty moon page
+	if location == "" {
+		c.HTML(http.StatusOK, "moon.html", gin.H{
+			"Title":      "Moon Phase - Console Weather Service",
+			"HostInfo":   utils.GetHostInfo(c),
+			"Location":   "",
+			"Units":      units,
+			"HideFooter": false,
+		})
+		return
+	}
 
 	var coords *services.Coordinates
 	var err error
 
-	if location != "" {
-		coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
-	} else {
-		coords, err = h.weatherService.GetCoordinatesFromIP(clientIP)
-	}
+	coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
 
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "moon.html", gin.H{
-			"title":    "Moon Phase Report - Console Weather Service",
-			"error":    err.Error(),
-			"hostInfo": utils.GetHostInfo(c),
+			"Title":      "Moon Phase - Console Weather Service",
+			"Error":      err.Error(),
+			"HostInfo":   utils.GetHostInfo(c),
+			"Location":   location,
+			"Units":      units,
+			"HideFooter": false,
 		})
 		return
 	}
@@ -114,20 +137,40 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	// TODO: Get moon data from moon service
 	// For now, provide basic structure
 	moonData := gin.H{
-		"location": enhanced,
-		"moon": gin.H{
-			"phase":         "First Quarter",
-			"illumination":  0.5,
-			"icon":          "🌓",
-			"age":           7.4,
+		"Location": gin.H{
+			"Name":         enhanced.FullName,
+			"NameEncoded":  strings.ReplaceAll(enhanced.ShortName, " ", "+"),
+			"Latitude":     coords.Latitude,
+			"Longitude":    coords.Longitude,
+			"Timezone":     coords.Timezone,
+			"Country":      coords.Country,
+			"CountryCode":  coords.CountryCode,
+		},
+		"Moon": gin.H{
+			"Phase":         "First Quarter",
+			"Illumination":  50,
+			"Icon":          "🌓",
+			"Age":           7,
+			"Rise":          "12:00",
+			"Set":           "00:00",
+			"RiseFormatted": "12:00 PM",
+			"SetFormatted":  "12:00 AM",
+		},
+		"Sun": gin.H{
+			"SunriseFormatted":   "6:30 AM",
+			"SunsetFormatted":    "6:30 PM",
+			"SolarNoonFormatted": "12:30 PM",
+			"DayLengthFormatted": "12h 0m",
 		},
 	}
 
 	c.HTML(http.StatusOK, "moon.html", gin.H{
-		"title":    "Moon Phase Report - Console Weather Service",
-		"moonData": moonData,
-		"hostInfo": utils.GetHostInfo(c),
-		"location": location,
+		"Title":      "Moon Phase - " + enhanced.ShortName,
+		"MoonData":   moonData,
+		"HostInfo":   utils.GetHostInfo(c),
+		"Location":   enhanced.ShortName,
+		"Units":      units,
+		"HideFooter": false,
 	})
 }
 

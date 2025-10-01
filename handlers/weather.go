@@ -168,17 +168,49 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 		forecast = &services.Forecast{Days: []services.ForecastDay{}}
 	}
 
+	// Enrich current weather with icon and description
+	currentData := gin.H{
+		"Temperature":   current.Temperature,
+		"FeelsLike":     current.FeelsLike,
+		"Humidity":      current.Humidity,
+		"Pressure":      current.Pressure,
+		"WindSpeed":     current.WindSpeed,
+		"WindDirection": current.WindDirection,
+		"Precipitation": current.Precipitation,
+		"WeatherCode":   current.WeatherCode,
+		"Icon":          h.weatherService.GetWeatherIcon(current.WeatherCode, current.IsDay == 1),
+		"Description":   h.weatherService.GetWeatherDescription(current.WeatherCode),
+	}
+
+	// Format location with population
+	locationData := gin.H{
+		"Name":                 location.Name,
+		"ShortName":            location.ShortName,
+		"FullName":             location.FullName,
+		"Latitude":             location.Latitude,
+		"Longitude":            location.Longitude,
+		"Country":              location.Country,
+		"CountryCode":          location.CountryCode,
+		"Population":           location.Population,
+		"PopulationFormatted":  fmt.Sprintf("%d", location.Population),
+		"Timezone":             location.Timezone,
+	}
+
+	// Format location for URLs (replace spaces with +)
+	locationFormatted := strings.ReplaceAll(location.ShortName, " ", "+")
+
 	c.HTML(http.StatusOK, "weather.html", gin.H{
 		"Title": location.ShortName + " Weather",
 		"WeatherData": gin.H{
-			"Location": location,
-			"Current":  current,
+			"Location": locationData,
+			"Current":  currentData,
 			"Forecast": forecast,
 			"Units":    units,
 		},
-		"hostInfo": utils.GetHostInfo(c),
-		"Location": location.Name,
-		"Units":    units,
+		"HostInfo":          utils.GetHostInfo(c),
+		"Location":          location.Name,
+		"LocationFormatted": locationFormatted,
+		"Units":             units,
 	})
 }
 
@@ -431,12 +463,16 @@ func (h *WeatherHandler) handleMoonRequest(c *gin.Context, locationInput string)
 	location = strings.TrimPrefix(location, "/")
 
 	if isBrowser {
+		// Get units from query parameter
+		units := c.DefaultQuery("units", "imperial")
+
 		// Serve moon HTML page
 		c.HTML(http.StatusOK, "moon.html", gin.H{
 			"Title":    "Moon Phase",
 			"Location": location,
-			"hostInfo": hostInfo,
-			"moonData": nil, // TODO: Calculate moon data
+			"Units":    units,
+			"HostInfo": hostInfo,
+			"MoonData": nil, // TODO: Calculate moon data
 		})
 		return
 	}
