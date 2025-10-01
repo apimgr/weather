@@ -190,13 +190,17 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	// For now, provide basic structure
 	moonData := gin.H{
 		"Location": gin.H{
-			"Name":         enhanced.FullName,
-			"NameEncoded":  strings.ReplaceAll(enhanced.ShortName, " ", "+"),
-			"Latitude":     coords.Latitude,
-			"Longitude":    coords.Longitude,
-			"Timezone":     coords.Timezone,
-			"Country":      coords.Country,
-			"CountryCode":  coords.CountryCode,
+			"Name":                enhanced.Name,
+			"ShortName":           enhanced.ShortName,
+			"FullName":            enhanced.FullName,
+			"NameEncoded":         strings.ReplaceAll(enhanced.ShortName, " ", "+"),
+			"Latitude":            enhanced.Latitude,
+			"Longitude":           enhanced.Longitude,
+			"Timezone":            enhanced.Timezone,
+			"Country":             enhanced.Country,
+			"CountryCode":         enhanced.CountryCode,
+			"Population":          enhanced.Population,
+			"PopulationFormatted": fmt.Sprintf("%d", enhanced.Population),
 		},
 		"Moon": gin.H{
 			"Phase":         "First Quarter",
@@ -217,12 +221,13 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "moon.html", gin.H{
-		"Title":      "Moon Phase - " + enhanced.ShortName,
-		"MoonData":   moonData,
-		"HostInfo":   utils.GetHostInfo(c),
-		"Location":   enhanced.ShortName,
-		"Units":      units,
-		"HideFooter": false,
+		"Title":             "Moon Phase - " + enhanced.ShortName,
+		"MoonData":          moonData,
+		"HostInfo":          utils.GetHostInfo(c),
+		"Location":          enhanced.ShortName,
+		"LocationFormatted": strings.ReplaceAll(enhanced.ShortName, " ", "+"),
+		"Units":             units,
+		"HideFooter":        false,
 	})
 }
 

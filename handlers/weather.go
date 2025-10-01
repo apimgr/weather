@@ -43,14 +43,36 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 	isBrowser := utils.IsBrowser(c)
 	params := utils.ParseWttrParams(c)
 
-	// Get location from IP
+	// Get location from IP and properly resolve it
 	coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
 	if err != nil {
 		h.handleError(c, err, "", isBrowser)
 		return
 	}
 
-	// Enhance location data
+	// First enhancement to get ShortName
+	tempEnhanced := h.locationEnhancer.EnhanceLocation(coords)
+
+	// Parse and resolve the location to get the best match (like moon page does)
+	coords, err = h.weatherService.ParseAndResolveLocation(tempEnhanced.ShortName, clientIP)
+	if err != nil {
+		// Fall back to original coords if parsing fails
+		coords = &services.Coordinates{
+			Latitude:    tempEnhanced.Latitude,
+			Longitude:   tempEnhanced.Longitude,
+			Name:        tempEnhanced.Name,
+			Country:     tempEnhanced.Country,
+			CountryCode: tempEnhanced.CountryCode,
+			Timezone:    tempEnhanced.Timezone,
+			Admin1:      tempEnhanced.Admin1,
+			Admin2:      tempEnhanced.Admin2,
+			Population:  tempEnhanced.Population,
+			FullName:    tempEnhanced.FullName,
+			ShortName:   tempEnhanced.ShortName,
+		}
+	}
+
+	// Final enhancement with the resolved location
 	enhanced := h.locationEnhancer.EnhanceLocation(coords)
 
 	// Determine units (auto-detect based on country if not specified)
