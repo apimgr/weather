@@ -21,7 +21,17 @@
       "Bash(PORT=3050 npm start)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(PORT=3051 npm start)"
+      "Bash(PORT=3051 npm start)",
+      "Bash(go get:*)",
+      "Bash(go mod:*)",
+      "Bash(go build:*)",
+      "Bash(find:*)",
+      "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o weather_optimized main_new.go)",
+      "Bash(kill:*)",
+      "Bash(chmod:*)",
+      "Bash(tree:*)",
+      "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o weather main.go)",
+      "Bash(PORT=3001 ./weather)"
     ],
     "deny": [],
     "ask": []

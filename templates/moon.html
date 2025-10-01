@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌙</text></svg>">
+</head>
+<body>
+    <div class="weather-container">
+        <div class="weather-header">
+            🌙 Moon Phase Report
+        </div>
+
+        <!-- Location Search Form -->
+        <form method="GET" action="/moon" style="margin: 1rem 0;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <input
+                    type="text"
+                    name="location"
+                    class="location-input"
+                    placeholder="Enter location for moon phase"
+                    value="{{.Location}}"
+                    style="flex: 1; max-width: 300px;"
+                    autocomplete="off"
+                >
+                <button type="submit" class="search-button">
+                    🌙 Get Moon Phase
+                </button>
+            </div>
+        </form>
+
+        {{if .MoonData}}
+            <!-- Current Moon Phase -->
+            <div class="current-weather">
+                <div class="weather-icon" style="font-size: 4rem;">
+                    {{.MoonData.Moon.Icon}}
+                </div>
+                <div class="weather-details">
+                    <div class="temperature" style="color: var(--dracula-purple);">
+                        {{.MoonData.Moon.Phase}}
+                    </div>
+                    <div class="description">
+                        {{.MoonData.Moon.Illumination}}% illuminated
+                    </div>
+                    <div class="weather-stats">
+                        <div class="stat">Age: <span class="stat-value">{{.MoonData.Moon.Age}} days</span></div>
+                        <div class="stat">Next Phase: <span class="stat-value">
+                            {{if lt .MoonData.Moon.Age 7}}First Quarter{{else if lt .MoonData.Moon.Age 14}}Full Moon{{else if lt .MoonData.Moon.Age 21}}Last Quarter{{else}}New Moon{{end}}
+                        </span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moon and Sun Times -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <!-- Moon Times -->
+                <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+                    <h3 style="color: var(--dracula-purple); margin-top: 0; text-align: center;">🌙 Lunar Information</h3>
+                    <div style="color: var(--dracula-foreground);">
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Phase:</strong>
+                            <span style="color: var(--dracula-yellow);">{{.MoonData.Moon.Phase}}</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Illumination:</strong>
+                            <span style="color: var(--dracula-green);">{{.MoonData.Moon.Illumination}}%</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Age:</strong>
+                            <span style="color: var(--dracula-pink);">{{.MoonData.Moon.Age}} days</span>
+                        </div>
+                        {{if and .MoonData.Moon.Rise .MoonData.Moon.Set}}
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Moonrise:</strong>
+                            <span style="color: var(--dracula-orange);">{{.MoonData.Moon.RiseFormatted}}</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Moonset:</strong>
+                            <span style="color: var(--dracula-orange);">{{.MoonData.Moon.SetFormatted}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Sun Times -->
+                <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+                    <h3 style="color: var(--dracula-yellow); margin-top: 0; text-align: center;">☀️ Solar Information</h3>
+                    <div style="color: var(--dracula-foreground);">
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Sunrise:</strong>
+                            <span style="color: var(--dracula-yellow);">{{.MoonData.Sun.SunriseFormatted}}</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Sunset:</strong>
+                            <span style="color: var(--dracula-red);">{{.MoonData.Sun.SunsetFormatted}}</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Solar Noon:</strong>
+                            <span style="color: var(--dracula-green);">{{.MoonData.Sun.SolarNoonFormatted}}</span>
+                        </div>
+                        <div style="margin: 0.75rem 0;">
+                            <strong style="color: var(--dracula-cyan);">Day Length:</strong>
+                            <span style="color: var(--dracula-pink);">{{.MoonData.Sun.DayLengthFormatted}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <a href="{{.HostInfo.FullHost}}/{{.MoonData.Location.NameEncoded}}"
+                   style="color: var(--dracula-cyan); text-decoration: none; margin: 0 1rem;">
+                    🌤️ View Weather for {{.MoonData.Location.Name}}
+                </a>
+                <a href="{{.HostInfo.FullHost}}/"
+                   style="color: var(--dracula-pink); text-decoration: none; margin: 0 1rem;">
+                    🏠 Home
+                </a>
+            </div>
+
+        {{else}}
+            <div style="text-align: center; color: var(--dracula-comment); margin: 40px 0;">
+                <h2 style="color: var(--dracula-purple);">🌙 Moon Phase Information</h2>
+                <p>Enter a location above to see moon phase information, or try these examples:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
+                    <a href="?location=London" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇬🇧 London</a>
+                    <a href="?location=Tokyo" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇯🇵 Tokyo</a>
+                    <a href="?location=New York" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇺🇸 New York</a>
+                    <a href="?location=Sydney" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇦🇺 Sydney</a>
+                </div>
+            </div>
+        {{end}}
+
+        {{if not .HideFooter}}
+        <div class="footer">
+            <p>Moon and sun calculations powered by SunCalc • Console Weather Service</p>
+            <p>Console access: <code style="color: var(--dracula-cyan);">{{.HostInfo.FullHost}}/moon</code></p>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>

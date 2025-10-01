@@ -1,38 +1,48 @@
-# Use Node.js LTS (Long Term Support) version
-FROM node:20-alpine
+# Multi-stage build for Go weather service
+FROM golang:1.23-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package*.json ./
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
 
-# Install dependencies
-RUN npm ci --omit=dev && npm cache clean --force
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S weatherapp -u 1001
+# Copy source code
+COPY . .
 
-# Copy application code
-COPY --chown=weatherapp:nodejs . .
+# Build static binary with optimization
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o weather .
 
-# Create necessary directories
-RUN mkdir -p /app/logs && \
-    chown -R weatherapp:nodejs /app
+# Final stage - minimal runtime image
+FROM scratch
 
-# Switch to non-root user
-USER weatherapp
+# Copy timezone data and CA certificates from builder
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Copy templates and static files
+COPY --from=builder /app/templates /templates
+COPY --from=builder /app/static /static
+
+# Copy the binary
+COPY --from=builder /app/weather /weather
+
+# Set working directory
+WORKDIR /
 
 # Expose port
 EXPOSE 3000
 
-# Health check using Kubernetes standard endpoint
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=1 \
-  CMD node -e "const http=require('http'); \
-    http.get('http://localhost:3000/healthz', (res) => { \
-      process.exit(res.statusCode === 200 ? 0 : 1); \
-    }).on('error', () => process.exit(1));"
+# Health check using wget (included in scratch via static binary)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD ["/weather", "healthcheck"]
+
+# Run as non-root user (nobody)
+USER 65534:65534
 
 # Start the application
-CMD ["npm", "start"]
+ENTRYPOINT ["/weather"]
