@@ -119,12 +119,11 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Morning</th>
-                            <th>Noon</th>
-                            <th>Evening</th>
-                            <th>Night</th>
+                            <th>Conditions</th>
+                            <th>Temperature</th>
+                            <th>Feels Like</th>
                             <th>Wind</th>
-                            <th>Rain</th>
+                            <th>Precipitation</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -133,19 +132,19 @@
                         <tr>
                             <td class="day-header">{{$day.DateFormatted}}</td>
                             <td class="forecast-condition">
-                                {{$day.Icon}} <span class="forecast-temp">{{printf "%.0f" $day.TempMorn}}{{if eq $.Units "imperial"}}°F{{else}}°C{{end}}</span>
+                                {{$day.Icon}} {{$day.Description}}
                             </td>
-                            <td class="forecast-condition">
-                                {{$day.Icon}} <span class="forecast-temp">{{printf "%.0f" $day.TempMax}}{{if eq $.Units "imperial"}}°F{{else}}°C{{end}}</span>
+                            <td class="forecast-temp">
+                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                             </td>
-                            <td class="forecast-condition">
-                                {{$day.Icon}} <span class="forecast-temp">{{printf "%.0f" $day.TempEven}}{{if eq $.Units "imperial"}}°F{{else}}°C{{end}}</span>
-                            </td>
-                            <td class="forecast-condition">
-                                {{$day.Icon}} <span class="forecast-temp">{{printf "%.0f" $day.TempMin}}{{if eq $.Units "imperial"}}°F{{else}}°C{{end}}</span>
+                            <td style="color: var(--dracula-comment); font-size: 0.875rem;">
+                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
+                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
                             </td>
                             <td class="wind-info">{{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</td>
-                            <td class="precipitation">{{$day.PrecipitationProbability}}%</td>
+                            <td class="precipitation">{{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</td>
                         </tr>
                         {{end}}
                     {{end}}
@@ -163,11 +162,19 @@
                             <div class="forecast-card-content">
                                 <div class="forecast-main">
                                     <span class="forecast-icon">{{$day.Icon}}</span>
-                                    <span class="forecast-temp">{{printf "%.0f" $day.TempMin}}°-{{printf "%.0f" $day.TempMax}}{{if eq $.Units "imperial"}}°F{{else}}°C{{end}}</span>
+                                    <span class="forecast-temp">
+                                        <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                        <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                        {{if eq $.Units "imperial"}}F{{else}}C{{end}}
+                                    </span>
                                 </div>
-                                <div class="forecast-details">
+                                <div class="forecast-details" style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <div>{{$day.Description}}</div>
                                     <div class="wind-info">💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</div>
-                                    <div class="precipitation">☔ {{$day.PrecipitationProbability}}%</div>
+                                    <div class="precipitation">☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</div>
+                                    {{if gt $day.FeelsLikeMax 0}}
+                                    <div style="color: var(--dracula-comment);">Feels like ↑{{printf "%.0f" $day.FeelsLikeMax}}° ↓{{printf "%.0f" $day.FeelsLikeMin}}°</div>
+                                    {{end}}
                                 </div>
                             </div>
                         </div>

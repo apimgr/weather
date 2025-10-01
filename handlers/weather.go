@@ -132,19 +132,6 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 	// Enhance location data
 	enhanced := h.locationEnhancer.EnhanceLocation(coords)
 
-	// Check if this is a GPS coordinate request from browser
-	// If so, redirect to the resolved city name
-	if isBrowser && isGPS {
-		// URL encode the location name to handle spaces and special chars
-		encodedLocation := strings.ReplaceAll(enhanced.ShortName, " ", "+")
-		redirectURL := "/" + encodedLocation
-		if params.Format > 0 {
-			redirectURL += fmt.Sprintf("?format=%d", params.Format)
-		}
-		c.Redirect(http.StatusFound, redirectURL)
-		return
-	}
-
 	// Determine units
 	units := utils.GetUnits(params, enhanced.CountryCode)
 

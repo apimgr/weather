@@ -42,7 +42,8 @@
       "Bash(~/.local/bin/gh:*)",
       "Bash(~/bin/gh:*)",
       "Bash(cat:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(wget:*)"
     ],
     "deny": [],
     "ask": []

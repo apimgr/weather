@@ -59,7 +59,7 @@
 
                 <div style="margin: 1rem 0;">
                     <strong style="color: var(--dracula-cyan);">Example:</strong><br>
-                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow);">
+                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow); overflow-x: auto; white-space: nowrap;">
                         curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=London,GB
                     </code>
                 </div>
@@ -81,7 +81,7 @@
 
                 <div style="margin: 1rem 0;">
                     <strong style="color: var(--dracula-cyan);">Example:</strong><br>
-                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow);">
+                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow); overflow-x: auto; white-space: nowrap;">
                         curl -q -LSs {{.HostInfo.FullHost}}/api/v1/forecast?location=Tokyo,JP&days=7
                     </code>
                 </div>
@@ -103,7 +103,7 @@
 
                 <div style="margin: 1rem 0;">
                     <strong style="color: var(--dracula-cyan);">Example:</strong><br>
-                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow);">
+                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow); overflow-x: auto; white-space: nowrap;">
                         curl -q -LSs {{.HostInfo.FullHost}}/api/v1/search?q=alb
                     </code>
                 </div>
@@ -126,12 +126,12 @@
 
                 <div style="margin: 1rem 0;">
                     <strong style="color: var(--dracula-cyan);">Format Examples:</strong><br>
-                    <div style="font-family: monospace; margin: 0.5rem 0;">
-                        <code style="color: var(--dracula-yellow);">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=1</code><br>
+                    <div style="font-family: monospace; margin: 0.5rem 0; overflow-x: auto;">
+                        <code style="color: var(--dracula-yellow); white-space: nowrap;">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=1</code><br>
                         <span style="color: var(--dracula-comment);">→ ☁️  +12⁰C</span>
                     </div>
-                    <div style="font-family: monospace; margin: 0.5rem 0;">
-                        <code style="color: var(--dracula-yellow);">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=3</code><br>
+                    <div style="font-family: monospace; margin: 0.5rem 0; overflow-x: auto;">
+                        <code style="color: var(--dracula-yellow); white-space: nowrap;">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=3</code><br>
                         <span style="color: var(--dracula-comment);">→ London, GB: ☁️  +12⁰C</span>
                     </div>
                 </div>
