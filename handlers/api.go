@@ -543,7 +543,7 @@ func (h *APIHandler) GetDocsJSON(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
 	c.JSON(http.StatusOK, gin.H{
-		"service":     "Console Weather Service API",
+		"service":     "Weather API",
 		"version":     "2.0.0",
 		"description": "Free weather API with no API key required",
 		"base_url":    hostInfo.FullHost,
@@ -585,7 +585,7 @@ func (h *APIHandler) GetDocsHTML(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
 	c.HTML(http.StatusOK, "api-docs.html", gin.H{
-		"Title":      "API Documentation - Console Weather Service",
+		"Title":      "API Documentation - Weather",
 		"HostInfo":   hostInfo,
 		"HideFooter": false,
 	})

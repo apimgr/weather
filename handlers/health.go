@@ -61,7 +61,7 @@ func HealthCheck(c *gin.Context) {
 	health := gin.H{
 		"status":    "OK",
 		"timestamp": utils.Now(),
-		"service":   "Console Weather Service",
+		"service":   "Weather",
 		"version":   "2.0.0-go",
 		"uptime":    uptime.String(),
 		"ready":     IsInitialized(),
@@ -115,7 +115,7 @@ func DebugInfo(c *gin.Context) {
 
 	info := gin.H{
 		"service": gin.H{
-			"name":    "Console Weather Service",
+			"name":    "Weather",
 			"version": "2.0.0-go",
 			"uptime":  uptime.String(),
 			"started": status.Started.Format(time.RFC3339),
@@ -170,7 +170,7 @@ func ServeLoadingPage(c *gin.Context) {
 
 	if isCurl {
 		// Console-friendly ASCII output
-		output := fmt.Sprintf(`🚀 Console Weather Service - Starting Up
+		output := fmt.Sprintf(`🚀 Weather - Starting Up
 
 Services Initialization:
   [%s] Countries Database
@@ -200,7 +200,7 @@ Tip: Check status with:
 	hostInfo := utils.GetHostInfo(c)
 
 	c.HTML(http.StatusServiceUnavailable, "loading.html", gin.H{
-		"Title":    "Starting Up - Console Weather Service",
+		"Title":    "Starting Up - Weather",
 		"Status":   status,
 		"Uptime":   uptime.String(),
 		"HostInfo": hostInfo,

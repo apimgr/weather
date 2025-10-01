@@ -366,7 +366,7 @@ func (r *ASCIIRenderer) getWeatherArt(weatherCode int, isDay bool) []string {
 
 // renderFooter renders the footer with attribution
 func (r *ASCIIRenderer) renderFooter(location utils.LocationData) string {
-	footer := colorize("Console Weather Service • Free weather data from Open-Meteo.com", "#6272a4", false)
+	footer := colorize("Weather • Free weather data from Open-Meteo.com", "#6272a4", false)
 	return footer
 }
 

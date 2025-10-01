@@ -397,7 +397,7 @@ func (h *WeatherHandler) handleHelp(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 	baseURL := hostInfo.FullHost
 
-	helpText := fmt.Sprintf(`Console Weather Service
+	helpText := fmt.Sprintf(`Weather
 
 USAGE:
     curl -q -LSs %s/

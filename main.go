@@ -72,7 +72,7 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	// Initialize services
-	log.Println("🚀 Starting Console Weather Service...")
+	log.Println("🚀 Starting Weather...")
 	log.Println("📍 Initializing location databases...")
 
 	locationEnhancer := services.NewLocationEnhancer()
@@ -185,7 +185,7 @@ func main() {
 	// Main /api endpoint - API version information
 	r.GET("/api", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"service": "Console Weather Service API",
+			"service": "Weather API",
 			"version": "2.0.0",
 			"api_versions": []string{
 				"v1",
@@ -278,7 +278,7 @@ JSON API:
 		baseURL += ":" + port
 	}
 
-	log.Printf("🌤️  Console Weather Service starting on port %s\n", port)
+	log.Printf("🌤️  Weather starting on port %s\n", port)
 	log.Printf("📡 API Documentation: %s/api/docs\n", baseURL)
 	log.Printf("💡 Examples: %s/examples\n", baseURL)
 	log.Printf("🏥 Health Check: %s/healthz\n", baseURL)
