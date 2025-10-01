@@ -145,13 +145,10 @@ func (r *ASCIIRenderer) renderForecastTable(forecast []utils.ForecastData, param
 	lines = append(lines, strings.Repeat(" ", dayBoxPadding)+colorize("┌─────────────┐", "#bd93f9", false)+strings.Repeat(" ", 120-dayBoxPadding-13))
 
 	// Date header row with box drawing
-	dateSpaceNeeded := len(dayHeader) + 2
-	leftDateSpace := dateSpaceNeeded / 2
-	rightDateSpace := dateSpaceNeeded - len(dayHeader) - leftDateSpace
-
+	// Simplified: just center the day header without complex spacing
 	lines = append(lines,
 		colorize("┌──────────────────────────────┬───────────────────────┤", "#bd93f9", false)+
-			strings.Repeat(" ", leftDateSpace+1)+colorize(dayHeader, "#ff79c6", false)+strings.Repeat(" ", rightDateSpace+1)+
+			" "+colorize(dayHeader, "#ff79c6", false)+" "+
 			colorize("├───────────────────────┬──────────────────────────────┐", "#bd93f9", false))
 
 	// Time period headers
@@ -228,21 +225,20 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 	precipProb := 0 // Default if not available
 
 	description := day.Condition
-	if len(description) > 12 {
-		description = description[:12]
-	}
+	// Don't truncate - let centerInWidth handle it
 
 	// Create properly aligned content - each line exactly fits the column
 	createPeriodLines := func(temp, feels int, windMod float64) []string {
 		tempLine := fmt.Sprintf("+%d(%d) %s", temp, feels, tempUnit)
 		windLine := fmt.Sprintf("%s %d %s", windDir, int(math.Max(1, float64(windSpeed)*windMod)), speedUnit)
+		precipLine := fmt.Sprintf("%s %s | %d%%", precipitation, precipUnit, precipProb)
 
 		return []string{
 			centerInWidth(colorize(description, "#8be9fd", false), 30),
 			centerInWidth(colorize(tempLine, "#f1fa8c", false), 30),
 			centerInWidth(colorize(windLine, "#50fa7b", false), 30),
 			centerInWidth(colorize("6 mi", "#bd93f9", false), 30),
-			centerInWidth(colorize(precipitation+" "+precipUnit, "#ff79c6", false)+" | "+colorize(fmt.Sprintf("%d%%", precipProb), "#ffb86c", false), 30),
+			centerInWidth(colorize(precipLine, "#ff79c6", false), 30),
 		}
 	}
 
@@ -438,10 +434,22 @@ func padToWidth(text string, width int) string {
 func centerInWidth(text string, width int) string {
 	cleanText := stripAnsiCodes(text)
 	textLength := len(cleanText)
-	totalPadding := width - textLength
-	if totalPadding < 0 {
-		totalPadding = 0
+
+	// If text is too long, truncate it
+	if textLength > width {
+		// Find the color codes in the original text
+		hasColors := strings.Contains(text, "\x1b[")
+		if hasColors {
+			// Extract color prefix and reset code
+			colorStart := text[:strings.Index(text, "m")+1]
+			resetCode := "\x1b[0m"
+			truncated := cleanText[:width]
+			return colorStart + truncated + resetCode
+		}
+		return cleanText[:width]
 	}
+
+	totalPadding := width - textLength
 	leftPadding := totalPadding / 2
 	rightPadding := totalPadding - leftPadding
 

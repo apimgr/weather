@@ -80,15 +80,18 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 		return
 	}
 
-	// Filter invalid paths
-	if h.isInvalidPath(locationInput) {
-		c.String(http.StatusNotFound, "404 Not Found\n")
-		return
-	}
-
 	// Handle moon requests
 	if strings.HasPrefix(strings.ToLower(locationInput), "moon") {
 		h.handleMoonRequest(c, locationInput)
+		return
+	}
+
+	// Allow GPS coordinates (skip invalid path check for coordinates)
+	isGPS := h.isGPSCoordinates(locationInput)
+
+	// Filter invalid paths (but not GPS coordinates)
+	if !isGPS && h.isInvalidPath(locationInput) {
+		c.String(http.StatusNotFound, "404 Not Found\n")
 		return
 	}
 
@@ -106,6 +109,19 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 	// Enhance location data
 	enhanced := h.locationEnhancer.EnhanceLocation(coords)
 
+	// Check if this is a GPS coordinate request from browser
+	// If so, redirect to the resolved city name
+	if isBrowser && isGPS {
+		// URL encode the location name to handle spaces and special chars
+		encodedLocation := strings.ReplaceAll(enhanced.ShortName, " ", "+")
+		redirectURL := "/" + encodedLocation
+		if params.Format > 0 {
+			redirectURL += fmt.Sprintf("?format=%d", params.Format)
+		}
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
 	// Determine units
 	units := utils.GetUnits(params, enhanced.CountryCode)
 
@@ -117,6 +133,21 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 
 	// Console clients get ASCII output
 	h.serveASCIIWeather(c, enhanced, units, params, locationInput)
+}
+
+// isGPSCoordinates checks if a location string is GPS coordinates
+func (h *WeatherHandler) isGPSCoordinates(location string) bool {
+	// Check for pattern: number,number or number, number
+	parts := strings.Split(location, ",")
+	if len(parts) != 2 {
+		return false
+	}
+
+	// Try to parse as floats
+	_, err1 := fmt.Sscanf(strings.TrimSpace(parts[0]), "%f", new(float64))
+	_, err2 := fmt.Sscanf(strings.TrimSpace(parts[1]), "%f", new(float64))
+
+	return err1 == nil && err2 == nil
 }
 
 // serveHTMLWeather renders HTML weather page for browsers
@@ -138,16 +169,16 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	}
 
 	c.HTML(http.StatusOK, "weather.html", gin.H{
-		"title": "Console Weather Service",
-		"weatherData": gin.H{
-			"location": location,
-			"current":  current,
-			"forecast": forecast,
-			"units":    units,
+		"Title": location.ShortName + " Weather",
+		"WeatherData": gin.H{
+			"Location": location,
+			"Current":  current,
+			"Forecast": forecast,
+			"Units":    units,
 		},
 		"hostInfo": utils.GetHostInfo(c),
-		"location": location.Name,
-		"units":    units,
+		"Location": location.Name,
+		"Units":    units,
 	})
 }
 
@@ -392,23 +423,78 @@ w() { wttr "$@"; }
 
 // handleMoonRequest handles moon phase requests
 func (h *WeatherHandler) handleMoonRequest(c *gin.Context, locationInput string) {
-	// TODO: Implement moon phase rendering
-	// For now, return a placeholder
+	hostInfo := utils.GetHostInfo(c)
+	isBrowser := utils.IsBrowser(c)
+
+	// Extract location from moon/location or just moon
+	location := strings.TrimPrefix(strings.ToLower(locationInput), "moon")
+	location = strings.TrimPrefix(location, "/")
+
+	if isBrowser {
+		// Serve moon HTML page
+		c.HTML(http.StatusOK, "moon.html", gin.H{
+			"Title":    "Moon Phase",
+			"Location": location,
+			"hostInfo": hostInfo,
+			"moonData": nil, // TODO: Calculate moon data
+		})
+		return
+	}
+
+	// ASCII moon report
+	cyan := "\x1b[38;2;139;233;253m"
+	yellow := "\x1b[38;2;241;250;140m"
+	purple := "\x1b[38;2;189;147;249m"
+	reset := "\x1b[0m"
+
+	output := fmt.Sprintf(`%sMoon Phase Feature%s
+
+🌙 Moon phase calculations are available via the web interface:
+   %s/moon
+
+For location-specific moon phases:
+   %s/moon/london,gb
+   %s/moon/tokyo,jp
+
+%sComing soon to ASCII interface!%s
+
+Visit %s%s/moon%s for the full moon phase interface.
+`, yellow, reset, hostInfo.FullHost, hostInfo.FullHost, hostInfo.FullHost, purple, reset, cyan, hostInfo.FullHost, reset)
+
 	c.Header("Content-Type", "text/plain; charset=utf-8")
-	c.String(http.StatusNotImplemented, "Moon phase feature coming soon!\n")
+	c.String(http.StatusOK, output)
 }
 
 // isInvalidPath filters out invalid paths that should return 404
 func (h *WeatherHandler) isInvalidPath(path string) bool {
+	// Don't reject paths that look like GPS coordinates
+	if h.isGPSCoordinates(path) {
+		return false
+	}
+
 	invalidPatterns := []string{
 		"wp-", "admin/", ".well-known/", "favicon.ico", "robots.txt",
-		"sitemap", ".php", ".asp", ".jsp", ".cgi", ".js", ".css",
-		".png", ".jpg", ".gif", ".ico", ".svg", ".html", ".xml", ".json",
+		"sitemap", ".php", ".asp", ".jsp", ".cgi",
+	}
+
+	// File extensions (but not decimal points in coordinates)
+	fileExtensions := []string{
+		".js", ".css", ".png", ".jpg", ".gif", ".ico",
+		".svg", ".html", ".xml", ".json",
 	}
 
 	lowerPath := strings.ToLower(path)
+
+	// Check invalid patterns
 	for _, pattern := range invalidPatterns {
 		if strings.Contains(lowerPath, pattern) {
+			return true
+		}
+	}
+
+	// Check file extensions at the end of the path
+	for _, ext := range fileExtensions {
+		if strings.HasSuffix(lowerPath, ext) {
 			return true
 		}
 	}

@@ -31,7 +31,11 @@
       "Bash(chmod:*)",
       "Bash(tree:*)",
       "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o weather main.go)",
-      "Bash(PORT=3001 ./weather)"
+      "Bash(PORT=3001 ./weather)",
+      "Bash(awk:*)",
+      "Bash(xargs:*)",
+      "Bash(killall:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []
