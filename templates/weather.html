@@ -172,7 +172,7 @@
                                     <div>{{$day.Description}}</div>
                                     <div class="wind-info">💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</div>
                                     <div class="precipitation">☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</div>
-                                    {{if gt $day.FeelsLikeMax 0}}
+                                    {{if $day.FeelsLikeMax}}
                                     <div style="color: var(--dracula-comment);">Feels like ↑{{printf "%.0f" $day.FeelsLikeMax}}° ↓{{printf "%.0f" $day.FeelsLikeMin}}°</div>
                                     {{end}}
                                 </div>
