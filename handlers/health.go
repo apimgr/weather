@@ -200,10 +200,10 @@ Tip: Check status with:
 	hostInfo := utils.GetHostInfo(c)
 
 	c.HTML(http.StatusServiceUnavailable, "loading.html", gin.H{
-		"title":    "Starting Up - Console Weather Service",
-		"status":   status,
-		"uptime":   uptime.String(),
-		"hostInfo": hostInfo,
+		"Title":    "Starting Up - Console Weather Service",
+		"Status":   status,
+		"Uptime":   uptime.String(),
+		"HostInfo": hostInfo,
 	})
 }
 
