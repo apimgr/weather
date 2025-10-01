@@ -35,6 +35,18 @@ jobs:
             arch: amd64
             goos: windows
             goarch: amd64
+          - os: windows
+            arch: arm64
+            goos: windows
+            goarch: arm64
+          - os: freebsd
+            arch: amd64
+            goos: freebsd
+            goarch: amd64
+          - os: freebsd
+            arch: arm64
+            goos: freebsd
+            goarch: arm64
 
     steps:
     - name: Checkout
@@ -149,6 +161,9 @@ jobs:
           | macOS | AMD64 (Intel) | `weather-darwin-amd64` |
           | macOS | ARM64 (Apple Silicon) | `weather-darwin-arm64` |
           | Windows | AMD64 | `weather-windows-amd64.exe` |
+          | Windows | ARM64 | `weather-windows-arm64.exe` |
+          | FreeBSD | AMD64 | `weather-freebsd-amd64` |
+          | FreeBSD | ARM64 | `weather-freebsd-arm64` |
 
           ### 🌍 Features
 
