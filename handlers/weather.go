@@ -80,7 +80,7 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 
 	// If browser and no explicit format requested, serve HTML
 	if isBrowser && params.Format == 0 && !params.ForceANSI {
-		h.serveHTMLWeather(c, enhanced, units)
+		h.serveHTMLWeather(c, enhanced, units, enhanced.ShortName)
 		return
 	}
 
@@ -150,7 +150,7 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 
 	// If browser and no explicit format requested, serve HTML
 	if isBrowser && params.Format == 0 && !params.ForceANSI {
-		h.serveHTMLWeather(c, enhanced, units)
+		h.serveHTMLWeather(c, enhanced, units, locationInput)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (h *WeatherHandler) isGPSCoordinates(location string) bool {
 }
 
 // serveHTMLWeather renders HTML weather page for browsers
-func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coordinates, units string) {
+func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coordinates, units string, locationInput string) {
 	// Get current weather and forecast
 	current, err := h.weatherService.GetCurrentWeather(location.Latitude, location.Longitude, units)
 	if err != nil {
@@ -256,7 +256,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	}
 
 	// Format location for URLs (replace spaces with +)
-	locationFormatted := strings.ReplaceAll(location.ShortName, " ", "+")
+	locationFormatted := strings.ReplaceAll(locationInput, " ", "+")
 
 	c.HTML(http.StatusOK, "weather.html", gin.H{
 		"Title": location.ShortName + " Weather",

@@ -41,7 +41,8 @@
       "Bash(/usr/bin/gh:*)",
       "Bash(~/.local/bin/gh:*)",
       "Bash(~/bin/gh:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
