@@ -1,595 +1,880 @@
-# 🤖 Console Weather Service - Complete Implementation Guide
-
-This document provides **complete instructions** for recreating this project from scratch using Claude Code. Follow these steps in order to build an identical weather service.
-
-## 🎯 Project Goal
-
-Build a production-ready weather service in Go that:
-- Provides beautiful ASCII art weather displays for terminals
-- Offers a responsive web interface with Dracula theming
-- Supports wttr.in format compatibility (format=0,1,2,3,4)
-- Features intelligent location detection with 209K+ cities
-- Includes reverse geocoding for GPS coordinates with US state abbreviations
-- Deploys as a single static binary across 8 platforms
-- Initializes in ~3 seconds with automatic readiness detection
-
-## 📋 Prerequisites
-
-Before starting, ensure you have:
-- Go 1.23 or later installed
-- Git for version control
-- Basic understanding of HTTP servers
-- Optional: Docker for containerization
-
-## 🏗️ Step-by-Step Implementation
-
-### Step 1: Initialize Go Project
-
-```bash
-# Create project directory
-mkdir weather && cd weather
-
-# Initialize Go module
-go mod init weather-go
-
-# Create directory structure
-mkdir -p handlers services renderers utils templates static/css static/js
-```
-
-### Step 2: Install Dependencies
-
-```bash
-# Add core dependencies
-go get github.com/gin-gonic/gin@latest
-go get github.com/gin-contrib/cors@latest
-go get github.com/gin-contrib/secure@latest
-```
-
-Your `go.mod` should look like:
-```go
-module weather-go
-
-go 1.23
-
-require (
-    github.com/gin-contrib/cors v1.7.2
-    github.com/gin-contrib/secure v1.0.3
-    github.com/gin-gonic/gin v1.10.0
-)
-```
-
-### Step 3: Create Main Application Entry Point
-
-Create `main.go` with:
-- Gin HTTP server setup
-- Middleware (logging, CORS, security headers)
-- Route definitions
-- Health check endpoints
-- Initialization logic with 2-minute timeout fallback
-
-Key features to implement:
-- Apache2 combined log format
-- Path normalization for double slashes
-- Service initialization callbacks
-- Template loading from `templates/`
-- Static file serving from `static/`
-
-### Step 4: Implement Type Definitions
-
-Create `utils/types.go` with these core types:
-
-```go
-// Coordinates represents a geographic location
-type Coordinates struct {
-    Latitude    float64
-    Longitude   float64
-    Name        string
-    Country     string
-    CountryCode string
-    Timezone    string
-    Admin1      string  // State/Province
-    Admin2      string  // County/Region
-    Population  int
-    FullName    string  // "Summerville, South Carolina, United States"
-    ShortName   string  // "Summerville, SC"
-}
-
-// WeatherParams contains request parameters
-type WeatherParams struct {
-    Location     string
-    Format       int     // 0-4 for wttr.in compatibility
-    Units        string  // "metric" or "imperial"
-    Lang         string
-    NoFooter     bool
-    Quiet        bool
-    OneLineOnly  bool
-}
-
-// InitializationStatus tracks service readiness
-type InitializationStatus struct {
-    Countries bool
-    Cities    bool
-    Weather   bool
-    Started   time.Time
-}
-```
-
-### Step 5: Build Weather Service
-
-Create `services/weather.go` with:
-
-**Core functionality:**
-- Open-Meteo API integration for weather data
-- Geocoding (city name → coordinates)
-- Reverse geocoding (coordinates → city name with Nominatim fallback)
-- Weather code to emoji/description mapping
-- Wind direction calculations
-- Moon phase calculations
-
-**API endpoints used:**
-- `https://geocoding-api.open-meteo.com/v1/search` - Forward geocoding
-- `https://api.open-meteo.com/v1/forecast` - Weather data
-- `https://nominatim.openstreetmap.org/reverse` - Reverse geocoding (fallback)
-
-**Caching:**
-- 10-minute cache for weather data
-- Thread-safe map with RWMutex
-
-### Step 6: Implement Location Enhancer
-
-Create `services/location_enhancer.go` with:
-
-**Features:**
-- Parallel loading of countries and cities databases
-- Coordinate-based matching using Haversine distance
-- US state abbreviation lookup (all 50 states)
-- Canadian province abbreviation lookup
-- Population and timezone enrichment
-- Timing logs for initialization
-
-**External databases:**
-```go
-countriesURL := "https://github.com/apimgr/countries/raw/refs/heads/main/countries.json"
-citiesURL := "https://github.com/apimgr/citylist/raw/refs/heads/master/api/city.list.json"
-```
-
-**Key algorithms:**
-- Haversine distance for coordinate matching
-- Case-insensitive state name normalization
-- Building full vs short location names
-
-### Step 7: Create ASCII Renderers
-
-Create `renderers/ascii.go` for full weather display:
-- Weather header with location name
-- ASCII art weather icons (sun, clouds, rain, etc.)
-- Current conditions table
-- 3-day forecast with hourly details
-- Footer with attribution
-
-Create `renderers/oneline.go` for wttr.in formats:
-- Format 1: `🌙  +14°C`
-- Format 2: `🌙  🌡️+14°C 🌬️↓4km/h`
-- Format 3: `London, GB: 🌙  +14°C`
-- Format 4: `London, GB: 🌙  🌡️+14°C 🌬️↓4km/h`
-
-**ANSI color codes** (Dracula theme):
-```go
-cyan    := "\x1b[38;2;139;233;253m"  // #8BE9FD
-green   := "\x1b[38;2;80;250;123m"   // #50FA7B
-yellow  := "\x1b[38;2;241;250;140m"  // #F1FA8C
-pink    := "\x1b[38;2;255;121;198m"  // #FF79C6
-purple  := "\x1b[38;2;189;147;249m"  // #BD93F9
-reset   := "\x1b[0m"
-```
-
-### Step 8: Build HTTP Handlers
-
-Create `handlers/weather.go`:
-- Root handler (/) with IP-based location detection
-- Location handler (/:location) with format detection
-- Browser vs console detection via User-Agent
-- Parameter parsing (format, units, options)
-
-Create `handlers/api.go`:
-- JSON weather endpoints
-- Forecast endpoints
-- Location search
-- IP detection endpoint
-
-Create `handlers/health.go`:
-- `/healthz` - Main health check with initialization status
-- `/readyz` - Kubernetes readiness probe
-- `/livez` - Kubernetes liveness probe
-- Initialization state management with callbacks
-
-Create `handlers/web.go`:
-- HTML interface renderer
-- Loading page with auto-refresh
-
-### Step 9: Create HTML Templates
-
-Create `templates/weather.html`:
-- Dracula-themed responsive design
-- Location search with autocomplete
-- Unit toggle (°F/°C)
-- Geolocation button
-- Weather display with forecast
-- Mobile-first responsive (320px+)
-
-Create `templates/loading.html`:
-- Coffee cup spinner animation
-- Database loading status indicators
-- 30-second initial delay, then 15-second auto-checks
-- Auto-redirect when service is ready
-- Console-friendly ASCII fallback
-
-Create `templates/api-docs.html`:
-- Interactive API documentation
-- Usage examples
-- Endpoint descriptions
-
-### Step 10: Add Static Assets
-
-Create `static/css/dracula.css`:
-- Dracula color palette
-- CSS variables for theming
-- Responsive utilities
-- Form styling
-- Animation keyframes
-
-Color scheme:
-```css
---dracula-bg: #282a36
---dracula-current-line: #44475a
---dracula-foreground: #f8f8f2
---dracula-comment: #6272a4
---dracula-cyan: #8be9fd
---dracula-green: #50fa7b
---dracula-orange: #ffb86c
---dracula-pink: #ff79c6
---dracula-purple: #bd93f9
---dracula-red: #ff5555
---dracula-yellow: #f1fa8c
-```
-
-### Step 11: Implement Dockerfile
-
-Create multi-stage `Dockerfile`:
-```dockerfile
-FROM golang:1.23-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o weather main.go
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates tzdata
-WORKDIR /root/
-COPY --from=builder /app/weather .
-COPY --from=builder /app/templates ./templates
-COPY --from=builder /app/static ./static
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/healthz || exit 1
-CMD ["./weather"]
-```
-
-### Step 12: Create GitHub Actions Workflow
-
-Create `.github/workflows/release.yml`:
-- Multi-platform build matrix (Linux, macOS, Windows, FreeBSD × AMD64/ARM64)
-- Static binary builds with `CGO_ENABLED=0`
-- Auto-delete existing releases
-- Upload 8 platform binaries
-- Comprehensive release notes
-
-Supported platforms:
-- weather-linux-amd64
-- weather-linux-arm64
-- weather-darwin-amd64
-- weather-darwin-arm64
-- weather-windows-amd64.exe
-- weather-windows-arm64.exe
-- weather-freebsd-amd64
-- weather-freebsd-arm64
-
-### Step 13: Add Build Automation
-
-Create `Makefile`:
-```makefile
-.PHONY: build build-all run dev clean
-
-build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o weather main.go
-
-build-all:
-	# Linux
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-linux-amd64 main.go
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-linux-arm64 main.go
-	# macOS
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-darwin-amd64 main.go
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-darwin-arm64 main.go
-	# Windows
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-windows-amd64.exe main.go
-	GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-windows-arm64.exe main.go
-	# FreeBSD
-	GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-freebsd-amd64 main.go
-	GOOS=freebsd GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dist/weather-freebsd-arm64 main.go
-
-run:
-	PORT=3000 ./weather
-
-dev:
-	GIN_MODE=debug go run main.go
-
-clean:
-	rm -f weather
-	rm -rf dist/
-```
-
-### Step 14: Documentation
-
-Create comprehensive `README.md` with:
-- Quick start for all 8 platforms
-- Usage examples (curl, web browser, JSON API)
-- Format parameters table
-- Location format examples
-- Configuration options
-- Deployment guides (Docker, Kubernetes, systemd)
-- Performance comparison
-- Architecture diagram
-- Contributing guidelines
-
-Create `LICENSE.md` with:
-- MIT License text
-- Third-party attributions (Gin, Open-Meteo, Nominatim, etc.)
-- Data source credits
-- Privacy statement
-- Disclaimer
-
-### Step 15: Configuration Files
-
-Create `.gitignore`:
-```
-# Binaries
-weather
-weather-*
-*.exe
-dist/
-
-# Go
-vendor/
-*.out
-*.test
-
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Development
-*.log
-.env
-```
-
-Create `docker-compose.yml`:
-```yaml
-version: '3.8'
-services:
-  weather:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - GIN_MODE=release
-      - PORT=3000
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-```
-
-## 🔑 Critical Implementation Details
-
-### Database Initialization
-```go
-// In location_enhancer.go
-func (le *LocationEnhancer) loadData() {
-    startTime := time.Now()
-    fmt.Printf("⏱️  Starting database initialization at %s\n", startTime.Format("15:04:05.000"))
-
-    // Load in parallel with timing
-    var wg sync.WaitGroup
-    wg.Add(2)
-
-    go func() {
-        defer wg.Done()
-        countryStart := time.Now()
-        fmt.Println("📥 Loading countries database...")
-        err := le.loadCountriesData()
-        elapsed := time.Since(countryStart)
-        if err != nil {
-            fmt.Printf("❌ Countries database failed after %s: %v\n", elapsed, err)
-        } else {
-            fmt.Printf("✅ Countries database loaded in %s (%d countries)\n", elapsed, len(le.countriesData))
-        }
-    }()
-
-    go func() {
-        defer wg.Done()
-        cityStart := time.Now()
-        fmt.Println("📥 Loading cities database...")
-        err := le.loadCitiesData()
-        elapsed := time.Since(cityStart)
-        if err != nil {
-            fmt.Printf("❌ Cities database failed after %s: %v\n", elapsed, err)
-        } else {
-            fmt.Printf("✅ Cities database loaded in %s (%d cities)\n", elapsed, len(le.citiesData))
-        }
-    }()
-
-    wg.Wait()
-    totalElapsed := time.Since(startTime)
-    fmt.Printf("🎉 Database initialization complete in %s\n", totalElapsed)
-
-    // Notify main that initialization is complete
-    if le.onInitComplete != nil {
-        le.onInitComplete(countriesLoaded, citiesLoaded)
-    }
-}
-```
-
-### State Abbreviation Handling
-```go
-// Must handle both full names and abbreviations
-func (le *LocationEnhancer) getStateAbbreviation(stateName string) string {
-    normalizedState := strings.ToLower(strings.TrimSpace(stateName))
-
-    states := map[string]string{
-        "alabama": "AL", "alaska": "AK", "arizona": "AZ",
-        // ... all 50 states
-    }
-
-    if abbrev, ok := states[normalizedState]; ok {
-        return abbrev
-    }
-    return ""
-}
-```
-
-### Reverse Geocoding with Nominatim Fallback
-```go
-// In weather.go ReverseGeocode function
-// First try Open-Meteo, then fallback to Nominatim
-if len(geocodeResult.Name) == 0 || geocodeResult.Admin1 == "" {
-    nominatimURL := fmt.Sprintf(
-        "https://nominatim.openstreetmap.org/reverse?lat=%.4f&lon=%.4f&format=json",
-        latitude, longitude,
-    )
-    req, _ := http.NewRequest("GET", nominatimURL, nil)
-    req.Header.Set("User-Agent", "WeatherService/2.0")
-    // Parse and use Nominatim data
-}
-```
-
-## 🎨 Design Principles
-
-1. **Initialization Performance**: Load databases in parallel, show timing logs
-2. **Graceful Degradation**: Service works even if databases fail to load
-3. **Auto-Ready Detection**: Loading page checks every 15s and auto-redirects
-4. **State Abbreviations**: GPS coordinates show "SC" not "US" for Summerville
-5. **Multi-Platform**: Static binaries for 8 platforms (no dependencies)
-6. **Health Checks**: Proper HTTP status codes (503 when initializing, 200 when ready)
-7. **Logging**: Detailed initialization timing and Apache2 combined format
-
-## ✅ Testing Checklist
-
-After implementation, test these scenarios:
-
-```bash
-# Build and run
-CGO_ENABLED=0 go build -ldflags="-s -w" -o weather main.go
-PORT=3000 ./weather
-
-# Wait for initialization (watch logs)
-# Should show:
-# ⏱️  Starting database initialization at HH:MM:SS.mmm
-# ✅ Countries database loaded in ~250ms (247 countries)
-# ✅ Cities database loaded in ~2.6s (209579 cities)
-# 🎉 Database initialization complete in ~2.6s
-
-# Test GPS coordinates with state
-curl "http://localhost:3000/33.0285,-80.1551?format=3"
-# Should return: Summerville, SC: 🌙  +69°F
-
-# Test city with state
-curl "http://localhost:3000/Albany,NY?format=3"
-# Should return: Albany, NY: 🌙  +53°F
-
-# Test health check
-curl http://localhost:3000/healthz | jq '.'
-# Should show: "ready": true
-
-# Test loading page
-curl http://localhost:3000/
-# Should redirect to weather page or show loading
-
-# Test formats
-curl "http://localhost:3000/London?format=1"  # Icon + temp
-curl "http://localhost:3000/London?format=2"  # + wind
-curl "http://localhost:3000/London?format=3"  # Location + weather
-curl "http://localhost:3000/London?format=4"  # Full details
-curl "http://localhost:3000/London"           # ASCII art (format=0)
-```
-
-## 📊 Expected Performance
-
-After implementation, you should see:
-- **Startup**: <1 second
-- **DB Init**: ~3 seconds (247 countries + 209,579 cities)
-- **Memory**: ~50MB
-- **Binary Size**: ~20MB
-- **Response Time**: <200ms
-
-## 🚀 Deployment
-
-```bash
-# Tag and release
-git add .
-git commit -m "Complete weather service implementation"
-git tag v2.0.0
-git push origin main
-git push origin v2.0.0
-
-# GitHub Actions will automatically:
-# - Build 8 platform binaries
-# - Create release with binaries
-# - Generate release notes
-```
-
-## 📚 Key Files Summary
-
-| File | Purpose | Lines |
-|------|---------|-------|
-| `main.go` | HTTP server, middleware, routes | ~340 |
-| `handlers/weather.go` | Weather request handlers | ~200 |
-| `handlers/api.go` | JSON API endpoints | ~150 |
-| `handlers/health.go` | Health checks | ~230 |
-| `services/weather.go` | Open-Meteo integration | ~500 |
-| `services/location_enhancer.go` | Database enhancement | ~440 |
-| `renderers/ascii.go` | Full ASCII display | ~400 |
-| `renderers/oneline.go` | Format 1-4 rendering | ~150 |
-| `utils/types.go` | Type definitions | ~100 |
-| `templates/weather.html` | Main web interface | ~300 |
-| `templates/loading.html` | Loading page | ~245 |
-| `.github/workflows/release.yml` | CI/CD builds | ~200 |
-
-**Total**: ~3,000 lines of production-ready Go code
-
-## 🎯 Final Result
-
-Following this guide creates a production-ready weather service that:
-- ✅ Starts in <1 second
-- ✅ Initializes databases in ~3 seconds
-- ✅ Serves weather for 209K+ cities
-- ✅ Shows correct US state abbreviations
-- ✅ Provides 8 platform binaries
-- ✅ Auto-detects when ready
-- ✅ Handles 100+ requests/second
-- ✅ Uses 50MB memory
-- ✅ Deploys as single binary
-
-**Developed with Claude Code** - This entire system was created through AI-assisted development, demonstrating the power of collaborative programming with Claude.
+# 🌤️ Weather Service - Complete Platform Documentation
+
+## 📚 Table of Contents
+
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Features](#features)
+4. [Technology Stack](#technology-stack)
+5. [Directory Structure](#directory-structure)
+6. [Database Schema](#database-schema)
+7. [Authentication System](#authentication-system)
+8. [API Documentation](#api-documentation)
+9. [CLI Commands](#cli-commands)
+10. [Configuration](#configuration)
+11. [Deployment](#deployment)
+12. [Development](#development)
 
 ---
 
-*Last Updated: 2024 | Version: 2.0.0 | Go Edition*
+## Overview
+
+Weather Service is a comprehensive weather platform built in Go that provides:
+- **Beautiful weather forecasts** with ASCII art for terminals
+- **Web dashboard** with Dracula theme
+- **User authentication** with admin and user roles
+- **SQLite database** for data persistence
+- **Saved locations** with weather alerts
+- **API token system** with rate limiting
+- **Hurricane tracking** using NOAA data
+- **Earthquake monitoring** using USGS data
+- **Moon phase calculations**
+- **PWA support** for offline functionality
+- **Built-in scheduler** for periodic tasks
+- **Notification system** with in-app alerts
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Client Layer                          │
+│  ┌────────────┐  ┌────────────┐  ┌────────────────┐    │
+│  │ Web Browser│  │   CLI/curl │  │  Mobile (PWA)  │    │
+│  └─────┬──────┘  └─────┬──────┘  └────────┬───────┘    │
+└────────┼───────────────┼──────────────────┼─────────────┘
+         │               │                  │
+         └───────────────┼──────────────────┘
+                         │
+┌────────────────────────▼─────────────────────────────────┐
+│                  Gin HTTP Server                          │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Middleware Stack                                  │    │
+│  │  - Apache Combined Logging                        │    │
+│  │  - CORS                                           │    │
+│  │  - Security Headers (CSP, X-Frame-Options)        │    │
+│  │  - Session Authentication                         │    │
+│  │  - Rate Limiting (120/hr anon, 1200/hr auth)      │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │   Handlers   │  │   Services   │  │  Renderers   │  │
+│  │              │  │              │  │              │  │
+│  │ • Weather    │  │ • Weather    │  │ • ASCII      │  │
+│  │ • Auth       │  │ • Hurricane  │  │ • HTML       │  │
+│  │ • Admin      │  │ • Earthquake │  │ • JSON       │  │
+│  │ • API        │  │ • Location   │  │ • OneLineFmt │  │
+│  │ • Health     │  │ • Geocoding  │  │              │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+└───────────────────────────────────────────────────────────┘
+                         │
+┌────────────────────────▼─────────────────────────────────┐
+│                 Data Layer                                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │   SQLite DB  │  │ External APIs│  │    Caches    │  │
+│  │              │  │              │  │              │  │
+│  │ • users      │  │ • Open-Meteo │  │ • Weather    │  │
+│  │ • locations  │  │ • NOAA NHC   │  │ • Geocoding  │  │
+│  │ • api_tokens │  │ • USGS       │  │ • Hurricane  │  │
+│  │ • sessions   │  │ • Nominatim  │  │              │  │
+│  │ • alerts     │  │ • City DB    │  │              │  │
+│  │ • logs       │  │              │  │              │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+└───────────────────────────────────────────────────────────┘
+                         │
+┌────────────────────────▼─────────────────────────────────┐
+│               Background Tasks (Scheduler)                │
+│  • Session cleanup (every 6 hours)                        │
+│  • Weather alerts check (every 15 minutes)                │
+│  • Database backup (daily at 3 AM)                        │
+│  • Token expiration cleanup (hourly)                      │
+└───────────────────────────────────────────────────────────┘
+```
+
+## Features
+
+### Core Weather Features
+- **Current Weather**: Temperature, conditions, wind, humidity
+- **3-Day Forecast**: Hourly breakdowns with highs/lows
+- **Moon Phases**: Current phase, illumination percentage
+- **Hurricanes**: Active cyclone tracking from NOAA
+- **Earthquakes**: Recent seismic activity from USGS
+- **wttr.in Compatibility**: Formats 0-4 supported
+
+### Authentication & Users
+- **Email/Password Auth**: bcrypt hashed passwords
+- **Session Management**: Secure cookie-based sessions
+- **Role System**: Admin and User roles
+- **First-Run Wizard**: Automatic admin account creation
+- **Password Reset**: Secure reset flow
+- **User Profiles**: Customizable display names
+
+### Admin Dashboard
+- **User Management**: Create, edit, delete users
+- **API Token Management**: Generate, revoke, monitor tokens
+- **System Settings**: Configure alerts, rate limits
+- **Activity Logs**: Track user actions and API usage
+- **Server Status**: Real-time metrics and health
+- **Database Stats**: User count, locations, tokens
+
+### Saved Locations
+- **Personal Library**: Save favorite locations
+- **Weather Alerts**: Automatic notifications for severe weather
+- **Quick Access**: Dashboard with all saved locations
+- **Customizable**: Add nicknames to locations
+
+### API System
+- **RESTful JSON API**: `/api/weather`, `/api/forecast`
+- **Token Authentication**: Show-once secure tokens
+- **Rate Limiting**: Per-token and per-IP limits
+- **API Documentation**: Interactive `/api/docs`
+
+### PWA Support
+- **Offline Mode**: Service worker caching
+- **Install Prompt**: Add to home screen
+- **App Shortcuts**: Quick access to features
+- **Push Notifications**: Weather alerts (future)
+
+## Technology Stack
+
+### Backend
+- **Language**: Go 1.23+
+- **Framework**: Gin (HTTP router)
+- **Database**: SQLite (modernc.org/sqlite - pure Go)
+- **Sessions**: gorilla/sessions
+- **Password**: bcrypt
+
+### Frontend
+- **CSS Framework**: Custom Dracula theme
+- **JavaScript**: Vanilla JS (no framework)
+- **PWA**: Service Worker + Manifest
+- **Icons**: Emoji-based weather icons
+
+### External APIs
+- **Weather**: Open-Meteo (free, no API key)
+- **Geocoding**: Open-Meteo + Nominatim (fallback)
+- **Hurricanes**: NOAA National Hurricane Center
+- **Earthquakes**: USGS Earthquake Catalog
+- **Location Data**: 209K+ cities from apimgr/citylist
+
+### Infrastructure
+- **Build**: Go build with CGO_ENABLED=0
+- **Container**: Docker multi-stage (scratch base)
+- **Orchestration**: Docker Compose
+- **CI/CD**: GitHub Actions (8 platforms)
+
+## Directory Structure
+
+```
+weather/
+├── main.go                    # Application entry point
+├── go.mod                     # Go dependencies
+├── go.sum                     # Dependency checksums
+├── Makefile                   # Build automation
+├── Dockerfile                 # Container image
+├── docker-compose.yml         # Docker orchestration
+├── .env.example              # Environment template
+├── CLAUDE.md                  # This file
+├── README.md                  # User documentation
+│
+├── handlers/                  # HTTP request handlers
+│   ├── weather.go            # Weather endpoints
+│   ├── api.go                # JSON API
+│   ├── health.go             # Health checks
+│   └── web.go                # Web interface
+│
+├── services/                  # Business logic
+│   ├── weather.go            # Weather service
+│   ├── hurricane.go          # Hurricane tracking
+│   ├── earthquake.go         # Earthquake monitoring
+│   └── location_enhancer.go  # Geocoding enhancement
+│
+├── renderers/                 # Output formatters
+│   ├── ascii.go              # Terminal ASCII art
+│   ├── oneline.go            # wttr.in formats
+│   └── html.go               # Web templates
+│
+├── utils/                     # Utilities
+│   ├── types.go              # Data structures
+│   ├── params.go             # Request parsing
+│   └── helpers.go            # Helper functions
+│
+├── src/                       # Application modules
+│   ├── database/             # Database layer
+│   │   ├── schema.go         # Schema + migrations
+│   │   └── queries.go        # Database queries
+│   │
+│   ├── handlers/             # Auth handlers
+│   │   ├── auth.go           # Login/logout
+│   │   ├── register.go       # Registration
+│   │   ├── admin.go          # Admin panel
+│   │   └── dashboard.go      # User dashboard
+│   │
+│   ├── middleware/           # Custom middleware
+│   │   ├── auth.go           # Auth checking
+│   │   └── ratelimit.go      # Rate limiting
+│   │
+│   └── scheduler/            # Background tasks
+│       └── scheduler.go      # Task scheduler
+│
+├── templates/                 # HTML templates
+│   ├── weather.html          # Main weather page
+│   ├── loading.html          # Initialization page
+│   ├── login.html            # Login form
+│   ├── register.html         # Registration
+│   ├── dashboard.html        # User dashboard
+│   ├── admin.html            # Admin panel
+│   └── api-docs.html         # API documentation
+│
+├── static/                    # Static assets
+│   ├── css/
+│   │   └── dracula.css       # Dracula theme
+│   ├── js/
+│   │   └── sw.js             # Service worker
+│   ├── manifest.json         # PWA manifest
+│   └── images/               # Icons
+│
+├── scripts/                   # Installation scripts
+│   ├── install.sh            # Universal installer
+│   ├── linux.sh              # Linux + systemd
+│   ├── macos.sh              # macOS + LaunchAgent
+│   └── windows.ps1           # Windows + NSSM
+│
+└── data/                      # Runtime data
+    └── weather.db            # SQLite database
+```
+
+## Database Schema
+
+### Tables (11 total)
+
+#### 1. `users`
+Stores user accounts with authentication
+
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    display_name TEXT,
+    role TEXT DEFAULT 'user',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login DATETIME,
+    is_active BOOLEAN DEFAULT 1
+);
+```
+
+#### 2. `sessions`
+Manages user sessions
+
+```sql
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+#### 3. `locations`
+User's saved locations
+
+```sql
+CREATE TABLE locations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    nickname TEXT,
+    alerts_enabled BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+#### 4. `api_tokens`
+API authentication tokens
+
+```sql
+CREATE TABLE api_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    scopes TEXT,
+    rate_limit INTEGER DEFAULT 1200,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME,
+    last_used DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+#### 5. `alerts`
+Weather alert notifications
+
+```sql
+CREATE TABLE alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    location_id INTEGER NOT NULL,
+    alert_type TEXT NOT NULL,
+    severity TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME,
+    acknowledged BOOLEAN DEFAULT 0,
+    FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+);
+```
+
+#### 6. `notifications`
+In-app notifications
+
+```sql
+CREATE TABLE notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT DEFAULT 'info',
+    read BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+#### 7. `settings`
+System configuration
+
+```sql
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 8. `activity_logs`
+User action tracking
+
+```sql
+CREATE TABLE activity_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    action TEXT NOT NULL,
+    details TEXT,
+    ip_address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+#### 9. `api_usage`
+API request metrics
+
+```sql
+CREATE TABLE api_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_id INTEGER,
+    endpoint TEXT NOT NULL,
+    method TEXT NOT NULL,
+    status_code INTEGER,
+    response_time INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (token_id) REFERENCES api_tokens(id) ON DELETE SET NULL
+);
+```
+
+#### 10. `weather_cache`
+Weather data caching
+
+```sql
+CREATE TABLE weather_cache (
+    location_key TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    cached_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL
+);
+```
+
+#### 11. `scheduled_tasks`
+Scheduler task tracking
+
+```sql
+CREATE TABLE scheduled_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_name TEXT NOT NULL,
+    last_run DATETIME,
+    next_run DATETIME,
+    status TEXT DEFAULT 'pending',
+    error_message TEXT
+);
+```
+
+## Authentication System
+
+### Password Security
+- **Hashing**: bcrypt with cost factor 10
+- **Validation**: Min 8 chars, complexity checks
+- **Storage**: Never store plaintext passwords
+
+### Session Management
+- **Storage**: SQLite + gorilla/sessions
+- **Duration**: 7 days default
+- **Security**: HTTP-only cookies, SameSite=Lax
+- **Cleanup**: Automatic expiration via scheduler
+
+### Role System
+- **Admin**: Full access (user mgmt, settings, logs)
+- **User**: Limited access (own data, saved locations)
+
+### First-Run Setup
+1. Check for existing users on startup
+2. If none found, show registration wizard
+3. First user automatically gets admin role
+4. Subsequent users default to 'user' role
+
+## API Documentation
+
+### Weather Endpoints
+
+#### Get Current Weather
+```
+GET /api/weather?location={location}
+```
+
+**Response**:
+```json
+{
+  "location": {
+    "name": "New York, NY",
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "timezone": "America/New_York"
+  },
+  "current": {
+    "temperature": 72,
+    "condition": "Partly Cloudy",
+    "icon": "⛅",
+    "wind_speed": 8,
+    "humidity": 65,
+    "timestamp": "2024-10-02T14:30:00Z"
+  }
+}
+```
+
+#### Get Forecast
+```
+GET /api/forecast?location={location}&days=3
+```
+
+#### Get Moon Phase
+```
+GET /api/moon
+```
+
+#### Get Hurricanes
+```
+GET /api/hurricanes
+```
+
+#### Get Earthquakes
+```
+GET /api/earthquakes?mag=2.5&days=7
+```
+
+### Authentication Required
+
+All `/api/v1/*` endpoints require token:
+```
+Authorization: Bearer {token}
+```
+
+### Rate Limits
+- Anonymous: 120 requests/hour
+- Authenticated: 1200 requests/hour
+- Token-based: Custom per token
+
+## CLI Commands
+
+### Basic Commands
+
+```bash
+# Show version
+./weather --version
+
+# Show server status
+./weather --status
+
+# Run health check (Docker)
+./weather --healthcheck
+```
+
+### Configuration Overrides
+
+```bash
+# Override port
+./weather --port 8080
+
+# Override database path
+./weather --data /path/to/db
+
+# Override listen address
+./weather --address 127.0.0.1
+```
+
+### Examples
+
+```bash
+# Start on port 8080 with custom database
+./weather --port 8080 --data /var/lib/weather/data.db
+
+# Check status with custom config
+./weather --data /custom/path.db --status
+```
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# Server
+PORT=3000
+GIN_MODE=release
+SERVER_ADDRESS=0.0.0.0
+
+# Database
+DATABASE_PATH=/data/weather.db
+
+# Security
+SESSION_SECRET=your-secure-random-string
+
+# Logging
+LOG_LEVEL=info
+
+# Features
+RATE_LIMIT_ANON=120
+RATE_LIMIT_AUTH=1200
+```
+
+### Configuration Files
+
+Create `.env` from `.env.example`:
+```bash
+cp .env.example .env
+# Edit .env with your values
+```
+
+### Security Best Practices
+
+1. **Always set SESSION_SECRET** in production
+   ```bash
+   SESSION_SECRET=$(openssl rand -base64 32)
+   ```
+
+2. **Use HTTPS** with reverse proxy (Nginx/Caddy)
+
+3. **Restrict database permissions**
+   ```bash
+   chmod 600 /data/weather.db
+   ```
+
+4. **Enable firewall** and limit exposed ports
+
+## Deployment
+
+### Docker
+
+```bash
+# Build image
+docker build -t weather:latest .
+
+# Run container
+docker run -d \
+  -p 3000:3000 \
+  -v weather-data:/data \
+  -e SESSION_SECRET=$(openssl rand -base64 32) \
+  weather:latest
+```
+
+### Docker Compose
+
+```bash
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+### Systemd (Linux)
+
+```bash
+# Install
+sudo ./scripts/linux.sh
+
+# Manage service
+sudo systemctl start weather
+sudo systemctl enable weather
+sudo systemctl status weather
+```
+
+### LaunchAgent (macOS)
+
+```bash
+# Install
+./scripts/macos.sh
+
+# Manage service
+launchctl load ~/Library/LaunchAgents/com.apimgr.weather.plist
+launchctl unload ~/Library/LaunchAgents/com.apimgr.weather.plist
+```
+
+### Windows Service
+
+```powershell
+# Install (requires NSSM)
+.\scripts\windows.ps1 -InstallService
+
+# Manage service
+nssm start Weather
+nssm stop Weather
+```
+
+## Development
+
+### Prerequisites
+
+- Go 1.23+
+- Make (optional)
+- Docker (optional)
+
+### Build
+
+```bash
+# Development build
+make dev
+
+# Production build
+make build
+
+# All platforms
+make build-all
+```
+
+### Run Locally
+
+```bash
+# Development mode (auto-reload)
+GIN_MODE=debug go run main.go
+
+# Production mode
+make run
+```
+
+### Testing
+
+```bash
+# Run tests
+go test ./...
+
+# With coverage
+go test -cover ./...
+
+# Specific package
+go test ./services/...
+```
+
+### Database Migrations
+
+Migrations run automatically on startup. Manual execution:
+
+```bash
+# Run migrations
+./weather --data ./test.db
+```
+
+### Adding Features
+
+1. **New Endpoint**:
+   - Add handler in `handlers/`
+   - Register route in `main.go`
+   - Update API docs
+
+2. **New Database Table**:
+   - Add schema to `src/database/schema.go`
+   - Increment schema version
+   - Add migration logic
+
+3. **New External API**:
+   - Create service in `services/`
+   - Add caching layer
+   - Handle errors gracefully
+
+### Code Style
+
+```bash
+# Format code
+make fmt
+
+# Lint code
+make lint
+
+# Run pre-commit checks
+make test
+```
+
+## Production Checklist
+
+- [ ] Set SESSION_SECRET environment variable
+- [ ] Use HTTPS with valid SSL certificate
+- [ ] Configure firewall rules
+- [ ] Set up regular database backups
+- [ ] Enable systemd/launchd service
+- [ ] Configure log rotation
+- [ ] Set up monitoring (health checks)
+- [ ] Review rate limits
+- [ ] Restrict admin access
+- [ ] Test disaster recovery
+
+## Troubleshooting
+
+### Database Locked
+
+```bash
+# Check for stale connections
+./weather --status
+
+# Restart service
+systemctl restart weather
+```
+
+### High Memory Usage
+
+```bash
+# Check cache size
+sqlite3 data/weather.db "SELECT COUNT(*) FROM weather_cache;"
+
+# Clear old cache
+sqlite3 data/weather.db "DELETE FROM weather_cache WHERE expires_at < datetime('now');"
+```
+
+### Rate Limit Issues
+
+```bash
+# Check current limits
+./weather --status
+
+# Adjust in .env
+RATE_LIMIT_AUTH=5000
+```
+
+## API Client Examples
+
+### cURL
+
+```bash
+# Get weather
+curl "http://localhost:3000/api/weather?location=NYC"
+
+# With API token
+curl -H "Authorization: Bearer your-token" \
+  "http://localhost:3000/api/v1/forecast?location=NYC&days=7"
+```
+
+### Python
+
+```python
+import requests
+
+# Anonymous
+r = requests.get('http://localhost:3000/api/weather?location=NYC')
+print(r.json())
+
+# Authenticated
+headers = {'Authorization': 'Bearer your-token'}
+r = requests.get('http://localhost:3000/api/v1/forecast?location=NYC', headers=headers)
+print(r.json())
+```
+
+### JavaScript
+
+```javascript
+// Fetch weather
+fetch('http://localhost:3000/api/weather?location=NYC')
+  .then(r => r.json())
+  .then(data => console.log(data));
+
+// With token
+fetch('http://localhost:3000/api/v1/forecast?location=NYC', {
+  headers: { 'Authorization': 'Bearer your-token' }
+})
+  .then(r => r.json())
+  .then(data => console.log(data));
+```
+
+## Performance Optimization
+
+### Caching Strategy
+
+- **Weather Data**: 10 minutes
+- **Geocoding**: 1 hour
+- **Hurricane Data**: 15 minutes
+- **Static Assets**: Browser cache 1 day
+
+### Database Optimization
+
+```sql
+-- Indexes for common queries
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_locations_user_id ON locations(user_id);
+CREATE INDEX idx_tokens_token ON api_tokens(token);
+CREATE INDEX idx_notifications_user_read ON notifications(user_id, read);
+```
+
+### Resource Limits
+
+```yaml
+# docker-compose.yml
+deploy:
+  resources:
+    limits:
+      cpus: '1'
+      memory: 256M
+    reservations:
+      cpus: '0.5'
+      memory: 128M
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Add tests
+5. Update documentation
+6. Submit pull request
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Support
+
+- **Issues**: https://github.com/apimgr/weather/issues
+- **Discussions**: https://github.com/apimgr/weather/discussions
+- **Email**: support@example.com
+
+---
+
+**Built with ❤️**
+
+*Last Updated: 2024-10-02*
+*Version: 3.0.0*

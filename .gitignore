@@ -231,3 +231,11 @@ dist/
 
 # Vendor directory
 vendor/
+
+# Ignore docker mounts
+data
+rootfs
+
+# Ignore the TODO.md
+TODO.md
+

@@ -14,11 +14,36 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build static binary with optimization
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o weather .
+# Build args for version information
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Build static binary with optimization and version info
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${VCS_REF}" \
+    -o weather .
 
 # Final stage - minimal runtime image
 FROM scratch
+
+# OCI Standard Labels
+LABEL org.opencontainers.image.title="Weather Service" \
+      org.opencontainers.image.description="Beautiful weather forecasts, moon phases, earthquakes, and hurricane tracking with authentication and admin dashboard" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.authors="Weather Service Contributors" \
+      org.opencontainers.image.url="https://github.com/apimgr/weather" \
+      org.opencontainers.image.source="https://github.com/apimgr/weather" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.documentation="https://github.com/apimgr/weather/blob/main/README.md"
+
+# Application-specific labels
+LABEL app.weather.features="authentication,database,admin-ui,saved-locations,api-tokens,scheduler,notifications,weather-alerts,hurricane-tracking,pwa" \
+      app.weather.database="sqlite" \
+      app.weather.framework="gin" \
+      app.weather.theme="dracula"
 
 # Copy timezone data and CA certificates from builder
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
@@ -34,15 +59,27 @@ COPY --from=builder /app/weather /weather
 # Set working directory
 WORKDIR /
 
+# Environment variables with defaults
+ENV PORT=3000 \
+    GIN_MODE=release \
+    DATABASE_PATH=/data/weather.db \
+    SESSION_SECRET="" \
+    TZ=UTC
+
 # Expose port
 EXPOSE 3000
 
-# Health check using wget (included in scratch via static binary)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD ["/weather", "healthcheck"]
+# Create data directory and set permissions
+# Note: In production, mount a volume to /data for persistence
+VOLUME ["/data"]
 
-# Run as non-root user (nobody)
+# Health check - uses built-in healthcheck endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["/weather", "--healthcheck"] || exit 1
+
+# Run as non-root user (nobody:nogroup)
 USER 65534:65534
 
 # Start the application
 ENTRYPOINT ["/weather"]
+CMD []

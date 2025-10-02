@@ -1,24 +1,130 @@
-# Production configuration
-name: weather
-services:
-  app:
-    image: casjaysdevdocker/weather:latest
-    container_name: weather-app
-    restart: always
-    pull_policy: always
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - weather
+# Weather Service - Docker Compose Configuration
+# Supports both development and production deployments
 
-networks:
+version: '3.8'
+
+services:
   weather:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
+        VCS_REF: ${VCS_REF:-$(git rev-parse --short HEAD)}
+    image: weather:${VERSION:-latest}
+    container_name: weather-service
+    restart: unless-stopped
+
+    # Port mapping
+    ports:
+      - "${PORT:-3000}:3000"
+
+    # Environment variables
+    environment:
+      # Server configuration
+      - PORT=3000
+      - GIN_MODE=${GIN_MODE:-release}
+
+      # Database configuration
+      - DATABASE_PATH=/data/weather.db
+
+      # Authentication (generate a secure random secret in production)
+      - SESSION_SECRET=${SESSION_SECRET:-}
+
+      # Timezone
+      - TZ=${TZ:-UTC}
+
+      # Optional: Custom log level
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+    # Volume mounts for persistence
+    volumes:
+      - weather-data:/data
+      - ./templates:/templates:ro  # Read-only templates (dev mode)
+      - ./static:/static:ro        # Read-only static files (dev mode)
+
+    # Health check
+    healthcheck:
+      test: ["/weather", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+        reservations:
+          cpus: '0.5'
+          memory: 128M
+
+    # Network configuration
+    networks:
+      - weather-network
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M,mode=1777
+
+    # Labels for organization
+    labels:
+      - "com.weather.app=weather-service"
+      - "com.weather.version=${VERSION:-dev}"
+      - "com.weather.environment=${ENVIRONMENT:-development}"
+
+# Named volumes for data persistence
+volumes:
+  weather-data:
+    driver: local
+    labels:
+      - "com.weather.volume=database"
+
+# Network configuration
+networks:
+  weather-network:
     driver: bridge
-    external: false
+    labels:
+      - "com.weather.network=main"
+
+# Additional services (optional - uncomment if needed)
+
+#  # Nginx reverse proxy (optional)
+#  nginx:
+#    image: nginx:alpine
+#    container_name: weather-nginx
+#    restart: unless-stopped
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#      - ./ssl:/etc/nginx/ssl:ro
+#    depends_on:
+#      - weather
+#    networks:
+#      - weather-network
+
+#  # Backup service (optional)
+#  backup:
+#    image: alpine:latest
+#    container_name: weather-backup
+#    volumes:
+#      - weather-data:/data:ro
+#      - ./backups:/backups
+#    command: |
+#      sh -c '
+#        while true; do
+#          tar czf /backups/weather-$(date +%Y%m%d-%H%M%S).tar.gz /data
+#          find /backups -name "weather-*.tar.gz" -mtime +7 -delete
+#          sleep 86400
+#        done
+#      '
+#    networks:
+#      - weather-network

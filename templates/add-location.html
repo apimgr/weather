@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--dracula-bg);
+            color: var(--dracula-foreground);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .back-link {
+            color: var(--dracula-cyan);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .form-card {
+            background: var(--dracula-current-line);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dracula-foreground);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dracula-bg);
+            border: 1px solid var(--dracula-comment);
+            border-radius: 4px;
+            color: var(--dracula-foreground);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--dracula-purple);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: var(--dracula-comment);
+            font-size: 0.85rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--dracula-pink);
+        }
+
+        .btn-secondary {
+            background: var(--dracula-comment);
+            color: var(--dracula-foreground);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dracula-cyan);
+        }
+
+        .btn-gps {
+            background: var(--dracula-green);
+            color: var(--dracula-bg);
+            margin-bottom: 1rem;
+        }
+
+        .btn-gps:hover {
+            background: var(--dracula-cyan);
+        }
+
+        .error-message {
+            background: rgba(255, 85, 85, 0.1);
+            border: 1px solid var(--dracula-red);
+            color: var(--dracula-red);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .success-message {
+            background: rgba(80, 250, 123, 0.1);
+            border: 1px solid var(--dracula-green);
+            color: var(--dracula-green);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>Add New Location</h1>
+            <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+        </div>
+
+        <div class="form-card">
+            <div id="message"></div>
+
+            <button class="btn btn-gps" onclick="useCurrentLocation()">📍 Use Current Location</button>
+
+            <form id="locationForm">
+                <div class="form-group">
+                    <label for="name">Location Name</label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., Home, Office, Beach House">
+                    <small>Give this location a memorable name</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" name="latitude" step="0.000001" min="-90" max="90" required placeholder="40.7128">
+                    <small>Between -90 and 90</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" name="longitude" step="0.000001" min="-180" max="180" required placeholder="-74.0060">
+                    <small>Between -180 and 180</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="timezone">Timezone (Optional)</label>
+                    <input type="text" id="timezone" name="timezone" placeholder="America/New_York">
+                    <small>IANA timezone identifier</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Location</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/dashboard'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('locationForm');
+        const messageDiv = document.getElementById('message');
+
+        function useCurrentLocation() {
+            if (!navigator.geolocation) {
+                showMessage('Geolocation is not supported by your browser', 'error');
+                return;
+            }
+
+            showMessage('Getting your location...', 'success');
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                    showMessage('Location detected! Please add a name.', 'success');
+                },
+                (error) => {
+                    showMessage('Unable to get your location: ' + error.message, 'error');
+                }
+            );
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                name: document.getElementById('name').value,
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                timezone: document.getElementById('timezone').value || ''
+            };
+
+            try {
+                const response = await fetch('/api/locations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showMessage('Location saved successfully! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Failed to save location', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        });
+
+        function showMessage(text, type) {
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

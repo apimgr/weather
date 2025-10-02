@@ -1,0 +1,299 @@
+package handlers
+
+import (
+	"database/sql"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"weather-go/src/middleware"
+	"weather-go/src/models"
+
+	"github.com/gin-gonic/gin"
+)
+
+type AuthHandler struct {
+	DB *sql.DB
+}
+
+// LoginRequest represents login request payload
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+// RegisterRequest represents registration request payload
+type RegisterRequest struct {
+	Email           string `json:"email" binding:"required,email"`
+	Password        string `json:"password" binding:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required"`
+}
+
+// ShowLoginPage renders the login page
+func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
+	// Check if already authenticated
+	if middleware.IsAuthenticated(c) {
+		c.Redirect(http.StatusFound, "/dashboard")
+		return
+	}
+
+	c.HTML(http.StatusOK, "login.html", gin.H{
+		"title": "Login - Weather Service",
+	})
+}
+
+// ShowRegisterPage renders the registration page
+func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
+	// Check if already authenticated
+	if middleware.IsAuthenticated(c) {
+		c.Redirect(http.StatusFound, "/dashboard")
+		return
+	}
+
+	// Check if this is first user (setup mode)
+	userModel := &models.UserModel{DB: h.DB}
+	count, err := userModel.Count()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
+			"error": "Database error",
+		})
+		return
+	}
+
+	isSetup := count == 0
+
+	c.HTML(http.StatusOK, "register.html", gin.H{
+		"title":   "Register - Weather Service",
+		"isSetup": isSetup,
+	})
+}
+
+// HandleLogin processes login requests
+func (h *AuthHandler) HandleLogin(c *gin.Context) {
+	var req LoginRequest
+
+	// Support both JSON and form data
+	contentType := c.GetHeader("Content-Type")
+	if strings.Contains(contentType, "application/json") {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+	} else {
+		req.Email = c.PostForm("email")
+		req.Password = c.PostForm("password")
+	}
+
+	// Validate credentials
+	userModel := &models.UserModel{DB: h.DB}
+	user, err := userModel.GetByEmail(req.Email)
+	if err != nil {
+		respondWithError(c, http.StatusUnauthorized, "Invalid email or password")
+		return
+	}
+
+	if !userModel.CheckPassword(user, req.Password) {
+		respondWithError(c, http.StatusUnauthorized, "Invalid email or password")
+		return
+	}
+
+	// Get session timeout from settings
+	sessionTimeout, err := h.getSessionTimeout()
+	if err != nil {
+		sessionTimeout = 86400 // Default 24 hours
+	}
+
+	// Create session
+	sessionModel := &models.SessionModel{DB: h.DB}
+	session, err := sessionModel.Create(user.ID, sessionTimeout)
+	if err != nil {
+		respondWithError(c, http.StatusInternalServerError, "Failed to create session")
+		return
+	}
+
+	// Set session cookie
+	c.SetCookie(
+		middleware.SessionCookieName,
+		session.ID,
+		sessionTimeout,
+		"/",
+		"",
+		false, // Set to true in production with HTTPS
+		true,  // HttpOnly
+	)
+
+	// Respond based on request type
+	if strings.Contains(contentType, "application/json") {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Login successful",
+			"user": gin.H{
+				"id":    user.ID,
+				"email": user.Email,
+				"role":  user.Role,
+			},
+		})
+	} else {
+		c.Redirect(http.StatusFound, "/dashboard")
+	}
+}
+
+// HandleRegister processes registration requests
+func (h *AuthHandler) HandleRegister(c *gin.Context) {
+	var req RegisterRequest
+
+	// Support both JSON and form data
+	contentType := c.GetHeader("Content-Type")
+	if strings.Contains(contentType, "application/json") {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+	} else {
+		req.Email = c.PostForm("email")
+		req.Password = c.PostForm("password")
+		req.ConfirmPassword = c.PostForm("confirm_password")
+	}
+
+	// Validate passwords match
+	if req.Password != req.ConfirmPassword {
+		respondWithError(c, http.StatusBadRequest, "Passwords do not match")
+		return
+	}
+
+	userModel := &models.UserModel{DB: h.DB}
+
+	// Check if first user (becomes admin)
+	count, err := userModel.Count()
+	if err != nil {
+		respondWithError(c, http.StatusInternalServerError, "Database error")
+		return
+	}
+
+	role := "user"
+	if count == 0 {
+		role = "admin" // First user is admin
+	}
+
+	// Create user
+	user, err := userModel.Create(req.Email, req.Password, role)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			respondWithError(c, http.StatusConflict, "Email already registered")
+			return
+		}
+		respondWithError(c, http.StatusInternalServerError, "Failed to create user")
+		return
+	}
+
+	// Get session timeout from settings
+	sessionTimeout, err := h.getSessionTimeout()
+	if err != nil {
+		sessionTimeout = 86400 // Default 24 hours
+	}
+
+	// Auto-login after registration
+	sessionModel := &models.SessionModel{DB: h.DB}
+	session, err := sessionModel.Create(user.ID, sessionTimeout)
+	if err != nil {
+		respondWithError(c, http.StatusInternalServerError, "User created but failed to login")
+		return
+	}
+
+	// Set session cookie
+	c.SetCookie(
+		middleware.SessionCookieName,
+		session.ID,
+		sessionTimeout,
+		"/",
+		"",
+		false, // Set to true in production with HTTPS
+		true,  // HttpOnly
+	)
+
+	// Respond based on request type
+	if strings.Contains(contentType, "application/json") {
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Registration successful",
+			"user": gin.H{
+				"id":    user.ID,
+				"email": user.Email,
+				"role":  user.Role,
+			},
+		})
+	} else {
+		c.Redirect(http.StatusFound, "/dashboard")
+	}
+}
+
+// HandleLogout processes logout requests
+func (h *AuthHandler) HandleLogout(c *gin.Context) {
+	// Get session from context
+	session, exists := middleware.GetCurrentSession(c)
+	if exists {
+		sessionModel := &models.SessionModel{DB: h.DB}
+		sessionModel.Delete(session.ID)
+	}
+
+	// Clear session cookie
+	c.SetCookie(
+		middleware.SessionCookieName,
+		"",
+		-1,
+		"/",
+		"",
+		false,
+		true,
+	)
+
+	// Respond based on request type
+	acceptHeader := c.GetHeader("Accept")
+	if strings.Contains(acceptHeader, "application/json") {
+		c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+	} else {
+		c.Redirect(http.StatusFound, "/")
+	}
+}
+
+// GetCurrentUser returns current user info
+func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":    user.ID,
+		"email": user.Email,
+		"role":  user.Role,
+	})
+}
+
+// Helper functions
+
+func (h *AuthHandler) getSessionTimeout() (int, error) {
+	var timeoutStr string
+	err := h.DB.QueryRow("SELECT value FROM settings WHERE key = ?", "auth.session_timeout").Scan(&timeoutStr)
+	if err != nil {
+		return 0, err
+	}
+
+	timeout, err := strconv.Atoi(timeoutStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return timeout, nil
+}
+
+func respondWithError(c *gin.Context, statusCode int, message string) {
+	contentType := c.GetHeader("Content-Type")
+	if strings.Contains(contentType, "application/json") {
+		c.JSON(statusCode, gin.H{"error": message})
+	} else {
+		// For form submissions, redirect back with error
+		c.HTML(statusCode, "error.html", gin.H{
+			"error": message,
+		})
+	}
+}

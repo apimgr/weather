@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Weather Service</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-title {
+            color: var(--dracula-red);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            color: var(--dracula-foreground);
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--dracula-current-line);
+            border-radius: 8px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+        }
+
+        .btn-primary:hover {
+            background: var(--dracula-pink);
+        }
+
+        .btn-secondary {
+            background: var(--dracula-current-line);
+            color: var(--dracula-foreground);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dracula-comment);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h1 class="error-title">Oops! Something went wrong</h1>
+        <div class="error-message">
+            {{ if .error }}
+                {{ .error }}
+            {{ else }}
+                An unexpected error occurred. Please try again.
+            {{ end }}
+        </div>
+        <div class="error-actions">
+            <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+            <a href="/" class="btn btn-primary">Go Home</a>
+        </div>
+    </div>
+</body>
+</html>
