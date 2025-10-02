@@ -333,10 +333,17 @@ func (le *LocationEnhancer) FindNearestCity(latitude, longitude float64) (*Enhan
 func (le *LocationEnhancer) buildFullName(location *EnhancedLocation) string {
 	parts := []string{location.Name}
 
+	// Add Admin2 (e.g., "Greater London")
+	if location.Admin2 != "" && location.Admin2 != location.Name && location.Admin2 != location.Admin1 {
+		parts = append(parts, location.Admin2)
+	}
+
+	// Add Admin1 (e.g., "England", "California")
 	if location.Admin1 != "" && location.Admin1 != location.Name {
 		parts = append(parts, location.Admin1)
 	}
 
+	// Add country name
 	if location.Country != "" {
 		parts = append(parts, location.Country)
 	}

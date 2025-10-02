@@ -11,7 +11,8 @@ import (
 
 // ASCIIRenderer handles full wttr.in-style ASCII art weather display
 type ASCIIRenderer struct {
-	width int
+	width    int
+	noColors bool
 }
 
 // NewASCIIRenderer creates a new ASCII renderer
@@ -23,6 +24,9 @@ func NewASCIIRenderer() *ASCIIRenderer {
 
 // RenderFull renders the full wttr.in style weather display
 func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.RenderParams) string {
+	// Set noColors flag for this render
+	r.noColors = params.NoColors
+
 	var lines []string
 
 	// Header (skip if quiet mode)
@@ -64,24 +68,55 @@ func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.Rend
 // renderHeader renders the weather report header
 func (r *ASCIIRenderer) renderHeader(location utils.LocationData) string {
 	fullLocation := r.getFullLocationName(location)
-	header := fmt.Sprintf("Weather report: %s", strings.ToLower(fullLocation))
-	return colorize(header, "#f1fa8c", true) // Yellow, bold
+	header := fmt.Sprintf("Weather report: %s", r.capitalizeLocation(fullLocation))
+	return r.colorize(header, "#f1fa8c", true) // Yellow, bold
 }
 
-// getFullLocationName gets the full location display name
-func (r *ASCIIRenderer) getFullLocationName(location utils.LocationData) string {
-	// Use the enhanced short name for header display (e.g. "New York, NY" or "London, GB")
-	if location.ShortName != "" {
-		return location.ShortName
+// capitalizeLocation capitalizes first letter of each location part
+func (r *ASCIIRenderer) capitalizeLocation(location string) string {
+	// Split by comma to get individual parts
+	parts := strings.Split(location, ",")
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+
+		// If it's a 2-letter country/state code, capitalize entirely
+		if len(part) == 2 && strings.ToUpper(part) == part {
+			parts[i] = strings.ToUpper(part)
+		} else {
+			// Capitalize first letter of each word
+			words := strings.Fields(part)
+			for j, word := range words {
+				if len(word) > 0 {
+					// Check if it's a short abbreviation (2-3 letters all caps)
+					if len(word) <= 3 && strings.ToUpper(word) == word {
+						words[j] = strings.ToUpper(word)
+					} else {
+						words[j] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
+					}
+				}
+			}
+			parts[i] = strings.Join(words, " ")
+		}
 	}
+	return strings.Join(parts, ", ")
+}
+
+// getFullLocationName gets the full location display name with coordinates
+func (r *ASCIIRenderer) getFullLocationName(location utils.LocationData) string {
+	var baseName string
 
 	// Use the pre-built full name from geocoding API if available
 	if location.FullName != "" {
-		return location.FullName
+		baseName = location.FullName
+	} else if location.ShortName != "" {
+		baseName = location.ShortName
+	} else {
+		// Fallback: build basic name
+		baseName = fmt.Sprintf("%s, %s", location.Name, location.Country)
 	}
 
-	// Fallback: build basic name
-	return fmt.Sprintf("%s, %s", location.Name, location.Country)
+	// Append coordinates like wttr.in does
+	return fmt.Sprintf("%s [%.7f,%.7f]", baseName, location.Latitude, location.Longitude)
 }
 
 // renderCurrentWeatherArt renders the current weather with ASCII art
@@ -103,18 +138,11 @@ func (r *ASCIIRenderer) renderCurrentWeatherArt(current utils.CurrentData, param
 
 	// Create current weather display with Dracula colors
 	lines := []string{
-		fmt.Sprintf("%s     %s", art[0], colorize(description, "#8be9fd", false)),
-		fmt.Sprintf("%s     %s", art[1], colorize(fmt.Sprintf("+%d(%d) %s", temp, feelsLike, tempUnit), "#f1fa8c", false)),
-		fmt.Sprintf("%s     %s", art[2], colorize(fmt.Sprintf("%s %d %s", windDir, windSpeed, speedUnit), "#50fa7b", false)),
-		fmt.Sprintf("%s     %s", art[3], colorize(fmt.Sprintf("%d %s", getPressure(current.Pressure, params.Units), getPressureUnit(params.Units)), "#bd93f9", false)),
-		fmt.Sprintf("%s     %s", art[4], colorize(fmt.Sprintf("%s %s", precipitation, precipUnit), "#ff79c6", false)),
-	}
-
-	if params.NoColors {
-		// Strip colors if requested
-		for i, line := range lines {
-			lines[i] = stripAnsiCodes(line)
-		}
+		fmt.Sprintf("%s     %s", art[0], r.colorize(description, "#8be9fd", false)),
+		fmt.Sprintf("%s     %s", art[1], r.colorize(fmt.Sprintf("+%d(%d) %s", temp, feelsLike, tempUnit), "#f1fa8c", false)),
+		fmt.Sprintf("%s     %s", art[2], r.colorize(fmt.Sprintf("%s %d %s", windDir, windSpeed, speedUnit), "#50fa7b", false)),
+		fmt.Sprintf("%s     %s", art[3], r.colorize(fmt.Sprintf("%d %s", getPressure(current.Pressure, params.Units), getPressureUnit(params.Units)), "#bd93f9", false)),
+		fmt.Sprintf("%s     %s", art[4], r.colorize(fmt.Sprintf("%s %s", precipitation, precipUnit), "#ff79c6", false)),
 	}
 
 	return lines
@@ -142,25 +170,25 @@ func (r *ASCIIRenderer) renderForecastTable(forecast []utils.ForecastData, param
 	dayBoxPadding := (120 - 13) / 2
 
 	// Top day header box - mathematically centered
-	lines = append(lines, strings.Repeat(" ", dayBoxPadding)+colorize("┌─────────────┐", "#bd93f9", false)+strings.Repeat(" ", 120-dayBoxPadding-13))
+	lines = append(lines, strings.Repeat(" ", dayBoxPadding)+r.colorize("┌─────────────┐", "#bd93f9", false)+strings.Repeat(" ", 120-dayBoxPadding-13))
 
 	// Date header row with box drawing
 	// Simplified: just center the day header without complex spacing
 	lines = append(lines,
-		colorize("┌──────────────────────────────┬───────────────────────┤", "#bd93f9", false)+
-			" "+colorize(dayHeader, "#ff79c6", false)+" "+
-			colorize("├───────────────────────┬──────────────────────────────┐", "#bd93f9", false))
+		r.colorize("┌──────────────────────────────┬───────────────────────┤", "#bd93f9", false)+
+			" "+r.colorize(dayHeader, "#ff79c6", false)+" "+
+			r.colorize("├───────────────────────┬──────────────────────────────┐", "#bd93f9", false))
 
 	// Time period headers
 	lines = append(lines,
-		colorize("│", "#bd93f9", false)+colorize("            Morning           ", "#ffb86c", false)+
-			colorize("│", "#bd93f9", false)+colorize("             Noon      ", "#ffb86c", false)+
-			colorize("└──────┬──────┘", "#bd93f9", false)+colorize("     Evening           ", "#ffb86c", false)+
-			colorize("│", "#bd93f9", false)+colorize("             Night            ", "#ffb86c", false)+
-			colorize("│", "#bd93f9", false))
+		r.colorize("│", "#bd93f9", false)+r.colorize("            Morning           ", "#ffb86c", false)+
+			r.colorize("│", "#bd93f9", false)+r.colorize("             Noon      ", "#ffb86c", false)+
+			r.colorize("└──────┬──────┘", "#bd93f9", false)+r.colorize("     Evening           ", "#ffb86c", false)+
+			r.colorize("│", "#bd93f9", false)+r.colorize("             Night            ", "#ffb86c", false)+
+			r.colorize("│", "#bd93f9", false))
 
 	// Data separator
-	lines = append(lines, colorize("├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤", "#bd93f9", false))
+	lines = append(lines, r.colorize("├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤", "#bd93f9", false))
 
 	// Add each day's forecast
 	for i, day := range days {
@@ -173,29 +201,22 @@ func (r *ASCIIRenderer) renderForecastTable(forecast []utils.ForecastData, param
 			evenLine := padToWidth(periods.evening[lineIndex], 30)
 			nightLine := padToWidth(periods.night[lineIndex], 30)
 
-			line := colorize("│", "#bd93f9", false) + mornLine +
-				colorize("│", "#bd93f9", false) + noonLine +
-				colorize("│", "#bd93f9", false) + evenLine +
-				colorize("│", "#bd93f9", false) + nightLine +
-				colorize("│", "#bd93f9", false)
+			line := r.colorize("│", "#bd93f9", false) + mornLine +
+				r.colorize("│", "#bd93f9", false) + noonLine +
+				r.colorize("│", "#bd93f9", false) + evenLine +
+				r.colorize("│", "#bd93f9", false) + nightLine +
+				r.colorize("│", "#bd93f9", false)
 			lines = append(lines, line)
 		}
 
 		// Add separator between days (except last)
 		if i < len(days)-1 {
-			lines = append(lines, colorize("├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤", "#bd93f9", false))
+			lines = append(lines, r.colorize("├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤", "#bd93f9", false))
 			lines = append(lines, "") // Add blank line between days for better readability
 		}
 	}
 
-	lines = append(lines, colorize("└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘", "#bd93f9", false))
-
-	if params.NoColors {
-		// Strip colors if requested
-		for i, line := range lines {
-			lines[i] = stripAnsiCodes(line)
-		}
-	}
+	lines = append(lines, r.colorize("└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘", "#bd93f9", false))
 
 	return lines
 }
@@ -234,11 +255,11 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 		precipLine := fmt.Sprintf("%s %s | %d%%", precipitation, precipUnit, precipProb)
 
 		return []string{
-			centerInWidth(colorize(description, "#8be9fd", false), 30),
-			centerInWidth(colorize(tempLine, "#f1fa8c", false), 30),
-			centerInWidth(colorize(windLine, "#50fa7b", false), 30),
-			centerInWidth(colorize("6 mi", "#bd93f9", false), 30),
-			centerInWidth(colorize(precipLine, "#ff79c6", false), 30),
+			centerInWidth(r.colorize(description, "#8be9fd", false), 30),
+			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),
+			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),
+			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),
+			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),
 		}
 	}
 
@@ -266,7 +287,7 @@ func (r *ASCIIRenderer) getColoredWeatherArt(weatherCode int, noColors bool) []s
 
 	colored := make([]string, len(baseArt))
 	for i, line := range baseArt {
-		colored[i] = colorize(line, artColor, false)
+		colored[i] = r.colorize(line, artColor, false)
 	}
 	return colored
 }
@@ -366,19 +387,29 @@ func (r *ASCIIRenderer) getWeatherArt(weatherCode int, isDay bool) []string {
 
 // renderFooter renders the footer with attribution
 func (r *ASCIIRenderer) renderFooter(location utils.LocationData) string {
-	footer := colorize("Weather • Free weather data from Open-Meteo.com", "#6272a4", false)
+	footer := r.colorize("Weather • Free weather data from Open-Meteo.com", "#6272a4", false)
 	return footer
 }
 
 // Helper functions
 
-// colorize applies ANSI color codes to text
-func colorize(text, hexColor string, bold bool) string {
+// colorize applies ANSI color codes to text (method on renderer to access noColors)
+func (r *ASCIIRenderer) colorize(text, hexColor string, bold bool) string {
+	return colorizeWithFlag(text, hexColor, bold, r.noColors)
+}
+
+// colorizeWithFlag is a package-level function for rendering without renderer context
+func colorizeWithFlag(text, hexColor string, bold bool, noColors bool) string {
+	// If colors are disabled, return plain text
+	if noColors {
+		return text
+	}
+
 	// Convert hex to RGB
-	r, g, b := hexToRGB(hexColor)
+	red, green, blue := hexToRGB(hexColor)
 
 	// ANSI escape code for 24-bit color
-	colorCode := fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+	colorCode := fmt.Sprintf("\033[38;2;%d;%d;%dm", red, green, blue)
 	resetCode := "\033[0m"
 
 	if bold {
@@ -386,6 +417,11 @@ func colorize(text, hexColor string, bold bool) string {
 	}
 
 	return colorCode + text + resetCode
+}
+
+// colorize is the original package function for backward compatibility
+func colorize(text, hexColor string, bold bool) string {
+	return colorizeWithFlag(text, hexColor, bold, false)
 }
 
 // hexToRGB converts hex color to RGB

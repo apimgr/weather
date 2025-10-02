@@ -66,7 +66,7 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 			if err != nil {
 				errorMsg = err.Error()
 			} else {
-				forecast, _ := h.weatherService.GetForecast(enhanced.Latitude, enhanced.Longitude, 7, units)
+				forecast, _ := h.weatherService.GetForecast(enhanced.Latitude, enhanced.Longitude, 16, units)
 
 				// Enrich current weather with icon and description
 				currentData := gin.H{

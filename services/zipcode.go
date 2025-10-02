@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -57,20 +56,20 @@ func toFloat64(v interface{}) float64 {
 // loadZipcodes loads zipcode data from GitHub
 func (zs *ZipcodeService) loadZipcodes() {
 	startTime := time.Now()
-	log.Println("📮 Loading US zipcode database...")
+	fmt.Println("📮 Loading US zipcode database...")
 
 	zipcodeURL := "https://raw.githubusercontent.com/apimgr/zipcodes/refs/heads/main/api/zipcodes.json"
 
 	resp, err := http.Get(zipcodeURL)
 	if err != nil {
-		log.Printf("❌ Failed to load zipcodes: %v\n", err)
+		fmt.Printf("❌ Failed to load zipcodes: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	var zipcodes []ZipcodeData
 	if err := json.NewDecoder(resp.Body).Decode(&zipcodes); err != nil {
-		log.Printf("❌ Failed to parse zipcodes: %v\n", err)
+		fmt.Printf("❌ Failed to parse zipcodes: %v\n", err)
 		return
 	}
 
@@ -89,7 +88,7 @@ func (zs *ZipcodeService) loadZipcodes() {
 	zs.mu.Unlock()
 
 	elapsed := time.Since(startTime)
-	log.Printf("✅ Zipcode database loaded in %s (%d valid zipcodes with coordinates)\n", elapsed, validCount)
+	fmt.Printf("✅ Zipcode database loaded in %s (%d valid zipcodes with coordinates)\n", elapsed, validCount)
 }
 
 // LookupZipcode returns coordinates for a US zipcode

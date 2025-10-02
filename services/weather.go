@@ -77,19 +77,37 @@ type CurrentWeather struct {
 
 // ForecastDay represents a single day forecast
 type ForecastDay struct {
-	Date                     string  `json:"date"`
-	WeatherCode              int     `json:"weatherCode"`
-	TempMax                  float64 `json:"tempMax"`
-	TempMin                  float64 `json:"tempMin"`
-	FeelsLikeMax             float64 `json:"feelsLikeMax"`
-	FeelsLikeMin             float64 `json:"feelsLikeMin"`
+	Date                     string         `json:"date"`
+	WeatherCode              int            `json:"weatherCode"`
+	TempMax                  float64        `json:"tempMax"`
+	TempMin                  float64        `json:"tempMin"`
+	FeelsLikeMax             float64        `json:"feelsLikeMax"`
+	FeelsLikeMin             float64        `json:"feelsLikeMin"`
+	Precipitation            float64        `json:"precipitation"`
+	PrecipitationHours       float64        `json:"precipitationHours"`
+	PrecipitationProbability int            `json:"precipitationProbability"`
+	WindSpeedMax             float64        `json:"windSpeedMax"`
+	WindGustsMax             float64        `json:"windGustsMax"`
+	WindDirection            int            `json:"windDirection"`
+	SolarRadiation           float64        `json:"solarRadiation"`
+	Hourly                   []ForecastHour `json:"hourly,omitempty"`
+}
+
+// ForecastHour represents hourly forecast data
+type ForecastHour struct {
+	Time                     string  `json:"time"`
+	Temperature              float64 `json:"temperature"`
+	FeelsLike                float64 `json:"feelsLike"`
+	Humidity                 int     `json:"humidity"`
 	Precipitation            float64 `json:"precipitation"`
-	PrecipitationHours       float64 `json:"precipitationHours"`
 	PrecipitationProbability int     `json:"precipitationProbability"`
-	WindSpeedMax             float64 `json:"windSpeedMax"`
-	WindGustsMax             float64 `json:"windGustsMax"`
+	WeatherCode              int     `json:"weatherCode"`
+	CloudCover               int     `json:"cloudCover"`
+	WindSpeed                float64 `json:"windSpeed"`
 	WindDirection            int     `json:"windDirection"`
-	SolarRadiation           float64 `json:"solarRadiation"`
+	WindGusts                float64 `json:"windGusts"`
+	Visibility               float64 `json:"visibility"`
+	UVIndex                  float64 `json:"uvIndex"`
 }
 
 // Forecast represents multi-day weather forecast
@@ -142,6 +160,21 @@ type OpenMeteoForecastResponse struct {
 		WindDirection10mDominant    []int     `json:"wind_direction_10m_dominant"`
 		ShortwaveRadiationSum       []float64 `json:"shortwave_radiation_sum"`
 	} `json:"daily"`
+	Hourly struct {
+		Time                     []string  `json:"time"`
+		Temperature2m            []float64 `json:"temperature_2m"`
+		ApparentTemperature      []float64 `json:"apparent_temperature"`
+		RelativeHumidity2m       []int     `json:"relative_humidity_2m"`
+		Precipitation            []float64 `json:"precipitation"`
+		PrecipitationProbability []int     `json:"precipitation_probability"`
+		WeatherCode              []int     `json:"weather_code"`
+		CloudCover               []int     `json:"cloud_cover"`
+		WindSpeed10m             []float64 `json:"wind_speed_10m"`
+		WindDirection10m         []int     `json:"wind_direction_10m"`
+		WindGusts10m             []float64 `json:"wind_gusts_10m"`
+		Visibility               []float64 `json:"visibility"`
+		UVIndex                  []float64 `json:"uv_index"`
+	} `json:"hourly"`
 	Timezone string `json:"timezone"`
 }
 
@@ -318,6 +351,7 @@ func (ws *WeatherService) GetForecast(latitude, longitude float64, days int, uni
 	params.Set("latitude", fmt.Sprintf("%.4f", latitude))
 	params.Set("longitude", fmt.Sprintf("%.4f", longitude))
 	params.Set("daily", "weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_hours,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum")
+	params.Set("hourly", "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,precipitation_probability,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,uv_index")
 	params.Set("forecast_days", strconv.Itoa(days))
 	params.Set("timezone", "auto")
 
@@ -344,6 +378,7 @@ func (ws *WeatherService) GetForecast(latitude, longitude float64, days int, uni
 		Timezone: data.Timezone,
 	}
 
+	// Parse daily data
 	for i := range data.Daily.Time {
 		day := ForecastDay{
 			Date:                     data.Daily.Time[i],
@@ -359,8 +394,41 @@ func (ws *WeatherService) GetForecast(latitude, longitude float64, days int, uni
 			WindGustsMax:             data.Daily.WindGusts10mMax[i],
 			WindDirection:            data.Daily.WindDirection10mDominant[i],
 			SolarRadiation:           data.Daily.ShortwaveRadiationSum[i],
+			Hourly:                   []ForecastHour{},
 		}
 		forecast.Days[i] = day
+	}
+
+	// Group hourly data by day
+	if len(data.Hourly.Time) > 0 {
+		for i := range data.Hourly.Time {
+			// Extract date from hourly timestamp (format: "2024-10-02T14:00")
+			hourTime := data.Hourly.Time[i]
+			hourDate := hourTime[:10] // Get YYYY-MM-DD
+
+			// Find matching day and append hourly data
+			for j := range forecast.Days {
+				if forecast.Days[j].Date == hourDate {
+					hour := ForecastHour{
+						Time:                     hourTime,
+						Temperature:              data.Hourly.Temperature2m[i],
+						FeelsLike:                data.Hourly.ApparentTemperature[i],
+						Humidity:                 data.Hourly.RelativeHumidity2m[i],
+						Precipitation:            data.Hourly.Precipitation[i],
+						PrecipitationProbability: data.Hourly.PrecipitationProbability[i],
+						WeatherCode:              data.Hourly.WeatherCode[i],
+						CloudCover:               data.Hourly.CloudCover[i],
+						WindSpeed:                data.Hourly.WindSpeed10m[i],
+						WindDirection:            data.Hourly.WindDirection10m[i],
+						WindGusts:                data.Hourly.WindGusts10m[i],
+						Visibility:               data.Hourly.Visibility[i],
+						UVIndex:                  data.Hourly.UVIndex[i],
+					}
+					forecast.Days[j].Hourly = append(forecast.Days[j].Hourly, hour)
+					break
+				}
+			}
+		}
 	}
 
 	// Convert units if needed
@@ -965,6 +1033,19 @@ func (ws *WeatherService) convertForecastUnits(forecast *Forecast, units string)
 			convertedDay.Precipitation = ws.mmToInches(day.Precipitation)
 			convertedDay.WindSpeedMax = ws.kmhToMph(day.WindSpeedMax)
 			convertedDay.WindGustsMax = ws.kmhToMph(day.WindGustsMax)
+
+			// Convert hourly data
+			convertedDay.Hourly = make([]ForecastHour, len(day.Hourly))
+			for j, hour := range day.Hourly {
+				convertedHour := hour
+				convertedHour.Temperature = ws.celsiusToFahrenheit(hour.Temperature)
+				convertedHour.FeelsLike = ws.celsiusToFahrenheit(hour.FeelsLike)
+				convertedHour.Precipitation = ws.mmToInches(hour.Precipitation)
+				convertedHour.WindSpeed = ws.kmhToMph(hour.WindSpeed)
+				convertedHour.WindGusts = ws.kmhToMph(hour.WindGusts)
+				convertedHour.Visibility = ws.metersToMiles(hour.Visibility)
+				convertedDay.Hourly[j] = convertedHour
+			}
 		}
 		converted.Days[i] = convertedDay
 	}
@@ -987,6 +1068,10 @@ func (ws *WeatherService) hpaToInhg(hpa float64) float64 {
 
 func (ws *WeatherService) mmToInches(mm float64) float64 {
 	return mm * 0.0393701
+}
+
+func (ws *WeatherService) metersToMiles(meters float64) float64 {
+	return meters * 0.000621371
 }
 
 // ParseAndResolveLocation parses location string and resolves to coordinates

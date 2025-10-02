@@ -43,7 +43,15 @@
       "Bash(~/bin/gh:*)",
       "Bash(cat:*)",
       "Bash(echo:*)",
-      "Bash(wget:*)"
+      "Bash(wget:*)",
+      "WebFetch(domain:wttr.in)",
+      "Bash(export CGO_ENABLED=0)",
+      "WebSearch",
+      "WebFetch(domain:open-meteo.com)",
+      "WebFetch(domain:www.weather.gov)",
+      "WebFetch(domain:earthquake.usgs.gov)",
+      "Bash(export PORT=3001)",
+      "Read(//root/Pictures/**)"
     ],
     "deny": [],
     "ask": []

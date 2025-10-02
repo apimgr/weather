@@ -17,7 +17,7 @@
         <nav style="display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0; padding: 0.75rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
             <a href="{{if .LocationFormatted}}/{{.LocationFormatted}}{{else}}/{{end}}" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">🏠 Home</a>
             <a href="{{if .LocationFormatted}}/moon/{{.LocationFormatted}}{{else}}/moon{{end}}" style="color: var(--dracula-purple); text-decoration: none; font-weight: 500;">🌙 Moon</a>
-            <a href="/docs" style="color: var(--dracula-pink); text-decoration: none; font-weight: 500;">📚 Docs</a>
+            <a href="/earthquake" style="color: var(--dracula-orange); text-decoration: none; font-weight: 500;">🌍 Earthquakes</a>
         </nav>
 
         <!-- Location Search Form - Mobile First -->
@@ -200,11 +200,11 @@
         {{if not .HideFooter}}
         <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
             <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
-                <span style="color: var(--dracula-cyan);">Weather</span>
+                <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
                 <span style="color: var(--dracula-pink);">•</span>
                 <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
                 <span style="color: var(--dracula-pink);">•</span>
-                <span style="color: var(--dracula-green);">v2.0.0</span>
+                <a href="/api/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
             </p>
         </div>
         {{end}}
@@ -345,9 +345,10 @@
 
                 item.addEventListener('click', function() {
                     const units = document.getElementById('moon-units-select').value;
-                    const cleanLocation = locationName.replace(/ /g, '+');
+                    // Use coordinates for navigation (more accurate)
+                    const coords = `${result.latitude.toFixed(4)},${result.longitude.toFixed(4)}`;
                     const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
-                    const newUrl = `${window.location.origin}/moon/${cleanLocation}${unitsParam}`;
+                    const newUrl = `${window.location.origin}/moon/${coords}${unitsParam}`;
                     hideMoonAutocomplete();
                     window.location.href = newUrl;
                 });

@@ -17,6 +17,13 @@ import (
 )
 
 func main() {
+	// Disable log timestamps
+	log.SetFlags(0)
+
+	// Print startup timestamp
+	startTime := time.Now()
+	fmt.Printf("🕐 %s\n", startTime.Format("2006-01-02 at 15:04:05"))
+
 	// Set Gin mode
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.ReleaseMode)
@@ -64,16 +71,16 @@ func main() {
 	})
 
 	// Serve static files
-	r.Static("/css", "./static/css")
-	r.Static("/js", "./static/js")
-	r.Static("/images", "./static/images")
+	r.Static("/static/css", "./static/css")
+	r.Static("/static/js", "./static/js")
+	r.Static("/static/images", "./static/images")
 
 	// Load templates
 	r.LoadHTMLGlob("templates/*")
 
 	// Initialize services
-	log.Println("🚀 Starting Weather...")
-	log.Println("📍 Initializing location databases...")
+	fmt.Println("🚀 Starting Weather...")
+	fmt.Println("📍 Initializing location databases...")
 
 	locationEnhancer := services.NewLocationEnhancer()
 
@@ -81,7 +88,9 @@ func main() {
 	locationEnhancer.SetOnInitComplete(func(countries, cities bool) {
 		// Mark weather service as always ready (no initialization needed)
 		handlers.SetInitStatus(countries, cities, true)
-		log.Printf("✅ Service ready! Countries: %v, Cities: %v\n", countries, cities)
+		fmt.Printf("✅ Service ready! Countries: %v, Cities: %v\n", countries, cities)
+		// Print ready timestamp
+		fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
 	})
 
 	weatherService := services.NewWeatherService(locationEnhancer)
@@ -91,15 +100,20 @@ func main() {
 	go func() {
 		time.Sleep(2 * time.Minute)
 		if !handlers.IsInitialized() {
-			log.Println("⏰ Initialization timeout reached, marking service as ready (fallback)")
+			fmt.Println("⏰ Initialization timeout reached, marking service as ready (fallback)")
+			fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
 			handlers.SetInitStatus(true, true, true)
 		}
 	}()
+
+	// Create services
+	earthquakeService := services.NewEarthquakeService()
 
 	// Create handlers
 	weatherHandler := handlers.NewWeatherHandler(weatherService, locationEnhancer)
 	apiHandler := handlers.NewAPIHandler(weatherService, locationEnhancer)
 	webHandler := handlers.NewWebHandler(weatherService, locationEnhancer)
+	earthquakeHandler := handlers.NewEarthquakeHandler(earthquakeService, weatherService, locationEnhancer)
 
 	// Health check endpoints (Kubernetes standard)
 	r.GET("/healthz", handlers.HealthCheck)
@@ -229,6 +243,11 @@ JSON API:
 	r.GET("/moon", webHandler.ServeMoonInterface)
 	r.GET("/moon/:location", webHandler.ServeMoonInterface)
 
+	// Earthquake routes
+	r.GET("/earthquake", earthquakeHandler.HandleEarthquakeRequest)
+	r.GET("/earthquake/*location", earthquakeHandler.HandleEarthquakeRequest)
+	r.GET("/api/earthquakes", earthquakeHandler.HandleEarthquakeAPI)
+
 	// Initialization check middleware - show loading page if not ready
 	r.Use(func(c *gin.Context) {
 		// Skip for health checks, API routes, and static files
@@ -278,10 +297,10 @@ JSON API:
 		baseURL += ":" + port
 	}
 
-	log.Printf("🌤️  Weather starting on port %s\n", port)
-	log.Printf("📡 API Documentation: %s/api/docs\n", baseURL)
-	log.Printf("💡 Examples: %s/examples\n", baseURL)
-	log.Printf("🏥 Health Check: %s/healthz\n", baseURL)
+	fmt.Printf("🌤️  Weather starting on port %s\n", port)
+	fmt.Printf("📡 API Documentation: %s/api/docs\n", baseURL)
+	fmt.Printf("💡 Examples: %s/examples\n", baseURL)
+	fmt.Printf("🏥 Health Check: %s/healthz\n", baseURL)
 
 	// Start server
 	if err := r.Run(":" + port); err != nil {
@@ -379,7 +398,7 @@ func isLocalIP(ip string) bool {
 func securityHeadersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Content Security Policy
-		c.Header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'")
+		c.Header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https: http:; font-src 'self' data:; connect-src 'self' https://unpkg.com https://*.tile.openstreetmap.org")
 
 		// Other security headers
 		c.Header("X-Content-Type-Options", "nosniff")

@@ -172,7 +172,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 		return
 	}
 
-	forecast, err := h.weatherService.GetForecast(location.Latitude, location.Longitude, 7, units)
+	forecast, err := h.weatherService.GetForecast(location.Latitude, location.Longitude, 16, units)
 	if err != nil {
 		// Non-fatal, continue without forecast
 		forecast = &services.Forecast{Days: []services.ForecastDay{}}
@@ -286,7 +286,7 @@ func (h *WeatherHandler) serveASCIIWeather(c *gin.Context, location *services.Co
 		}()
 
 		go func() {
-			fcst, err := h.weatherService.GetForecast(location.Latitude, location.Longitude, 7, units)
+			fcst, err := h.weatherService.GetForecast(location.Latitude, location.Longitude, 16, units)
 			if err != nil {
 				errChan <- err
 				return
