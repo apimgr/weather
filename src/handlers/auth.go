@@ -100,7 +100,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 	// Get session timeout from settings
 	sessionTimeout, err := h.getSessionTimeout()
 	if err != nil {
-		sessionTimeout = 86400 // Default 24 hours
+		sessionTimeout = 2592000 // Default 30 days
 	}
 
 	// Create session
@@ -188,7 +188,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 	// Get session timeout from settings
 	sessionTimeout, err := h.getSessionTimeout()
 	if err != nil {
-		sessionTimeout = 86400 // Default 24 hours
+		sessionTimeout = 2592000 // Default 30 days
 	}
 
 	// Auto-login after registration

@@ -519,8 +519,11 @@ Authorization: Bearer {token}
 # Override port
 ./weather --port 8080
 
-# Override database path
-./weather --data /path/to/db
+# Override data directory (database will be <dir>/weather.db)
+./weather --data /var/lib/weather
+
+# Override config directory
+./weather --config /etc/weather
 
 # Override listen address
 ./weather --address 127.0.0.1
@@ -529,11 +532,11 @@ Authorization: Bearer {token}
 ### Examples
 
 ```bash
-# Start on port 8080 with custom database
-./weather --port 8080 --data /var/lib/weather/data.db
+# Start on port 8080 with custom data and config directories
+./weather --port 8080 --data /var/lib/weather --config /etc/weather
 
-# Check status with custom config
-./weather --data /custom/path.db --status
+# Check status with custom directories
+./weather --data /var/lib/weather --config /etc/weather --status
 ```
 
 ## Configuration

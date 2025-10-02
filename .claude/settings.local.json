@@ -68,7 +68,11 @@
       "Bash({} +)",
       "Bash(src/handlers/hurricane.go)",
       "Bash(env CGO_ENABLED=0 go build -ldflags=\"-s -w -X main.Version=3.0.0\" -o weather main.go)",
-      "Read(//var/lib/weather-test/**)"
+      "Read(//var/lib/weather-test/**)",
+      "Bash(make:*)",
+      "Bash(PORT=3050 timeout 10 ./weather)",
+      "Bash(env:*)",
+      "Bash(/tmp/test_notification_delivery.sh:*)"
     ],
     "deny": [],
     "ask": []

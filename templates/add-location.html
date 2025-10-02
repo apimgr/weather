@@ -5,196 +5,418 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .title }}</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--dracula-bg);
-            color: var(--dracula-foreground);
-            min-height: 100vh;
-        }
-
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 2rem auto;
-            padding: 0 2rem;
+            padding: 0 var(--space-md);
         }
 
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-header h1 {
-            color: var(--dracula-purple);
-            margin-bottom: 0.5rem;
-        }
-
-        .back-link {
-            color: var(--dracula-cyan);
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        .form-card {
-            background: var(--dracula-current-line);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--dracula-foreground);
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
-            background: var(--dracula-bg);
-            border: 1px solid var(--dracula-comment);
-            border-radius: 4px;
-            color: var(--dracula-foreground);
-            font-size: 1rem;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--dracula-purple);
-        }
-
-        .form-group small {
-            display: block;
-            margin-top: 0.25rem;
-            color: var(--dracula-comment);
-            font-size: 0.85rem;
-        }
-
-        .form-actions {
+        .tabs {
             display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+            border-bottom: 2px solid var(--dracula-current-line);
         }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
+        .tab {
+            padding: var(--space-md) var(--space-lg);
+            background: transparent;
             border: none;
+            color: var(--dracula-comment);
+            cursor: pointer;
+            font-weight: 600;
             font-size: 1rem;
-            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
         }
 
-        .btn-primary {
+        .tab:hover {
+            color: var(--dracula-foreground);
+        }
+
+        .tab.active {
+            color: var(--dracula-purple);
+            border-bottom-color: var(--dracula-purple);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-results {
+            position: relative;
+            margin-top: var(--space-sm);
+        }
+
+        .results-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--dracula-current-line);
+            border: 1px solid var(--dracula-purple);
+            border-radius: var(--radius-md);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: var(--z-dropdown);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .results-dropdown.active {
+            display: block;
+        }
+
+        .result-item {
+            padding: var(--space-md);
+            cursor: pointer;
+            border-bottom: 1px solid var(--dracula-bg);
+            transition: all 0.2s ease;
+        }
+
+        .result-item:hover {
             background: var(--dracula-purple);
             color: var(--dracula-bg);
-            flex: 1;
         }
 
-        .btn-primary:hover {
-            background: var(--dracula-pink);
+        .result-item:last-child {
+            border-bottom: none;
         }
 
-        .btn-secondary {
-            background: var(--dracula-comment);
-            color: var(--dracula-foreground);
+        .result-city {
+            font-weight: 700;
+            color: var(--dracula-cyan);
         }
 
-        .btn-secondary:hover {
-            background: var(--dracula-cyan);
-        }
-
-        .btn-gps {
-            background: var(--dracula-green);
+        .result-item:hover .result-city {
             color: var(--dracula-bg);
-            margin-bottom: 1rem;
         }
 
-        .btn-gps:hover {
-            background: var(--dracula-cyan);
+        .result-details {
+            font-size: 0.875rem;
+            color: var(--dracula-comment);
+            margin-top: var(--space-xs);
         }
 
-        .error-message {
-            background: rgba(255, 85, 85, 0.1);
-            border: 1px solid var(--dracula-red);
-            color: var(--dracula-red);
-            padding: 0.75rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
+        .result-item:hover .result-details {
+            color: var(--dracula-bg);
+            opacity: 0.8;
         }
 
-        .success-message {
-            background: rgba(80, 250, 123, 0.1);
-            border: 1px solid var(--dracula-green);
-            color: var(--dracula-green);
-            padding: 0.75rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
+        .gps-button {
+            width: 100%;
+            margin-bottom: var(--space-lg);
         }
     </style>
 </head>
 <body>
+    <!-- Unified Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                🌤️ Weather Service
+            </a>
+            <div class="navbar-menu">
+                <a href="/" class="navbar-link">Weather</a>
+                <a href="/moon" class="navbar-link">Moon</a>
+                <a href="/earthquake" class="navbar-link">Earthquakes</a>
+                <a href="/hurricane" class="navbar-link">Hurricanes</a>
+                <a href="/dashboard" class="navbar-link active">Dashboard</a>
+                {{ if eq .user.Role "admin" }}
+                <a href="/admin" class="navbar-link">Admin</a>
+                {{ end }}
+            </div>
+            <div class="navbar-actions">
+                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+                <div class="profile-avatar">
+                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                        {{ if .user.Email }}
+                            {{ index .user.Email 0 | printf "%c" | upper }}
+                        {{ else }}
+                            U
+                        {{ end }}
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div>{{ .user.Email }}</div>
+                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
+                        </div>
+                        <nav class="profile-dropdown-menu">
+                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
+                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                            <a href="/api-docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        </nav>
+                    </div>
+                </div>
+                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
+                    ☰
+                </button>
+            </div>
+        </div>
+        <div class="navbar-menu-mobile">
+            <a href="/" class="navbar-link">Weather</a>
+            <a href="/moon" class="navbar-link">Moon</a>
+            <a href="/earthquake" class="navbar-link">Earthquakes</a>
+            <a href="/hurricane" class="navbar-link">Hurricanes</a>
+            <a href="/dashboard" class="navbar-link active">Dashboard</a>
+            {{ if eq .user.Role "admin" }}
+            <a href="/admin" class="navbar-link">Admin</a>
+            {{ end }}
+        </div>
+    </nav>
+
     <div class="container">
-        <div class="page-header">
-            <h1>Add New Location</h1>
-            <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+        <div style="margin-bottom: 2rem;">
+            <h1 class="text-purple">Add New Location</h1>
+            <a href="/dashboard" style="color: var(--dracula-cyan);">← Back to Dashboard</a>
         </div>
 
-        <div class="form-card">
-            <div id="message"></div>
+        <div class="card">
+            <div class="card-body">
+                <div id="message"></div>
 
-            <button class="btn btn-gps" onclick="useCurrentLocation()">📍 Use Current Location</button>
+                <!-- GPS Button -->
+                <button class="btn btn-secondary gps-button" onclick="useCurrentLocation()">
+                    📍 Use My Current Location
+                </button>
 
-            <form id="locationForm">
-                <div class="form-group">
-                    <label for="name">Location Name</label>
-                    <input type="text" id="name" name="name" required placeholder="e.g., Home, Office, Beach House">
-                    <small>Give this location a memorable name</small>
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('search')">🔍 Search</button>
+                    <button class="tab" onclick="switchTab('zip')">📮 ZIP Code</button>
+                    <button class="tab" onclick="switchTab('coords')">🗺️ Coordinates</button>
                 </div>
 
-                <div class="form-group">
-                    <label for="latitude">Latitude</label>
-                    <input type="number" id="latitude" name="latitude" step="0.000001" min="-90" max="90" required placeholder="40.7128">
-                    <small>Between -90 and 90</small>
+                <!-- Search Tab -->
+                <div id="search-tab" class="tab-content active">
+                    <div class="form-group">
+                        <label class="form-label">Search for a City</label>
+                        <input type="text"
+                               id="citySearch"
+                               class="form-input"
+                               placeholder="e.g., New York, London, Tokyo..."
+                               oninput="searchCities(this.value)">
+                        <p class="form-help">Start typing to search for cities worldwide</p>
+                    </div>
+
+                    <div class="search-results">
+                        <div id="searchResults" class="results-dropdown"></div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="longitude">Longitude</label>
-                    <input type="number" id="longitude" name="longitude" step="0.000001" min="-180" max="180" required placeholder="-74.0060">
-                    <small>Between -180 and 180</small>
+                <!-- ZIP Code Tab -->
+                <div id="zip-tab" class="tab-content">
+                    <div class="form-group">
+                        <label class="form-label">ZIP / Postal Code</label>
+                        <input type="text"
+                               id="zipCode"
+                               class="form-input"
+                               placeholder="e.g., 10001, SW1A 1AA, 75001">
+                        <p class="form-help">Enter a US ZIP code or international postal code</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="lookupZipCode()">Look Up Location</button>
                 </div>
 
-                <div class="form-group">
-                    <label for="timezone">Timezone (Optional)</label>
-                    <input type="text" id="timezone" name="timezone" placeholder="America/New_York">
-                    <small>IANA timezone identifier</small>
+                <!-- Coordinates Tab -->
+                <div id="coords-tab" class="tab-content">
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input type="number"
+                               id="manualLat"
+                               class="form-input"
+                               step="0.000001"
+                               min="-90"
+                               max="90"
+                               placeholder="40.7128">
+                        <p class="form-help">Between -90 and 90</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input type="number"
+                               id="manualLon"
+                               class="form-input"
+                               step="0.000001"
+                               min="-180"
+                               max="180"
+                               placeholder="-74.0060">
+                        <p class="form-help">Between -180 and 180</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="lookupCoordinates()">Look Up Location</button>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Location</button>
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/dashboard'">Cancel</button>
-                </div>
-            </form>
+                <!-- Location Form (shown after selection) -->
+                <form id="locationForm" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--dracula-current-line);">
+                    <h3 class="text-cyan" style="margin-bottom: 1rem;">Confirm Location Details</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Location Name</label>
+                        <input type="text" id="name" class="form-input" required placeholder="e.g., Home, Office">
+                        <p class="form-help">Give this location a memorable name</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" id="displayCity" class="form-input" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Coordinates</label>
+                        <input type="text" id="displayCoords" class="form-input" readonly>
+                    </div>
+
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+                    <input type="hidden" id="timezone" name="timezone">
+
+                    <div class="flex gap-md" style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">💾 Save Location</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 Start Over</button>
+                        <button type="button" class="btn btn-ghost" onclick="window.location.href='/dashboard'">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
-        const form = document.getElementById('locationForm');
-        const messageDiv = document.getElementById('message');
+        let searchTimeout;
+        let selectedLocation = null;
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // Reset form
+            resetForm();
+        }
+
+        function searchCities(query) {
+            clearTimeout(searchTimeout);
+
+            if (query.length < 2) {
+                document.getElementById('searchResults').classList.remove('active');
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/locations/search?q=${encodeURIComponent(query)}`);
+                    const results = await response.json();
+
+                    displaySearchResults(results);
+                } catch (error) {
+                    console.error('Search failed:', error);
+                }
+            }, 300);
+        }
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="result-item">No results found</div>';
+                container.classList.add('active');
+                return;
+            }
+
+            container.innerHTML = results.map(result => `
+                <div class="result-item" onclick='selectLocation(${JSON.stringify(result)})'>
+                    <div class="result-city">${result.name}</div>
+                    <div class="result-details">
+                        ${result.admin1 ? result.admin1 + ', ' : ''}${result.country}
+                        <span style="opacity: 0.6;">• ${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            container.classList.add('active');
+        }
+
+        function selectLocation(location) {
+            selectedLocation = location;
+            document.getElementById('searchResults').classList.remove('active');
+
+            // Fill in the form
+            document.getElementById('name').value = location.name;
+            document.getElementById('displayCity').value = `${location.name}, ${location.admin1 ? location.admin1 + ', ' : ''}${location.country}`;
+            document.getElementById('displayCoords').value = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+            document.getElementById('latitude').value = location.latitude;
+            document.getElementById('longitude').value = location.longitude;
+            document.getElementById('timezone').value = location.timezone || '';
+
+            // Show the form
+            document.getElementById('locationForm').style.display = 'block';
+            showMessage('Location selected! Adjust the name if needed and click Save.', 'success');
+        }
+
+        async function lookupZipCode() {
+            const zipCode = document.getElementById('zipCode').value.trim();
+
+            if (!zipCode) {
+                showMessage('Please enter a ZIP or postal code', 'error');
+                return;
+            }
+
+            Loading.show('#zip-tab');
+
+            try {
+                const response = await fetch(`/api/locations/lookup/zip/${encodeURIComponent(zipCode)}`);
+                const location = await response.json();
+
+                if (response.ok) {
+                    selectLocation(location);
+                } else {
+                    showMessage(location.error || 'ZIP code not found', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to look up ZIP code', 'error');
+            } finally {
+                Loading.hide('#zip-tab');
+            }
+        }
+
+        async function lookupCoordinates() {
+            const lat = parseFloat(document.getElementById('manualLat').value);
+            const lon = parseFloat(document.getElementById('manualLon').value);
+
+            if (isNaN(lat) || isNaN(lon)) {
+                showMessage('Please enter valid coordinates', 'error');
+                return;
+            }
+
+            Loading.show('#coords-tab');
+
+            try {
+                const response = await fetch(`/api/locations/lookup/coords?lat=${lat}&lon=${lon}`);
+                const location = await response.json();
+
+                if (response.ok) {
+                    selectLocation(location);
+                } else {
+                    showMessage(location.error || 'Location not found', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to look up coordinates', 'error');
+            } finally {
+                Loading.hide('#coords-tab');
+            }
+        }
 
         function useCurrentLocation() {
             if (!navigator.geolocation) {
@@ -202,13 +424,25 @@
                 return;
             }
 
-            showMessage('Getting your location...', 'success');
+            showMessage('Getting your location...', 'info');
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-                    showMessage('Location detected! Please add a name.', 'success');
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    try {
+                        const response = await fetch(`/api/locations/lookup/coords?lat=${lat}&lon=${lon}`);
+                        const location = await response.json();
+
+                        if (response.ok) {
+                            selectLocation(location);
+                        } else {
+                            showMessage('Could not identify your location', 'error');
+                        }
+                    } catch (error) {
+                        showMessage('Failed to look up your location', 'error');
+                    }
                 },
                 (error) => {
                     showMessage('Unable to get your location: ' + error.message, 'error');
@@ -216,7 +450,18 @@
             );
         }
 
-        form.addEventListener('submit', async (e) => {
+        function resetForm() {
+            document.getElementById('locationForm').style.display = 'none';
+            document.getElementById('searchResults').classList.remove('active');
+            document.getElementById('citySearch').value = '';
+            document.getElementById('zipCode').value = '';
+            document.getElementById('manualLat').value = '';
+            document.getElementById('manualLon').value = '';
+            selectedLocation = null;
+            clearMessage();
+        }
+
+        document.getElementById('locationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const data = {
@@ -234,7 +479,7 @@
                 });
 
                 if (response.ok) {
-                    showMessage('Location saved successfully! Redirecting...', 'success');
+                    Toast.success('Location saved successfully!');
                     setTimeout(() => {
                         window.location.href = '/dashboard';
                     }, 1500);
@@ -243,14 +488,24 @@
                     showMessage(error.error || 'Failed to save location', 'error');
                 }
             } catch (error) {
-                showMessage('Network error: ' + error.message, 'error');
+                showMessage('Error saving location', 'error');
             }
         });
 
-        function showMessage(text, type) {
-            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
-            messageDiv.textContent = text;
-            messageDiv.style.display = 'block';
+        function showMessage(message, type) {
+            Alert.create(message, {
+                type: type,
+                container: '#message'
+            });
+        }
+
+        function clearMessage() {
+            document.getElementById('message').innerHTML = '';
+        }
+
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000);
         }
     </script>
 </body>

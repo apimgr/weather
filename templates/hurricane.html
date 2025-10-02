@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - Weather</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌀</text></svg>">
     <style>
         .hurricane-header {
@@ -156,19 +157,65 @@
     </style>
 </head>
 <body>
-    <div class="weather-container">
-        <div class="weather-header">
-            🌀 <a href="/" style="color: inherit; text-decoration: none;">Weather</a>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                🌤️ Weather Service
+            </a>
+            <div class="navbar-menu">
+                <a href="/" class="navbar-link">Weather</a>
+                <a href="/moon" class="navbar-link">Moon</a>
+                <a href="/earthquake" class="navbar-link">Earthquakes</a>
+                <a href="/hurricane" class="navbar-link active">Hurricanes</a>
+                <a href="/dashboard" class="navbar-link">Dashboard</a>
+                {{ if eq .user.Role "admin" }}
+                <a href="/admin" class="navbar-link">Admin</a>
+                {{ end }}
+            </div>
+            <div class="navbar-actions">
+                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+                <div class="profile-avatar">
+                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                        {{ if .user.Email }}
+                            {{ index .user.Email 0 | printf "%c" | upper }}
+                        {{ else }}
+                            U
+                        {{ end }}
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div>{{ .user.Email }}</div>
+                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
+                        </div>
+                        <nav class="profile-dropdown-menu">
+                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
+                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                            <a href="/api-docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        </nav>
+                    </div>
+                </div>
+                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
+                    ☰
+                </button>
+            </div>
         </div>
+        <div class="navbar-menu-mobile">
+            <a href="/" class="navbar-link">Weather</a>
+            <a href="/moon" class="navbar-link">Moon</a>
+            <a href="/earthquake" class="navbar-link">Earthquakes</a>
+            <a href="/hurricane" class="navbar-link active">Hurricanes</a>
+            <a href="/dashboard" class="navbar-link">Dashboard</a>
+            {{ if eq .user.Role "admin" }}
+            <a href="/admin" class="navbar-link">Admin</a>
+            {{ end }}
+        </div>
+    </nav>
 
-        <!-- Navigation Bar -->
-        <nav style="display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0; padding: 0.75rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-            <a href="/" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">🏠 Home</a>
-            <a href="/moon" style="color: var(--dracula-purple); text-decoration: none; font-weight: 500;">🌙 Moon</a>
-            <a href="/earthquake" style="color: var(--dracula-orange); text-decoration: none; font-weight: 500;">🌍 Earthquakes</a>
-            <a href="/hurricane" style="color: var(--dracula-red); text-decoration: none; font-weight: 500;">🌀 Hurricanes</a>
-            <a href="/docs" style="color: var(--dracula-pink); text-decoration: none; font-weight: 500;">📚 Docs</a>
-        </nav>
+    <div class="weather-container">
 
         <div class="hurricane-header">
             <h1>🌀 Active Hurricanes & Tropical Storms</h1>
@@ -261,6 +308,11 @@
         setTimeout(() => {
             window.location.reload();
         }, 5 * 60 * 1000);
+
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000);
+        }
     </script>
 </body>
 </html>

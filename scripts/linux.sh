@@ -85,9 +85,9 @@ Type=simple
 User=${SERVICE_USER}
 Group=${SERVICE_USER}
 Environment="PORT=3000"
-Environment="DATABASE_PATH=${DATA_DIR}/weather.db"
 Environment="GIN_MODE=release"
-ExecStart=${INSTALL_DIR}/${BINARY_NAME}
+Environment="TZ=UTC"
+ExecStart=${INSTALL_DIR}/${BINARY_NAME} --data ${DATA_DIR} --config ${CONFIG_DIR}
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -98,7 +98,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=${DATA_DIR}
+ReadWritePaths=${DATA_DIR} ${CONFIG_DIR}
 
 [Install]
 WantedBy=multi-user.target

@@ -173,8 +173,14 @@ London, GB: ☀️ 🌡️+22°C 🌬️↗11km/h 💧45%
 # Custom port
 ./weather --port 8080
 
-# Custom database
-./weather --data /var/lib/weather/data.db
+# Custom data directory (database will be stored as <dir>/weather.db)
+./weather --data /var/lib/weather
+
+# Custom config directory
+./weather --config /etc/weather
+
+# Both data and config
+./weather --data /var/lib/weather --config /etc/weather
 
 # Custom address
 ./weather --address 127.0.0.1
@@ -193,8 +199,8 @@ PORT=3000                          # Listen port
 GIN_MODE=release                   # Gin mode (debug/release)
 SERVER_ADDRESS=0.0.0.0            # Listen address
 
-# Database
-DATABASE_PATH=/data/weather.db     # SQLite database path
+# Database (can be overridden with --data CLI flag)
+DATABASE_PATH=/data/weather.db     # SQLite database path (if not using --data flag)
 
 # Security
 SESSION_SECRET=your-random-secret  # Session encryption key
@@ -545,11 +551,12 @@ spec:
             secretKeyRef:
               name: weather-secrets
               key: session-secret
-        - name: DATABASE_PATH
-          value: /data/weather.db
+        # Note: --data and --config flags are set in Dockerfile CMD
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: config
+          mountPath: /config
         livenessProbe:
           httpGet:
             path: /livez
@@ -565,7 +572,10 @@ spec:
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: weather-pvc
+          claimName: weather-data-pvc
+      - name: config
+        persistentVolumeClaim:
+          claimName: weather-config-pvc
 ---
 apiVersion: v1
 kind: Service

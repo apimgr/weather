@@ -496,3 +496,10 @@ func (le *LocationEnhancer) EnhanceLocation(coords *Coordinates) *Coordinates {
 		ShortName:   enhanced.ShortName,
 	}
 }
+
+// GetCitiesData returns the loaded cities data
+func (le *LocationEnhancer) GetCitiesData() []City {
+	le.mu.RLock()
+	defer le.mu.RUnlock()
+	return le.citiesData
+}

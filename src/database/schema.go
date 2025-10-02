@@ -162,26 +162,223 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 
 CREATE INDEX IF NOT EXISTS idx_ratelimit_identifier ON rate_limits(identifier, endpoint);
 CREATE INDEX IF NOT EXISTS idx_ratelimit_window ON rate_limits(window_start);
+
+-- Notification Channels table (30+ channel configurations)
+CREATE TABLE IF NOT EXISTS notification_channels (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	channel_type TEXT UNIQUE NOT NULL,
+	channel_name TEXT NOT NULL,
+	enabled BOOLEAN DEFAULT 0,
+	state TEXT DEFAULT 'disabled' CHECK(state IN ('disabled', 'enabled', 'failed', 'testing')),
+	config TEXT,
+	last_test_at DATETIME,
+	last_test_result TEXT,
+	last_error TEXT,
+	last_success_at DATETIME,
+	failure_count INTEGER DEFAULT 0,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_channels_type ON notification_channels(channel_type);
+CREATE INDEX IF NOT EXISTS idx_channels_enabled ON notification_channels(enabled);
+CREATE INDEX IF NOT EXISTS idx_channels_state ON notification_channels(state);
+
+-- Notification Templates table
+CREATE TABLE IF NOT EXISTS notification_templates (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	channel_type TEXT NOT NULL,
+	template_name TEXT NOT NULL,
+	template_type TEXT NOT NULL,
+	subject_template TEXT,
+	body_template TEXT NOT NULL,
+	variables TEXT,
+	is_default BOOLEAN DEFAULT 0,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (channel_type) REFERENCES notification_channels(channel_type) ON DELETE CASCADE,
+	UNIQUE(channel_type, template_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_templates_channel ON notification_templates(channel_type);
+CREATE INDEX IF NOT EXISTS idx_templates_name ON notification_templates(template_name);
+CREATE INDEX IF NOT EXISTS idx_templates_default ON notification_templates(is_default);
+
+-- Notification Queue table
+CREATE TABLE IF NOT EXISTS notification_queue (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER,
+	channel_type TEXT NOT NULL,
+	template_id INTEGER,
+	priority INTEGER DEFAULT 5,
+	state TEXT DEFAULT 'created' CHECK(state IN ('created', 'queued', 'sending', 'delivered', 'failed', 'dead_letter')),
+	subject TEXT,
+	body TEXT NOT NULL,
+	variables TEXT,
+	retry_count INTEGER DEFAULT 0,
+	max_retries INTEGER DEFAULT 3,
+	next_retry_at DATETIME,
+	delivered_at DATETIME,
+	failed_at DATETIME,
+	error_message TEXT,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+	FOREIGN KEY (channel_type) REFERENCES notification_channels(channel_type) ON DELETE CASCADE,
+	FOREIGN KEY (template_id) REFERENCES notification_templates(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_queue_user ON notification_queue(user_id);
+CREATE INDEX IF NOT EXISTS idx_queue_channel ON notification_queue(channel_type);
+CREATE INDEX IF NOT EXISTS idx_queue_state ON notification_queue(state);
+CREATE INDEX IF NOT EXISTS idx_queue_priority ON notification_queue(priority);
+CREATE INDEX IF NOT EXISTS idx_queue_retry ON notification_queue(next_retry_at);
+CREATE INDEX IF NOT EXISTS idx_queue_created ON notification_queue(created_at);
+
+-- Notification History table (audit trail)
+CREATE TABLE IF NOT EXISTS notification_history (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	queue_id INTEGER,
+	user_id INTEGER,
+	channel_type TEXT NOT NULL,
+	status TEXT NOT NULL,
+	subject TEXT,
+	body TEXT,
+	sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	delivered_at DATETIME,
+	error_message TEXT,
+	metadata TEXT,
+	FOREIGN KEY (queue_id) REFERENCES notification_queue(id) ON DELETE SET NULL,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_history_queue ON notification_history(queue_id);
+CREATE INDEX IF NOT EXISTS idx_history_user ON notification_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_history_channel ON notification_history(channel_type);
+CREATE INDEX IF NOT EXISTS idx_history_status ON notification_history(status);
+CREATE INDEX IF NOT EXISTS idx_history_sent ON notification_history(sent_at);
+
+-- User Notification Preferences table
+CREATE TABLE IF NOT EXISTS user_notification_preferences (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	channel_type TEXT NOT NULL,
+	enabled BOOLEAN DEFAULT 1,
+	priority INTEGER DEFAULT 5,
+	quiet_hours_start TIME,
+	quiet_hours_end TIME,
+	config TEXT,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (channel_type) REFERENCES notification_channels(channel_type) ON DELETE CASCADE,
+	UNIQUE(user_id, channel_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_notification_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_prefs_channel ON user_notification_preferences(channel_type);
+CREATE INDEX IF NOT EXISTS idx_user_prefs_enabled ON user_notification_preferences(enabled);
+
+-- Notification Subscriptions table
+CREATE TABLE IF NOT EXISTS notification_subscriptions (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	subscription_type TEXT NOT NULL,
+	subscription_category TEXT NOT NULL,
+	enabled BOOLEAN DEFAULT 1,
+	config TEXT,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	UNIQUE(user_id, subscription_type, subscription_category)
+);
+
+CREATE INDEX IF NOT EXISTS idx_subs_user ON notification_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subs_type ON notification_subscriptions(subscription_type);
+CREATE INDEX IF NOT EXISTS idx_subs_category ON notification_subscriptions(subscription_category);
+CREATE INDEX IF NOT EXISTS idx_subs_enabled ON notification_subscriptions(enabled);
+
+-- Weather alert history table
+CREATE TABLE IF NOT EXISTS weather_alert_history (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	location_id INTEGER NOT NULL,
+	alert_type TEXT NOT NULL,
+	sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (location_id) REFERENCES user_locations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_history_user ON weather_alert_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_alert_history_location ON weather_alert_history(location_id);
+CREATE INDEX IF NOT EXISTS idx_alert_history_sent ON weather_alert_history(sent_at);
+
+-- Notification Metrics table (for custom metrics and analytics)
+CREATE TABLE IF NOT EXISTS notification_metrics (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	metric_type TEXT NOT NULL,
+	channel_type TEXT,
+	value REAL NOT NULL,
+	recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_metrics_type ON notification_metrics(metric_type);
+CREATE INDEX IF NOT EXISTS idx_metrics_channel ON notification_metrics(channel_type);
+CREATE INDEX IF NOT EXISTS idx_metrics_recorded ON notification_metrics(recorded_at);
 `
 
 // DefaultSettings are inserted on first setup
 var DefaultSettings = map[string]string{
+	// Server settings
 	"server.port":              "random", // Will be set to actual port on first run
 	"server.address":           "0.0.0.0",
 	"server.theme":             "dark",
+
+	// Auth settings
 	"auth.session_timeout":     "86400", // 24 hours
 	"auth.require_email_verification": "false",
+
+	// Rate limiting
 	"rate_limit.anonymous":     "120",
 	"rate_limit.window":        "3600", // 1 hour
+
+	// Audit
 	"audit.enabled":            "false",
+
+	// Legacy notification settings (deprecated, use notification_channels table)
 	"notifications.email":      "false",
 	"notifications.webhook":    "false",
 	"notifications.push":       "false",
+
+	// Notification system settings
+	"notifications.enabled":           "true",
+	"notifications.retry_max":         "3",
+	"notifications.retry_backoff":     "exponential", // linear or exponential
+	"notifications.queue_workers":     "5",
+	"notifications.batch_size":        "100",
+	"notifications.rate_limit_per_min": "60",
+
+	// SMTP settings (environment variable hints, web UI takes precedence)
+	"smtp.host":                "",     // SMTP_HOST env var
+	"smtp.port":                "587",  // SMTP_PORT env var
+	"smtp.username":            "",     // SMTP_USERNAME env var
+	"smtp.password":            "",     // SMTP_PASSWORD env var (encrypted in DB)
+	"smtp.from_address":        "",     // SMTP_FROM_ADDRESS env var
+	"smtp.from_name":           "Weather Service",
+	"smtp.use_tls":             "true",
+	"smtp.auto_enable":         "true", // Auto-enable on successful test
+	"smtp.test_recipient":      "",     // Test email address
+
+	// Weather settings
 	"weather.refresh_interval": "600", // 10 minutes
 	"alerts.enabled":           "true",
 	"alerts.check_interval":    "300", // 5 minutes
+
+	// Backup settings
 	"backup.enabled":           "true",
 	"backup.interval":          "86400", // Daily
+
+	// Logging
 	"log.format":               "apache",
 	"log.level":                "info",
 }
@@ -293,4 +490,28 @@ func (db *DB) CleanupRateLimits() error {
 	cutoff := time.Now().Add(-2 * time.Hour)
 	_, err := db.Exec("DELETE FROM rate_limits WHERE window_start < ?", cutoff)
 	return err
+}
+
+// HealthCheck returns database health status with latency
+func (db *DB) HealthCheck() (status string, latencyMs int64, err error) {
+	start := time.Now()
+
+	// Simple query to check connection
+	var result int
+	err = db.QueryRow("SELECT 1").Scan(&result)
+
+	latencyMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		return "disconnected", latencyMs, err
+	}
+
+	return "connected", latencyMs, nil
+}
+
+// GetSessionCount returns active session count
+func (db *DB) GetSessionCount() (int, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM sessions WHERE expires_at > ?", time.Now()).Scan(&count)
+	return count, err
 }

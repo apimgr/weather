@@ -71,6 +71,15 @@ func main() {
 		os.Setenv("PORT", *configPort)
 	}
 	if *dataDir != "" {
+		// Check if path exists and is a file (not a directory)
+		if info, err := os.Stat(*dataDir); err == nil {
+			if !info.IsDir() {
+				// Path exists but is a file - delete it
+				if err := os.Remove(*dataDir); err != nil {
+					log.Fatalf("Failed to remove file at %s: %v", *dataDir, err)
+				}
+			}
+		}
 		// Create data directory if it doesn't exist
 		if err := os.MkdirAll(*dataDir, 0755); err != nil {
 			log.Fatalf("Failed to create data directory %s: %v", *dataDir, err)
@@ -80,6 +89,15 @@ func main() {
 		os.Setenv("DATABASE_PATH", dbPath)
 	}
 	if *configDir != "" {
+		// Check if path exists and is a file (not a directory)
+		if info, err := os.Stat(*configDir); err == nil {
+			if !info.IsDir() {
+				// Path exists but is a file - delete it
+				if err := os.Remove(*configDir); err != nil {
+					log.Fatalf("Failed to remove file at %s: %v", *configDir, err)
+				}
+			}
+		}
 		// Create config directory if it doesn't exist
 		if err := os.MkdirAll(*configDir, 0755); err != nil {
 			log.Fatalf("Failed to create config directory %s: %v", *configDir, err)
@@ -190,6 +208,15 @@ func main() {
 	// Load templates
 	r.LoadHTMLGlob("templates/*.html")
 
+	// Live reload templates in debug mode
+	if gin.Mode() == gin.DebugMode {
+		r.Use(func(c *gin.Context) {
+			r.LoadHTMLGlob("templates/*.html")
+			c.Next()
+		})
+		fmt.Println("🔄 Live reload enabled for templates")
+	}
+
 	// Initialize services
 	fmt.Println("🚀 Starting Weather...")
 	fmt.Println("📍 Initializing location databases...")
@@ -218,6 +245,27 @@ func main() {
 		}
 	}()
 
+	// Initialize notification system services
+	fmt.Println("📬 Initializing notification system...")
+	channelManager := services.NewChannelManager(db.DB)
+	templateEngine := services.NewTemplateEngine(db.DB)
+	deliverySystem := services.NewDeliverySystem(db.DB, channelManager, templateEngine)
+
+	// Load delivery system settings from database
+	_ = deliverySystem.LoadSettings()
+
+	// Initialize default templates
+	_ = templateEngine.InitializeDefaultTemplates()
+
+	// Initialize channels in database
+	_ = channelManager.InitializeChannels()
+
+	// Create weather notification service
+	weatherNotifications := services.NewWeatherNotificationService(db.DB, weatherService, deliverySystem, templateEngine)
+
+	// Initialize notification metrics service
+	notificationMetrics := services.NewNotificationMetrics(db.DB)
+
 	// Initialize scheduler for periodic tasks
 	taskScheduler := scheduler.NewScheduler(db.DB)
 
@@ -236,7 +284,22 @@ func main() {
 
 	// Register weather alert checks - run every 15 minutes
 	taskScheduler.AddTask("check-weather-alerts", 15*time.Minute, func() error {
-		return scheduler.CheckWeatherAlerts(db.DB)
+		return weatherNotifications.CheckWeatherAlerts()
+	})
+
+	// Register daily forecast - run once per day at 7 AM
+	taskScheduler.AddTask("daily-forecast", 24*time.Hour, func() error {
+		return weatherNotifications.SendDailyForecast()
+	})
+
+	// Register notification queue processing - run every 2 minutes
+	taskScheduler.AddTask("process-notification-queue", 2*time.Minute, func() error {
+		return deliverySystem.ProcessQueue()
+	})
+
+	// Register cleanup of old delivered notifications - run daily
+	taskScheduler.AddTask("cleanup-notifications", 24*time.Hour, func() error {
+		return deliverySystem.CleanupOld(30) // Keep 30 days
 	})
 
 	// Register backup task - run every 6 hours
@@ -267,11 +330,69 @@ func main() {
 	authHandler := &handlers.AuthHandler{DB: db.DB}
 	dashboardHandler := &handlers.DashboardHandler{DB: db.DB}
 	adminHandler := &handlers.AdminHandler{DB: db.DB}
-	locationHandler := &handlers.LocationHandler{DB: db.DB}
+	locationHandler := &handlers.LocationHandler{
+		DB:               db.DB,
+		WeatherService:   weatherService,
+		LocationEnhancer: locationEnhancer,
+	}
 	notificationHandler := &handlers.NotificationHandler{DB: db.DB}
 
+	// Create notification system handlers
+	channelHandler := handlers.NewNotificationChannelHandler(db.DB)
+	preferencesHandler := handlers.NewNotificationPreferencesHandler(db.DB)
+	templateHandler := handlers.NewNotificationTemplateHandler(db.DB)
+	metricsHandler := handlers.NewNotificationMetricsHandler(notificationMetrics)
+
+	// Get port from environment or database-managed port (early to pass to health check)
+	port := os.Getenv("PORT")
+	if port == "" {
+		// Use port manager to get or assign a random port (64000-64999)
+		portManager := utils.NewPortManager(db.DB)
+		httpPort, err := portManager.GetOrAssignPort("http")
+		if err != nil {
+			log.Printf("⚠️  Failed to get managed port: %v, using default 3000", err)
+			port = "3000"
+		} else {
+			port = fmt.Sprintf("%d", httpPort)
+			fmt.Printf("🔌 Using managed HTTP port: %s\n", port)
+		}
+	} else {
+		fmt.Printf("🔌 Using PORT environment variable: %s\n", port)
+	}
+
+	// Initialize SSL manager
+	sslDataDir := os.Getenv("DATA_DIR")
+	if sslDataDir == "" {
+		sslDataDir = "./data"
+	}
+	sslManager := utils.NewSSLManager(db.DB, sslDataDir)
+	httpsPort := 0
+
+	// Check for SSL configuration
+	hostname, _ := os.Hostname()
+	if hostname == "" {
+		hostname = "localhost"
+	}
+
+	// Try to check for existing Let's Encrypt certs
+	found, err := sslManager.CheckExistingCerts(hostname)
+	if err != nil {
+		log.Printf("⚠️  SSL check failed: %v", err)
+	} else if found {
+		fmt.Printf("🔒 Found Let's Encrypt certificate for %s\n", hostname)
+		// Get HTTPS port
+		portManager := utils.NewPortManager(db.DB)
+		httpsPortInt, err := portManager.GetOrAssignPort("https")
+		if err == nil {
+			httpsPort = httpsPortInt
+			fmt.Printf("🔌 HTTPS enabled on port: %d\n", httpsPort)
+		}
+	}
+	// Note: Self-signed cert generation is optional and disabled by default
+	// Can be enabled via CLI flag or environment variable if needed
+
 	// Health check endpoints (Kubernetes standard)
-	r.GET("/healthz", handlers.HealthCheck)
+	r.GET("/healthz", handlers.ComprehensiveHealthCheck(db, port, httpsPort, sslManager))
 	r.GET("/health", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/healthz")
 	})
@@ -331,6 +452,19 @@ func main() {
 	r.GET("/admin", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), dashboardHandler.ShowAdminPanel)
 	r.GET("/notifications", middleware.RequireAuth(db.DB), notificationHandler.ShowNotificationsPage)
 
+	// User notification preferences page
+	r.GET("/preferences", middleware.RequireAuth(db.DB), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "user_preferences.html", nil)
+	})
+
+	// Admin notification system pages (admin only)
+	r.GET("/admin/channels", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_channels.html", nil)
+	})
+	r.GET("/admin/templates", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "template_editor.html", nil)
+	})
+
 	// Location management pages
 	r.GET("/locations/new", middleware.RequireAuth(db.DB), locationHandler.ShowAddLocationPage)
 	r.GET("/locations/:id/edit", middleware.RequireAuth(db.DB), locationHandler.ShowEditLocationPage)
@@ -343,6 +477,9 @@ func main() {
 	locationAPI.Use(middleware.RequireAuth(db.DB))
 	{
 		locationAPI.GET("", locationHandler.ListLocations)
+		locationAPI.GET("/search", locationHandler.SearchLocations)
+		locationAPI.GET("/lookup/zip/:code", locationHandler.LookupZipCode)
+		locationAPI.GET("/lookup/coords", locationHandler.LookupCoordinates)
 		locationAPI.GET("/:id", locationHandler.GetLocation)
 		locationAPI.POST("", locationHandler.CreateLocation)
 		locationAPI.PUT("/:id", locationHandler.UpdateLocation)
@@ -389,6 +526,56 @@ func main() {
 
 		// System stats
 		adminAPI.GET("/stats", adminHandler.GetSystemStats)
+
+		// Notification channel management (admin only)
+		adminAPI.GET("/channels", channelHandler.ListChannels)
+		adminAPI.GET("/channels/definitions", channelHandler.GetChannelDefinitions)
+		adminAPI.GET("/channels/queue/stats", channelHandler.GetQueueStats)
+		adminAPI.GET("/channels/history", channelHandler.GetNotificationHistory)
+		adminAPI.POST("/channels/initialize", channelHandler.InitializeChannels)
+		adminAPI.GET("/channels/:type", channelHandler.GetChannel)
+		adminAPI.PUT("/channels/:type", channelHandler.UpdateChannel)
+		adminAPI.POST("/channels/:type/enable", channelHandler.EnableChannel)
+		adminAPI.POST("/channels/:type/disable", channelHandler.DisableChannel)
+		adminAPI.POST("/channels/:type/test", channelHandler.TestChannel)
+		adminAPI.GET("/channels/:type/stats", channelHandler.GetChannelStats)
+
+		// SMTP provider management
+		adminAPI.GET("/smtp/providers", channelHandler.ListSMTPProviders)
+		adminAPI.POST("/smtp/autodetect", channelHandler.AutoDetectSMTP)
+
+		// Template management (admin only)
+		adminAPI.GET("/templates", templateHandler.ListTemplates)
+		adminAPI.GET("/templates/variables", templateHandler.GetTemplateVariables)
+		adminAPI.POST("/templates/preview", templateHandler.PreviewTemplate)
+		adminAPI.POST("/templates/initialize", templateHandler.InitializeDefaults)
+		adminAPI.GET("/templates/:id", templateHandler.GetTemplate)
+		adminAPI.POST("/templates", templateHandler.CreateTemplate)
+		adminAPI.PUT("/templates/:id", templateHandler.UpdateTemplate)
+		adminAPI.DELETE("/templates/:id", templateHandler.DeleteTemplate)
+		adminAPI.POST("/templates/:id/clone", templateHandler.CloneTemplate)
+
+		// Notification metrics management (admin only)
+		adminAPI.GET("/metrics/notifications/summary", metricsHandler.GetSummary)
+		adminAPI.GET("/metrics/notifications/channels/:type", metricsHandler.GetChannelMetrics)
+		adminAPI.GET("/metrics/notifications/errors", metricsHandler.GetRecentErrors)
+		adminAPI.GET("/metrics/notifications/health", metricsHandler.GetHealthStatus)
+	}
+
+	// User notification preferences API (authenticated users)
+	userPrefAPI := r.Group("/api/user")
+	userPrefAPI.Use(middleware.RequireAuth(db.DB))
+	{
+		// Channel preferences
+		userPrefAPI.GET("/preferences", preferencesHandler.GetUserPreferences)
+		userPrefAPI.PUT("/preferences/:id", preferencesHandler.UpdatePreference)
+		userPrefAPI.POST("/preferences", preferencesHandler.CreatePreference)
+		userPrefAPI.DELETE("/preferences/:id", preferencesHandler.DeletePreference)
+
+		// Subscriptions
+		userPrefAPI.GET("/subscriptions", preferencesHandler.GetSubscriptions)
+		userPrefAPI.PUT("/subscriptions/:id", preferencesHandler.UpdateSubscription)
+		userPrefAPI.POST("/subscriptions", preferencesHandler.CreateSubscription)
 	}
 
 	// API routes - must come before catch-all weather routes
@@ -508,26 +695,20 @@ JSON API:
 	r.GET("/", weatherHandler.HandleRoot)
 	r.GET("/:location", weatherHandler.HandleLocation)
 
-	// Get port from environment or default
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
-
 	// Show startup message
 	protocol := "http"
 	if os.Getenv("NODE_ENV") == "production" {
 		protocol = "https"
 	}
-	hostname := os.Getenv("HOST")
-	if hostname == "" {
-		hostname = os.Getenv("HOSTNAME")
+	hostnameForURL := os.Getenv("HOST")
+	if hostnameForURL == "" {
+		hostnameForURL = os.Getenv("HOSTNAME")
 	}
-	if hostname == "" {
-		hostname = "localhost"
+	if hostnameForURL == "" {
+		hostnameForURL = "localhost"
 	}
 
-	baseURL := fmt.Sprintf("%s://%s", protocol, hostname)
+	baseURL := fmt.Sprintf("%s://%s", protocol, hostnameForURL)
 	if (protocol == "http" && port != "80") || (protocol == "https" && port != "443") {
 		baseURL += ":" + port
 	}

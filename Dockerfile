@@ -4,8 +4,8 @@ FROM golang:1.23-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache git ca-certificates tzdata
+# Install build dependencies (bash, curl, git, ca-certificates, tzdata)
+RUN apk add --no-cache bash curl git ca-certificates tzdata
 
 # Copy go mod files
 COPY go.mod go.sum ./
@@ -17,15 +17,21 @@ COPY . .
 # Build args for version information
 ARG VERSION=dev
 ARG BUILD_DATE
-ARG VCS_REF
+ARG GIT_COMMIT
 
 # Build static binary with optimization and version info
 RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${VCS_REF}" \
-    -o weather .
+    -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${GIT_COMMIT}" \
+    -o weather . && \
+    chmod +x weather
 
 # Final stage - minimal runtime image
 FROM scratch
+
+# Build args for labels
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG GIT_COMMIT
 
 # OCI Standard Labels
 LABEL org.opencontainers.image.title="Weather Service" \
@@ -35,7 +41,7 @@ LABEL org.opencontainers.image.title="Weather Service" \
       org.opencontainers.image.authors="Weather Service Contributors" \
       org.opencontainers.image.url="https://github.com/apimgr/weather" \
       org.opencontainers.image.source="https://github.com/apimgr/weather" \
-      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.documentation="https://github.com/apimgr/weather/blob/main/README.md"
 
@@ -53,8 +59,8 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/templates /templates
 COPY --from=builder /app/static /static
 
-# Copy the binary
-COPY --from=builder /app/weather /weather
+# Copy the binary to /usr/local/bin
+COPY --from=builder /app/weather /usr/local/bin/weather
 
 # Set working directory
 WORKDIR /
@@ -62,24 +68,23 @@ WORKDIR /
 # Environment variables with defaults
 ENV PORT=3000 \
     GIN_MODE=release \
-    DATABASE_PATH=/data/weather.db \
     SESSION_SECRET="" \
     TZ=UTC
 
 # Expose port
 EXPOSE 3000
 
-# Create data directory and set permissions
-# Note: In production, mount a volume to /data for persistence
-VOLUME ["/data"]
+# Create data and config directories
+# Note: In production, mount volumes to /data and /config for persistence
+VOLUME ["/data", "/config"]
 
 # Health check - uses built-in healthcheck endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD ["/weather", "--healthcheck"] || exit 1
+  CMD ["/usr/local/bin/weather", "--healthcheck"] || exit 1
 
 # Run as non-root user (nobody:nogroup)
 USER 65534:65534
 
-# Start the application
-ENTRYPOINT ["/weather"]
-CMD []
+# Start the application with directory-based CLI flags
+ENTRYPOINT ["/usr/local/bin/weather"]
+CMD ["--data", "/data", "--config", "/config"]

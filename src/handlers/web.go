@@ -108,7 +108,7 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 
 	hostInfo := utils.GetHostInfo(c)
 
-	// Format location for URLs (replace spaces with +)
+	// Format location for URLs (replace spaces with +, keep commas)
 	locationFormatted := strings.ReplaceAll(location, " ", "+")
 
 	c.HTML(http.StatusOK, "weather.html", gin.H{

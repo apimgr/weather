@@ -6,6 +6,7 @@ set -e
 VERSION="${VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 DATA_DIR="${DATA_DIR:-$HOME/Library/Application Support/Weather}"
+CONFIG_DIR="${CONFIG_DIR:-$HOME/Library/Application Support/Weather/config}"
 REPO="apimgr/weather"
 BINARY_NAME="weather"
 
@@ -53,9 +54,10 @@ else
     mv "${TMP_DIR}/${BINARY_FILE}" "${INSTALL_DIR}/${BINARY_NAME}"
 fi
 
-# Create data directory
-echo "📁 Creating data directory..."
+# Create data and config directories
+echo "📁 Creating directories..."
 mkdir -p "${DATA_DIR}"
+mkdir -p "${CONFIG_DIR}"
 
 # Create LaunchAgent
 echo "⚙️  Creating LaunchAgent..."
@@ -72,15 +74,19 @@ cat > "${LAUNCH_AGENT}" <<EOF
     <key>ProgramArguments</key>
     <array>
         <string>${INSTALL_DIR}/${BINARY_NAME}</string>
+        <string>--data</string>
+        <string>${DATA_DIR}</string>
+        <string>--config</string>
+        <string>${CONFIG_DIR}</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PORT</key>
         <string>3000</string>
-        <key>DATABASE_PATH</key>
-        <string>${DATA_DIR}/weather.db</string>
         <key>GIN_MODE</key>
         <string>release</string>
+        <key>TZ</key>
+        <string>UTC</string>
     </dict>
     <key>RunAtLoad</key>
     <true/>
