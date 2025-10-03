@@ -8,6 +8,7 @@ import (
 
 	"weather-go/src/middleware"
 	"weather-go/src/models"
+	"weather-go/src/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,9 +38,9 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "login.html", gin.H{
-		"title": "Login - Weather Service",
-	})
+	c.HTML(http.StatusOK, "login.html", utils.TemplateData(c, gin.H{
+		"title": "Login",
+	}))
 }
 
 // ShowRegisterPage renders the registration page
@@ -54,18 +55,18 @@ func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 	userModel := &models.UserModel{DB: h.DB}
 	count, err := userModel.Count()
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
+		c.HTML(http.StatusInternalServerError, "error.html", utils.TemplateData(c, gin.H{
 			"error": "Database error",
-		})
+		}))
 		return
 	}
 
 	isSetup := count == 0
 
-	c.HTML(http.StatusOK, "register.html", gin.H{
-		"title":   "Register - Weather Service",
+	c.HTML(http.StatusOK, "register.html", utils.TemplateData(c, gin.H{
+		"title":   "Register",
 		"isSetup": isSetup,
-	})
+	}))
 }
 
 // HandleLogin processes login requests

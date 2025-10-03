@@ -26,6 +26,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     chmod +x weather
 
 # Final stage - minimal runtime image
+FROM alpine:latest as base
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/weather /usr/local/bin/weather
+
+RUN apk update --no-cache && apk add --no-cache curl bash
+
 FROM scratch
 
 # Build args for labels
@@ -51,40 +58,28 @@ LABEL app.weather.features="authentication,database,admin-ui,saved-locations,api
       app.weather.framework="gin" \
       app.weather.theme="dracula"
 
-# Copy timezone data and CA certificates from builder
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-# Copy templates and static files
-COPY --from=builder /app/templates /templates
-COPY --from=builder /app/static /static
-
-# Copy the binary to /usr/local/bin
-COPY --from=builder /app/weather /usr/local/bin/weather
+# Copy base to scratch
+COPY --from=base / /
 
 # Set working directory
-WORKDIR /
+WORKDIR /config
 
 # Environment variables with defaults
-ENV PORT=3000 \
+ENV PORT=80 \
     GIN_MODE=release \
     SESSION_SECRET="" \
-    TZ=UTC
+    TZ=${TZ:-America/New_York}
 
 # Expose port
-EXPOSE 3000
+EXPOSE 80
 
 # Create data and config directories
 # Note: In production, mount volumes to /data and /config for persistence
 VOLUME ["/data", "/config"]
 
 # Health check - uses built-in healthcheck endpoint
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD ["/usr/local/bin/weather", "--healthcheck"] || exit 1
-
-# Run as non-root user (nobody:nogroup)
-USER 65534:65534
+HEALTHCHECK --interval=120s --timeout=5s --start-period=90s --retries=3 CMD ["/usr/local/bin/weather", "--healthcheck"] || exit 1
 
 # Start the application with directory-based CLI flags
 ENTRYPOINT ["/usr/local/bin/weather"]
-CMD ["--data", "/data", "--config", "/config"]
+CMD ["--data", "/data/weather", "--config", "/config/weather"]

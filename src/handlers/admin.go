@@ -410,3 +410,56 @@ func (h *AdminHandler) GetSystemStats(c *gin.Context) {
 		"notifications": totalNotifications,
 	})
 }
+
+// ShowSettingsPage renders the admin settings page
+func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	// Load all settings
+	settingsModel := &models.SettingsModel{DB: h.DB}
+	settings := make(map[string]interface{})
+
+	// Server settings
+	settings["server_title"] = settingsModel.GetString("server.title", "Weather Service")
+	settings["server_tagline"] = settingsModel.GetString("server.tagline", "Your personal weather dashboard")
+	settings["server_description"] = settingsModel.GetString("server.description", "A comprehensive platform for weather forecasts, moon phases, earthquakes, and hurricane tracking.")
+	settings["server_http_port"] = settingsModel.GetInt("server.http_port", 3000)
+	settings["server_https_port"] = settingsModel.GetInt("server.https_port", 0)
+	settings["server_timezone"] = settingsModel.GetString("server.timezone", "America/New_York")
+	settings["server_date_format"] = settingsModel.GetString("server.date_format", "US")
+	settings["server_time_format"] = settingsModel.GetString("server.time_format", "12-hour")
+
+	// Security settings
+	settings["security_session_timeout"] = settingsModel.GetInt("security.session_timeout", 2592000)
+	settings["security_max_login_attempts"] = settingsModel.GetInt("security.max_login_attempts", 5)
+	settings["security_lockout_duration"] = settingsModel.GetInt("security.lockout_duration", 30)
+	settings["security_password_min_length"] = settingsModel.GetInt("security.password_min_length", 8)
+
+	// Features
+	settings["features_registration_enabled"] = settingsModel.GetBool("features.registration_enabled", true)
+	settings["features_api_enabled"] = settingsModel.GetBool("features.api_enabled", true)
+	settings["features_weather_alerts"] = settingsModel.GetBool("features.weather_alerts", true)
+
+	// Backup settings
+	settings["backup_enabled"] = settingsModel.GetBool("backup.enabled", true)
+	settings["backup_interval"] = settingsModel.GetInt("backup.interval", 6)
+	settings["backup_retention"] = settingsModel.GetInt("backup.retention", 30)
+	settings["backup_location"] = settingsModel.GetString("backup.location", "/data/backups")
+
+	// Logging settings
+	settings["logging_level"] = settingsModel.GetString("logging.level", "info")
+	settings["logging_access_log"] = settingsModel.GetBool("logging.access_log", true)
+	settings["logging_error_log"] = settingsModel.GetBool("logging.error_log", true)
+	settings["logging_audit_log"] = settingsModel.GetBool("logging.audit_log", true)
+	settings["logging_rotation_days"] = settingsModel.GetInt("logging.rotation_days", 30)
+
+	c.HTML(http.StatusOK, "admin-settings.html", gin.H{
+		"title":    "Server Settings",
+		"user":     user,
+		"settings": settings,
+	})
+}

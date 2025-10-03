@@ -398,7 +398,7 @@
      */
     fetch: async function() {
       try {
-        const response = await fetch('/api/notifications/unread');
+        const response = await fetch('/api/v1/notifications/unread');
         const data = await response.json();
         this.updateBadge(data.unread_count || 0);
       } catch (error) {

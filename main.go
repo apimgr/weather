@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"embed"
 	"flag"
 	"fmt"
+	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -19,10 +22,17 @@ import (
 	"weather-go/src/database"
 	"weather-go/src/handlers"
 	"weather-go/src/middleware"
+	"weather-go/src/models"
 	"weather-go/src/scheduler"
 	"weather-go/src/services"
 	"weather-go/src/utils"
 )
+
+//go:embed templates/*.html
+var templatesFS embed.FS
+
+//go:embed static
+var staticFS embed.FS
 
 // Version information (set via ldflags during build)
 var (
@@ -134,6 +144,12 @@ func main() {
 	defer db.Close()
 	fmt.Printf("✅ Database initialized: %s\n", dbPath)
 
+	// Initialize default settings
+	settingsModel := &models.SettingsModel{DB: db.DB}
+	if err := settingsModel.InitializeDefaults(); err != nil {
+		log.Printf("⚠️  Warning: Could not initialize default settings: %v", err)
+	}
+
 	// Check if this is first run (no users)
 	isFirstRun, err := db.IsFirstRun()
 	if err != nil {
@@ -180,6 +196,9 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Server context middleware - injects server title/tagline/description
+	r.Use(middleware.InjectServerContext(db.DB, Version))
+
 	// Path normalization middleware - fix double slashes
 	r.Use(func(c *gin.Context) {
 		if strings.Contains(c.Request.URL.Path, "//") {
@@ -196,25 +215,38 @@ func main() {
 		c.Next()
 	})
 
-	// Serve static files
-	r.Static("/static/css", "./static/css")
-	r.Static("/static/js", "./static/js")
-	r.Static("/static/images", "./static/images")
+	// Serve embedded static files
+	staticSubFS, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		log.Fatalf("Failed to get static subdirectory: %v", err)
+	}
+	r.StaticFS("/static", http.FS(staticSubFS))
 
-	// PWA files
-	r.StaticFile("/manifest.json", "./static/manifest.json")
-	r.StaticFile("/sw.js", "./static/js/sw.js")
+	// Load embedded templates with custom functions
+	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
+		"upper": strings.ToUpper,
+	}).ParseFS(templatesFS, "templates/*.html"))
+	r.SetHTMLTemplate(tmpl)
 
-	// Load templates
-	r.LoadHTMLGlob("templates/*.html")
-
-	// Live reload templates in debug mode
+	// Live reload templates in debug mode (loads from filesystem if available)
 	if gin.Mode() == gin.DebugMode {
-		r.Use(func(c *gin.Context) {
-			r.LoadHTMLGlob("templates/*.html")
-			c.Next()
-		})
-		fmt.Println("🔄 Live reload enabled for templates")
+		if _, err := os.Stat("templates"); err == nil {
+			r.Use(func(c *gin.Context) {
+				// Try to reload from filesystem in debug mode
+				t := template.New("").Funcs(template.FuncMap{
+					"upper": strings.ToUpper,
+				})
+				if t, err := t.ParseGlob("templates/*.html"); err == nil {
+					r.SetHTMLTemplate(t)
+				}
+				c.Next()
+			})
+			fmt.Println("🔄 Live reload enabled for templates (using filesystem)")
+		} else {
+			fmt.Println("📦 Using embedded templates (no filesystem templates found)")
+		}
+	} else {
+		fmt.Println("📦 Using embedded templates and static files")
 	}
 
 	// Initialize services
@@ -343,22 +375,24 @@ func main() {
 	templateHandler := handlers.NewNotificationTemplateHandler(db.DB)
 	metricsHandler := handlers.NewNotificationMetricsHandler(notificationMetrics)
 
-	// Get port from environment or database-managed port (early to pass to health check)
-	port := os.Getenv("PORT")
-	if port == "" {
-		// Use port manager to get or assign a random port (64000-64999)
-		portManager := utils.NewPortManager(db.DB)
-		httpPort, err := portManager.GetOrAssignPort("http")
-		if err != nil {
-			log.Printf("⚠️  Failed to get managed port: %v, using default 3000", err)
-			port = "3000"
-		} else {
-			port = fmt.Sprintf("%d", httpPort)
-			fmt.Printf("🔌 Using managed HTTP port: %s\n", port)
-		}
-	} else {
-		fmt.Printf("🔌 Using PORT environment variable: %s\n", port)
+	// Get port configuration using comprehensive port manager
+	// Priority: 1) Database saved ports, 2) PORT env variable, 3) Random port (64000-64999)
+	portManager := utils.NewPortManager(db.DB)
+	httpPortInt, httpsPortInt, err := portManager.GetServerPorts()
+	if err != nil {
+		log.Fatalf("Failed to configure server ports: %v", err)
 	}
+
+	port := fmt.Sprintf("%d", httpPortInt)
+	serverIP := utils.GetServerIP()
+
+	// Display port configuration
+	if os.Getenv("PORT") != "" {
+		fmt.Printf("🔌 Using PORT environment variable: %s\n", port)
+	} else {
+		fmt.Printf("🔌 Using configured HTTP port: %s\n", port)
+	}
+	fmt.Printf("📍 Server IP: %s\n", serverIP)
 
 	// Initialize SSL manager
 	sslDataDir := os.Getenv("DATA_DIR")
@@ -366,7 +400,7 @@ func main() {
 		sslDataDir = "./data"
 	}
 	sslManager := utils.NewSSLManager(db.DB, sslDataDir)
-	httpsPort := 0
+	httpsPort := httpsPortInt
 
 	// Check for SSL configuration
 	hostname, _ := os.Hostname()
@@ -374,18 +408,16 @@ func main() {
 		hostname = "localhost"
 	}
 
-	// Try to check for existing Let's Encrypt certs
-	found, err := sslManager.CheckExistingCerts(hostname)
-	if err != nil {
-		log.Printf("⚠️  SSL check failed: %v", err)
-	} else if found {
-		fmt.Printf("🔒 Found Let's Encrypt certificate for %s\n", hostname)
-		// Get HTTPS port
-		portManager := utils.NewPortManager(db.DB)
-		httpsPortInt, err := portManager.GetOrAssignPort("https")
-		if err == nil {
-			httpsPort = httpsPortInt
+	// Try to check for existing Let's Encrypt certs and enable HTTPS if configured
+	if httpsPort > 0 {
+		found, err := sslManager.CheckExistingCerts(hostname)
+		if err != nil {
+			log.Printf("⚠️  SSL check failed: %v", err)
+		} else if found {
+			fmt.Printf("🔒 Found Let's Encrypt certificate for %s\n", hostname)
 			fmt.Printf("🔌 HTTPS enabled on port: %d\n", httpsPort)
+		} else {
+			fmt.Printf("ℹ️  HTTPS port configured (%d) but no certificates found\n", httpsPort)
 		}
 	}
 	// Note: Self-signed cert generation is optional and disabled by default
@@ -464,16 +496,58 @@ func main() {
 	r.GET("/admin/templates", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "template_editor.html", nil)
 	})
+	r.GET("/admin/settings", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), adminHandler.ShowSettingsPage)
 
 	// Location management pages
 	r.GET("/locations/new", middleware.RequireAuth(db.DB), locationHandler.ShowAddLocationPage)
 	r.GET("/locations/:id/edit", middleware.RequireAuth(db.DB), locationHandler.ShowEditLocationPage)
 
+	// API v1 routes - all API endpoints under /api/v1
+	apiV1 := r.Group("/api/v1")
+
+	// Weather API routes (optional auth + rate limiting)
+	weatherAPI := apiV1.Group("")
+	weatherAPI.Use(middleware.OptionalAuth(db.DB))
+	weatherAPI.Use(middleware.RateLimitMiddleware(db.DB))
+	{
+		weatherAPI.GET("/weather", apiHandler.GetWeather)
+		weatherAPI.GET("/weather/:location", apiHandler.GetWeatherByLocation)
+		weatherAPI.GET("/forecast", apiHandler.GetForecast)
+		weatherAPI.GET("/forecast/:location", apiHandler.GetForecastByLocation)
+		weatherAPI.GET("/search", apiHandler.SearchLocations)
+		weatherAPI.GET("/ip", apiHandler.GetIP)
+		weatherAPI.GET("/location", apiHandler.GetLocation)
+		weatherAPI.GET("/docs", apiHandler.GetDocsJSON)
+
+		// Root /api/v1 endpoint - return all endpoints
+		weatherAPI.GET("", func(c *gin.Context) {
+			hostInfo := utils.GetHostInfo(c)
+			c.JSON(http.StatusOK, gin.H{
+				"version": "v1",
+				"endpoints": []string{
+					hostInfo.FullHost + "/api/v1/user",
+					hostInfo.FullHost + "/api/v1/locations",
+					hostInfo.FullHost + "/api/v1/notifications",
+					hostInfo.FullHost + "/api/v1/admin",
+					hostInfo.FullHost + "/api/v1/weather",
+					hostInfo.FullHost + "/api/v1/weather/:location",
+					hostInfo.FullHost + "/api/v1/forecast",
+					hostInfo.FullHost + "/api/v1/forecast/:location",
+					hostInfo.FullHost + "/api/v1/search",
+					hostInfo.FullHost + "/api/v1/ip",
+					hostInfo.FullHost + "/api/v1/location",
+					hostInfo.FullHost + "/api/v1/docs",
+				},
+				"documentation": hostInfo.FullHost + "/docs",
+			})
+		})
+	}
+
 	// User info API (requires auth)
-	r.GET("/api/user", middleware.RequireAuth(db.DB), authHandler.GetCurrentUser)
+	apiV1.GET("/user", middleware.RequireAuth(db.DB), authHandler.GetCurrentUser)
 
 	// Location API routes (require auth)
-	locationAPI := r.Group("/api/locations")
+	locationAPI := apiV1.Group("/locations")
 	locationAPI.Use(middleware.RequireAuth(db.DB))
 	{
 		locationAPI.GET("", locationHandler.ListLocations)
@@ -488,7 +562,7 @@ func main() {
 	}
 
 	// Notification API routes (require auth)
-	notificationAPI := r.Group("/api/notifications")
+	notificationAPI := apiV1.Group("/notifications")
 	notificationAPI.Use(middleware.RequireAuth(db.DB))
 	{
 		notificationAPI.GET("", notificationHandler.ListNotifications)
@@ -499,7 +573,7 @@ func main() {
 	}
 
 	// Admin API routes (require admin role)
-	adminAPI := r.Group("/api/admin")
+	adminAPI := apiV1.Group("/admin")
 	adminAPI.Use(middleware.RequireAuth(db.DB))
 	adminAPI.Use(middleware.RequireAdmin())
 	{
@@ -578,40 +652,7 @@ func main() {
 		userPrefAPI.POST("/subscriptions", preferencesHandler.CreateSubscription)
 	}
 
-	// API routes - must come before catch-all weather routes
-	// Apply optional auth (to check for API tokens) and rate limiting
-	apiV1 := r.Group("/api/v1")
-	apiV1.Use(middleware.OptionalAuth(db.DB))
-	apiV1.Use(middleware.RateLimitMiddleware(db.DB))
-	{
-		apiV1.GET("/weather", apiHandler.GetWeather)
-		apiV1.GET("/weather/:location", apiHandler.GetWeatherByLocation)
-		apiV1.GET("/forecast", apiHandler.GetForecast)
-		apiV1.GET("/forecast/:location", apiHandler.GetForecastByLocation)
-		apiV1.GET("/search", apiHandler.SearchLocations)
-		apiV1.GET("/ip", apiHandler.GetIP)
-		apiV1.GET("/location", apiHandler.GetLocation)
-		apiV1.GET("/docs", apiHandler.GetDocsJSON)
-
-		// Root /api/v1 endpoint - return all endpoints
-		apiV1.GET("", func(c *gin.Context) {
-			hostInfo := utils.GetHostInfo(c)
-			c.JSON(http.StatusOK, gin.H{
-				"version": "v1",
-				"endpoints": []string{
-					hostInfo.FullHost + "/api/v1/weather",
-					hostInfo.FullHost + "/api/v1/weather/:location",
-					hostInfo.FullHost + "/api/v1/forecast",
-					hostInfo.FullHost + "/api/v1/forecast/:location",
-					hostInfo.FullHost + "/api/v1/search",
-					hostInfo.FullHost + "/api/v1/ip",
-					hostInfo.FullHost + "/api/v1/location",
-					hostInfo.FullHost + "/api/v1/docs",
-				},
-				"documentation": hostInfo.FullHost + "/docs",
-			})
-		})
-	}
+	// API routes are now consolidated under /api/v1 above
 
 	// Main /api endpoint - API version information
 	r.GET("/api", func(c *gin.Context) {
