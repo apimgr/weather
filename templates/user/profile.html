@@ -86,10 +86,10 @@
     <main class="container">
         <!-- Profile Header -->
         <div class="profile-header">
-            <div class="profile-avatar-large">{{ index .user.Email 0 | printf "%c" | upper }}</div>
+            <div class="profile-avatar-large">{{ index .user.Username 0 | printf "%c" | upper }}</div>
             <div class="profile-info">
-                <h1>{{if .user.DisplayName}}{{.user.DisplayName}}{{else}}{{.user.Email}}{{end}}</h1>
-                <p>{{.user.Email}}</p>
+                <h1>{{if .user.DisplayName}}{{.user.DisplayName}}{{else}}{{.user.Username}}{{end}}</h1>
+                <p>@{{.user.Username}} • {{.user.Email}}</p>
                 <p><span class="badge {{if eq .user.Role "admin"}}badge-danger{{else}}badge-primary{{end}}">{{.user.Role}}</span></p>
                 <p>Member since {{.user.CreatedAt.Format "January 2, 2006"}}</p>
             </div>
@@ -112,6 +112,11 @@
                 <h2>Account Overview</h2>
                 <form id="profileForm" onsubmit="updateProfile(event)">
                     <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" value="{{.user.Username}}" readonly>
+                        <small>Contact an administrator to change your username</small>
+                    </div>
+                    <div class="form-group">
                         <label for="display_name">Display Name</label>
                         <input type="text" id="display_name" value="{{.user.DisplayName}}" placeholder="Enter your display name">
                     </div>
@@ -119,6 +124,11 @@
                         <label for="email">Email</label>
                         <input type="email" id="email" value="{{.user.Email}}" readonly>
                         <small>Contact an administrator to change your email</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number (Private)</label>
+                        <input type="tel" id="phone" value="{{.user.Phone}}" placeholder="+1234567890" pattern="[\+]?[0-9]{10,15}">
+                        <small>Used for SMS notifications. Keep this private. Format: +1234567890</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>
@@ -531,12 +541,22 @@
             event.preventDefault();
 
             const displayName = document.getElementById('display_name').value;
+            const phone = document.getElementById('phone').value;
+
+            // Validate phone format if provided
+            if (phone && !phone.match(/^[\+]?[0-9]{10,15}$/)) {
+                Toast.error('Invalid phone number format. Use +1234567890');
+                return;
+            }
 
             try {
                 await fetch('/api/v1/user/profile', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ display_name: displayName })
+                    body: JSON.stringify({
+                        display_name: displayName,
+                        phone: phone || null
+                    })
                 });
 
                 Toast.success('Profile updated successfully');

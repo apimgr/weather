@@ -629,11 +629,22 @@ func main() {
 					hostInfo.FullHost + "/api/v1/ip",
 					hostInfo.FullHost + "/api/v1/location",
 					hostInfo.FullHost + "/api/v1/docs",
+					hostInfo.FullHost + "/api/v1/blocklist",
 				},
 				"documentation": hostInfo.FullHost + "/docs",
 			})
 		})
 	}
+
+	// Public blocklist endpoint (no auth required)
+	apiV1.GET("/blocklist", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"blocklist": utils.UsernameBlocklist,
+			"count":     utils.GetBlocklistSize(),
+			"public":    utils.IsBlocklistPublic(),
+			"note":      "These usernames are reserved and cannot be used for registration. The blocklist does not apply to the first user (admin setup).",
+		})
+	})
 
 	// User info API (requires auth)
 	apiV1.GET("/user", middleware.RequireAuth(db.DB), authHandler.GetCurrentUser)

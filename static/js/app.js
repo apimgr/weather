@@ -399,8 +399,17 @@
     fetch: async function() {
       try {
         const response = await fetch('/api/v1/notifications/unread');
-        const data = await response.json();
-        this.updateBadge(data.unread_count || 0);
+
+        // Stop polling if unauthorized (user logged out)
+        if (response.status === 401) {
+          this.stopPolling();
+          return;
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          this.updateBadge(data.unread_count || 0);
+        }
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
       }
@@ -651,6 +660,7 @@
   window.Utils = Utils;
 
   // Auto-start notification polling if user is authenticated
+  // Only poll if notification bell exists (user is logged in)
   if (document.querySelector('.notification-bell')) {
     Notifications.startPolling();
   }

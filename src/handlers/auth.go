@@ -19,12 +19,13 @@ type AuthHandler struct {
 
 // LoginRequest represents login request payload
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Identifier string `json:"identifier" binding:"required"` // Can be username, email, or phone
+	Password   string `json:"password" binding:"required"`
 }
 
 // RegisterRequest represents registration request payload
 type RegisterRequest struct {
+	Username        string `json:"username" binding:"required"`
 	Email           string `json:"email" binding:"required,email"`
 	Password        string `json:"password" binding:"required,min=8"`
 	ConfirmPassword string `json:"confirm_password" binding:"required"`
@@ -81,20 +82,24 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 			return
 		}
 	} else {
-		req.Email = c.PostForm("email")
+		// Accept both "identifier" and legacy "email" field names
+		req.Identifier = c.PostForm("identifier")
+		if req.Identifier == "" {
+			req.Identifier = c.PostForm("email") // Backward compatibility
+		}
 		req.Password = c.PostForm("password")
 	}
 
-	// Validate credentials
+	// Validate credentials - try username, email, or phone
 	userModel := &models.UserModel{DB: h.DB}
-	user, err := userModel.GetByEmail(req.Email)
+	user, err := userModel.GetByIdentifier(req.Identifier)
 	if err != nil {
-		respondWithError(c, http.StatusUnauthorized, "Invalid email or password")
+		respondWithError(c, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
 	if !userModel.CheckPassword(user, req.Password) {
-		respondWithError(c, http.StatusUnauthorized, "Invalid email or password")
+		respondWithError(c, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
@@ -128,9 +133,10 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Login successful",
 			"user": gin.H{
-				"id":    user.ID,
-				"email": user.Email,
-				"role":  user.Role,
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+				"role":     user.Role,
 			},
 		})
 	} else {
@@ -150,6 +156,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 			return
 		}
 	} else {
+		req.Username = c.PostForm("username")
 		req.Email = c.PostForm("email")
 		req.Password = c.PostForm("password")
 		req.ConfirmPassword = c.PostForm("confirm_password")
@@ -170,19 +177,29 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		return
 	}
 
+	isFirstUser := count == 0
 	role := "user"
-	if count == 0 {
+	if isFirstUser {
 		role = "admin" // First user is admin
-	}
-
-	// Create user
-	user, err := userModel.Create(req.Email, req.Password, role)
-	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			respondWithError(c, http.StatusConflict, "Email already registered")
+	} else {
+		// Validate username (skip for first user/admin setup)
+		if err := utils.ValidateUsername(req.Username); err != nil {
+			respondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		respondWithError(c, http.StatusInternalServerError, "Failed to create user")
+	}
+
+	// Normalize username
+	username := utils.NormalizeUsername(req.Username)
+
+	// Create user
+	user, err := userModel.Create(username, req.Email, req.Password, role)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			respondWithError(c, http.StatusBadRequest, "Unable to create account. Please try a different email address.")
+			return
+		}
+		respondWithError(c, http.StatusInternalServerError, "Failed to create account. Please try again later.")
 		return
 	}
 
@@ -216,9 +233,10 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Registration successful",
 			"user": gin.H{
-				"id":    user.ID,
-				"email": user.Email,
-				"role":  user.Role,
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+				"role":     user.Role,
 			},
 		})
 	} else {
@@ -264,9 +282,11 @@ func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"email": user.Email,
-		"role":  user.Role,
+		"id":       user.ID,
+		"username": user.Username,
+		"email":    user.Email,
+		"phone":    user.Phone,
+		"role":     user.Role,
 	})
 }
 
@@ -292,9 +312,25 @@ func respondWithError(c *gin.Context, statusCode int, message string) {
 	if strings.Contains(contentType, "application/json") {
 		c.JSON(statusCode, gin.H{"error": message})
 	} else {
-		// For form submissions, redirect back with error
-		c.HTML(statusCode, "error.html", gin.H{
-			"error": message,
-		})
+		// For form submissions, render inline error on same page
+		// Get the current path to determine which template to render
+		path := c.Request.URL.Path
+
+		if strings.Contains(path, "login") {
+			c.HTML(statusCode, "login.html", utils.TemplateData(c, gin.H{
+				"title": "Login",
+				"error": message,
+			}))
+		} else if strings.Contains(path, "register") {
+			c.HTML(statusCode, "register.html", utils.TemplateData(c, gin.H{
+				"title": "Register",
+				"error": message,
+			}))
+		} else {
+			// Fallback to error page for other cases
+			c.HTML(statusCode, "error.html", gin.H{
+				"error": message,
+			})
+		}
 	}
 }

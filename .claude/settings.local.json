@@ -82,7 +82,9 @@
       "Bash(done)",
       "Bash(pgrep:*)",
       "Bash(for file in earthquake.html api-docs.html earthquake_detail.html)",
-      "Bash(do echo \"=== $file ===\")"
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(go test:*)",
+      "Bash(go run:*)"
     ],
     "deny": [],
     "ask": []

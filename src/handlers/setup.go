@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -39,16 +40,21 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Normalize username
+	username := input.Username
+	// Username can be anything for first user, but normalize it
+	username = strings.ToLower(strings.TrimSpace(username))
+
 	// Check if user already exists
 	var count int
-	err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", input.Email).Scan(&count)
+	err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = ? OR username = ?", input.Email, username).Scan(&count)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
 	if count > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Email or username already exists"})
 		return
 	}
 
@@ -59,11 +65,11 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Create user with 'user' role (first user is owner, not admin)
+	// Create user with 'admin' role (first user is admin)
 	_, err = h.DB.Exec(`
-		INSERT INTO users (email, password_hash, display_name, role, is_active)
-		VALUES (?, ?, ?, 'user', 1)
-	`, input.Email, string(hashedPassword), input.Username)
+		INSERT INTO users (username, email, password_hash, role, created_at, updated_at)
+		VALUES (?, ?, ?, 'admin', datetime('now'), datetime('now'))
+	`, username, input.Email, string(hashedPassword))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
@@ -100,7 +106,7 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	// Check if admin already exists
 	var count int
-	err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = 'administrator@system.local'").Scan(&count)
+	err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'administrator' OR email = 'administrator@system.local'").Scan(&count)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
@@ -120,8 +126,8 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	// Create administrator account
 	_, err = h.DB.Exec(`
-		INSERT INTO users (email, password_hash, display_name, role, is_active)
-		VALUES ('administrator@system.local', ?, 'Administrator', 'admin', 1)
+		INSERT INTO users (username, email, password_hash, role, created_at, updated_at)
+		VALUES ('administrator', 'administrator@system.local', ?, 'admin', datetime('now'), datetime('now'))
 	`, string(hashedPassword))
 
 	if err != nil {

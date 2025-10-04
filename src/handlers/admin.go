@@ -8,6 +8,7 @@ import (
 
 	"weather-go/src/middleware"
 	"weather-go/src/models"
+	"weather-go/src/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,6 +32,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 
 func (h *AdminHandler) CreateUser(c *gin.Context) {
 	var req struct {
+		Username string `json:"username" binding:"required"`
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=8"`
 		Role     string `json:"role" binding:"required"`
@@ -41,8 +43,17 @@ func (h *AdminHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Validate username
+	if err := utils.ValidateUsername(req.Username); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Normalize username
+	username := utils.NormalizeUsername(req.Username)
+
 	userModel := &models.UserModel{DB: h.DB}
-	user, err := userModel.Create(req.Email, req.Password, req.Role)
+	user, err := userModel.Create(username, req.Email, req.Password, req.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
@@ -59,8 +70,9 @@ func (h *AdminHandler) UpdateUser(c *gin.Context) {
 	}
 
 	var req struct {
-		Email string `json:"email" binding:"required,email"`
-		Role  string `json:"role" binding:"required"`
+		Username string `json:"username" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Role     string `json:"role" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -68,8 +80,17 @@ func (h *AdminHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Validate username
+	if err := utils.ValidateUsername(req.Username); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Normalize username
+	username := utils.NormalizeUsername(req.Username)
+
 	userModel := &models.UserModel{DB: h.DB}
-	if err := userModel.Update(id, req.Email, req.Role); err != nil {
+	if err := userModel.Update(id, username, req.Email, req.Role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
 	}

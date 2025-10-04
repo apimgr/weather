@@ -3,12 +3,14 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 // Schema contains all table creation SQL
 var Schema = `
@@ -21,14 +23,18 @@ CREATE TABLE IF NOT EXISTS schema_version (
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	username TEXT UNIQUE NOT NULL,
 	email TEXT UNIQUE NOT NULL,
+	phone TEXT UNIQUE,
 	password_hash TEXT NOT NULL,
 	role TEXT DEFAULT 'user' CHECK(role IN ('admin', 'user')),
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- API Tokens table
@@ -388,6 +394,163 @@ type DB struct {
 	*sql.DB
 }
 
+// runMigrations applies database migrations from current to target version
+func runMigrations(db *sql.DB, fromVersion, toVersion int) error {
+	log.Printf("Running database migrations from version %d to %d", fromVersion, toVersion)
+
+	for v := fromVersion + 1; v <= toVersion; v++ {
+		log.Printf("Applying migration to version %d", v)
+
+		switch v {
+		case 2:
+			// Migration from v1 to v2: Add username and phone fields
+			if err := migrateToV2(db); err != nil {
+				return fmt.Errorf("migration to v2 failed: %w", err)
+			}
+
+		default:
+			return fmt.Errorf("unknown migration version: %d", v)
+		}
+
+		// Update schema version
+		if _, err := db.Exec("INSERT INTO schema_version (version) VALUES (?)", v); err != nil {
+			return fmt.Errorf("failed to update schema version to %d: %w", v, err)
+		}
+
+		log.Printf("Successfully migrated to version %d", v)
+	}
+
+	return nil
+}
+
+// migrateToV2 adds username and phone fields to users table
+func migrateToV2(db *sql.DB) error {
+	// Add username column (will be populated with email prefix initially)
+	if _, err := db.Exec("ALTER TABLE users ADD COLUMN username TEXT"); err != nil {
+		return fmt.Errorf("failed to add username column: %w", err)
+	}
+
+	// Add phone column (nullable)
+	if _, err := db.Exec("ALTER TABLE users ADD COLUMN phone TEXT"); err != nil {
+		return fmt.Errorf("failed to add phone column: %w", err)
+	}
+
+	// Populate username from email (take part before @, add random suffix if needed for uniqueness)
+	rows, err := db.Query("SELECT id, email FROM users")
+	if err != nil {
+		return fmt.Errorf("failed to query users: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var email string
+		if err := rows.Scan(&id, &email); err != nil {
+			return fmt.Errorf("failed to scan user: %w", err)
+		}
+
+		// Extract username from email (part before @)
+		username := email
+		if atIndex := strings.Index(email, "@"); atIndex > 0 {
+			username = email[:atIndex]
+		}
+
+		// Make username unique by appending id if necessary
+		// Clean username: only alphanumeric and underscore
+		username = strings.ToLower(username)
+		username = strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' {
+				return r
+			}
+			return '_'
+		}, username)
+
+		// Check if username exists
+		var count int
+		db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
+		if count > 0 {
+			// Append user ID to make it unique
+			username = fmt.Sprintf("%s_%d", username, id)
+		}
+
+		// Update username
+		if _, err := db.Exec("UPDATE users SET username = ? WHERE id = ?", username, id); err != nil {
+			return fmt.Errorf("failed to update username for user %d: %w", id, err)
+		}
+	}
+
+	// Now make username column NOT NULL and UNIQUE
+	// SQLite doesn't support ALTER COLUMN, so we need to recreate the table
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Create new users table with constraints
+	_, err = tx.Exec(`
+		CREATE TABLE users_new (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			username TEXT UNIQUE NOT NULL,
+			email TEXT UNIQUE NOT NULL,
+			phone TEXT UNIQUE,
+			password_hash TEXT NOT NULL,
+			role TEXT DEFAULT 'user' CHECK(role IN ('admin', 'user')),
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to create new users table: %w", err)
+	}
+
+	// Copy data
+	_, err = tx.Exec(`
+		INSERT INTO users_new (id, username, email, phone, password_hash, role, created_at, updated_at)
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at FROM users
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to copy user data: %w", err)
+	}
+
+	// Drop old table
+	if _, err = tx.Exec("DROP TABLE users"); err != nil {
+		return fmt.Errorf("failed to drop old users table: %w", err)
+	}
+
+	// Rename new table
+	if _, err = tx.Exec("ALTER TABLE users_new RENAME TO users"); err != nil {
+		return fmt.Errorf("failed to rename users table: %w", err)
+	}
+
+	// Recreate indexes
+	_, err = tx.Exec("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+	if err != nil {
+		return fmt.Errorf("failed to create username index: %w", err)
+	}
+
+	_, err = tx.Exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
+	if err != nil {
+		return fmt.Errorf("failed to create email index: %w", err)
+	}
+
+	_, err = tx.Exec("CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)")
+	if err != nil {
+		return fmt.Errorf("failed to create phone index: %w", err)
+	}
+
+	_, err = tx.Exec("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
+	if err != nil {
+		return fmt.Errorf("failed to create role index: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
 // InitDB initializes the database and creates tables
 func InitDB(dbPath string) (*DB, error) {
 	db, err := sql.Open("sqlite", dbPath)
@@ -432,6 +595,11 @@ func InitDB(dbPath string) (*DB, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to insert default setting %s: %w", key, err)
 			}
+		}
+	} else if currentVersion < SchemaVersion {
+		// Run migrations
+		if err := runMigrations(db, currentVersion, SchemaVersion); err != nil {
+			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 	}
 

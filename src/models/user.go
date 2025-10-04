@@ -11,8 +11,10 @@ import (
 // User represents a user in the system
 type User struct {
 	ID           int       `json:"id"`
+	Username     string    `json:"username"`
 	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"` // Never expose password hash
+	Phone        string    `json:"phone,omitempty"` // Optional, omit if empty
+	PasswordHash string    `json:"-"`               // Never expose password hash
 	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
@@ -24,7 +26,7 @@ type UserModel struct {
 }
 
 // Create creates a new user with hashed password
-func (m *UserModel) Create(email, password, role string) (*User, error) {
+func (m *UserModel) Create(username, email, password, role string) (*User, error) {
 	// Validate role
 	if role != "admin" && role != "user" {
 		return nil, fmt.Errorf("invalid role: must be 'admin' or 'user'")
@@ -38,9 +40,9 @@ func (m *UserModel) Create(email, password, role string) (*User, error) {
 
 	// Insert user
 	result, err := m.DB.Exec(`
-		INSERT INTO users (email, password_hash, role, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?)
-	`, email, string(hashedPassword), role, time.Now(), time.Now())
+		INSERT INTO users (username, email, password_hash, role, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, username, email, string(hashedPassword), role, time.Now(), time.Now())
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
@@ -57,16 +59,21 @@ func (m *UserModel) Create(email, password, role string) (*User, error) {
 // GetByID retrieves a user by ID
 func (m *UserModel) GetByID(id int) (*User, error) {
 	user := &User{}
+	var phone sql.NullString
 	err := m.DB.QueryRow(`
-		SELECT id, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at
 		FROM users WHERE id = ?
-	`, id).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	`, id).Scan(&user.ID, &user.Username, &user.Email, &phone, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("user not found")
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	if phone.Valid {
+		user.Phone = phone.String
 	}
 
 	return user, nil
@@ -75,10 +82,11 @@ func (m *UserModel) GetByID(id int) (*User, error) {
 // GetByEmail retrieves a user by email
 func (m *UserModel) GetByEmail(email string) (*User, error) {
 	user := &User{}
+	var phone sql.NullString
 	err := m.DB.QueryRow(`
-		SELECT id, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at
 		FROM users WHERE email = ?
-	`, email).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	`, email).Scan(&user.ID, &user.Username, &user.Email, &phone, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("user not found")
@@ -87,13 +95,86 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 		return nil, err
 	}
 
+	if phone.Valid {
+		user.Phone = phone.String
+	}
+
+	return user, nil
+}
+
+// GetByUsername retrieves a user by username
+func (m *UserModel) GetByUsername(username string) (*User, error) {
+	user := &User{}
+	var phone sql.NullString
+	err := m.DB.QueryRow(`
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at
+		FROM users WHERE username = ?
+	`, username).Scan(&user.ID, &user.Username, &user.Email, &phone, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if phone.Valid {
+		user.Phone = phone.String
+	}
+
+	return user, nil
+}
+
+// GetByPhone retrieves a user by phone number
+func (m *UserModel) GetByPhone(phone string) (*User, error) {
+	user := &User{}
+	var phoneNull sql.NullString
+	err := m.DB.QueryRow(`
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at
+		FROM users WHERE phone = ?
+	`, phone).Scan(&user.ID, &user.Username, &user.Email, &phoneNull, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if phoneNull.Valid {
+		user.Phone = phoneNull.String
+	}
+
+	return user, nil
+}
+
+// GetByIdentifier retrieves a user by username, email, or phone
+func (m *UserModel) GetByIdentifier(identifier string) (*User, error) {
+	user := &User{}
+	var phone sql.NullString
+	err := m.DB.QueryRow(`
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at
+		FROM users WHERE username = ? OR email = ? OR phone = ?
+	`, identifier, identifier, identifier).Scan(&user.ID, &user.Username, &user.Email, &phone, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if phone.Valid {
+		user.Phone = phone.String
+	}
+
 	return user, nil
 }
 
 // GetAll retrieves all users
 func (m *UserModel) GetAll() ([]*User, error) {
 	rows, err := m.DB.Query(`
-		SELECT id, email, password_hash, role, created_at, updated_at
+		SELECT id, username, email, phone, password_hash, role, created_at, updated_at
 		FROM users ORDER BY created_at DESC
 	`)
 	if err != nil {
@@ -104,9 +185,13 @@ func (m *UserModel) GetAll() ([]*User, error) {
 	var users []*User
 	for rows.Next() {
 		user := &User{}
-		err := rows.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+		var phone sql.NullString
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &phone, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
 			return nil, err
+		}
+		if phone.Valid {
+			user.Phone = phone.String
 		}
 		users = append(users, user)
 	}
@@ -115,11 +200,20 @@ func (m *UserModel) GetAll() ([]*User, error) {
 }
 
 // Update updates a user's information
-func (m *UserModel) Update(id int, email, role string) error {
+func (m *UserModel) Update(id int, username, email, role string) error {
 	_, err := m.DB.Exec(`
-		UPDATE users SET email = ?, role = ?, updated_at = ?
+		UPDATE users SET username = ?, email = ?, role = ?, updated_at = ?
 		WHERE id = ?
-	`, email, role, time.Now(), id)
+	`, username, email, role, time.Now(), id)
+	return err
+}
+
+// UpdatePhone updates a user's phone number
+func (m *UserModel) UpdatePhone(id int, phone string) error {
+	_, err := m.DB.Exec(`
+		UPDATE users SET phone = ?, updated_at = ?
+		WHERE id = ?
+	`, phone, time.Now(), id)
 	return err
 }
 
