@@ -185,12 +185,12 @@
             <div style="font-family: monospace; font-size: 0.875rem;">
                 <div style="margin: 0.75rem 0;">
                     <strong style="color: var(--dracula-green);">All Earthquakes:</strong>
-                    <code style="color: var(--dracula-cyan);">curl -s {{.HostInfo.FullHost}}/api/earthquakes?feed={{.FeedType}}</code>
+                    <code style="color: var(--dracula-cyan);">curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}</code>
                 </div>
                 {{if .Location}}
                 <div style="margin: 0.75rem 0;">
                     <strong style="color: var(--dracula-green);">Near Location:</strong>
-                    <code style="color: var(--dracula-cyan);">curl -s {{.HostInfo.FullHost}}/api/earthquakes?feed={{.FeedType}}</code>
+                    <code style="color: var(--dracula-cyan);">curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}</code>
                 </div>
                 {{end}}
             </div>

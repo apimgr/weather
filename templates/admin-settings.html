@@ -235,6 +235,15 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="logging_format">Log Format</label>
+                        <select id="logging_format" name="logging.format">
+                            <option value="json" {{if eq .settings.logging_format "json"}}selected{{end}}>JSON</option>
+                            <option value="text" {{if eq .settings.logging_format "text"}}selected{{end}}>Text</option>
+                            <option value="apache" {{if eq .settings.logging_format "apache"}}selected{{end}}>Apache Combined</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="logging.access_log" {{if .settings.logging_access_log}}checked{{end}}>
                             <span class="toggle-slider"></span>

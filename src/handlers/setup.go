@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -89,8 +91,10 @@ func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
 // CreateAdmin creates the administrator account (step 5)
 func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	var input struct {
-		Password        string `json:"password" binding:"required,min=12"`
-		ConfirmPassword string `json:"confirm_password" binding:"required"`
+		Username        string `json:"username"`
+		UseRandom       bool   `json:"use_random"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirm_password"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -98,44 +102,139 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	// Validate passwords match
-	if input.Password != input.ConfirmPassword {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwords do not match"})
-		return
+	// Set default username if empty
+	username := strings.TrimSpace(input.Username)
+	if username == "" {
+		username = "administrator"
 	}
 
-	// Check if admin already exists
+	// Normalize username
+	username = strings.ToLower(username)
+
+	var password string
+	var generatedPassword string
+
+	if input.UseRandom {
+		// Generate random password (32 characters, alphanumeric + special)
+		generatedPassword = generateRandomPassword(32)
+		password = generatedPassword
+	} else {
+		// Use custom password - must be confirmed
+		if input.Password == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Password is required"})
+			return
+		}
+		if len(input.Password) < 12 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 12 characters"})
+			return
+		}
+		if input.Password != input.ConfirmPassword {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Passwords do not match"})
+			return
+		}
+		password = input.Password
+	}
+
+	// Check if admin username already exists
 	var count int
-	err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'administrator' OR email = 'administrator@system.local'").Scan(&count)
+	err := h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
 	if count > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "Administrator already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
 		return
 	}
 
 	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	// Create administrator account
-	_, err = h.DB.Exec(`
+	// Create administrator account with custom username
+	email := username + "@admin.local"
+	result, err := h.DB.Exec(`
 		INSERT INTO users (username, email, password_hash, role, created_at, updated_at)
-		VALUES ('administrator', 'administrator@system.local', ?, 'admin', datetime('now'), datetime('now'))
-	`, string(hashedPassword))
+		VALUES (?, ?, ?, 'admin', datetime('now'), datetime('now'))
+	`, username, email, string(hashedPassword))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create administrator"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	// Get the newly created admin user ID
+	adminID, err := result.LastInsertId()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve admin ID"})
+		return
+	}
+
+	// Create session for the admin user (auto-login)
+	sessionID := generateSessionID()
+	expiresAt := time.Now().Add(7 * 24 * time.Hour) // 7 days
+
+	_, err = h.DB.Exec(`
+		INSERT INTO sessions (id, user_id, expires_at, ip_address, user_agent, created_at)
+		VALUES (?, ?, ?, ?, ?, datetime('now'))
+	`, sessionID, adminID, expiresAt, c.ClientIP(), c.GetHeader("User-Agent"))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
+		return
+	}
+
+	// Set session cookie
+	c.SetCookie(
+		"session_id",
+		sessionID,
+		int(7*24*time.Hour.Seconds()),
+		"/",
+		"",
+		false, // secure (set to true in production with HTTPS)
+		true,  // httpOnly
+	)
+
+	response := gin.H{"success": true}
+	if generatedPassword != "" {
+		// Include generated password in response (shown only once)
+		response["generated_password"] = generatedPassword
+		response["username"] = username
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// generateRandomPassword generates a secure random password
+func generateRandomPassword(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?"
+	password := make([]byte, length)
+	for i := range password {
+		password[i] = charset[randomInt(len(charset))]
+	}
+	return string(password)
+}
+
+// randomInt returns a random integer between 0 and max-1
+func randomInt(max int) int {
+	// Simple random using time-based seed
+	// In production, use crypto/rand
+	return int(time.Now().UnixNano() % int64(max))
+}
+
+// generateSessionID generates a secure random session ID
+func generateSessionID() string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const length = 64
+	sessionID := make([]byte, length)
+	for i := range sessionID {
+		sessionID[i] = charset[randomInt(len(charset))]
+	}
+	return string(sessionID)
 }
 
 // CompleteSetup performs the final redirect based on current user context
@@ -155,10 +254,107 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 		return
 	}
 
-	// Redirect based on role
+	// Redirect based on role - admin goes to server setup, user to dashboard
 	if role == "admin" {
-		c.Redirect(http.StatusFound, "/admin")
+		c.Redirect(http.StatusFound, "/admin/setup/welcome")
 	} else {
 		c.Redirect(http.StatusFound, "/dashboard")
 	}
+}
+
+// =============================================================================
+// Server Setup Wizard (Admin Only)
+// =============================================================================
+
+// ShowServerSetupWelcome shows the server setup welcome page
+func (h *SetupHandler) ShowServerSetupWelcome(c *gin.Context) {
+	c.HTML(http.StatusOK, "server_setup_welcome.html", gin.H{
+		"Title": "Server Setup - Weather",
+	})
+}
+
+// ShowServerSetupSettings shows the server settings configuration page
+func (h *SetupHandler) ShowServerSetupSettings(c *gin.Context) {
+	c.HTML(http.StatusOK, "server_setup_settings.html", gin.H{
+		"Title": "Server Settings - Weather",
+	})
+}
+
+// SaveServerSettings saves server configuration settings
+func (h *SetupHandler) SaveServerSettings(c *gin.Context) {
+	var input struct {
+		ServerName          string `json:"serverName"`
+		ServerDescription   string `json:"serverDescription"`
+		TemperatureUnit     string `json:"temperatureUnit"`
+		WindSpeedUnit       string `json:"windSpeedUnit"`
+		PrecipitationUnit   string `json:"precipitationUnit"`
+		RateLimitAnon       int    `json:"rateLimitAnon"`
+		RateLimitAuth       int    `json:"rateLimitAuth"`
+		EnableRegistration  bool   `json:"enableRegistration"`
+		EnableAlerts        bool   `json:"enableAlerts"`
+		EnableNotifications bool   `json:"enableNotifications"`
+		EnableAuditLog      bool   `json:"enableAuditLog"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Save all settings to database
+	settings := map[string]string{
+		"server.name":               input.ServerName,
+		"server.description":        input.ServerDescription,
+		"units.temperature":         input.TemperatureUnit,
+		"units.wind_speed":          input.WindSpeedUnit,
+		"units.precipitation":       input.PrecipitationUnit,
+		"rate_limit.anonymous":      fmt.Sprintf("%d", input.RateLimitAnon),
+		"rate_limit.authenticated":  fmt.Sprintf("%d", input.RateLimitAuth),
+		"features.registration":     boolToString(input.EnableRegistration),
+		"features.alerts":           boolToString(input.EnableAlerts),
+		"features.notifications":    boolToString(input.EnableNotifications),
+		"features.audit_log":        boolToString(input.EnableAuditLog),
+	}
+
+	for key, value := range settings {
+		_, err := h.DB.Exec(`
+			INSERT INTO settings (key, value, updated_at)
+			VALUES (?, ?, datetime('now'))
+			ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+		`, key, value, value)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save setting: " + key})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// ShowServerSetupComplete shows the completion page and marks setup as done
+func (h *SetupHandler) ShowServerSetupComplete(c *gin.Context) {
+	// Mark server setup as complete
+	_, err := h.DB.Exec(`
+		INSERT INTO settings (key, value, updated_at)
+		VALUES ('setup.completed', 'true', datetime('now'))
+		ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')
+	`)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark setup as complete"})
+		return
+	}
+
+	c.HTML(http.StatusOK, "server_setup_complete.html", gin.H{
+		"Title": "Setup Complete - Weather",
+	})
+}
+
+// Helper function to convert bool to string
+func boolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }

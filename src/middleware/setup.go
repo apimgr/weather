@@ -30,9 +30,9 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if admin user exists (setup is complete when 'administrator' exists)
+		// Check if admin user exists (setup is complete when any admin exists)
 		var count int
-		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'administrator'").Scan(&count)
+		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
 		if err != nil {
 			c.Next()
 			return
@@ -52,10 +52,10 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 // BlockSetupAfterComplete blocks access to setup routes after setup is complete
 func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Check if admin user exists (username='administrator')
+		// Check if admin user exists
 		// Setup is only complete when the dedicated admin account exists
 		var count int
-		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'administrator'").Scan(&count)
+		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 			c.Abort()

@@ -383,10 +383,9 @@
             <div class="admin-section">
                 <div class="section-header">
                     <h2>Scheduled Tasks</h2>
-                    <button class="btn btn-primary">+ Add Task</button>
                 </div>
-                <div class="placeholder-text">
-                    Scheduled task management will be implemented here
+                <div id="tasks-list" style="overflow-x: auto;">
+                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading scheduled tasks...</p>
                 </div>
             </div>
         </div>
@@ -411,6 +410,7 @@
                 if (tabId === 'settings') loadSettings();
                 if (tabId === 'tokens') loadTokens();
                 if (tabId === 'logs') loadLogs();
+                if (tabId === 'tasks') loadScheduledTasks();
             });
         });
 
@@ -458,39 +458,80 @@
         }
 
         async function deleteUser(id) {
-            if (!showConfirm('Are you sure you want to delete this user?')) return;
+            const confirmed = await showConfirm('Are you sure you want to delete this user? This action cannot be undone.', 'Delete User');
+            if (!confirmed) return;
 
             try {
-                await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+                await fetch(`/api/v1/admin/users/${id}`, { method: 'DELETE' });
+                Toast.success('User deleted successfully');
                 loadUsers();
             } catch (error) {
-                showAlert('Failed to delete user');
+                Toast.error('Failed to delete user');
             }
         }
 
         function showAddUserModal() {
-            const email = prompt('Enter email:');
-            if (!email) return;
-            const password = prompt('Enter password (min 8 characters):');
-            if (!password || password.length < 8) {
-                showAlert('Password must be at least 8 characters');
-                return;
-            }
-            const role = showConfirm('Make this user an admin?') ? 'admin' : 'user';
-
-            createUser(email, password, role);
+            const modalId = Modal.create({
+                title: 'Add New User',
+                body: `
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label for="newUserEmail">Email Address</label>
+                            <input type="email" id="newUserEmail" class="form-input" required placeholder="user@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserPassword">Password</label>
+                            <input type="password" id="newUserPassword" class="form-input" required minlength="8" placeholder="Minimum 8 characters">
+                            <small style="color: var(--dracula-comment);">Minimum 8 characters</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserRole">Role</label>
+                            <select id="newUserRole" class="form-input">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="createUserFromModal('${modalId}')">Create User</button>
+                `,
+                size: 'md'
+            });
         }
 
-        async function createUser(email, password, role) {
+        async function createUserFromModal(modalId) {
+            const email = document.getElementById('newUserEmail').value;
+            const password = document.getElementById('newUserPassword').value;
+            const role = document.getElementById('newUserRole').value;
+
+            if (!email || !password) {
+                Toast.error('Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 8) {
+                Toast.error('Password must be at least 8 characters');
+                return;
+            }
+
             try {
-                await fetch('/api/v1/admin/users', {
+                const response = await fetch('/api/v1/admin/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, role })
                 });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create user');
+                }
+
+                Modal.close(modalId);
+                Toast.success('User created successfully');
                 loadUsers();
             } catch (error) {
-                showAlert('Failed to create user');
+                Toast.error('Failed to create user: ' + error.message);
             }
         }
 
@@ -531,18 +572,52 @@
         }
 
         async function editSetting(key, currentValue) {
-            const newValue = prompt(`Enter new value for ${key}:`, currentValue);
-            if (!newValue || newValue === currentValue) return;
+            const modalId = Modal.create({
+                title: 'Edit Setting',
+                body: `
+                    <form id="editSettingForm">
+                        <div class="form-group">
+                            <label for="settingKey">Setting Key</label>
+                            <input type="text" id="settingKey" class="form-input" value="${key}" readonly style="background: var(--dracula-current-line); cursor: not-allowed;">
+                        </div>
+                        <div class="form-group">
+                            <label for="settingValue">Value</label>
+                            <input type="text" id="settingValue" class="form-input" value="${currentValue}" required>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="updateSettingFromModal('${modalId}', '${key}', '${currentValue}')">Save</button>
+                `,
+                size: 'md'
+            });
+        }
+
+        async function updateSettingFromModal(modalId, key, currentValue) {
+            const newValue = document.getElementById('settingValue').value;
+
+            if (!newValue || newValue === currentValue) {
+                Modal.close(modalId);
+                return;
+            }
 
             try {
-                await fetch(`/api/admin/settings/${key}`, {
+                const response = await fetch(`/api/v1/admin/settings/${key}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ value: newValue })
                 });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update setting');
+                }
+
+                Modal.close(modalId);
+                Toast.success('Setting updated successfully');
                 loadSettings();
             } catch (error) {
-                showAlert('Failed to update setting');
+                Toast.error('Failed to update setting: ' + error.message);
             }
         }
 
@@ -587,48 +662,118 @@
         }
 
         async function revokeToken(id) {
-            if (!showConfirm('Are you sure you want to revoke this token?')) return;
+            const confirmed = await showConfirm('Are you sure you want to revoke this token? Applications using this token will no longer have access.', 'Revoke Token');
+            if (!confirmed) return;
 
             try {
-                await fetch(`/api/admin/tokens/${id}`, { method: 'DELETE' });
+                await fetch(`/api/v1/admin/tokens/${id}`, { method: 'DELETE' });
+                Toast.success('Token revoked successfully');
                 loadTokens();
             } catch (error) {
-                showAlert('Failed to revoke token');
+                Toast.error('Failed to revoke token');
             }
         }
 
-        function showGenerateTokenModal() {
-            const email = prompt('Enter user email:');
-            if (!email) return;
-            const name = prompt('Enter token name:');
-            if (!name) return;
+        async function showGenerateTokenModal() {
+            // Load users first
+            const usersResponse = await fetch('/api/v1/admin/users');
+            const users = await usersResponse.json();
 
-            generateToken(email, name);
+            const userOptions = users.map(u =>
+                `<option value="${u.id}">${u.email}</option>`
+            ).join('');
+
+            const modalId = Modal.create({
+                title: 'Generate API Token',
+                body: `
+                    <form id="generateTokenForm">
+                        <div class="form-group">
+                            <label for="tokenUser">Select User</label>
+                            <select id="tokenUser" class="form-input" required>
+                                <option value="">-- Select User --</option>
+                                ${userOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tokenName">Token Name</label>
+                            <input type="text" id="tokenName" class="form-input" required placeholder="e.g., Production API Key">
+                            <small style="color: var(--dracula-comment);">A descriptive name to identify this token</small>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="generateTokenFromModal('${modalId}')">Generate Token</button>
+                `,
+                size: 'md'
+            });
         }
 
-        async function generateToken(email, name) {
+        async function generateTokenFromModal(modalId) {
+            const userId = document.getElementById('tokenUser').value;
+            const tokenName = document.getElementById('tokenName').value;
+
+            if (!userId || !tokenName) {
+                Toast.error('Please fill in all fields');
+                return;
+            }
+
             try {
-                // First, get user ID from email
-                const usersResponse = await fetch('/api/v1/admin/users');
-                const users = await usersResponse.json();
-                const user = users.find(u => u.email === email);
-
-                if (!user) {
-                    showAlert('User not found');
-                    return;
-                }
-
                 const response = await fetch('/api/v1/admin/tokens', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: user.id, name })
+                    body: JSON.stringify({ user_id: parseInt(userId), name: tokenName })
                 });
 
+                if (!response.ok) {
+                    throw new Error('Failed to generate token');
+                }
+
                 const result = await response.json();
-                showAlert(`Token generated successfully!\n\nToken: ${result.token.token}\n\nSave it now - it won't be shown again!`);
+                Modal.close(modalId);
+
+                // Show token in a new modal
+                showTokenModal(result.token.token);
                 loadTokens();
             } catch (error) {
-                showAlert('Failed to generate token');
+                Toast.error('Failed to generate token: ' + error.message);
+            }
+        }
+
+        function showTokenModal(token) {
+            const modalId = Modal.create({
+                title: '✅ Token Generated Successfully',
+                body: `
+                    <div style="margin-bottom: 1rem;">
+                        <p style="color: var(--dracula-orange); margin-bottom: 1rem;">
+                            ⚠️ <strong>Important:</strong> Copy this token now. For security reasons, it will not be shown again!
+                        </p>
+                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-green);">
+                            <code style="font-family: monospace; word-break: break-all; color: var(--dracula-green); font-size: 0.9rem;">${token}</code>
+                        </div>
+                    </div>
+                `,
+                footer: `
+                    <button class="btn btn-primary" onclick="copyToken('${token}', '${modalId}')">📋 Copy to Clipboard</button>
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Close</button>
+                `,
+                size: 'lg'
+            });
+        }
+
+        async function copyToken(token, modalId) {
+            try {
+                await navigator.clipboard.writeText(token);
+                Toast.success('Token copied to clipboard!');
+            } catch (error) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = token;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                Toast.success('Token copied to clipboard!');
             }
         }
 
@@ -674,16 +819,90 @@
         }
 
         async function clearAuditLogs() {
-            const days = prompt('Delete logs older than how many days?', '30');
-            if (!days) return;
+            const modalId = Modal.create({
+                title: 'Clear Audit Logs',
+                body: `
+                    <form id="clearLogsForm">
+                        <div class="form-group">
+                            <label for="logDays">Delete logs older than (days)</label>
+                            <input type="number" id="logDays" class="form-input" value="30" min="1" required>
+                            <small style="color: var(--dracula-comment);">Logs older than this many days will be permanently deleted</small>
+                        </div>
+                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-orange); margin-top: 1rem;">
+                            <p style="color: var(--dracula-orange); margin: 0;">
+                                ⚠️ <strong>Warning:</strong> This action cannot be undone. Deleted logs cannot be recovered.
+                            </p>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-danger" onclick="confirmClearLogs('${modalId}')">Delete Logs</button>
+                `,
+                size: 'md'
+            });
+        }
 
-            if (!showConfirm(`Delete all logs older than ${days} days?`)) return;
+        async function confirmClearLogs(modalId) {
+            const days = document.getElementById('logDays').value;
+
+            if (!days || days < 1) {
+                Toast.error('Please enter a valid number of days');
+                return;
+            }
 
             try {
-                await fetch(`/api/admin/logs?days=${days}`, { method: 'DELETE' });
+                const response = await fetch(`/api/v1/admin/logs?days=${days}`, { method: 'DELETE' });
+
+                if (!response.ok) {
+                    throw new Error('Failed to clear logs');
+                }
+
+                Modal.close(modalId);
+                Toast.success(`Audit logs older than ${days} days have been deleted`);
                 loadLogs();
             } catch (error) {
-                showAlert('Failed to clear logs');
+                Toast.error('Failed to clear logs: ' + error.message);
+            }
+        }
+
+        // Scheduled Tasks Management
+        async function loadScheduledTasks() {
+            try {
+                const response = await fetch('/api/v1/admin/tasks');
+                const tasks = await response.json();
+
+                const html = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
+                                <th style="text-align: left; padding: 1rem;">Task Name</th>
+                                <th style="text-align: left; padding: 1rem;">Interval</th>
+                                <th style="text-align: left; padding: 1rem;">Status</th>
+                                <th style="text-align: left; padding: 1rem;">Last Run</th>
+                                <th style="text-align: left; padding: 1rem;">Next Run</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tasks.map(task => `
+                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
+                                    <td style="padding: 1rem; font-family: monospace; color: var(--dracula-cyan);">${task.name}</td>
+                                    <td style="padding: 1rem;">${task.interval}</td>
+                                    <td style="padding: 1rem;">
+                                        <span style="background: ${task.running ? 'var(--dracula-green)' : 'var(--dracula-comment)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">
+                                            ${task.running ? 'Running' : 'Stopped'}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 1rem; font-size: 0.9rem;">${task.last_run ? new Date(task.last_run).toLocaleString() : 'Never'}</td>
+                                    <td style="padding: 1rem; font-size: 0.9rem;">${task.next_run ? new Date(task.next_run).toLocaleString() : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('tasks-list').innerHTML = html;
+            } catch (error) {
+                document.getElementById('tasks-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading scheduled tasks</p>';
             }
         }
 

@@ -150,6 +150,39 @@ func main() {
 		log.Printf("⚠️  Warning: Could not initialize default settings: %v", err)
 	}
 
+	// Auto-detect SMTP server at 172.17.0.1 (Docker bridge) and configure defaults
+	smtpService := services.NewSMTPService(db.DB)
+	if err := smtpService.LoadConfig(); err == nil {
+		// Check if SMTP is not already configured
+		smtpHost := settingsModel.GetString("smtp.host", "")
+		if smtpHost == "" {
+			// Try auto-detect
+			if detected, _ := smtpService.AutoDetect(); detected {
+				// SMTP detected, enable it
+				settingsModel.SetBool("smtp.enabled", true)
+				fmt.Println("✉️  SMTP server auto-detected and enabled")
+			}
+		}
+
+		// Set default from_address if not set
+		fromAddr := settingsModel.GetString("smtp.from_address", "")
+		if fromAddr == "" {
+			hostname, _ := os.Hostname()
+			if hostname == "" {
+				hostname = "localhost"
+			}
+			defaultFromAddr := fmt.Sprintf("no-reply@%s", hostname)
+			settingsModel.SetString("smtp.from_address", defaultFromAddr)
+		}
+
+		// Set default from_name to server.title if not set
+		fromName := settingsModel.GetString("smtp.from_name", "")
+		if fromName == "" {
+			serverTitle := settingsModel.GetString("server.title", "Weather Service")
+			settingsModel.SetString("smtp.from_name", serverTitle)
+		}
+	}
+
 	// Check if this is first run (no users)
 	isFirstRun, err := db.IsFirstRun()
 	if err != nil {
@@ -201,6 +234,9 @@ func main() {
 
 	// Check for first user setup - redirects to /user/setup if no users exist
 	r.Use(middleware.CheckFirstUserSetup(db.DB))
+
+	// Restrict admin users to only access /admin routes - all other routes treat them as anonymous
+	r.Use(middleware.RestrictAdminToAdminRoutes())
 
 	// Path normalization middleware - fix double slashes
 	r.Use(func(c *gin.Context) {
@@ -525,6 +561,17 @@ func main() {
 		setupRoutes.GET("/complete", setupHandler.CompleteSetup)
 	}
 
+	// Server setup wizard routes (admin only)
+	serverSetupRoutes := r.Group("/admin/setup")
+	serverSetupRoutes.Use(middleware.RequireAuth(db.DB))
+	serverSetupRoutes.Use(middleware.RequireAdmin())
+	{
+		serverSetupRoutes.GET("/welcome", setupHandler.ShowServerSetupWelcome)
+		serverSetupRoutes.GET("/settings", setupHandler.ShowServerSetupSettings)
+		serverSetupRoutes.POST("/settings", setupHandler.SaveServerSettings)
+		serverSetupRoutes.GET("/complete", setupHandler.ShowServerSetupComplete)
+	}
+
 	// Authentication routes (public)
 	r.GET("/login", authHandler.ShowLoginPage)
 	r.POST("/login", authHandler.HandleLogin)
@@ -539,13 +586,13 @@ func main() {
 
 	// User profile page
 	r.GET("/profile", middleware.RequireAuth(db.DB), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "profile.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "user/profile.html", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))
 	})
 	r.GET("/user/profile", middleware.RequireAuth(db.DB), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "profile.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "user/profile.html", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))
@@ -600,6 +647,8 @@ func main() {
 		weatherAPI.GET("/ip", apiHandler.GetIP)
 		weatherAPI.GET("/location", apiHandler.GetLocation)
 		weatherAPI.GET("/docs", apiHandler.GetDocsJSON)
+		weatherAPI.GET("/earthquakes", earthquakeHandler.HandleEarthquakeAPI)
+		weatherAPI.GET("/hurricanes", hurricaneHandler.HandleHurricaneAPI)
 
 		// Root /api/v1 endpoint - return all endpoints
 		weatherAPI.GET("", func(c *gin.Context) {
@@ -620,6 +669,8 @@ func main() {
 					hostInfo.FullHost + "/api/v1/location",
 					hostInfo.FullHost + "/api/v1/docs",
 					hostInfo.FullHost + "/api/v1/blocklist",
+					hostInfo.FullHost + "/api/v1/earthquakes",
+					hostInfo.FullHost + "/api/v1/hurricanes",
 				},
 				"documentation": hostInfo.FullHost + "/docs",
 			})
@@ -696,6 +747,9 @@ func main() {
 
 		// System stats
 		adminAPI.GET("/stats", adminHandler.GetSystemStats)
+
+		// Scheduled tasks
+		adminAPI.GET("/tasks", adminHandler.GetScheduledTasks)
 
 		// Notification channel management (admin only)
 		adminAPI.GET("/channels", channelHandler.ListChannels)
@@ -800,12 +854,18 @@ JSON API:
 	// Earthquake routes
 	r.GET("/earthquake", earthquakeHandler.HandleEarthquakeRequest)
 	r.GET("/earthquake/*location", earthquakeHandler.HandleEarthquakeRequest)
-	r.GET("/api/earthquakes", earthquakeHandler.HandleEarthquakeAPI)
 
 	// Hurricane routes
 	r.GET("/hurricane", hurricaneHandler.HandleHurricaneRequest)
 	r.GET("/hurricanes", hurricaneHandler.HandleHurricaneRequest)
-	r.GET("/api/hurricanes", hurricaneHandler.HandleHurricaneAPI)
+
+	// Backwards compatibility redirects for old API routes
+	r.GET("/api/earthquakes", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/api/v1/earthquakes?"+c.Request.URL.RawQuery)
+	})
+	r.GET("/api/hurricanes", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/api/v1/hurricanes?"+c.Request.URL.RawQuery)
+	})
 
 	// Initialization check middleware - show loading page if not ready
 	r.Use(func(c *gin.Context) {

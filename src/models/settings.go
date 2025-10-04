@@ -198,10 +198,21 @@ func (m *SettingsModel) InitializeDefaults() error {
 
 		// Logging settings
 		"logging.level":         {Value: "info", Type: "string"},
+		"logging.format":        {Value: "apache", Type: "string"},
 		"logging.access_log":    {Value: "true", Type: "boolean"},
 		"logging.error_log":     {Value: "true", Type: "boolean"},
 		"logging.audit_log":     {Value: "true", Type: "boolean"},
 		"logging.rotation_days": {Value: "30", Type: "number"},
+
+		// SMTP settings
+		"smtp.enabled":      {Value: "false", Type: "boolean"},
+		"smtp.host":         {Value: "", Type: "string"},
+		"smtp.port":         {Value: "587", Type: "number"},
+		"smtp.username":     {Value: "", Type: "string"},
+		"smtp.password":     {Value: "", Type: "string"},
+		"smtp.from_address": {Value: "", Type: "string"},
+		"smtp.from_name":    {Value: "", Type: "string"},
+		"smtp.use_tls":      {Value: "true", Type: "boolean"},
 	}
 
 	for key, setting := range defaults {

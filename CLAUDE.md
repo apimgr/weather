@@ -127,7 +127,7 @@ CREATE TABLE users (
   bio TEXT,
   role VARCHAR(20) NOT NULL CHECK (role IN ('administrator', 'user', 'guest')),
   status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'pending')),
-  timezone VARCHAR(50) DEFAULT 'UTC',
+  timezone VARCHAR(50) DEFAULT 'America/New_York',
   language VARCHAR(10) DEFAULT 'en',
   theme VARCHAR(20) DEFAULT 'dark',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -229,22 +229,22 @@ Exact Step-by-Step Web Flow:
 8. System creates first regular user account
 9. System immediately redirects to /user/setup/admin
 10. Web page shows: "Create Administrator Account"
-    - Username field (pre-filled: "administrator", not editable)
+    - Username field (pre-filled: "administrator", editable)
     - Password field (required, min 12 chars)
     - Confirm password field (must match)
 11. User submits admin creation form
 12. System creates administrator account
 13. System logs out regular user
 14. System logs in as administrator
-15. Browser redirects to /user/setup/complete
+15. Browser redirects to /user/setup/complete (server setup wizard which must be defined)
 16. /user/setup/complete performs contextual redirect:
     - Currently admin → /admin or /admin/dashboard
     - Currently user → /user or /user/dashboard  
     - Not logged in → /auth/login
-17. Admin can configure server at /admin/settings
+17. Admin can configure server at /admin/server/**
 
 Post-Setup Access:
-  - /user/setup/* routes → 404 (setup complete)
+  - /user/setup/* routes → 301 (redirect to login page)
   - Any user visiting / → Normal homepage
   - Admin visiting / → Sees as guest/anonymous
   - Users and admins have separate dashboards
@@ -372,15 +372,8 @@ Flow:
   3. /user/setup → Shows welcome, continues to /user/setup/register
   4. User creates account → Redirect to /user/setup/admin
   5. Admin account created → Switch to admin, redirect to /user/setup/complete
-  6. /user/setup/complete redirects based on current auth:
-     - If logged in as admin → /admin (or /admin/dashboard)
-     - If logged in as user → /user (or /user/dashboard)
-     - If not logged in → /auth/login
-  7. Admin configures server settings in /admin/settings
 
 After Setup Behavior:
-  - Setup routes return 404 (no longer accessible)
-  - Direct visits to /user/setup → redirect to appropriate dashboard
   - System is now in normal operation mode
 
 Why under /user:

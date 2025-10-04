@@ -432,6 +432,75 @@ func (h *AdminHandler) GetSystemStats(c *gin.Context) {
 	})
 }
 
+// GetScheduledTasks returns status of all scheduled tasks
+func (h *AdminHandler) GetScheduledTasks(c *gin.Context) {
+	// Get scheduled tasks from database
+	rows, err := h.DB.Query(`
+		SELECT task_name, last_run, next_run, status
+		FROM scheduled_tasks
+		ORDER BY task_name
+	`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch scheduled tasks"})
+		return
+	}
+	defer rows.Close()
+
+	var tasks []map[string]interface{}
+	for rows.Next() {
+		var taskName, status string
+		var lastRun, nextRun sql.NullTime
+
+		if err := rows.Scan(&taskName, &lastRun, &nextRun, &status); err != nil {
+			continue
+		}
+
+		task := map[string]interface{}{
+			"name":    taskName,
+			"status":  status,
+			"running": status == "running",
+		}
+
+		if lastRun.Valid {
+			task["last_run"] = lastRun.Time
+		}
+		if nextRun.Valid {
+			task["next_run"] = nextRun.Time
+		}
+
+		// Determine interval from task name (this is approximate)
+		interval := "Unknown"
+		switch taskName {
+		case "cleanup-sessions", "cleanup-rate-limits":
+			interval = "Every 1 hour"
+		case "cleanup-audit-logs":
+			interval = "Every 24 hours"
+		case "check-weather-alerts":
+			interval = "Every 15 minutes"
+		case "daily-forecast":
+			interval = "Every 24 hours"
+		case "process-notification-queue":
+			interval = "Every 2 minutes"
+		case "cleanup-notifications":
+			interval = "Every 24 hours"
+		case "system-backup":
+			interval = "Every 6 hours"
+		case "refresh-weather-cache":
+			interval = "Every 30 minutes"
+		}
+		task["interval"] = interval
+
+		tasks = append(tasks, task)
+	}
+
+	// If no tasks in database, return empty array
+	if len(tasks) == 0 {
+		tasks = []map[string]interface{}{}
+	}
+
+	c.JSON(http.StatusOK, tasks)
+}
+
 // ShowSettingsPage renders the admin settings page
 func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)
@@ -473,6 +542,7 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 
 	// Logging settings
 	settings["logging_level"] = settingsModel.GetString("logging.level", "info")
+	settings["logging_format"] = settingsModel.GetString("logging.format", "apache")
 	settings["logging_access_log"] = settingsModel.GetBool("logging.access_log", true)
 	settings["logging_error_log"] = settingsModel.GetBool("logging.error_log", true)
 	settings["logging_audit_log"] = settingsModel.GetBool("logging.audit_log", true)
