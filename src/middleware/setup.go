@@ -30,15 +30,15 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if any users exist
+		// Check if admin user exists (setup is complete when 'administrator' exists)
 		var count int
-		err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'administrator'").Scan(&count)
 		if err != nil {
 			c.Next()
 			return
 		}
 
-		// If no users exist, redirect to setup
+		// If no admin exists, redirect to setup
 		if count == 0 {
 			c.Redirect(http.StatusFound, "/user/setup")
 			c.Abort()
@@ -52,21 +52,19 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 // BlockSetupAfterComplete blocks access to setup routes after setup is complete
 func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Check if any users exist
+		// Check if admin user exists (username='administrator')
+		// Setup is only complete when the dedicated admin account exists
 		var count int
-		err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'administrator'").Scan(&count)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 			c.Abort()
 			return
 		}
 
-		// If users exist, setup is complete - return 404
+		// If admin exists, setup is complete - redirect to login
 		if count > 0 {
-			c.HTML(http.StatusNotFound, "error.html", gin.H{
-				"Title":   "Not Found",
-				"Message": "Setup already completed",
-			})
+			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
 		}

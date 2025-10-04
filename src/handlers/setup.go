@@ -65,10 +65,10 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Create user with 'admin' role (first user is admin)
+	// Create first user with 'user' role (NOT admin)
 	_, err = h.DB.Exec(`
 		INSERT INTO users (username, email, password_hash, role, created_at, updated_at)
-		VALUES (?, ?, ?, 'admin', datetime('now'), datetime('now'))
+		VALUES (?, ?, ?, 'user', datetime('now'), datetime('now'))
 	`, username, input.Email, string(hashedPassword))
 
 	if err != nil {
