@@ -1,5 +1,5 @@
 # Multi-stage build for Go weather service
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -27,18 +27,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 
 # Final stage - minimal runtime image
 FROM alpine:latest as base
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+RUN apk update --no-cache && apk add --no-cache curl bash ca-certificates tzdata
 COPY --from=builder /app/weather /usr/local/bin/weather
 
-RUN apk update --no-cache && apk add --no-cache curl bash
-
 FROM scratch
-
-# Build args for labels
-ARG VERSION=dev
-ARG BUILD_DATE
-ARG GIT_COMMIT
 
 # OCI Standard Labels
 LABEL org.opencontainers.image.title="Weather Service" \
@@ -67,7 +60,6 @@ WORKDIR /config
 # Environment variables with defaults
 ENV PORT=80 \
     GIN_MODE=release \
-    SESSION_SECRET="" \
     TZ=${TZ:-America/New_York}
 
 # Expose port

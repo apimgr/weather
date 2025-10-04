@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <style>
+        .setup-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 3rem;
+            background: var(--dracula-current-line);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .setup-header h1 {
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .setup-header p {
+            color: var(--dracula-comment);
+            font-size: 1.1rem;
+        }
+
+        .welcome-content {
+            margin: 2rem 0;
+        }
+
+        .welcome-content h2 {
+            color: var(--dracula-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-content p {
+            color: var(--dracula-foreground);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .setup-steps {
+            background: var(--dracula-bg);
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .setup-steps h3 {
+            color: var(--dracula-green);
+            margin-bottom: 1rem;
+        }
+
+        .setup-steps ol {
+            color: var(--dracula-foreground);
+            margin-left: 1.5rem;
+        }
+
+        .setup-steps li {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 2rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--dracula-pink);
+        }
+
+        .info-box {
+            background: rgba(139, 233, 253, 0.1);
+            border: 1px solid var(--dracula-cyan);
+            color: var(--dracula-cyan);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <h1>🌤️ Welcome!</h1>
+            <p>Let's set up your Weather Service</p>
+        </div>
+
+        <div class="welcome-content">
+            <h2>First-Time Setup</h2>
+            <p>
+                Welcome to Weather Service! Since this is your first time running the application,
+                we need to set up your accounts.
+            </p>
+
+            <div class="setup-steps">
+                <h3>Setup Process</h3>
+                <ol>
+                    <li><strong>Create Your Account</strong> - You'll create the owner account (regular user)</li>
+                    <li><strong>Create Administrator</strong> - Then create a separate administrator account for managing the system</li>
+                    <li><strong>Start Using</strong> - Access your weather dashboard and features</li>
+                </ol>
+            </div>
+
+            <div class="info-box">
+                <strong>Note:</strong> The first account you create will be the owner account with regular user privileges.
+                You'll then create a separate administrator account for system management.
+            </div>
+
+            <form action="/user/setup/register" method="GET">
+                <button type="submit" class="btn-primary">Get Started →</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

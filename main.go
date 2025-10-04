@@ -28,7 +28,7 @@ import (
 	"weather-go/src/utils"
 )
 
-//go:embed templates/*.html
+//go:embed templates
 var templatesFS embed.FS
 
 //go:embed static
@@ -225,7 +225,7 @@ func main() {
 	// Load embedded templates with custom functions
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"upper": strings.ToUpper,
-	}).ParseFS(templatesFS, "templates/*.html"))
+	}).ParseFS(templatesFS, "templates/*.html", "templates/*/*.html", "templates/*/*/*.html"))
 	r.SetHTMLTemplate(tmpl)
 
 	// Live reload templates in debug mode (loads from filesystem if available)
@@ -236,9 +236,16 @@ func main() {
 				t := template.New("").Funcs(template.FuncMap{
 					"upper": strings.ToUpper,
 				})
-				if t, err := t.ParseGlob("templates/*.html"); err == nil {
-					r.SetHTMLTemplate(t)
+				// Load all templates including subdirectories
+				patterns := []string{
+					"templates/*.html",
+					"templates/*/*.html",
+					"templates/*/*/*.html",
 				}
+				for _, pattern := range patterns {
+					t, _ = t.ParseGlob(pattern)
+				}
+				r.SetHTMLTemplate(t)
 				c.Next()
 			})
 			fmt.Println("🔄 Live reload enabled for templates (using filesystem)")
