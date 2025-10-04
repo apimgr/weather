@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
 	username TEXT UNIQUE NOT NULL,
 	email TEXT UNIQUE NOT NULL,
 	phone TEXT UNIQUE,
+	display_name TEXT,
 	password_hash TEXT NOT NULL,
 	role TEXT DEFAULT 'user' CHECK(role IN ('admin', 'user')),
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -494,6 +495,7 @@ func migrateToV2(db *sql.DB) error {
 			username TEXT UNIQUE NOT NULL,
 			email TEXT UNIQUE NOT NULL,
 			phone TEXT UNIQUE,
+			display_name TEXT,
 			password_hash TEXT NOT NULL,
 			role TEXT DEFAULT 'user' CHECK(role IN ('admin', 'user')),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -506,8 +508,13 @@ func migrateToV2(db *sql.DB) error {
 
 	// Copy data
 	_, err = tx.Exec(`
-		INSERT INTO users_new (id, username, email, phone, password_hash, role, created_at, updated_at)
-		SELECT id, username, email, phone, password_hash, role, created_at, updated_at FROM users
+		INSERT INTO users_new (id, username, email, phone, display_name, password_hash, role, created_at, updated_at)
+		SELECT id, username, email, phone,
+			CASE WHEN EXISTS(SELECT 1 FROM pragma_table_info('users') WHERE name='display_name')
+				THEN display_name
+				ELSE NULL
+			END,
+			password_hash, role, created_at, updated_at FROM users
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to copy user data: %w", err)
