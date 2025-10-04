@@ -126,7 +126,6 @@ func main() {
 	fmt.Printf("🕐 %s\n", startTime.Format("2006-01-02 at 15:04:05"))
 
 	// Initialize database
-	fmt.Println("💾 Initializing database...")
 	dbPath := os.Getenv("DATABASE_PATH")
 	if dbPath == "" {
 		dbPath = "./data/weather.db"
@@ -142,7 +141,18 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
-	fmt.Printf("✅ Database initialized: %s\n", dbPath)
+
+	// Check if setup is complete
+	var setupComplete bool
+	var setupValue string
+	err = db.DB.QueryRow("SELECT value FROM settings WHERE key = 'setup.completed'").Scan(&setupValue)
+	setupComplete = (err == nil && setupValue == "true")
+
+	if setupComplete {
+		fmt.Printf("✅ Database initialized: %s\n", dbPath)
+	} else {
+		fmt.Printf("✅ Database initialized: %s (setup mode)\n", dbPath)
+	}
 
 	// Initialize default settings
 	settingsModel := &models.SettingsModel{DB: db.DB}
@@ -335,7 +345,7 @@ func main() {
 	}
 
 	// Initialize location enhancer
-	locationEnhancer := services.NewLocationEnhancer()
+	locationEnhancer := services.NewLocationEnhancer(db.DB)
 
 	// Set callback to mark initialization complete
 	locationEnhancer.SetOnInitComplete(func(countries, cities bool) {
@@ -465,10 +475,28 @@ func main() {
 
 	port := fmt.Sprintf("%d", httpPortInt)
 
+	// Get listen address - auto-detect reverse proxy
+	listenAddress := os.Getenv("SERVER_ADDRESS")
+	mode := ""
+	if listenAddress == "" {
+		// Check for reverse proxy indicators
+		reverseProxy := os.Getenv("REVERSE_PROXY") == "true" ||
+			os.Getenv("BEHIND_PROXY") == "true" ||
+			os.Getenv("USE_PROXY") == "true"
+
+		if reverseProxy {
+			listenAddress = "127.0.0.1"
+			mode = " in reverse proxy mode"
+		} else {
+			// Listen on all interfaces (IPv4 and IPv6)
+			listenAddress = "::"
+			mode = " (all interfaces)"
+		}
+	}
+
 	// Print startup messages
 	fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
-	fmt.Printf("🚀 Starting Weather on port %s\n", port)
-	fmt.Println("⏱️  Starting/Initializing the database")
+	fmt.Printf("🚀 Starting Weather%s on %s:%s\n", mode, listenAddress, port)
 
 	// Initialize SSL manager
 	sslDataDir := os.Getenv("DATA_DIR")
@@ -919,8 +947,14 @@ JSON API:
 	fmt.Printf("🕐 Ready: %s: %s\n", time.Now().Format("2006-01-02 at 15:04:05"), finalURL)
 
 	// Create HTTP server with graceful shutdown
+	// Format address properly for IPv6
+	serverAddr := listenAddress + ":" + port
+	if listenAddress == "::" {
+		serverAddr = "[" + listenAddress + "]:" + port
+	}
+
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    serverAddr,
 		Handler: r,
 	}
 
@@ -1068,8 +1102,20 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	}
 
 	address := os.Getenv("SERVER_ADDRESS")
+	addressMode := ""
 	if address == "" {
-		address = "0.0.0.0"
+		// Check for reverse proxy indicators
+		reverseProxy := os.Getenv("REVERSE_PROXY") == "true" ||
+			os.Getenv("BEHIND_PROXY") == "true" ||
+			os.Getenv("USE_PROXY") == "true"
+
+		if reverseProxy {
+			address = "127.0.0.1"
+			addressMode = " (reverse proxy mode)"
+		} else {
+			address = "::"
+			addressMode = " (all interfaces)"
+		}
 	}
 
 	sessionSecret := os.Getenv("SESSION_SECRET")
@@ -1090,7 +1136,7 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	fmt.Printf("   Version:        %s\n", Version)
 	fmt.Printf("   Build Date:     %s\n", BuildDate)
 	fmt.Printf("   Git Commit:     %s\n", GitCommit)
-	fmt.Printf("   Listen Address: %s:%s\n", address, port)
+	fmt.Printf("   Listen Address: %s:%s%s\n", address, port, addressMode)
 	fmt.Printf("   Gin Mode:       %s\n", ginMode)
 
 	fmt.Println("\n💾 Database:")
@@ -1133,6 +1179,11 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	fmt.Println("   --data DIR      Data directory (will store weather.db)")
 	fmt.Println("   --config DIR    Configuration directory")
 	fmt.Println("   --address ADDR  Override server listen address")
+
+	fmt.Println("\n🌐 Network Configuration:")
+	fmt.Println("   Default:        :: (all interfaces, IPv4 + IPv6)")
+	fmt.Println("   Reverse Proxy:  127.0.0.1 (set REVERSE_PROXY=true)")
+	fmt.Println("   Custom:         Set SERVER_ADDRESS environment variable")
 
 	fmt.Println("\n" + strings.Repeat("─", 56))
 	fmt.Println()

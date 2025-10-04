@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 
 // LocationEnhancer enhances location data with external databases
 type LocationEnhancer struct {
+	db            *sql.DB
 	client        *http.Client
 	countriesData []Country
 	citiesData    []City
@@ -60,7 +62,7 @@ type EnhancedLocation struct {
 }
 
 // NewLocationEnhancer creates a new location enhancer
-func NewLocationEnhancer() *LocationEnhancer {
+func NewLocationEnhancer(db *sql.DB) *LocationEnhancer {
 	transport := &http.Transport{
 		MaxIdleConns:        50,
 		MaxIdleConnsPerHost: 10,
@@ -68,6 +70,7 @@ func NewLocationEnhancer() *LocationEnhancer {
 	}
 
 	le := &LocationEnhancer{
+		db: db,
 		client: &http.Client{
 			Transport: transport,
 			Timeout:   30 * time.Second,
@@ -86,7 +89,7 @@ func NewLocationEnhancer() *LocationEnhancer {
 // loadData loads external data in parallel
 func (le *LocationEnhancer) loadData() {
 	startTime := time.Now()
-	fmt.Printf("⏱️  Starting database initialization at %s\n", startTime.Format("15:04:05.000"))
+	fmt.Printf("⏱️  Loading location databases at %s\n", startTime.Format("15:04:05.000"))
 
 	var wg sync.WaitGroup
 	wg.Add(2)

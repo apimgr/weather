@@ -85,7 +85,10 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(go test:*)",
       "Bash(go run:*)",
-      "Read(//var/log/weather/**)"
+      "Read(//var/log/weather/**)",
+      "Bash(docker exec:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker volume rm:*)"
     ],
     "deny": [],
     "ask": []

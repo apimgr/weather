@@ -119,7 +119,12 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	if input.UseRandom {
 		// Generate random password (32 characters, alphanumeric + special)
-		generatedPassword = generateRandomPassword(32)
+		var err error
+		generatedPassword, err = generateRandomPassword(32)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure password"})
+			return
+		}
 		password = generatedPassword
 	} else {
 		// Use custom password - must be confirmed
@@ -178,13 +183,17 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	}
 
 	// Create session for the admin user (auto-login)
-	sessionID := generateSessionID()
+	sessionID, err := generateSessionID()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate session ID"})
+		return
+	}
 	expiresAt := time.Now().Add(7 * 24 * time.Hour) // 7 days
 
 	_, err = h.DB.Exec(`
-		INSERT INTO sessions (id, user_id, expires_at, ip_address, user_agent, created_at)
-		VALUES (?, ?, ?, ?, ?, datetime('now'))
-	`, sessionID, adminID, expiresAt, c.ClientIP(), c.GetHeader("User-Agent"))
+		INSERT INTO sessions (id, user_id, expires_at, created_at)
+		VALUES (?, ?, ?, datetime('now'))
+	`, sessionID, adminID, expiresAt)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
@@ -213,30 +222,29 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 }
 
 // generateRandomPassword generates a cryptographically secure random password
-func generateRandomPassword(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?"
+func generateRandomPassword(length int) (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#-_$"
 	password := make([]byte, length)
 	charsetLen := big.NewInt(int64(len(charset)))
 
 	for i := range password {
 		n, err := rand.Int(rand.Reader, charsetLen)
 		if err != nil {
-			// Fallback to a simpler secure method if there's an error
-			panic("failed to generate secure random password: " + err.Error())
+			return "", fmt.Errorf("failed to generate secure random password: %w", err)
 		}
 		password[i] = charset[n.Int64()]
 	}
-	return string(password)
+	return string(password), nil
 }
 
 // generateSessionID generates a cryptographically secure random session ID
-func generateSessionID() string {
+func generateSessionID() (string, error) {
 	// Generate 48 random bytes and encode as base64 (results in 64 chars)
 	bytes := make([]byte, 48)
 	if _, err := rand.Read(bytes); err != nil {
-		panic("failed to generate secure session ID: " + err.Error())
+		return "", fmt.Errorf("failed to generate secure session ID: %w", err)
 	}
-	return base64.URLEncoding.EncodeToString(bytes)
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
 // CompleteSetup performs the final redirect based on current user context
