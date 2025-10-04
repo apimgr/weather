@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -209,32 +212,31 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// generateRandomPassword generates a secure random password
+// generateRandomPassword generates a cryptographically secure random password
 func generateRandomPassword(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?"
 	password := make([]byte, length)
+	charsetLen := big.NewInt(int64(len(charset)))
+
 	for i := range password {
-		password[i] = charset[randomInt(len(charset))]
+		n, err := rand.Int(rand.Reader, charsetLen)
+		if err != nil {
+			// Fallback to a simpler secure method if there's an error
+			panic("failed to generate secure random password: " + err.Error())
+		}
+		password[i] = charset[n.Int64()]
 	}
 	return string(password)
 }
 
-// randomInt returns a random integer between 0 and max-1
-func randomInt(max int) int {
-	// Simple random using time-based seed
-	// In production, use crypto/rand
-	return int(time.Now().UnixNano() % int64(max))
-}
-
-// generateSessionID generates a secure random session ID
+// generateSessionID generates a cryptographically secure random session ID
 func generateSessionID() string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	const length = 64
-	sessionID := make([]byte, length)
-	for i := range sessionID {
-		sessionID[i] = charset[randomInt(len(charset))]
+	// Generate 48 random bytes and encode as base64 (results in 64 chars)
+	bytes := make([]byte, 48)
+	if _, err := rand.Read(bytes); err != nil {
+		panic("failed to generate secure session ID: " + err.Error())
 	}
-	return string(sessionID)
+	return base64.URLEncoding.EncodeToString(bytes)
 }
 
 // CompleteSetup performs the final redirect based on current user context
