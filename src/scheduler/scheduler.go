@@ -50,7 +50,7 @@ func (s *Scheduler) AddTask(name string, interval time.Duration, fn func() error
 	}
 
 	s.tasks = append(s.tasks, task)
-	log.Printf("📅 Scheduled task: %s (every %v)", name, interval)
+	// Silently add task, no logging
 }
 
 // Start starts all scheduled tasks
@@ -58,13 +58,11 @@ func (s *Scheduler) Start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	log.Println("🚀 Starting scheduler...")
-
 	for _, task := range s.tasks {
 		go s.runTask(task)
 	}
 
-	log.Printf("✅ Scheduler started with %d tasks", len(s.tasks))
+	log.Printf("📅 Task manager has started (%d scheduled tasks)", len(s.tasks))
 }
 
 // Stop stops all scheduled tasks
@@ -96,14 +94,14 @@ func (s *Scheduler) runTask(task *Task) {
 	task.running = true
 	task.mu.Unlock()
 
-	log.Printf("▶️  Started task: %s", task.Name)
+	// Silently start task, no logging
 
 	for {
 		select {
 		case <-task.ticker.C:
 			s.executeTask(task)
 		case <-task.stopChan:
-			log.Printf("⏹️  Stopped task: %s", task.Name)
+			// Silently stop task, no logging
 			return
 		}
 	}

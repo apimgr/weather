@@ -298,19 +298,14 @@ func main() {
 		fmt.Println("📦 Using embedded templates and static files")
 	}
 
-	// Initialize services
-	fmt.Println("🚀 Starting Weather...")
-	fmt.Println("📍 Initializing location databases...")
-
+	// Initialize location enhancer
 	locationEnhancer := services.NewLocationEnhancer()
 
 	// Set callback to mark initialization complete
 	locationEnhancer.SetOnInitComplete(func(countries, cities bool) {
 		// Mark weather service as always ready (no initialization needed)
 		handlers.SetInitStatus(countries, cities, true)
-		fmt.Printf("✅ Service ready! Countries: %v, Cities: %v\n", countries, cities)
-		// Print ready timestamp
-		fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
+		fmt.Printf("✅ Countries: %v, Cities: %v, zipcodes: true, airportcodes: true\n", countries, cities)
 	})
 
 	weatherService := services.NewWeatherService(locationEnhancer)
@@ -326,8 +321,7 @@ func main() {
 		}
 	}()
 
-	// Initialize notification system services
-	fmt.Println("📬 Initializing notification system...")
+	// Initialize notification system services (silent)
 	channelManager := services.NewChannelManager(db.DB)
 	templateEngine := services.NewTemplateEngine(db.DB)
 	deliverySystem := services.NewDeliverySystem(db.DB, channelManager, templateEngine)
@@ -434,15 +428,11 @@ func main() {
 	}
 
 	port := fmt.Sprintf("%d", httpPortInt)
-	serverIP := utils.GetServerIP()
 
-	// Display port configuration
-	if os.Getenv("PORT") != "" {
-		fmt.Printf("🔌 Using PORT environment variable: %s\n", port)
-	} else {
-		fmt.Printf("🔌 Using configured HTTP port: %s\n", port)
-	}
-	fmt.Printf("📍 Server IP: %s\n", serverIP)
+	// Print startup messages
+	fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
+	fmt.Printf("🚀 Starting Weather on port %s\n", port)
+	fmt.Println("⏱️  Starting/Initializing the database")
 
 	// Initialize SSL manager
 	sslDataDir := os.Getenv("DATA_DIR")
@@ -842,28 +832,31 @@ JSON API:
 	r.GET("/", weatherHandler.HandleRoot)
 	r.GET("/:location", weatherHandler.HandleLocation)
 
-	// Show startup message
+	// Build final URL for documentation
+	finalHostname := os.Getenv("DOMAIN")
+	if finalHostname == "" {
+		finalHostname = os.Getenv("HOST")
+	}
+	if finalHostname == "" {
+		finalHostname = os.Getenv("HOSTNAME")
+	}
+	if finalHostname == "" {
+		finalHostname = "localhost"
+	}
+
 	protocol := "http"
-	if os.Getenv("NODE_ENV") == "production" {
+	if os.Getenv("TLS_ENABLED") == "true" || httpsPortInt > 0 {
 		protocol = "https"
 	}
-	hostnameForURL := os.Getenv("HOST")
-	if hostnameForURL == "" {
-		hostnameForURL = os.Getenv("HOSTNAME")
-	}
-	if hostnameForURL == "" {
-		hostnameForURL = "localhost"
-	}
 
-	baseURL := fmt.Sprintf("%s://%s", protocol, hostnameForURL)
+	finalURL := fmt.Sprintf("%s://%s", protocol, finalHostname)
 	if (protocol == "http" && port != "80") || (protocol == "https" && port != "443") {
-		baseURL += ":" + port
+		finalURL += ":" + port
 	}
 
-	fmt.Printf("🌤️  Weather starting on port %s\n", port)
-	fmt.Printf("📡 API Documentation: %s/api/docs\n", baseURL)
-	fmt.Printf("💡 Examples: %s/examples\n", baseURL)
-	fmt.Printf("🏥 Health Check: %s/healthz\n", baseURL)
+	// Print final startup messages
+	fmt.Printf("📡 For documentation see: %s/docs\n", finalURL)
+	fmt.Printf("🕐 Ready: %s: %s\n", time.Now().Format("2006-01-02 at 15:04:05"), finalURL)
 
 	// Create HTTP server with graceful shutdown
 	srv := &http.Server{
