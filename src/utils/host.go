@@ -19,8 +19,11 @@ func GetHostInfo(c *gin.Context) *HostInfo {
 		}
 	}
 
-	// Detect hostname from headers
-	hostname := c.GetHeader("X-Forwarded-Host")
+	// Detect hostname - prioritize DOMAIN env variable
+	hostname := os.Getenv("DOMAIN")
+	if hostname == "" {
+		hostname = c.GetHeader("X-Forwarded-Host")
+	}
 	if hostname == "" {
 		hostname = c.Request.Host
 	}
