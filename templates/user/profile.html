@@ -453,7 +453,7 @@
                 });
 
                 const result = await response.json();
-                alert('Token generated! Save it now - it won\'t be shown again:\n\n' + result.token);
+                showAlert('Token generated! Save it now - it won\'t be shown again:\n\n' + result.token);
                 loadTokens();
             } catch (error) {
                 Toast.error('Failed to generate token');
@@ -461,7 +461,7 @@
         }
 
         async function revokeToken(id) {
-            if (!confirm('Are you sure you want to revoke this token?')) return;
+            if (!showConfirm('Are you sure you want to revoke this token?')) return;
 
             try {
                 await fetch(`/api/v1/admin/tokens/${id}`, { method: 'DELETE' });
@@ -580,7 +580,7 @@
 
         // Delete location
         async function deleteLocation(id) {
-            if (!confirm('Are you sure you want to delete this location?')) return;
+            if (!showConfirm('Are you sure you want to delete this location?')) return;
 
             try {
                 await fetch(`/api/v1/locations/${id}`, { method: 'DELETE' });

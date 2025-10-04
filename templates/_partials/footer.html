@@ -1,14 +1,12 @@
 {{define "footer"}}
-<footer class="footer">
-    <div class="footer-container">
-        <div class="footer-section">
-            <p>&copy; 2025 {{.server.Title}}. All rights reserved.</p>
-        </div>
-        <div class="footer-section">
-            <a href="/api-docs" class="footer-link">API Documentation</a>
-            <a href="/healthz" class="footer-link">System Status</a>
-        </div>
-    </div>
+<footer class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
+    <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+        <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
+        <span style="color: var(--dracula-pink);">•</span>
+        <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
+        <span style="color: var(--dracula-pink);">•</span>
+        <a href="/api-docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
+    </p>
 </footer>
 </body>
 </html>

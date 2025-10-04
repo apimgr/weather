@@ -251,13 +251,13 @@
 
             if (password.length < 8) {
                 e.preventDefault();
-                alert('Password must be at least 8 characters long');
+                showAlert('Password must be at least 8 characters long');
                 return;
             }
 
             if (password !== confirm) {
                 e.preventDefault();
-                alert('Passwords do not match');
+                showAlert('Passwords do not match');
                 return;
             }
         });

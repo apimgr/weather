@@ -218,7 +218,7 @@
         async function clearLogs() {
             const days = document.getElementById('logDays').value;
 
-            if (!confirm(`Are you sure you want to delete logs older than ${days} days? This action cannot be undone.`)) {
+            if (!showConfirm(`Are you sure you want to delete logs older than ${days} days? This action cannot be undone.`)) {
                 return;
             }
 

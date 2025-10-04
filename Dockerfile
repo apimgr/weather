@@ -26,12 +26,19 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     chmod +x weather
 
 # Final stage - minimal runtime image
-FROM alpine:latest as base
-
-RUN apk update --no-cache && apk add --no-cache curl bash ca-certificates tzdata
+FROM alpine:latest AS base
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/weather /usr/local/bin/weather
 
+RUN apk update --no-cache && apk add --no-cache curl bash
+
 FROM scratch
+
+# Build args for labels
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG GIT_COMMIT
 
 # OCI Standard Labels
 LABEL org.opencontainers.image.title="Weather Service" \
@@ -60,7 +67,7 @@ WORKDIR /config
 # Environment variables with defaults
 ENV PORT=80 \
     GIN_MODE=release \
-    TZ=${TZ:-America/New_York}
+    TZ=America/New_York
 
 # Expose port
 EXPOSE 80
@@ -75,3 +82,4 @@ HEALTHCHECK --interval=120s --timeout=5s --start-period=90s --retries=3 CMD ["/u
 # Start the application with directory-based CLI flags
 ENTRYPOINT ["/usr/local/bin/weather"]
 CMD ["--data", "/data/weather", "--config", "/config/weather"]
+

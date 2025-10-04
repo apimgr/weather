@@ -302,7 +302,7 @@
 
         // Delete notification
         async function deleteNotification(id) {
-            if (!confirm('Delete this notification?')) return;
+            if (!showConfirm('Delete this notification?')) return;
             await fetch(`/api/v1/notifications/${id}`, { method: 'DELETE' });
             loadNotifications();
         }

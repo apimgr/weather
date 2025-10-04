@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS weather_alert_history (
 	alert_type TEXT NOT NULL,
 	sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-	FOREIGN KEY (location_id) REFERENCES user_locations(id) ON DELETE CASCADE
+	FOREIGN KEY (location_id) REFERENCES saved_locations(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_alert_history_user ON weather_alert_history(user_id);

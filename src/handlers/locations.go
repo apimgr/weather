@@ -9,6 +9,7 @@ import (
 	"weather-go/src/middleware"
 	"weather-go/src/models"
 	"weather-go/src/services"
+	"weather-go/src/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -245,10 +246,11 @@ func (h *LocationHandler) ShowAddLocationPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "add-location.html", gin.H{
+	c.HTML(http.StatusOK, "add-location.html", utils.TemplateData(c, gin.H{
 		"title": "Add Location - Weather Service",
 		"user":  user,
-	})
+		"page":  "locations",
+	}))
 }
 
 // ShowEditLocationPage renders the edit location page
@@ -277,11 +279,12 @@ func (h *LocationHandler) ShowEditLocationPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "edit-location.html", gin.H{
+	c.HTML(http.StatusOK, "edit-location.html", utils.TemplateData(c, gin.H{
 		"title":    "Edit Location - Weather Service",
 		"user":     user,
 		"location": location,
-	})
+		"page":     "locations",
+	}))
 }
 
 // SearchLocations searches for cities by name

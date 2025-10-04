@@ -6,6 +6,7 @@ import (
 
 	"weather-go/src/middleware"
 	"weather-go/src/models"
+	"weather-go/src/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,13 +37,14 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 		unreadCount = 0
 	}
 
-	c.HTML(http.StatusOK, "dashboard.html", gin.H{
+	c.HTML(http.StatusOK, "dashboard.html", utils.TemplateData(c, gin.H{
 		"title":         "Dashboard - Weather Service",
 		"user":          user,
 		"locations":     locations,
 		"unreadCount":   unreadCount,
 		"locationCount": len(locations),
-	})
+		"page":          "dashboard",
+	}))
 }
 
 // ShowAdminPanel renders the admin panel
@@ -63,11 +65,12 @@ func (h *DashboardHandler) ShowAdminPanel(c *gin.Context) {
 	var totalLocations int
 	h.DB.QueryRow("SELECT COUNT(*) FROM saved_locations").Scan(&totalLocations)
 
-	c.HTML(http.StatusOK, "admin.html", gin.H{
+	c.HTML(http.StatusOK, "admin.html", utils.TemplateData(c, gin.H{
 		"title":          "Admin Panel - Weather Service",
 		"user":           user,
 		"totalUsers":     totalUsers,
 		"adminCount":     adminCount,
 		"totalLocations": totalLocations,
-	})
+		"page":           "admin",
+	}))
 }

@@ -42,7 +42,6 @@ ehthumbs.db
 Thumbs.db
 
 # Git
-.git/
 .gitignore
 
 # Docker

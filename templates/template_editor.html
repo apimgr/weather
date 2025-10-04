@@ -450,7 +450,7 @@
             };
 
             if (!data.template_name || !data.body_template) {
-                alert('Template name and body are required');
+                showAlert('Template name and body are required');
                 return;
             }
 
@@ -472,13 +472,13 @@
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert('✅ Template saved successfully!');
+                    showAlert('✅ Template saved successfully!');
                     loadTemplates();
                 } else {
-                    alert('❌ Error: ' + result.error);
+                    showAlert('❌ Error: ' + result.error);
                 }
             } catch (error) {
-                alert('❌ Failed to save template: ' + error.message);
+                showAlert('❌ Failed to save template: ' + error.message);
             }
         }
 
@@ -513,16 +513,16 @@
                     document.getElementById('preview-body').innerHTML = result.body;
                     document.getElementById('preview-panel').style.display = 'block';
                 } else {
-                    alert('❌ Preview error: ' + result.error);
+                    showAlert('❌ Preview error: ' + result.error);
                 }
             } catch (error) {
-                alert('❌ Failed to preview: ' + error.message);
+                showAlert('❌ Failed to preview: ' + error.message);
             }
         }
 
         async function cloneTemplate() {
             if (!currentTemplate?.id) {
-                alert('Please select a template to clone');
+                showAlert('Please select a template to clone');
                 return;
             }
 
@@ -538,23 +538,23 @@
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert('✅ Template cloned successfully!');
+                    showAlert('✅ Template cloned successfully!');
                     loadTemplates();
                 } else {
-                    alert('❌ Error: ' + result.error);
+                    showAlert('❌ Error: ' + result.error);
                 }
             } catch (error) {
-                alert('❌ Failed to clone template: ' + error.message);
+                showAlert('❌ Failed to clone template: ' + error.message);
             }
         }
 
         async function deleteTemplate() {
             if (!currentTemplate?.id) {
-                alert('Please select a template to delete');
+                showAlert('Please select a template to delete');
                 return;
             }
 
-            if (!confirm(`Delete template "${currentTemplate.template_name}"?`)) {
+            if (!showConfirm(`Delete template "${currentTemplate.template_name}"?`)) {
                 return;
             }
 
@@ -565,15 +565,15 @@
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert('✅ Template deleted successfully!');
+                    showAlert('✅ Template deleted successfully!');
                     currentTemplate = null;
                     loadTemplates();
                     createNew();
                 } else {
-                    alert('❌ Error: ' + result.error);
+                    showAlert('❌ Error: ' + result.error);
                 }
             } catch (error) {
-                alert('❌ Failed to delete template: ' + error.message);
+                showAlert('❌ Failed to delete template: ' + error.message);
             }
         }
 

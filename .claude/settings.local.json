@@ -75,7 +75,14 @@
       "Bash(/tmp/test_notification_delivery.sh:*)",
       "Bash(docker build:*)",
       "Bash(docker rm:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(docker logs:*)",
+      "Bash(for endpoint in \"/web\" \"/moon\" \"/earthquake\" \"/hurricane\" \"/docs\" \"/api\")",
+      "Bash(do)",
+      "Bash(done)",
+      "Bash(pgrep:*)",
+      "Bash(for file in earthquake.html api-docs.html earthquake_detail.html)",
+      "Bash(do echo \"=== $file ===\")"
     ],
     "deny": [],
     "ask": []

@@ -28,7 +28,7 @@ import (
 	"weather-go/src/utils"
 )
 
-//go:embed templates
+//go:embed all:templates
 var templatesFS embed.FS
 
 //go:embed static
@@ -198,6 +198,9 @@ func main() {
 
 	// Server context middleware - injects server title/tagline/description
 	r.Use(middleware.InjectServerContext(db.DB, Version))
+
+	// Check for first user setup - redirects to /user/setup if no users exist
+	r.Use(middleware.CheckFirstUserSetup(db.DB))
 
 	// Path normalization middleware - fix double slashes
 	r.Use(func(c *gin.Context) {
@@ -520,12 +523,17 @@ func main() {
 	})
 
 	// First-run setup routes (public)
-	r.GET("/user/setup", setupHandler.ShowWelcome)
-	r.GET("/user/setup/register-user", setupHandler.ShowUserRegister)
-	r.POST("/user/setup/register-user", setupHandler.HandleUserRegister)
-	r.GET("/user/setup/register-admin", setupHandler.ShowAdminRegister)
-	r.POST("/user/setup/register-admin", setupHandler.HandleAdminRegister)
-	r.POST("/user/setup/complete", setupHandler.HandleComplete)
+	// First user setup routes (blocked after setup complete)
+	setupRoutes := r.Group("/user/setup")
+	setupRoutes.Use(middleware.BlockSetupAfterComplete(db.DB))
+	{
+		setupRoutes.GET("", setupHandler.ShowWelcome)
+		setupRoutes.GET("/register", setupHandler.ShowUserRegister)
+		setupRoutes.POST("/register", setupHandler.CreateUser)
+		setupRoutes.GET("/admin", setupHandler.ShowAdminSetup)
+		setupRoutes.POST("/admin", setupHandler.CreateAdmin)
+		setupRoutes.GET("/complete", setupHandler.CompleteSetup)
+	}
 
 	// Authentication routes (public)
 	r.GET("/login", authHandler.ShowLoginPage)
@@ -539,17 +547,46 @@ func main() {
 	r.GET("/admin", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), dashboardHandler.ShowAdminPanel)
 	r.GET("/notifications", middleware.RequireAuth(db.DB), notificationHandler.ShowNotificationsPage)
 
+	// User profile page
+	r.GET("/profile", middleware.RequireAuth(db.DB), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "profile.html", utils.TemplateData(c, gin.H{
+			"title": "Profile",
+			"page":  "profile",
+		}))
+	})
+	r.GET("/user/profile", middleware.RequireAuth(db.DB), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "profile.html", utils.TemplateData(c, gin.H{
+			"title": "Profile",
+			"page":  "profile",
+		}))
+	})
+
 	// User notification preferences page
 	r.GET("/preferences", middleware.RequireAuth(db.DB), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user_preferences.html", nil)
+		c.HTML(http.StatusOK, "user_preferences.html", utils.TemplateData(c, gin.H{
+			"title": "Preferences",
+			"page":  "preferences",
+		}))
+	})
+	r.GET("/user/preferences", middleware.RequireAuth(db.DB), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "user_preferences.html", utils.TemplateData(c, gin.H{
+			"title": "Preferences",
+			"page":  "preferences",
+		}))
 	})
 
 	// Admin notification system pages (admin only)
 	r.GET("/admin/channels", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_channels.html", nil)
+		c.HTML(http.StatusOK, "admin_channels.html", utils.TemplateData(c, gin.H{
+			"title": "Notification Channels - Admin",
+			"page":  "admin",
+		}))
 	})
 	r.GET("/admin/templates", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "template_editor.html", nil)
+		c.HTML(http.StatusOK, "template_editor.html", utils.TemplateData(c, gin.H{
+			"title": "Template Editor - Admin",
+			"page":  "admin",
+		}))
 	})
 	r.GET("/admin/settings", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), adminHandler.ShowSettingsPage)
 
@@ -602,13 +639,16 @@ func main() {
 	apiV1.GET("/user", middleware.RequireAuth(db.DB), authHandler.GetCurrentUser)
 
 	// Location API routes (require auth)
+	// Public location endpoints (no auth required)
+	apiV1.GET("/locations/search", locationHandler.SearchLocations)
+	apiV1.GET("/locations/lookup/zip/:code", locationHandler.LookupZipCode)
+	apiV1.GET("/locations/lookup/coords", locationHandler.LookupCoordinates)
+
+	// Protected location endpoints (require auth)
 	locationAPI := apiV1.Group("/locations")
 	locationAPI.Use(middleware.RequireAuth(db.DB))
 	{
 		locationAPI.GET("", locationHandler.ListLocations)
-		locationAPI.GET("/search", locationHandler.SearchLocations)
-		locationAPI.GET("/lookup/zip/:code", locationHandler.LookupZipCode)
-		locationAPI.GET("/lookup/coords", locationHandler.LookupCoordinates)
 		locationAPI.GET("/:id", locationHandler.GetLocation)
 		locationAPI.POST("", locationHandler.CreateLocation)
 		locationAPI.PUT("/:id", locationHandler.UpdateLocation)

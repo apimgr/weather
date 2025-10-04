@@ -590,6 +590,53 @@
   });
 
   // ============================================
+  // MODERN ALERT & CONFIRM REPLACEMENTS
+  // ============================================
+
+  /**
+   * Modern alert replacement using modals
+   */
+  window.showAlert = function(message, title = 'Alert') {
+    return new Promise((resolve) => {
+      const modalId = Modal.create({
+        title: title,
+        body: `<p style="margin: 0; line-height: 1.6;">${message}</p>`,
+        footer: `
+          <button class="btn btn-primary" onclick="Modal.close('${modalId}'); window._alertResolve();">
+            OK
+          </button>
+        `,
+        size: 'sm',
+        onClose: () => resolve()
+      });
+      window._alertResolve = resolve;
+    });
+  };
+
+  /**
+   * Modern confirm replacement using modals
+   */
+  window.showConfirm = function(message, title = 'Confirm') {
+    return new Promise((resolve) => {
+      const modalId = Modal.create({
+        title: title,
+        body: `<p style="margin: 0; line-height: 1.6;">${message}</p>`,
+        footer: `
+          <button class="btn btn-secondary" onclick="Modal.close('${modalId}'); window._confirmResolve(false);">
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="Modal.close('${modalId}'); window._confirmResolve(true);">
+            OK
+          </button>
+        `,
+        size: 'sm',
+        onClose: () => resolve(false)
+      });
+      window._confirmResolve = resolve;
+    });
+  };
+
+  // ============================================
   // EXPOSE TO GLOBAL SCOPE
   // ============================================
 

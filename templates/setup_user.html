@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👤</text></svg>">
+    <style>
+        .setup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .setup-card {
+            max-width: 450px;
+            width: 100%;
+            background: var(--dracula-current-line);
+            border-radius: 1rem;
+            padding: 2.5rem;
+        }
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .setup-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .setup-title {
+            font-size: 1.75rem;
+            color: var(--dracula-cyan);
+            margin-bottom: 0.5rem;
+        }
+        .setup-subtitle {
+            color: var(--dracula-comment);
+            font-size: 0.9375rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            color: var(--dracula-foreground);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--dracula-bg);
+            border: 1px solid var(--dracula-selection);
+            border-radius: 0.5rem;
+            color: var(--dracula-foreground);
+            font-size: 1rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--dracula-cyan);
+        }
+        .submit-button {
+            width: 100%;
+            background: var(--dracula-green);
+            color: var(--dracula-bg);
+            border: none;
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .submit-button:hover {
+            background: #45e66b;
+        }
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: var(--dracula-red);
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <div class="setup-header">
+                <div class="setup-icon">👤</div>
+                <h1 class="setup-title">Create Your Account</h1>
+                <p class="setup-subtitle">Step 1 of 2: Owner Account</p>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+
+            <form id="setup-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" required minlength="8">
+                    <small style="color: var(--dracula-comment); font-size: 0.8125rem;">Minimum 8 characters</small>
+                </div>
+
+                <button type="submit" id="submit-btn" class="submit-button">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('setup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn');
+            const errorMsg = document.getElementById('error-message');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+            errorMsg.style.display = 'none';
+
+            const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/user/setup/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/user/setup/admin';
+                } else {
+                    errorMsg.textContent = result.error || 'Failed to create account';
+                    errorMsg.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Account';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Network error. Please try again.';
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

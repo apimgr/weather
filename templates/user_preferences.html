@@ -497,16 +497,16 @@
 
                 hasChanges = false;
                 document.getElementById('save-bar').classList.remove('visible');
-                alert('✅ Preferences saved successfully!');
+                showAlert('✅ Preferences saved successfully!');
                 loadPreferences();
                 loadSubscriptions();
             } catch (error) {
-                alert('❌ Failed to save preferences: ' + error.message);
+                showAlert('❌ Failed to save preferences: ' + error.message);
             }
         }
 
         function cancelChanges() {
-            if (confirm('Discard unsaved changes?')) {
+            if (showConfirm('Discard unsaved changes?')) {
                 hasChanges = false;
                 document.getElementById('save-bar').classList.remove('visible');
                 loadPreferences();

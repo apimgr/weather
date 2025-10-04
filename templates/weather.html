@@ -13,64 +13,58 @@
 
     <div class="weather-container">
 
-        <!-- Location Search Form - Mobile First -->
-        <form id="weather-form" style="margin: 1rem 0; width: 100%;">
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
-                <!-- First row: Location input and units -->
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <div style="position: relative; flex: 1;">
-                        <input
-                            type="text"
-                            id="location-input"
-                            name="location"
-                            class="location-input"
-                            placeholder="Enter city or coordinates"
-                            value="{{.Location}}"
-                            style="flex: 1; min-width: 0; width: 100%;"
-                            autocomplete="off"
-                        >
-                        <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
-                    </div>
-                    <select name="units" id="units-select" class="location-input" style="flex-shrink: 0; width: 5rem;">
-                        <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
-                        <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
-                    </select>
+        <!-- Location Search Form -->
+        <form id="weather-form" class="search-form">
+            <div class="search-row-single">
+                <div class="search-input-wrapper">
+                    <input
+                        type="text"
+                        id="location-input"
+                        name="location"
+                        class="location-input"
+                        placeholder="Enter city or coordinates"
+                        value="{{.Location}}"
+                        autocomplete="off"
+                    >
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
                 </div>
-
-                <!-- Second row: Buttons -->
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <button type="submit" class="search-button" style="flex: 1;">
-                        🌤️ Get Weather
-                    </button>
-                    <button type="button" id="location-btn" class="search-button"
-                            style="flex: 1; background-color: var(--dracula-cyan);">
-                        📍 My Location
-                    </button>
-                </div>
+                <select name="units" id="units-select" class="units-select">
+                    <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
+                    <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
+                </select>
+                <button type="submit" class="search-button primary">
+                    Get Weather
+                </button>
+                <button type="button" id="location-btn" class="search-button secondary">
+                    📍 My Location
+                </button>
             </div>
         </form>
 
         {{if .WeatherData}}
-            <!-- Location Details Section -->
-            <div class="location-details-section" style="margin: 1.5rem 0; padding: 1rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+            <!-- Location Details Card -->
+            <div class="location-card">
                 <div class="location-info">
-                    <!-- Always show location name -->
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
-                        <span style="color: var(--dracula-yellow);">{{if .WeatherData.Location.ShortName}}{{.WeatherData.Location.ShortName}}{{else}}{{.WeatherData.Location.Name}}, {{.WeatherData.Location.Country}}{{end}}</span>
+                    <div class="location-detail">
+                        <span class="location-icon">📍</span>
+                        <span class="location-label">Location:</span>
+                        <span class="location-value location-name">{{if .WeatherData.Location.ShortName}}{{.WeatherData.Location.ShortName}}{{else}}{{.WeatherData.Location.Name}}, {{.WeatherData.Location.Country}}{{end}}</span>
                     </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌍 <strong style="color: var(--dracula-cyan);">Country:</strong>
-                        <span style="color: var(--dracula-green);">{{.WeatherData.Location.Country}}</span>
+                    <div class="location-detail">
+                        <span class="location-icon">🌍</span>
+                        <span class="location-label">Country:</span>
+                        <span class="location-value country">{{.WeatherData.Location.Country}}</span>
                     </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🗺️ <strong style="color: var(--dracula-cyan);">Coordinates:</strong>
-                        <span style="color: var(--dracula-pink);">{{printf "%.4f" .WeatherData.Location.Latitude}}, {{printf "%.4f" .WeatherData.Location.Longitude}}</span>
+                    <div class="location-detail">
+                        <span class="location-icon">🗺️</span>
+                        <span class="location-label">Coordinates:</span>
+                        <span class="location-value coords">{{printf "%.4f" .WeatherData.Location.Latitude}}, {{printf "%.4f" .WeatherData.Location.Longitude}}</span>
                     </div>
                     {{if .WeatherData.Location.Population}}
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        👥 <strong style="color: var(--dracula-cyan);">Population:</strong>
-                        <span style="color: var(--dracula-orange);">{{.WeatherData.Location.PopulationFormatted}}</span>
+                    <div class="location-detail">
+                        <span class="location-icon">👥</span>
+                        <span class="location-label">Population:</span>
+                        <span class="location-value population">{{.WeatherData.Location.PopulationFormatted}}</span>
                     </div>
                     {{end}}
                 </div>
@@ -223,17 +217,6 @@
             </div>
         {{end}}
 
-        {{if not .HideFooter}}
-        <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
-            <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
-                <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
-                <span style="color: var(--dracula-pink);">•</span>
-                <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
-                <span style="color: var(--dracula-pink);">•</span>
-                <a href="/api/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
-            </p>
-        </div>
-        {{end}}
     </div>
 
     <script>
@@ -605,5 +588,10 @@
             dropdown.classList.remove('show');
         }
     </script>
+
+{{if not .HideFooter}}
+{{template "footer" .}}
+{{else}}
 </body>
 </html>
+{{end}}

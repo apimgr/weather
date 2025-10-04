@@ -286,7 +286,7 @@
             };
 
             try {
-                const response = await fetch(`/api/locations/${locationId}`, {
+                const response = await fetch(`/api/v1/locations/${locationId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -307,12 +307,13 @@
         });
 
         async function deleteLocation() {
-            if (!confirm('Are you sure you want to delete this location? This cannot be undone.')) {
+            const confirmed = await showConfirm('Are you sure you want to delete this location? This cannot be undone.');
+            if (!confirmed) {
                 return;
             }
 
             try {
-                const response = await fetch(`/api/locations/${locationId}`, {
+                const response = await fetch(`/api/v1/locations/${locationId}`, {
                     method: 'DELETE'
                 });
 

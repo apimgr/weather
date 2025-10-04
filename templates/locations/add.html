@@ -316,7 +316,7 @@
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    const response = await fetch(`/api/locations/search?q=${encodeURIComponent(query)}`);
+                    const response = await fetch(`/api/v1/locations/search?q=${encodeURIComponent(query)}`);
                     const results = await response.json();
 
                     displaySearchResults(results);
@@ -376,7 +376,7 @@
             Loading.show('#zip-tab');
 
             try {
-                const response = await fetch(`/api/locations/lookup/zip/${encodeURIComponent(zipCode)}`);
+                const response = await fetch(`/api/v1/locations/lookup/zip/${encodeURIComponent(zipCode)}`);
                 const location = await response.json();
 
                 if (response.ok) {
@@ -403,7 +403,7 @@
             Loading.show('#coords-tab');
 
             try {
-                const response = await fetch(`/api/locations/lookup/coords?lat=${lat}&lon=${lon}`);
+                const response = await fetch(`/api/v1/locations/lookup/coords?lat=${lat}&lon=${lon}`);
                 const location = await response.json();
 
                 if (response.ok) {
@@ -432,7 +432,7 @@
                     const lon = position.coords.longitude;
 
                     try {
-                        const response = await fetch(`/api/locations/lookup/coords?lat=${lat}&lon=${lon}`);
+                        const response = await fetch(`/api/v1/locations/lookup/coords?lat=${lat}&lon=${lon}`);
                         const location = await response.json();
 
                         if (response.ok) {

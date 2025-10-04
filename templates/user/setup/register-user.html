@@ -167,10 +167,10 @@
                 if (result.success) {
                     window.location.href = result.redirect;
                 } else {
-                    alert(result.message || 'Registration failed');
+                    showAlert(result.message || 'Registration failed');
                 }
             } catch (error) {
-                alert('An error occurred during registration');
+                showAlert('An error occurred during registration');
                 console.error(error);
             }
         });
