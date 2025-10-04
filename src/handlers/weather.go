@@ -165,10 +165,11 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	// Get current weather and forecast
 	current, err := h.weatherService.GetCurrentWeather(location.Latitude, location.Longitude, units)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "weather.html", gin.H{
+		c.HTML(http.StatusInternalServerError, "weather.html", utils.TemplateData(c, gin.H{
 			"error":    err.Error(),
 			"hostInfo": utils.GetHostInfo(c),
-		})
+			"page":     "weather",
+		}))
 		return
 	}
 
@@ -245,7 +246,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	// Format location for URLs (replace spaces with +, use ShortName for clean format)
 	locationFormatted := strings.ReplaceAll(location.ShortName, " ", "+")
 
-	c.HTML(http.StatusOK, "weather.html", gin.H{
+	c.HTML(http.StatusOK, "weather.html", utils.TemplateData(c, gin.H{
 		"Title": location.ShortName + " Weather",
 		"WeatherData": gin.H{
 			"Location": locationData,
@@ -258,7 +259,8 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 		"LocationFormatted": locationFormatted,
 		"Units":             units,
 		"HideFooter":        false,
-	})
+		"page":              "weather",
+	}))
 }
 
 // serveASCIIWeather renders ASCII weather for console clients
@@ -591,10 +593,11 @@ func (h *WeatherHandler) handleError(c *gin.Context, err error, location string,
 	errMsg := err.Error()
 
 	if isBrowser {
-		c.HTML(http.StatusInternalServerError, "weather.html", gin.H{
+		c.HTML(http.StatusInternalServerError, "weather.html", utils.TemplateData(c, gin.H{
 			"error":    errMsg,
 			"hostInfo": hostInfo,
-		})
+			"page":     "weather",
+		}))
 		return
 	}
 

@@ -5,20 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
 </head>
 <body>
-    <div class="weather-container">
-        <div class="weather-header">
-            🌤️ <a href="/" style="color: inherit; text-decoration: none;">Weather</a>
-        </div>
+    {{template "navbar" .}}
 
-        <!-- Navigation Bar -->
-        <nav style="display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0; padding: 0.75rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-            <a href="{{if .LocationFormatted}}/{{.LocationFormatted}}{{else}}/{{end}}" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">🏠 Home</a>
-            <a href="{{if .LocationFormatted}}/moon/{{.LocationFormatted}}{{else}}/moon{{end}}" style="color: var(--dracula-purple); text-decoration: none; font-weight: 500;">🌙 Moon</a>
-            <a href="/earthquake" style="color: var(--dracula-orange); text-decoration: none; font-weight: 500;">🌍 Earthquakes</a>
-        </nav>
+    <div class="weather-container">
 
         <!-- Location Search Form - Mobile First -->
         <form id="weather-form" style="margin: 1rem 0; width: 100%;">
