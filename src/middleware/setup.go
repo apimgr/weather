@@ -9,6 +9,7 @@ import (
 )
 
 // CheckFirstUserSetup checks if any users exist and redirects to setup if needed
+// Only applies to web/HTML requests, not API requests
 func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
@@ -18,6 +19,13 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 			strings.HasPrefix(path, "/static/") ||
 			strings.HasPrefix(path, "/api/") ||
 			strings.HasPrefix(path, "/healthz") {
+			c.Next()
+			return
+		}
+
+		// Only apply to HTML requests (check Accept header)
+		accept := c.GetHeader("Accept")
+		if !strings.Contains(accept, "text/html") && accept != "" {
 			c.Next()
 			return
 		}
