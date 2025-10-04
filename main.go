@@ -223,9 +223,45 @@ func main() {
 	r.StaticFS("/static", http.FS(staticSubFS))
 
 	// Load embedded templates with custom functions
+	// Create sub-filesystem starting at "templates/" so template names don't include "templates/" prefix
+	templatesSubFS, err := fs.Sub(templatesFS, "templates")
+	if err != nil {
+		log.Fatalf("Failed to get templates subdirectory: %v", err)
+	}
+
+	// Walk the filesystem and collect all .html files
+	var templatePaths []string
+	fs.WalkDir(templatesSubFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && strings.HasSuffix(path, ".html") {
+			templatePaths = append(templatePaths, path)
+		}
+		return nil
+	})
+
+	// Debug: Print loaded templates
+	if gin.Mode() == gin.DebugMode {
+		fmt.Printf("📝 Loading %d templates:\n", len(templatePaths))
+		for _, path := range templatePaths {
+			fmt.Printf("   - %s\n", path)
+		}
+	}
+
+	// Parse all templates
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"upper": strings.ToUpper,
-	}).ParseFS(templatesFS, "templates/*.html", "templates/*/*.html", "templates/*/*/*.html"))
+	}).ParseFS(templatesSubFS, templatePaths...))
+
+	// Debug: Print registered template names
+	if gin.Mode() == gin.DebugMode {
+		fmt.Println("📋 Registered template names:")
+		for _, t := range tmpl.Templates() {
+			fmt.Printf("   - %s\n", t.Name())
+		}
+	}
+
 	r.SetHTMLTemplate(tmpl)
 
 	// Live reload templates in debug mode (loads from filesystem if available)
@@ -237,6 +273,7 @@ func main() {
 					"upper": strings.ToUpper,
 				})
 				// Load all templates including subdirectories
+				// Note: This loads from filesystem, so paths are relative to templates/
 				patterns := []string{
 					"templates/*.html",
 					"templates/*/*.html",
@@ -245,6 +282,8 @@ func main() {
 				for _, pattern := range patterns {
 					t, _ = t.ParseGlob(pattern)
 				}
+				// Need to rename templates to remove "templates/" prefix for consistency
+				// This is a bit hacky but necessary for live reload
 				r.SetHTMLTemplate(t)
 				c.Next()
 			})
@@ -367,6 +406,7 @@ func main() {
 
 	// Create auth handlers
 	authHandler := &handlers.AuthHandler{DB: db.DB}
+	setupHandler := &handlers.SetupHandler{DB: db.DB}
 	dashboardHandler := &handlers.DashboardHandler{DB: db.DB}
 	adminHandler := &handlers.AdminHandler{DB: db.DB}
 	locationHandler := &handlers.LocationHandler{
@@ -478,6 +518,14 @@ func main() {
 			},
 		})
 	})
+
+	// First-run setup routes (public)
+	r.GET("/user/setup", setupHandler.ShowWelcome)
+	r.GET("/user/setup/register-user", setupHandler.ShowUserRegister)
+	r.POST("/user/setup/register-user", setupHandler.HandleUserRegister)
+	r.GET("/user/setup/register-admin", setupHandler.ShowAdminRegister)
+	r.POST("/user/setup/register-admin", setupHandler.HandleAdminRegister)
+	r.POST("/user/setup/complete", setupHandler.HandleComplete)
 
 	// Authentication routes (public)
 	r.GET("/login", authHandler.ShowLoginPage)

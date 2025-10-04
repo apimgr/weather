@@ -72,7 +72,10 @@
       "Bash(make:*)",
       "Bash(PORT=3050 timeout 10 ./weather)",
       "Bash(env:*)",
-      "Bash(/tmp/test_notification_delivery.sh:*)"
+      "Bash(/tmp/test_notification_delivery.sh:*)",
+      "Bash(docker build:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker run:*)"
     ],
     "deny": [],
     "ask": []

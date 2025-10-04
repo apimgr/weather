@@ -58,7 +58,7 @@ func (h *SetupHandler) ShowWelcome(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "user/setup/welcome.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "welcome.html", utils.TemplateData(c, gin.H{
 		"title": "Welcome - Setup Required",
 	}))
 }
@@ -79,7 +79,7 @@ func (h *SetupHandler) ShowUserRegister(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "user/setup/register-user.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "register-user.html", utils.TemplateData(c, gin.H{
 		"title": "Create Your Account",
 	}))
 }
@@ -168,7 +168,7 @@ func (h *SetupHandler) ShowAdminRegister(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "user/setup/register-admin.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "register-admin.html", utils.TemplateData(c, gin.H{
 		"title": "Create Administrator Account",
 	}))
 }
