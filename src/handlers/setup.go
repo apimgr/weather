@@ -190,7 +190,7 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	// Set session cookie
 	c.SetCookie(
-		"session_id",
+		"weather_session",
 		sessionID,
 		int(7*24*time.Hour.Seconds()),
 		"/",

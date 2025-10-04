@@ -42,9 +42,9 @@ build: clean
 		GOARCH=$(word 2,$(subst /, ,$(platform))) \
 		CGO_ENABLED=0 go build $(BUILD_FLAGS) \
 		-o dist/$(PROJECT_NAME)-$(word 1,$(subst /, ,$(platform)))-$(word 2,$(subst /, ,$(platform)))$(if $(filter windows,$(word 1,$(subst /, ,$(platform)))),.exe,) \
-		main.go && echo "  ✅ $(PROJECT_NAME)-$(word 1,$(subst /, ,$(platform)))-$(word 2,$(subst /, ,$(platform)))" || exit 1;)
+		./src && echo "  ✅ $(PROJECT_NAME)-$(word 1,$(subst /, ,$(platform)))-$(word 2,$(subst /, ,$(platform)))" || exit 1;)
 	@# Build host binary
-	@CGO_ENABLED=0 go build $(BUILD_FLAGS) -o $(PROJECT_NAME) main.go
+	@CGO_ENABLED=0 go build $(BUILD_FLAGS) -o $(PROJECT_NAME) ./src
 	@echo "  ✅ $(PROJECT_NAME) (host: $(HOST_OS)/$(HOST_ARCH))"
 	@# Strip musl binaries
 	@if command -v strip >/dev/null 2>&1; then \

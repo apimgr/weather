@@ -22,7 +22,7 @@ ARG GIT_COMMIT
 # Build static binary with optimization and version info
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${GIT_COMMIT}" \
-    -o weather . && \
+    -o weather ./src && \
     chmod +x weather
 
 # Final stage - minimal runtime image

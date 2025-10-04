@@ -84,7 +84,8 @@
       "Bash(for file in earthquake.html api-docs.html earthquake_detail.html)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(go test:*)",
-      "Bash(go run:*)"
+      "Bash(go run:*)",
+      "Read(//var/log/weather/**)"
     ],
     "deny": [],
     "ask": []
