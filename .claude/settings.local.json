@@ -97,7 +97,9 @@
       "Bash(/tmp/final_admin_report.sh:*)",
       "Bash(for page in \"\" \"/users\" \"/settings\" \"/tokens\" \"/logs\" \"/tasks\" \"/backup\" \"/channels\" \"/templates\")",
       "Bash(do echo -n \"Testing /admin$page: \")",
-      "Bash(CGO_ENABLED=0 go build -o /tmp/weather-test ./src)"
+      "Bash(CGO_ENABLED=0 go build -o /tmp/weather-test ./src)",
+      "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o weather .)",
+      "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o ../weather .)"
     ],
     "deny": [],
     "ask": []

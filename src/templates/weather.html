@@ -172,23 +172,38 @@
                 <div class="console-commands">
                     <div class="command-item">
                         <strong style="color: var(--dracula-green);">Weather:</strong>
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}</code>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}')">Copy</button>
+                        </div>
                     </div>
                     <div class="command-item">
                         <strong style="color: var(--dracula-green);">One-Line:</strong>
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3</code>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3')">Copy</button>
+                        </div>
                     </div>
                     <div class="command-item">
                         <strong style="color: var(--dracula-green);">Moon:</strong>
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon</code>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon')">Copy</button>
+                        </div>
                     </div>
                     <div class="command-item">
                         <strong style="color: var(--dracula-green);">Moon Location:</strong>
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}</code>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}')">Copy</button>
+                        </div>
                     </div>
                     <div class="command-item">
                         <strong style="color: var(--dracula-green);">JSON API:</strong>
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}</code>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}')">Copy</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -582,6 +597,25 @@
         function hideAutocomplete() {
             const dropdown = document.getElementById('autocomplete-dropdown');
             dropdown.classList.remove('show');
+        }
+
+        // Copy command to clipboard
+        function copyCommand(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = '✗ Failed';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
         }
     </script>
 
