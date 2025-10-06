@@ -69,6 +69,13 @@ func (h *AdminHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Prevent modifying your own account
+	currentUser, _ := middleware.GetCurrentUser(c)
+	if currentUser.ID == id {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot modify your own account credentials. Contact another administrator if you need to change your username, email, or role."})
+		return
+	}
+
 	var req struct {
 		Username string `json:"username" binding:"required"`
 		Email    string `json:"email" binding:"required,email"`

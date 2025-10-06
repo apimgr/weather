@@ -534,6 +534,7 @@ func main() {
 	})
 	r.GET("/readyz", handlers.ReadinessCheck)
 	r.GET("/livez", handlers.LivenessCheck)
+	r.GET("/healthz/setup", setupHandler.GetSetupStatus)
 
 	// Debug endpoints
 	r.GET("/debug/info", handlers.DebugInfo)
@@ -790,6 +791,7 @@ func main() {
 
 	// User info API (requires auth)
 	apiV1.GET("/user", middleware.RequireAuth(db.DB), authHandler.GetCurrentUser)
+	apiV1.PUT("/user/profile", middleware.RequireAuth(db.DB), authHandler.UpdateProfile)
 
 	// Location API routes (require auth)
 	// Public location endpoints (no auth required)

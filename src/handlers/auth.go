@@ -303,6 +303,33 @@ func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	})
 }
 
+// UpdateProfile updates user profile (display name and phone only)
+func (h *AuthHandler) UpdateProfile(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	var req struct {
+		DisplayName string `json:"display_name"`
+		Phone       string `json:"phone"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userModel := &models.UserModel{DB: h.DB}
+	if err := userModel.UpdateProfile(user.ID, req.DisplayName, req.Phone); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+}
+
 // Helper functions
 
 func (h *AuthHandler) getSessionTimeout() (int, error) {

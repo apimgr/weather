@@ -236,6 +236,15 @@ func (m *UserModel) UpdatePhone(id int, phone string) error {
 	return err
 }
 
+// UpdateProfile updates a user's display name and phone (safe fields)
+func (m *UserModel) UpdateProfile(id int, displayName, phone string) error {
+	_, err := m.DB.Exec(`
+		UPDATE users SET display_name = ?, phone = ?, updated_at = ?
+		WHERE id = ?
+	`, displayName, phone, time.Now(), id)
+	return err
+}
+
 // UpdatePassword updates a user's password
 func (m *UserModel) UpdatePassword(id int, newPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)

@@ -255,7 +255,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	// Check if user is logged in
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.Redirect(http.StatusFound, "/auth/login")
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 
@@ -263,7 +263,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	var role string
 	err := h.DB.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/auth/login")
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 
@@ -364,6 +364,88 @@ func (h *SetupHandler) ShowServerSetupComplete(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "server_setup_complete.html", gin.H{
 		"Title": "Setup Complete - Weather",
+	})
+}
+
+// GetSetupStatus returns the current setup status as a healthz endpoint
+func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
+	// Check if any users exist
+	var userCount int
+	err := h.DB.QueryRow("SELECT COUNT(*) FROM users").Scan(&userCount)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to check setup status",
+		})
+		return
+	}
+
+	// No users = setup not started
+	if userCount == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"status":       "not_started",
+			"step":         0,
+			"total_steps":  3,
+			"message":      "Setup not started",
+			"next_action":  "Create first user account",
+			"next_route":   "/register",
+			"is_complete":  false,
+		})
+		return
+	}
+
+	// Check if admin exists
+	var adminCount int
+	err = h.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&adminCount)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to check admin status",
+		})
+		return
+	}
+
+	// First user created but no admin = step 1 complete
+	if adminCount == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"status":       "user_created",
+			"step":         1,
+			"total_steps":  3,
+			"message":      "First user created, admin account needed",
+			"next_action":  "Create admin account",
+			"next_route":   "/setup/admin/welcome",
+			"is_complete":  false,
+		})
+		return
+	}
+
+	// Check if setup is completed
+	var setupComplete string
+	err = h.DB.QueryRow("SELECT value FROM settings WHERE key = 'setup.completed'").Scan(&setupComplete)
+
+	// If setup.completed doesn't exist or is not "true", server settings needed
+	if err != nil || setupComplete != "true" {
+		c.JSON(http.StatusOK, gin.H{
+			"status":       "admin_created",
+			"step":         2,
+			"total_steps":  3,
+			"message":      "Admin account created, server configuration needed",
+			"next_action":  "Configure server settings",
+			"next_route":   "/setup/server/welcome",
+			"is_complete":  false,
+		})
+		return
+	}
+
+	// Setup is complete
+	c.JSON(http.StatusOK, gin.H{
+		"status":       "completed",
+		"step":         3,
+		"total_steps":  3,
+		"message":      "Setup completed successfully",
+		"next_action":  "Access admin dashboard",
+		"next_route":   "/admin",
+		"is_complete":  true,
 	})
 }
 

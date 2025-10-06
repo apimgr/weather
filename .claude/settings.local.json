@@ -99,7 +99,9 @@
       "Bash(do echo -n \"Testing /admin$page: \")",
       "Bash(CGO_ENABLED=0 go build -o /tmp/weather-test ./src)",
       "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o weather .)",
-      "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o ../weather .)"
+      "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o ../weather .)",
+      "Bash(ss:*)",
+      "Read(//proc/2697226/**)"
     ],
     "deny": [],
     "ask": []
