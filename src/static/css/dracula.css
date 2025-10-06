@@ -1578,6 +1578,14 @@ a:hover {
   min-width: 120px;
 }
 
+.code-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .mobile-code {
   background: var(--dracula-current-line);
   padding: var(--space-sm) var(--space-md);
@@ -1588,12 +1596,40 @@ a:hover {
   overflow-x: auto;
   display: block;
   white-space: nowrap;
+  flex: 1;
 }
 
 @media (min-width: 768px) {
   .mobile-code {
     display: inline-block;
   }
+}
+
+.copy-btn {
+  background: var(--dracula-purple);
+  color: var(--dracula-bg);
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: var(--dracula-pink);
+  transform: translateY(-1px);
+}
+
+.copy-btn:active {
+  transform: translateY(0);
+}
+
+.copy-btn.copied {
+  background: var(--dracula-green);
 }
 
 /* Mobile Forecast Cards */
