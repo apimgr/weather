@@ -218,6 +218,9 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		response["username"] = username
 	}
 
+	// Add redirect to server setup
+	response["redirect"] = "/setup/server/welcome"
+
 	c.JSON(http.StatusOK, response)
 }
 
@@ -268,7 +271,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	if role == "admin" {
 		c.Redirect(http.StatusFound, "/admin/setup/welcome")
 	} else {
-		c.Redirect(http.StatusFound, "/dashboard")
+		c.Redirect(http.StatusFound, "/user/dashboard")
 	}
 }
 
@@ -339,7 +342,10 @@ func (h *SetupHandler) SaveServerSettings(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"redirect": "/setup/complete",
+	})
 }
 
 // ShowServerSetupComplete shows the completion page and marks setup as done

@@ -398,7 +398,9 @@
      */
     fetch: async function() {
       try {
-        const response = await fetch('/api/v1/notifications/unread');
+        const response = await fetch('/api/v1/notifications/unread', {
+          credentials: 'same-origin'
+        });
 
         // Stop polling if unauthorized (user logged out)
         if (response.status === 401) {

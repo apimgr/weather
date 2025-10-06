@@ -1,0 +1,89 @@
+{{define "admin_header"}}
+<div class="admin-header">
+    <div class="admin-header-content">
+        <div class="admin-breadcrumbs">
+            <a href="/admin" class="breadcrumb-link">Admin</a>
+            {{if .breadcrumb}}
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">{{.breadcrumb}}</span>
+            {{end}}
+        </div>
+        <h1 class="admin-page-title">{{.title}}</h1>
+        {{if .description}}
+        <p class="admin-page-description">{{.description}}</p>
+        {{end}}
+    </div>
+    {{if .headerActions}}
+    <div class="admin-header-actions">
+        {{.headerActions}}
+    </div>
+    {{end}}
+</div>
+
+<style>
+.admin-header {
+    background: var(--dracula-bg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--dracula-current-line);
+}
+
+.admin-header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.admin-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.breadcrumb-link {
+    color: var(--dracula-cyan);
+    text-decoration: none;
+}
+
+.breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    color: var(--dracula-comment);
+}
+
+.breadcrumb-current {
+    color: var(--dracula-foreground);
+}
+
+.admin-page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dracula-purple);
+    margin: 0;
+}
+
+.admin-page-description {
+    color: var(--dracula-comment);
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+.admin-header-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 1.5rem 1rem;
+    }
+    .admin-page-title {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{{end}}

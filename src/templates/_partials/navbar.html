@@ -12,7 +12,7 @@
             <a href="/moon" class="navbar-link {{if eq .page "moon"}}active{{end}}">Moon</a>
             <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}">Earthquakes</a>
             <a href="/hurricane" class="navbar-link {{if eq .page "hurricane"}}active{{end}}">Hurricanes</a>
-            <a href="/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}">Dashboard</a>
+            <a href="/user/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}">Dashboard</a>
             {{if eq .user.Role "admin"}}
             <a href="/admin" class="navbar-link {{if eq .page "admin"}}active{{end}}">Admin</a>
             {{end}}
@@ -43,7 +43,7 @@
                     <nav class="profile-dropdown-menu">
                         <a href="/profile" class="profile-dropdown-item">👤 Profile</a>
                         <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
-                        <a href="/api-docs" class="profile-dropdown-item">📚 API Docs</a>
+                        <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
                         <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
                     </nav>
                 </div>
@@ -62,7 +62,7 @@
         <a href="/moon" class="mobile-menu-item">Moon</a>
         <a href="/earthquake" class="mobile-menu-item">Earthquakes</a>
         <a href="/hurricane" class="mobile-menu-item">Hurricanes</a>
-        <a href="/dashboard" class="mobile-menu-item">Dashboard</a>
+        <a href="/user/dashboard" class="mobile-menu-item">Dashboard</a>
         {{if eq .user.Role "admin"}}
         <a href="/admin" class="mobile-menu-item">Admin</a>
         {{end}}

@@ -171,7 +171,7 @@
                 <a href="/moon" class="navbar-link">Moon</a>
                 <a href="/earthquake" class="navbar-link">Earthquakes</a>
                 <a href="/hurricane" class="navbar-link">Hurricanes</a>
-                <a href="/dashboard" class="navbar-link active">Dashboard</a>
+                <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
                 {{ if eq .user.Role "admin" }}
                 <a href="/admin" class="navbar-link">Admin</a>
                 {{ end }}
@@ -197,7 +197,7 @@
                         <nav class="profile-dropdown-menu">
                             <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
                             <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
-                            <a href="/api-docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
                             <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
                         </nav>
                     </div>
@@ -212,7 +212,7 @@
             <a href="/moon" class="navbar-link">Moon</a>
             <a href="/earthquake" class="navbar-link">Earthquakes</a>
             <a href="/hurricane" class="navbar-link">Hurricanes</a>
-            <a href="/dashboard" class="navbar-link active">Dashboard</a>
+            <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
             {{ if eq .user.Role "admin" }}
             <a href="/admin" class="navbar-link">Admin</a>
             {{ end }}
@@ -222,7 +222,7 @@
     <div class="container">
         <div class="page-header">
             <h1>Edit Location</h1>
-            <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+            <a href="/user/dashboard" class="back-link">← Back to Dashboard</a>
         </div>
 
         <div class="form-card">
@@ -262,7 +262,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Update Location</button>
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/dashboard'">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/user/dashboard'">Cancel</button>
                     <button type="button" class="btn btn-danger" onclick="deleteLocation()">Delete</button>
                 </div>
             </form>
@@ -295,7 +295,7 @@
                 if (response.ok) {
                     showMessage('Location updated successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = '/user/dashboard';
                     }, 1500);
                 } else {
                     const error = await response.json();
@@ -320,7 +320,7 @@
                 if (response.ok) {
                     showMessage('Location deleted successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = '/user/dashboard';
                     }, 1500);
                 } else {
                     const error = await response.json();

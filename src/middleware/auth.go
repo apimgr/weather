@@ -157,12 +157,12 @@ func IsAdmin(c *gin.Context) bool {
 }
 
 // RestrictAdminToAdminRoutes middleware that forces admins to only access /admin routes
-// For all other routes, admins are treated as anonymous/guest users
+// Admins are treated as guest/anonymous on all non-admin routes
 func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
-		// Skip this middleware for /admin routes, API routes, static files, and public routes
+		// Skip this middleware for /admin routes, API routes, static files, and auth routes
 		if strings.HasPrefix(path, "/admin") ||
 		   strings.HasPrefix(path, "/api") ||
 		   strings.HasPrefix(path, "/static") ||
@@ -170,7 +170,8 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 		   strings.HasPrefix(path, "/logout") ||
 		   strings.HasPrefix(path, "/register") ||
 		   strings.HasPrefix(path, "/healthz") ||
-		   strings.HasPrefix(path, "/debug") {
+		   strings.HasPrefix(path, "/debug") ||
+		   strings.HasPrefix(path, "/docs") {
 			c.Next()
 			return
 		}
@@ -178,7 +179,8 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 		// Check if user is admin
 		user, ok := GetCurrentUser(c)
 		if ok && user.Role == "admin" {
-			// Admin trying to access non-admin route - clear user context
+			// Admin accessing non-admin route - treat as guest/anonymous
+			// Clear user and session context so they appear as unauthenticated
 			c.Set(UserContextKey, nil)
 			c.Set(SessionContextKey, nil)
 		}

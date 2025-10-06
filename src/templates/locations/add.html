@@ -127,7 +127,7 @@
                 <a href="/moon" class="navbar-link">Moon</a>
                 <a href="/earthquake" class="navbar-link">Earthquakes</a>
                 <a href="/hurricane" class="navbar-link">Hurricanes</a>
-                <a href="/dashboard" class="navbar-link active">Dashboard</a>
+                <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
                 {{ if eq .user.Role "admin" }}
                 <a href="/admin" class="navbar-link">Admin</a>
                 {{ end }}
@@ -153,7 +153,7 @@
                         <nav class="profile-dropdown-menu">
                             <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
                             <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
-                            <a href="/api-docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
                             <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
                         </nav>
                     </div>
@@ -168,7 +168,7 @@
             <a href="/moon" class="navbar-link">Moon</a>
             <a href="/earthquake" class="navbar-link">Earthquakes</a>
             <a href="/hurricane" class="navbar-link">Hurricanes</a>
-            <a href="/dashboard" class="navbar-link active">Dashboard</a>
+            <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
             {{ if eq .user.Role "admin" }}
             <a href="/admin" class="navbar-link">Admin</a>
             {{ end }}
@@ -178,7 +178,7 @@
     <div class="container">
         <div style="margin-bottom: 2rem;">
             <h1 class="text-purple">Add New Location</h1>
-            <a href="/dashboard" style="color: var(--dracula-cyan);">← Back to Dashboard</a>
+            <a href="/user/dashboard" style="color: var(--dracula-cyan);">← Back to Dashboard</a>
         </div>
 
         <div class="card">
@@ -282,7 +282,7 @@
                     <div class="flex gap-md" style="margin-top: 2rem;">
                         <button type="submit" class="btn btn-primary">💾 Save Location</button>
                         <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 Start Over</button>
-                        <button type="button" class="btn btn-ghost" onclick="window.location.href='/dashboard'">Cancel</button>
+                        <button type="button" class="btn btn-ghost" onclick="window.location.href='/user/dashboard'">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -481,7 +481,7 @@
                 if (response.ok) {
                     Toast.success('Location saved successfully!');
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = '/user/dashboard';
                     }, 1500);
                 } else {
                     const error = await response.json();

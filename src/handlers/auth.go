@@ -35,7 +35,7 @@ type RegisterRequest struct {
 func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 	// Check if already authenticated
 	if middleware.IsAuthenticated(c) {
-		c.Redirect(http.StatusFound, "/dashboard")
+		c.Redirect(http.StatusFound, "/user/dashboard")
 		return
 	}
 
@@ -48,7 +48,7 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 	// Check if already authenticated
 	if middleware.IsAuthenticated(c) {
-		c.Redirect(http.StatusFound, "/dashboard")
+		c.Redirect(http.StatusFound, "/user/dashboard")
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 			},
 		})
 	} else {
-		c.Redirect(http.StatusFound, "/dashboard")
+		c.Redirect(http.StatusFound, "/user/dashboard")
 	}
 }
 
@@ -170,7 +170,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 
 	userModel := &models.UserModel{DB: h.DB}
 
-	// Check if first user (becomes admin)
+	// Check if first user - they will be regular user, then create admin separately
 	count, err := userModel.Count()
 	if err != nil {
 		respondWithError(c, http.StatusInternalServerError, "Database error")
@@ -178,19 +178,19 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 	}
 
 	isFirstUser := count == 0
-	role := "user"
-	if isFirstUser {
-		role = "admin" // First user is admin
-	} else {
-		// Validate username (skip for first user/admin setup)
-		if err := utils.ValidateUsername(req.Username); err != nil {
-			respondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
+
+	// Validate username (all users, including first user)
+	if err := utils.ValidateUsername(req.Username); err != nil {
+		respondWithError(c, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	// Normalize username
 	username := utils.NormalizeUsername(req.Username)
+
+	// All users created via /register are regular users
+	// Admin accounts are created through /admin/setup wizard
+	role := "user"
 
 	// Create user
 	user, err := userModel.Create(username, req.Email, req.Password, role)
@@ -230,7 +230,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 
 	// Respond based on request type
 	if strings.Contains(contentType, "application/json") {
-		c.JSON(http.StatusCreated, gin.H{
+		response := gin.H{
 			"message": "Registration successful",
 			"user": gin.H{
 				"id":       user.ID,
@@ -238,9 +238,22 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 				"email":    user.Email,
 				"role":     user.Role,
 			},
-		})
+		}
+
+		// If first user, indicate they need to create admin account
+		if isFirstUser {
+			response["next_step"] = "create_admin"
+			response["redirect"] = "/setup/admin/welcome"
+		}
+
+		c.JSON(http.StatusCreated, response)
 	} else {
-		c.Redirect(http.StatusFound, "/dashboard")
+		// If first user, redirect to admin setup wizard
+		if isFirstUser {
+			c.Redirect(http.StatusFound, "/setup/admin/welcome")
+		} else {
+			c.Redirect(http.StatusFound, "/user/dashboard")
+		}
 	}
 }
 

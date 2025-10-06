@@ -31,7 +31,7 @@ COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/weather /usr/local/bin/weather
 
-RUN apk update --no-cache && apk add --no-cache curl bash
+RUN apk update --no-cache && apk add --no-cache curl bash || exit 1
 
 FROM scratch
 

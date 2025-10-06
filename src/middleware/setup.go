@@ -49,11 +49,28 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// BlockSetupAfterComplete blocks access to setup routes after setup is complete
+// BlockSetupAfterComplete blocks access to setup routes after server setup is complete
 func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Check if server setup is marked as complete
+		var setupComplete string
+		err := db.QueryRow("SELECT value FROM settings WHERE key = 'setup.completed'").Scan(&setupComplete)
+
+		// If setting exists and is true, setup is complete
+		if err == nil && setupComplete == "true" {
+			c.Redirect(http.StatusFound, "/admin")
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// BlockSetupAfterAdminExists blocks access to admin setup if admin account already exists
+func BlockSetupAfterAdminExists(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		// Check if admin user exists
-		// Setup is only complete when the dedicated admin account exists
 		var count int
 		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE role = 'admin'").Scan(&count)
 		if err != nil {
@@ -62,9 +79,15 @@ func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// If admin exists, setup is complete - redirect to login
+		// If admin exists, redirect to appropriate page
 		if count > 0 {
-			c.Redirect(http.StatusFound, "/login")
+			// Check if current user is admin
+			user, ok := GetCurrentUser(c)
+			if ok && user.Role == "admin" {
+				c.Redirect(http.StatusFound, "/admin")
+			} else {
+				c.Redirect(http.StatusFound, "/user/dashboard")
+			}
 			c.Abort()
 			return
 		}

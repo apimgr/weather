@@ -589,15 +589,30 @@ func main() {
 		setupRoutes.GET("/complete", setupHandler.CompleteSetup)
 	}
 
-	// Server setup wizard routes (admin only)
-	serverSetupRoutes := r.Group("/admin/setup")
-	serverSetupRoutes.Use(middleware.RequireAuth(db.DB))
-	serverSetupRoutes.Use(middleware.RequireAdmin())
+	// Setup wizard routes
+	setupWizard := r.Group("/setup")
+	setupWizard.Use(middleware.RequireAuth(db.DB))
 	{
-		serverSetupRoutes.GET("/welcome", setupHandler.ShowServerSetupWelcome)
-		serverSetupRoutes.GET("/settings", setupHandler.ShowServerSetupSettings)
-		serverSetupRoutes.POST("/settings", setupHandler.SaveServerSettings)
-		serverSetupRoutes.GET("/complete", setupHandler.ShowServerSetupComplete)
+		// Admin account creation (step 1 - accessible only when no admin exists)
+		adminSetup := setupWizard.Group("/admin")
+		adminSetup.Use(middleware.BlockSetupAfterAdminExists(db.DB))
+		{
+			adminSetup.GET("/welcome", setupHandler.ShowAdminSetup)
+			adminSetup.POST("/create", setupHandler.CreateAdmin)
+		}
+
+		// Server configuration wizard (step 2 - admin only, after admin account created)
+		serverSetup := setupWizard.Group("/server")
+		serverSetup.Use(middleware.RequireAdmin())
+		serverSetup.Use(middleware.BlockSetupAfterComplete(db.DB))
+		{
+			serverSetup.GET("/welcome", setupHandler.ShowServerSetupWelcome)
+			serverSetup.GET("/settings", setupHandler.ShowServerSetupSettings)
+			serverSetup.POST("/settings", setupHandler.SaveServerSettings)
+		}
+
+		// Setup completion page (admin only)
+		setupWizard.GET("/complete", middleware.RequireAdmin(), setupHandler.ShowServerSetupComplete)
 	}
 
 	// Authentication routes (public)
@@ -607,9 +622,80 @@ func main() {
 	r.POST("/register", authHandler.HandleRegister)
 	r.GET("/logout", authHandler.HandleLogout)
 
-	// Protected routes (require authentication)
-	r.GET("/dashboard", middleware.RequireAuth(db.DB), dashboardHandler.ShowDashboard)
-	r.GET("/admin", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), dashboardHandler.ShowAdminPanel)
+	// User routes (require authentication)
+	userRoutes := r.Group("/user")
+	userRoutes.Use(middleware.RequireAuth(db.DB))
+	{
+		userRoutes.GET("", dashboardHandler.ShowDashboard)          // /user -> user dashboard
+		userRoutes.GET("/dashboard", dashboardHandler.ShowDashboard) // /user/dashboard -> user dashboard
+	}
+
+	// Admin routes (require admin role)
+	adminRoutes := r.Group("/admin")
+	adminRoutes.Use(middleware.RequireAuth(db.DB))
+	adminRoutes.Use(middleware.RequireAdmin())
+	{
+		adminRoutes.GET("", dashboardHandler.ShowAdminPanel) // /admin -> admin dashboard
+
+		// Admin management pages
+		adminRoutes.GET("/users", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/users.html", utils.TemplateData(c, gin.H{
+				"title":       "User Management - Admin",
+				"page":        "users",
+				"breadcrumb": "Users",
+			}))
+		})
+
+		adminRoutes.GET("/settings", adminHandler.ShowSettingsPage)
+
+		adminRoutes.GET("/tokens", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/tokens.html", utils.TemplateData(c, gin.H{
+				"title":       "API Tokens - Admin",
+				"page":        "tokens",
+				"breadcrumb": "API Tokens",
+			}))
+		})
+
+		adminRoutes.GET("/logs", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/logs.html", utils.TemplateData(c, gin.H{
+				"title":       "Audit Logs - Admin",
+				"page":        "logs",
+				"breadcrumb": "Audit Logs",
+			}))
+		})
+
+		adminRoutes.GET("/tasks", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/tasks.html", utils.TemplateData(c, gin.H{
+				"title":       "Scheduled Tasks - Admin",
+				"page":        "tasks",
+				"breadcrumb": "Scheduled Tasks",
+			}))
+		})
+
+		adminRoutes.GET("/backup", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/backup.html", utils.TemplateData(c, gin.H{
+				"title":       "Backup Management - Admin",
+				"page":        "backup",
+				"breadcrumb": "Backup",
+			}))
+		})
+
+		adminRoutes.GET("/channels", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin_channels.html", utils.TemplateData(c, gin.H{
+				"title":       "Notification Channels - Admin",
+				"page":        "channels",
+				"breadcrumb": "Channels",
+			}))
+		})
+
+		adminRoutes.GET("/templates", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "template_editor.html", utils.TemplateData(c, gin.H{
+				"title":       "Template Editor - Admin",
+				"page":        "templates",
+				"breadcrumb": "Templates",
+			}))
+		})
+	}
 	r.GET("/notifications", middleware.RequireAuth(db.DB), notificationHandler.ShowNotificationsPage)
 
 	// User profile page
@@ -640,20 +726,7 @@ func main() {
 		}))
 	})
 
-	// Admin notification system pages (admin only)
-	r.GET("/admin/channels", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_channels.html", utils.TemplateData(c, gin.H{
-			"title": "Notification Channels - Admin",
-			"page":  "admin",
-		}))
-	})
-	r.GET("/admin/templates", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "template_editor.html", utils.TemplateData(c, gin.H{
-			"title": "Template Editor - Admin",
-			"page":  "admin",
-		}))
-	})
-	r.GET("/admin/settings", middleware.RequireAuth(db.DB), middleware.RequireAdmin(), adminHandler.ShowSettingsPage)
+	// Removed - moved to adminRoutes group above
 
 	// Location management pages
 	r.GET("/locations/new", middleware.RequireAuth(db.DB), locationHandler.ShowAddLocationPage)
@@ -1155,7 +1228,7 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 
 	fmt.Println("\n🌐 Endpoints:")
 	fmt.Printf("   Web Interface:  http://%s:%s/\n", address, port)
-	fmt.Printf("   API Docs:       http://%s:%s/api/docs\n", address, port)
+	fmt.Printf("   API Docs:       http://%s:%s/docs\n", address, port)
 	fmt.Printf("   Health Check:   http://%s:%s/healthz\n", address, port)
 	fmt.Printf("   Admin Panel:    http://%s:%s/admin\n", address, port)
 
