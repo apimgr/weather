@@ -412,6 +412,48 @@ func (h *AdminHandler) ClearAuditLogs(c *gin.Context) {
 	})
 }
 
+// GetLogsStats returns audit log statistics
+func (h *AdminHandler) GetLogsStats(c *gin.Context) {
+	var totalLogs, errorLogs, successLogs, recentLogs int64
+
+	// Get total count
+	h.DB.QueryRow("SELECT COUNT(*) FROM audit_log").Scan(&totalLogs)
+
+	// Get counts by success status
+	h.DB.QueryRow("SELECT COUNT(*) FROM audit_log WHERE success = 0").Scan(&errorLogs)
+	h.DB.QueryRow("SELECT COUNT(*) FROM audit_log WHERE success = 1").Scan(&successLogs)
+
+	// Get recent activity (last 24 hours)
+	h.DB.QueryRow("SELECT COUNT(*) FROM audit_log WHERE created_at >= datetime('now', '-1 day')").Scan(&recentLogs)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":       totalLogs,
+		"errors":      errorLogs,
+		"success":     successLogs,
+		"recent_24h":  recentLogs,
+	})
+}
+
+// GetTasksStats returns scheduled task statistics
+func (h *AdminHandler) GetTasksStats(c *gin.Context) {
+	var totalTasks, enabledTasks, disabledTasks, failedTasks int64
+
+	// Get total count
+	h.DB.QueryRow("SELECT COUNT(*) FROM scheduled_tasks").Scan(&totalTasks)
+
+	// Get counts by status
+	h.DB.QueryRow("SELECT COUNT(*) FROM scheduled_tasks WHERE enabled = 1").Scan(&enabledTasks)
+	h.DB.QueryRow("SELECT COUNT(*) FROM scheduled_tasks WHERE enabled = 0").Scan(&disabledTasks)
+	h.DB.QueryRow("SELECT COUNT(*) FROM scheduled_tasks WHERE last_status = 'failed'").Scan(&failedTasks)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total":    totalTasks,
+		"enabled":  enabledTasks,
+		"disabled": disabledTasks,
+		"failed":   failedTasks,
+	})
+}
+
 // System Stats APIs
 
 func (h *AdminHandler) GetSystemStats(c *gin.Context) {

@@ -162,8 +162,10 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
-		// Skip this middleware for /admin routes, API routes, static files, and auth routes
+		// Skip this middleware for /admin routes, setup routes, API routes, static files, and auth routes
 		if strings.HasPrefix(path, "/admin") ||
+		   strings.HasPrefix(path, "/setup") ||
+		   strings.HasPrefix(path, "/user/setup") ||
 		   strings.HasPrefix(path, "/api") ||
 		   strings.HasPrefix(path, "/static") ||
 		   strings.HasPrefix(path, "/login") ||

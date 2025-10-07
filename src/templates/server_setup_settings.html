@@ -221,7 +221,7 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/setup/welcome'">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/setup/server/welcome'">
                         Back
                     </button>
                     <button type="submit" class="btn btn-primary">
@@ -249,7 +249,7 @@
             }
 
             try {
-                const response = await fetch('/admin/setup/settings', {
+                const response = await fetch('/setup/server/settings', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -263,7 +263,7 @@
                     document.getElementById('successMessage').textContent = 'Settings saved successfully!';
                     document.getElementById('successMessage').style.display = 'block';
                     setTimeout(() => {
-                        window.location.href = '/admin/setup/complete';
+                        window.location.href = data.redirect || '/setup/complete';
                     }, 1000);
                 } else {
                     document.getElementById('errorMessage').textContent = data.error || 'Failed to save settings';

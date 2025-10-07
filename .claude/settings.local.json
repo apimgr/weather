@@ -101,7 +101,8 @@
       "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o weather .)",
       "Bash(CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o ../weather .)",
       "Bash(ss:*)",
-      "Read(//proc/2697226/**)"
+      "Read(//proc/2697226/**)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

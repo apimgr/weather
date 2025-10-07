@@ -94,13 +94,14 @@ func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
 // CreateAdmin creates the administrator account (step 5)
 func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	var input struct {
-		Username        string `json:"username"`
-		UseRandom       bool   `json:"use_random"`
-		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirm_password"`
+		Username        string `json:"username" form:"username"`
+		UseRandom       bool   `json:"use_random" form:"use_random"`
+		Password        string `json:"password" form:"password"`
+		ConfirmPassword string `json:"confirm_password" form:"confirm_password"`
 	}
 
-	if err := c.ShouldBindJSON(&input); err != nil {
+	// Accept both JSON and form data
+	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -269,7 +270,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 
 	// Redirect based on role - admin goes to server setup, user to dashboard
 	if role == "admin" {
-		c.Redirect(http.StatusFound, "/admin/setup/welcome")
+		c.Redirect(http.StatusFound, "/setup/server/welcome")
 	} else {
 		c.Redirect(http.StatusFound, "/user/dashboard")
 	}

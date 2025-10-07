@@ -178,7 +178,8 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    window.location.href = '/user/setup/complete';
+                    // Use the redirect URL from server response, fallback to /user/setup/complete
+                    window.location.href = result.redirect || '/user/setup/complete';
                 } else {
                     errorMsg.textContent = result.error || 'Failed to create administrator';
                     errorMsg.style.display = 'block';

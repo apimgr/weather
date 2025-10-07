@@ -189,7 +189,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 	username := utils.NormalizeUsername(req.Username)
 
 	// All users created via /register are regular users
-	// Admin accounts are created through /admin/setup wizard
+	// Admin accounts are created through /user/setup/admin wizard (first run only)
 	role := "user"
 
 	// Create user
