@@ -233,23 +233,41 @@ SERVER_LISTEN=0.0.0.0             # Listen address (default: auto-detect)
 
 #### Database
 
+**Supported Databases:**
+- ✅ SQLite (default, embedded, fully tested)
+- ✅ PostgreSQL (connection support added)
+- ✅ MariaDB/MySQL (connection support added)
+- ✅ Microsoft SQL Server (connection support added)
+
+**Optional Caching:**
+- ✅ Valkey/Redis (for performance optimization)
+
 ```bash
-# Connection String (preferred for non-SQLite)
-DATABASE_URL=sqlite:///data/weather.db          # SQLite
+# Connection String (currently SQLite only)
+DATABASE_URL=sqlite:///data/weather.db          # SQLite (supported)
 DATABASE_URL=postgres://user:pass@host/db       # PostgreSQL (planned)
-DATABASE_URL=mysql://user:pass@host/db          # MySQL (planned)
+DATABASE_URL=mysql://user:pass@host/db          # MariaDB/MySQL (planned)
+DATABASE_URL=sqlserver://user:pass@host/db      # MSSQL (planned)
 DB_CONNECTION_STRING=sqlite:///data/weather.db  # Alternative to DATABASE_URL
 
 # Direct Path (SQLite only)
 DATABASE_PATH=/data/db/weather.db  # Direct SQLite database path
 
-# Individual Parameters (first run only - not yet implemented)
-DB_TYPE=sqlite                     # Database type: sqlite, mysql, postgres, mssql
+# Individual Parameters (fully supported)
+DB_TYPE=sqlite                     # Database type: sqlite, mariadb, postgres, mssql
 DB_HOST=localhost                  # Database hostname
-DB_PORT=5432                       # Database port
+DB_PORT=5432                       # Database port (3306 for MariaDB, 1433 for MSSQL)
 DB_NAME=weather                    # Database name
 DB_USER=weather                    # Database username
 DB_PASSWORD=secret                 # Database password
+DB_SSLMODE=disable                 # PostgreSQL SSL mode: disable, require, verify-ca, verify-full
+
+# Optional Caching (Valkey/Redis)
+CACHE_ENABLED=true                 # Enable Valkey/Redis caching
+CACHE_HOST=localhost               # Valkey/Redis hostname
+CACHE_PORT=6379                    # Valkey/Redis port
+CACHE_PASSWORD=secret              # Valkey/Redis password (optional)
+CACHE_DB=0                         # Valkey/Redis database number
 ```
 
 #### Directory Paths

@@ -81,7 +81,19 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 					})
 					return
 				}
-				enhanced = h.locationEnhancer.EnhanceLocation(coords)
+				// Convert to GeocodeResult and enhance
+				geocodeResult := &services.GeocodeResult{
+					Latitude:    coords.Latitude,
+					Longitude:   coords.Longitude,
+					Name:        coords.Name,
+					Country:     coords.Country,
+					CountryCode: coords.CountryCode,
+					Admin1:      coords.Admin1,
+					Admin2:      coords.Admin2,
+					Timezone:    coords.Timezone,
+					Population:  coords.Population,
+				}
+				enhanced, _ = h.locationEnhancer.EnhanceLocationData(geocodeResult)
 			}
 		} else {
 			coords, err = h.weatherService.GetCoordinates(fmt.Sprintf("%f,%f", latitude, longitude), "")
@@ -94,7 +106,19 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 				})
 				return
 			}
-			enhanced = h.locationEnhancer.EnhanceLocation(coords)
+			// Convert to GeocodeResult and enhance
+			geocodeResult := &services.GeocodeResult{
+				Latitude:    coords.Latitude,
+				Longitude:   coords.Longitude,
+				Name:        coords.Name,
+				Country:     coords.Country,
+				CountryCode: coords.CountryCode,
+				Admin1:      coords.Admin1,
+				Admin2:      coords.Admin2,
+				Timezone:    coords.Timezone,
+				Population:  coords.Population,
+			}
+			enhanced, _ = h.locationEnhancer.EnhanceLocationData(geocodeResult)
 		}
 	} else if location != "" {
 		clientIP := utils.GetClientIP(c)
@@ -108,7 +132,19 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 			})
 			return
 		}
-		enhanced = h.locationEnhancer.EnhanceLocation(coords)
+		// Convert to GeocodeResult and enhance
+		geocodeResult := &services.GeocodeResult{
+			Latitude:    coords.Latitude,
+			Longitude:   coords.Longitude,
+			Name:        coords.Name,
+			Country:     coords.Country,
+			CountryCode: coords.CountryCode,
+			Admin1:      coords.Admin1,
+			Admin2:      coords.Admin2,
+			Timezone:    coords.Timezone,
+			Population:  coords.Population,
+		}
+		enhanced, _ = h.locationEnhancer.EnhanceLocationData(geocodeResult)
 	} else {
 		// IP-based location detection
 		clientIP := utils.GetClientIP(c)
@@ -122,7 +158,19 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 			})
 			return
 		}
-		enhanced = h.locationEnhancer.EnhanceLocation(coords)
+		// Convert to GeocodeResult and enhance
+		geocodeResult := &services.GeocodeResult{
+			Latitude:    coords.Latitude,
+			Longitude:   coords.Longitude,
+			Name:        coords.Name,
+			Country:     coords.Country,
+			CountryCode: coords.CountryCode,
+			Admin1:      coords.Admin1,
+			Admin2:      coords.Admin2,
+			Timezone:    coords.Timezone,
+			Population:  coords.Population,
+		}
+		enhanced, _ = h.locationEnhancer.EnhanceLocationData(geocodeResult)
 	}
 
 	// Determine units

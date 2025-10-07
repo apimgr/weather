@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"embed"
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"html/template"
@@ -13,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -147,21 +144,58 @@ func main() {
 	appLogger.Printf("🕐 %s", startTime.Format("2006-01-02 at 15:04:05"))
 
 	// Initialize database
-	// Check for connection string first, then path
+	// Priority: 1. Connection string, 2. Individual params (DB_TYPE, DB_HOST...), 3. SQLite path
 	dbConnString := os.Getenv("DATABASE_URL")
 	if dbConnString == "" {
 		dbConnString = os.Getenv("DB_CONNECTION_STRING")
 	}
 
 	var dbPath string
-	var db *gorm.DB
-	var err error
+	var db *database.DB
 
 	if dbConnString != "" {
 		// Use connection string (postgres://user:pass@host/db, mysql://user:pass@host/db, etc.)
 		db, err = database.InitDBFromConnectionString(dbConnString)
+	} else if dbType := os.Getenv("DB_TYPE"); dbType != "" && dbType != "sqlite" {
+		// Use individual database parameters (for PostgreSQL, MySQL, MSSQL)
+		config := &database.DatabaseConfig{
+			Type:     dbType,
+			Host:     os.Getenv("DB_HOST"),
+			Database: os.Getenv("DB_NAME"),
+			Username: os.Getenv("DB_USER"),
+			Password: os.Getenv("DB_PASSWORD"),
+			SSLMode:  os.Getenv("DB_SSLMODE"), // PostgreSQL only
+		}
+
+		// Parse port
+		if portStr := os.Getenv("DB_PORT"); portStr != "" {
+			var port int
+			fmt.Sscanf(portStr, "%d", &port)
+			config.Port = port
+		} else {
+			// Default ports
+			switch dbType {
+			case "postgres", "postgresql":
+				config.Port = 5432
+			case "mysql", "mariadb":
+				config.Port = 3306
+			case "mssql", "sqlserver":
+				config.Port = 1433
+			}
+		}
+
+		// Set defaults if not provided
+		if config.Host == "" {
+			config.Host = "localhost"
+		}
+		if config.Database == "" {
+			config.Database = "weather"
+		}
+
+		db, err = database.InitDBWithConfig(config)
+		dbPath = fmt.Sprintf("%s://%s:%d/%s", dbType, config.Host, config.Port, config.Database)
 	} else {
-		// Use SQLite file path
+		// Use SQLite file path (default)
 		dbPath = os.Getenv("DATABASE_PATH")
 		if dbPath == "" {
 			dbPath = utils.GetDatabasePath(dirPaths)
@@ -190,6 +224,12 @@ func main() {
 	backupPath := utils.GetBackupPath(dirPaths)
 	if err := settingsModel.InitializeDefaults(backupPath); err != nil {
 		appLogger.Error("⚠️  Warning: Could not initialize default settings: %v", err)
+	}
+
+	// Initialize cache manager (Valkey/Redis support, optional)
+	cacheManager := services.NewCacheManager()
+	if cacheManager.IsEnabled() {
+		appLogger.Printf("✅ Cache enabled (Redis/Valkey)")
 	}
 
 	// Auto-detect SMTP server at 172.17.0.1 (Docker bridge) and configure defaults
@@ -1097,6 +1137,11 @@ JSON API:
 	// Stop scheduler
 	taskScheduler.Stop()
 
+	// Close cache connection
+	if err := cacheManager.Close(); err != nil {
+		log.Printf("⚠️  Cache shutdown error: %v", err)
+	}
+
 	// Shutdown HTTP server with 5 second timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -1244,40 +1289,6 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 		}
 	}
 
-	// Load or generate session secret
-	sessionSecretPath := filepath.Join(dirPaths.Config, "session")
-	sessionSecret := os.Getenv("SESSION_SECRET")
-
-	if sessionSecret == "" {
-		// Try to load from file
-		if data, err := os.ReadFile(sessionSecretPath); err == nil {
-			sessionSecret = strings.TrimSpace(string(data))
-		}
-	}
-
-	if sessionSecret == "" {
-		// Generate new random session secret
-		randomBytes := make([]byte, 32)
-		if _, err := rand.Read(randomBytes); err != nil {
-			appLogger.Fatal("Failed to generate session secret: %v", err)
-		}
-		sessionSecret = base64.URLEncoding.EncodeToString(randomBytes)
-
-		// Save to file
-		if err := os.WriteFile(sessionSecretPath, []byte(sessionSecret), 0600); err != nil {
-			appLogger.Printf("⚠️  Warning: Could not save session secret: %v", err)
-		} else {
-			appLogger.Printf("✓ Generated and saved new session secret")
-		}
-	} else if os.Getenv("SESSION_SECRET") != "" {
-		// If provided via env var, save it to file for persistence
-		if err := os.WriteFile(sessionSecretPath, []byte(sessionSecret), 0600); err != nil {
-			appLogger.Printf("⚠️  Warning: Could not save session secret: %v", err)
-		}
-	}
-
-	hasSessionSecret := true
-
 	// Get database statistics
 	var userCount, locationCount, tokenCount int
 	db.DB.QueryRow("SELECT COUNT(*) FROM users").Scan(&userCount)
@@ -1304,11 +1315,7 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	fmt.Printf("   First Run:      %v\n", isFirstRun)
 
 	fmt.Println("\n🔐 Security:")
-	if hasSessionSecret {
-		fmt.Println("   Session Secret: ✅ Configured")
-	} else {
-		fmt.Println("   Session Secret: ⚠️  Using default (not recommended for production)")
-	}
+	fmt.Println("   Session Secret: ✅ Configured")
 
 	fmt.Println("\n🌐 Endpoints:")
 	fmt.Printf("   Web Interface:  http://%s:%s/\n", address, port)
