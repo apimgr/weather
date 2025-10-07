@@ -572,7 +572,11 @@
         }
 
         async function editSetting(key, currentValue) {
-            const modalId = Modal.create({
+            // Generate a unique modal ID first
+            const modalId = 'edit-setting-modal-' + Date.now();
+
+            Modal.create({
+                id: modalId,
                 title: 'Edit Setting',
                 body: `
                     <form id="editSettingForm">
@@ -625,7 +629,16 @@
         async function loadTokens() {
             try {
                 const response = await fetch('/api/v1/admin/tokens');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const tokens = await response.json();
+
+                // Handle empty array
+                if (!Array.isArray(tokens) || tokens.length === 0) {
+                    document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-comment); text-align: center; padding: 2rem;">No API tokens found. Generate one to get started.</p>';
+                    return;
+                }
 
                 const html = `
                     <table style="width: 100%; border-collapse: collapse;">
@@ -643,7 +656,7 @@
                             ${tokens.map(token => `
                                 <tr style="border-bottom: 1px solid var(--dracula-comment);">
                                     <td style="padding: 1rem;">${token.id}</td>
-                                    <td style="padding: 1rem;">${token.user_email}</td>
+                                    <td style="padding: 1rem;">${token.user_email || 'N/A'}</td>
                                     <td style="padding: 1rem;">${token.name}</td>
                                     <td style="padding: 1rem;">${new Date(token.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 1rem;">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : 'Never'}</td>
@@ -657,7 +670,8 @@
                 `;
                 document.getElementById('tokens-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading tokens</p>';
+                console.error('Error loading tokens:', error);
+                document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading tokens: ' + error.message + '</p>';
             }
         }
 
@@ -781,9 +795,12 @@
         async function loadLogs() {
             try {
                 const response = await fetch('/api/v1/admin/logs?limit=50');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const logs = await response.json();
 
-                if (logs.length === 0) {
+                if (!Array.isArray(logs) || logs.length === 0) {
                     document.getElementById('logs-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No audit logs found</p>';
                     return;
                 }
@@ -814,7 +831,8 @@
                 `;
                 document.getElementById('logs-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('logs-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading logs</p>';
+                console.error('Error loading logs:', error);
+                document.getElementById('logs-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading logs: ' + error.message + '</p>';
             }
         }
 
@@ -870,7 +888,15 @@
         async function loadScheduledTasks() {
             try {
                 const response = await fetch('/api/v1/admin/tasks');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const tasks = await response.json();
+
+                if (!Array.isArray(tasks) || tasks.length === 0) {
+                    document.getElementById('tasks-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No scheduled tasks found</p>';
+                    return;
+                }
 
                 const html = `
                     <table style="width: 100%; border-collapse: collapse;">
@@ -887,10 +913,10 @@
                             ${tasks.map(task => `
                                 <tr style="border-bottom: 1px solid var(--dracula-comment);">
                                     <td style="padding: 1rem; font-family: monospace; color: var(--dracula-cyan);">${task.name}</td>
-                                    <td style="padding: 1rem;">${task.interval}</td>
+                                    <td style="padding: 1rem;">${task.interval || 'N/A'}</td>
                                     <td style="padding: 1rem;">
                                         <span style="background: ${task.running ? 'var(--dracula-green)' : 'var(--dracula-comment)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">
-                                            ${task.running ? 'Running' : 'Stopped'}
+                                            ${task.running ? 'Running' : 'Idle'}
                                         </span>
                                     </td>
                                     <td style="padding: 1rem; font-size: 0.9rem;">${task.last_run ? new Date(task.last_run).toLocaleString() : 'Never'}</td>
@@ -902,7 +928,8 @@
                 `;
                 document.getElementById('tasks-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('tasks-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading scheduled tasks</p>';
+                console.error('Error loading scheduled tasks:', error);
+                document.getElementById('tasks-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading scheduled tasks: ' + error.message + '</p>';
             }
         }
 
