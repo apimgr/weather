@@ -105,7 +105,8 @@
       "Bash(rm:*)",
       "Bash(go:*)",
       "Bash(./tests/run-tests.sh:*)",
-      "Bash(sudo -u nobody go run:*)"
+      "Bash(sudo -u nobody go run:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
