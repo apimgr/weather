@@ -239,10 +239,13 @@
             const formData = new FormData(e.target);
             const settings = {};
 
-            // Convert form data to settings object
+            // Convert form data to settings object with proper types
             for (const [key, value] of formData.entries()) {
+                const element = document.getElementById(key);
                 if (key.startsWith('enable')) {
-                    settings[key] = document.getElementById(key).checked;
+                    settings[key] = element.checked;
+                } else if (element && element.type === 'number') {
+                    settings[key] = parseInt(value, 10) || 0;
                 } else {
                     settings[key] = value;
                 }

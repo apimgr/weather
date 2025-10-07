@@ -124,7 +124,14 @@
             <form id="admin-form">
                 <div class="form-group">
                     <label class="form-label" for="username">Username</label>
-                    <input type="text" id="username" name="username" class="form-input" value="administrator" disabled>
+                    <input type="text" id="username" name="username" class="form-input" value="administrator" required minlength="3">
+                    <small style="color: var(--dracula-comment); font-size: 0.8125rem;">Default: administrator (can be changed)</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" required placeholder="admin@example.com">
+                    <small style="color: var(--dracula-comment); font-size: 0.8125rem;">For password recovery and notifications</small>
                 </div>
 
                 <div class="form-group">
@@ -164,6 +171,8 @@
             submitBtn.textContent = 'Creating...';
 
             const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
                 password: password,
                 confirm_password: confirmPassword
             };

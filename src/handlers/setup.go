@@ -95,6 +95,7 @@ func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
 func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	var input struct {
 		Username        string `json:"username" form:"username"`
+		Email           string `json:"email" form:"email"`
 		UseRandom       bool   `json:"use_random" form:"use_random"`
 		Password        string `json:"password" form:"password"`
 		ConfirmPassword string `json:"confirm_password" form:"confirm_password"`
@@ -103,6 +104,18 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	// Accept both JSON and form data
 	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate email
+	email := strings.TrimSpace(input.Email)
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
+		return
+	}
+	// Basic email validation
+	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
 		return
 	}
 
@@ -165,7 +178,6 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	}
 
 	// Create administrator account with custom username
-	email := username + "@admin.local"
 	result, err := h.DB.Exec(`
 		INSERT INTO users (username, email, password_hash, role, created_at, updated_at)
 		VALUES (?, ?, ?, 'admin', datetime('now'), datetime('now'))
