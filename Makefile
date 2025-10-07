@@ -4,7 +4,8 @@ GITHUB_ORG = apimgr
 REGISTRY = ghcr.io/$(GITHUB_ORG)
 
 # Version management
-VERSION = $(shell cat release.txt 2>/dev/null || echo "1.0.0")
+# Override with: make build VERSION=2.0.0
+VERSION ?= $(shell cat release.txt 2>/dev/null || echo "1.0.0")
 BUILD_DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT = $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
@@ -57,18 +58,24 @@ build: clean
 	@echo "🎉 Build complete! $(shell ls -1 dist/ | wc -l) binaries in dist/"
 	@ls -lh dist/ | tail -n +2 | awk '{printf "  %s %s\n", $$9, $$5}'
 
-# Create GitHub release (auto-increments version)
+# Create GitHub release (auto-increments version unless VERSION is set)
 release: build test
 	@echo "🚀 Creating GitHub release..."
-	@# Increment patch version
-	@CURRENT_VERSION=$$(cat release.txt); \
-	MAJOR=$$(echo $$CURRENT_VERSION | cut -d. -f1); \
-	MINOR=$$(echo $$CURRENT_VERSION | cut -d. -f2); \
-	PATCH=$$(echo $$CURRENT_VERSION | cut -d. -f3); \
-	NEW_PATCH=$$((PATCH + 1)); \
-	NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
-	echo "  📝 Incrementing version: $$CURRENT_VERSION → $$NEW_VERSION"; \
-	echo "$$NEW_VERSION" > release.txt
+	@# Use custom VERSION if provided, otherwise increment patch version
+	@if [ -n "$(filter-out $(shell cat release.txt 2>/dev/null || echo "1.0.0"),$(VERSION))" ]; then \
+		NEW_VERSION="$(VERSION)"; \
+		echo "  📝 Using custom version: $$NEW_VERSION"; \
+		echo "$$NEW_VERSION" > release.txt; \
+	else \
+		CURRENT_VERSION=$$(cat release.txt); \
+		MAJOR=$$(echo $$CURRENT_VERSION | cut -d. -f1); \
+		MINOR=$$(echo $$CURRENT_VERSION | cut -d. -f2); \
+		PATCH=$$(echo $$CURRENT_VERSION | cut -d. -f3); \
+		NEW_PATCH=$$((PATCH + 1)); \
+		NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
+		echo "  📝 Incrementing version: $$CURRENT_VERSION → $$NEW_VERSION"; \
+		echo "$$NEW_VERSION" > release.txt; \
+	fi
 	@# Delete existing release and tag if they exist
 	@NEW_VERSION=$$(cat release.txt); \
 	if gh release view "v$$NEW_VERSION" >/dev/null 2>&1; then \
@@ -88,32 +95,37 @@ release: build test
 	git tag -a "v$$NEW_VERSION" -m "Release v$$NEW_VERSION" 2>/dev/null || true; \
 	git push origin "v$$NEW_VERSION" 2>/dev/null || true; \
 	echo "  📦 Creating GitHub release v$$NEW_VERSION"; \
+	echo "Release $(PROJECT_NAME) v$$NEW_VERSION" > /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "**Built:** $(BUILD_DATE)" >> /tmp/release-notes.md; \
+	echo "**Commit:** $(GIT_COMMIT)" >> /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "## Downloads" >> /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "Download the binary for your platform:" >> /tmp/release-notes.md; \
+	echo "- **Linux**: \`$(PROJECT_NAME)-linux-{amd64|arm64}\`" >> /tmp/release-notes.md; \
+	echo "- **macOS**: \`$(PROJECT_NAME)-darwin-{amd64|arm64}\`" >> /tmp/release-notes.md; \
+	echo "- **Windows**: \`$(PROJECT_NAME)-windows-{amd64|arm64}.exe\`" >> /tmp/release-notes.md; \
+	echo "- **FreeBSD**: \`$(PROJECT_NAME)-freebsd-{amd64|arm64}\`" >> /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "## Installation" >> /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "\`\`\`bash" >> /tmp/release-notes.md; \
+	echo "# Linux/macOS/FreeBSD" >> /tmp/release-notes.md; \
+	echo "chmod +x $(PROJECT_NAME)-*" >> /tmp/release-notes.md; \
+	echo "sudo mv $(PROJECT_NAME)-* /usr/local/bin/$(PROJECT_NAME)" >> /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "# Windows" >> /tmp/release-notes.md; \
+	echo "# Move $(PROJECT_NAME)-windows-*.exe to your PATH" >> /tmp/release-notes.md; \
+	echo "\`\`\`" >> /tmp/release-notes.md; \
+	echo "" >> /tmp/release-notes.md; \
+	echo "## What's Changed" >> /tmp/release-notes.md; \
+	echo "- Full changelog: https://github.com/$(GITHUB_ORG)/$(PROJECT_NAME)/commits/v$$NEW_VERSION" >> /tmp/release-notes.md; \
 	gh release create "v$$NEW_VERSION" \
 		--title "$(PROJECT_NAME) v$$NEW_VERSION" \
-		--notes "Release $(PROJECT_NAME) v$$NEW_VERSION
-
-Built: $(BUILD_DATE)
-Commit: $(GIT_COMMIT)
-
-## Downloads
-
-Download the binary for your platform:
-- **Linux**: \`$(PROJECT_NAME)-linux-{amd64|arm64}\`
-- **macOS**: \`$(PROJECT_NAME)-darwin-{amd64|arm64}\`
-- **Windows**: \`$(PROJECT_NAME)-windows-{amd64|arm64}.exe\`
-- **FreeBSD**: \`$(PROJECT_NAME)-freebsd-{amd64|arm64}\`
-
-## Installation
-
-\`\`\`bash
-# Linux/macOS/FreeBSD
-chmod +x $(PROJECT_NAME)-*
-sudo mv $(PROJECT_NAME)-* /usr/local/bin/$(PROJECT_NAME)
-
-# Windows
-# Move $(PROJECT_NAME)-windows-*.exe to your PATH
-\`\`\`" \
-		dist/*
+		--notes-file /tmp/release-notes.md \
+		dist/*; \
+	rm -f /tmp/release-notes.md
 	@echo "✅ Release v$$NEW_VERSION created successfully!"
 	@echo "   https://github.com/$(GITHUB_ORG)/$(PROJECT_NAME)/releases/tag/v$$NEW_VERSION"
 
@@ -153,7 +165,7 @@ clean:
 help:
 	@echo "Weather Service Build System"
 	@echo ""
-	@echo "Usage: make [target]"
+	@echo "Usage: make [target] [VAR=value]"
 	@echo ""
 	@echo "Targets:"
 	@echo "  build    - Build for all platforms + host binary (default)"
@@ -162,6 +174,11 @@ help:
 	@echo "  test     - Run all tests with coverage"
 	@echo "  clean    - Remove build artifacts"
 	@echo "  help     - Show this help"
+	@echo ""
+	@echo "Variables:"
+	@echo "  VERSION  - Override version (default: auto from release.txt)"
+	@echo "             Example: make build VERSION=2.0.0"
+	@echo "             Example: make release VERSION=2.0.0"
 	@echo ""
 	@echo "Current version: $(VERSION)"
 	@echo "Host platform: $(HOST_OS)/$(HOST_ARCH)"
