@@ -56,8 +56,12 @@ fi
 
 # Create data and config directories
 echo "📁 Creating directories..."
-mkdir -p "${DATA_DIR}"
-mkdir -p "${CONFIG_DIR}"
+mkdir -p "${DATA_DIR}/db"
+mkdir -p "${DATA_DIR}/backups"
+mkdir -p "${CONFIG_DIR}/certs"
+mkdir -p "${CONFIG_DIR}/databases"
+mkdir -p "$HOME/Library/Logs/weather"
+mkdir -p "$HOME/Library/Caches/weather/weather"
 
 # Create LaunchAgent
 echo "⚙️  Creating LaunchAgent..."
@@ -74,10 +78,6 @@ cat > "${LAUNCH_AGENT}" <<EOF
     <key>ProgramArguments</key>
     <array>
         <string>${INSTALL_DIR}/${BINARY_NAME}</string>
-        <string>--data</string>
-        <string>${DATA_DIR}</string>
-        <string>--config</string>
-        <string>${CONFIG_DIR}</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>

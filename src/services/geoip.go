@@ -34,11 +34,14 @@ type GeoIPService struct {
 }
 
 // NewGeoIPService creates a new GeoIP service
+// Recommended usage: Pass utils.GetGeoIPPath(dirPaths) for dataPath
 func NewGeoIPService(dataURL, dataPath string) *GeoIPService {
 	if dataURL == "" {
 		dataURL = "https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-City.mmdb"
 	}
 	if dataPath == "" {
+		// Fallback to temp for backward compatibility
+		// TODO: Should use config/databases/geoip.mmdb
 		dataPath = "/tmp/GeoLite2-City.mmdb"
 	}
 

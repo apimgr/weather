@@ -172,7 +172,22 @@ func readVersion() string {
 	return string(data)
 }
 
+// Global variables to store directory paths
+var (
+	globalDataDir string
+	globalLogDir  string
+)
+
+// SetDirectoryPaths sets the global directory paths for health checks
+func SetDirectoryPaths(dataDir, logDir string) {
+	globalDataDir = dataDir
+	globalLogDir = logDir
+}
+
 func getDataDir() string {
+	if globalDataDir != "" {
+		return globalDataDir
+	}
 	dir := os.Getenv("DATA_DIR")
 	if dir == "" {
 		dir = "./data"
@@ -181,6 +196,9 @@ func getDataDir() string {
 }
 
 func getLogDir() string {
+	if globalLogDir != "" {
+		return globalLogDir
+	}
 	dir := os.Getenv("LOG_DIR")
 	if dir == "" {
 		dir = "./logs"

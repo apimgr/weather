@@ -104,7 +104,8 @@
       "Read(//proc/2697226/**)",
       "Bash(rm:*)",
       "Bash(go:*)",
-      "Bash(./tests/run-tests.sh:*)"
+      "Bash(./tests/run-tests.sh:*)",
+      "Bash(sudo -u nobody go run:*)"
     ],
     "deny": [],
     "ask": []

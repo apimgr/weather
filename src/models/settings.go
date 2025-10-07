@@ -165,7 +165,13 @@ func (m *SettingsModel) ListByPrefix(prefix string) ([]*Setting, error) {
 }
 
 // InitializeDefaults sets default values for all settings
-func (m *SettingsModel) InitializeDefaults() error {
+// backupPath is optional - if empty, uses "/data/backups" as default
+func (m *SettingsModel) InitializeDefaults(backupPath ...string) error {
+	defaultBackupPath := "/data/backups"
+	if len(backupPath) > 0 && backupPath[0] != "" {
+		defaultBackupPath = backupPath[0]
+	}
+
 	defaults := map[string]Setting{
 		// Server settings
 		"server.title":          {Value: "Weather Service", Type: "string"},
@@ -194,7 +200,7 @@ func (m *SettingsModel) InitializeDefaults() error {
 		"backup.enabled":       {Value: "true", Type: "boolean"},
 		"backup.interval":      {Value: "6", Type: "number"}, // hours
 		"backup.retention":     {Value: "30", Type: "number"}, // days
-		"backup.location":      {Value: "/data/backups", Type: "string"},
+		"backup.location":      {Value: defaultBackupPath, Type: "string"},
 
 		// Logging settings
 		"logging.level":         {Value: "info", Type: "string"},

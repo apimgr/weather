@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"embed"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"html/template"
@@ -76,69 +78,98 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Apply CLI overrides to environment
+	// Get OS-appropriate directory paths
+	dirPaths, err := utils.GetDirectoryPaths()
+	if err != nil {
+		log.Fatalf("Failed to determine directory paths: %v", err)
+	}
+
+	// Apply environment variable overrides
+	if envDataDir := os.Getenv("DATA_DIR"); envDataDir != "" && *dataDir == "" {
+		*dataDir = envDataDir
+	}
+	if envConfigDir := os.Getenv("CONFIG_DIR"); envConfigDir != "" && *configDir == "" {
+		*configDir = envConfigDir
+	}
+	if envLogDir := os.Getenv("LOG_DIR"); envLogDir != "" {
+		dirPaths.Log = envLogDir
+	}
+
+	// Apply CLI overrides (CLI takes precedence over env vars)
 	if *configPort != "" {
 		os.Setenv("PORT", *configPort)
 	}
 	if *dataDir != "" {
-		// Check if path exists and is a file (not a directory)
+		// CLI override for data directory
 		if info, err := os.Stat(*dataDir); err == nil {
 			if !info.IsDir() {
-				// Path exists but is a file - delete it
 				if err := os.Remove(*dataDir); err != nil {
 					log.Fatalf("Failed to remove file at %s: %v", *dataDir, err)
 				}
 			}
 		}
-		// Create data directory if it doesn't exist
 		if err := os.MkdirAll(*dataDir, 0755); err != nil {
 			log.Fatalf("Failed to create data directory %s: %v", *dataDir, err)
 		}
-		// Set DATABASE_PATH to <dataDir>/weather.db
-		dbPath := filepath.Join(*dataDir, "weather.db")
-		os.Setenv("DATABASE_PATH", dbPath)
+		dirPaths.Data = *dataDir
 	}
 	if *configDir != "" {
-		// Check if path exists and is a file (not a directory)
+		// CLI override for config directory
 		if info, err := os.Stat(*configDir); err == nil {
 			if !info.IsDir() {
-				// Path exists but is a file - delete it
 				if err := os.Remove(*configDir); err != nil {
 					log.Fatalf("Failed to remove file at %s: %v", *configDir, err)
 				}
 			}
 		}
-		// Create config directory if it doesn't exist
 		if err := os.MkdirAll(*configDir, 0755); err != nil {
 			log.Fatalf("Failed to create config directory %s: %v", *configDir, err)
 		}
-		// Future: Load config files from this directory
+		dirPaths.Config = *configDir
 	}
 	if *configAddr != "" {
-		os.Setenv("SERVER_ADDRESS", *configAddr)
+		os.Setenv("SERVER_LISTEN", *configAddr)
 	}
 
-	// Disable log timestamps
-	log.SetFlags(0)
+	// Create all required directories
+	if err := utils.CreateDirectories(dirPaths); err != nil {
+		log.Fatalf("Failed to create directories: %v", err)
+	}
+
+	// Initialize logger
+	appLogger, err := utils.NewLogger(dirPaths.Log)
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
 
 	// Print startup timestamp
 	startTime := time.Now()
-	fmt.Printf("🕐 %s\n", startTime.Format("2006-01-02 at 15:04:05"))
+	appLogger.Printf("🕐 %s", startTime.Format("2006-01-02 at 15:04:05"))
 
 	// Initialize database
-	dbPath := os.Getenv("DATABASE_PATH")
-	if dbPath == "" {
-		dbPath = "./data/weather.db"
+	// Check for connection string first, then path
+	dbConnString := os.Getenv("DATABASE_URL")
+	if dbConnString == "" {
+		dbConnString = os.Getenv("DB_CONNECTION_STRING")
 	}
 
-	// Ensure data directory exists
-	if err := os.MkdirAll("./data", 0755); err != nil {
-		log.Fatalf("Failed to create data directory: %v", err)
-	}
+	var dbPath string
+	var db *gorm.DB
+	var err error
 
-	db, err := database.InitDB(dbPath)
+	if dbConnString != "" {
+		// Use connection string (postgres://user:pass@host/db, mysql://user:pass@host/db, etc.)
+		db, err = database.InitDBFromConnectionString(dbConnString)
+	} else {
+		// Use SQLite file path
+		dbPath = os.Getenv("DATABASE_PATH")
+		if dbPath == "" {
+			dbPath = utils.GetDatabasePath(dirPaths)
+		}
+		db, err = database.InitDB(dbPath)
+	}
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		appLogger.Fatal("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
 
@@ -149,15 +180,16 @@ func main() {
 	setupComplete = (err == nil && setupValue == "true")
 
 	if setupComplete {
-		fmt.Printf("✅ Database initialized: %s\n", dbPath)
+		appLogger.Printf("✅ Database initialized: %s", dbPath)
 	} else {
-		fmt.Printf("✅ Database initialized: %s (setup mode)\n", dbPath)
+		appLogger.Printf("✅ Database initialized: %s (setup mode)", dbPath)
 	}
 
-	// Initialize default settings
+	// Initialize default settings with proper backup path
 	settingsModel := &models.SettingsModel{DB: db.DB}
-	if err := settingsModel.InitializeDefaults(); err != nil {
-		log.Printf("⚠️  Warning: Could not initialize default settings: %v", err)
+	backupPath := utils.GetBackupPath(dirPaths)
+	if err := settingsModel.InitializeDefaults(backupPath); err != nil {
+		appLogger.Error("⚠️  Warning: Could not initialize default settings: %v", err)
 	}
 
 	// Auto-detect SMTP server at 172.17.0.1 (Docker bridge) and configure defaults
@@ -170,7 +202,7 @@ func main() {
 			if detected, _ := smtpService.AutoDetect(); detected {
 				// SMTP detected, enable it
 				settingsModel.SetBool("smtp.enabled", true)
-				fmt.Println("✉️  SMTP server auto-detected and enabled")
+				appLogger.Printf("✉️  SMTP server auto-detected and enabled")
 			}
 		}
 
@@ -196,11 +228,11 @@ func main() {
 	// Check if this is first run (no users)
 	isFirstRun, err := db.IsFirstRun()
 	if err != nil {
-		log.Printf("⚠️  Warning: Could not check first run status: %v", err)
+		appLogger.Error("⚠️  Warning: Could not check first run status: %v", err)
 		isFirstRun = false
 	}
 	if isFirstRun {
-		fmt.Println("🆕 First run detected - please create an admin account at /register")
+		appLogger.Printf("🆕 First run detected - please create an admin account at /register")
 	}
 
 	// Handle status flag
@@ -209,8 +241,18 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Set Gin mode
-	if os.Getenv("GIN_MODE") == "" {
+	// Set Gin mode based on ENV variable (development, production, test)
+	envMode := os.Getenv("ENV")
+	if envMode == "" {
+		envMode = os.Getenv("ENVIRONMENT") // Alternative
+	}
+
+	switch envMode {
+	case "development", "dev":
+		gin.SetMode(gin.DebugMode)
+	case "test", "testing":
+		gin.SetMode(gin.TestMode)
+	default:
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -220,8 +262,8 @@ func main() {
 	// Trust reverse proxy headers
 	r.SetTrustedProxies([]string{"127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"})
 
-	// Custom logging middleware (Apache2 combined format)
-	r.Use(apacheLoggingMiddleware())
+	// Access logging middleware (writes to log files)
+	r.Use(middleware.AccessLogger(appLogger))
 
 	// Recovery middleware
 	r.Use(gin.Recovery())
@@ -390,6 +432,11 @@ func main() {
 	// Initialize scheduler for periodic tasks
 	taskScheduler := scheduler.NewScheduler(db.DB)
 
+	// Register log rotation task - run daily at midnight
+	taskScheduler.AddTask("rotate-logs", 24*time.Hour, func() error {
+		return appLogger.RotateLogs()
+	})
+
 	// Register cleanup tasks - run every hour
 	taskScheduler.AddTask("cleanup-sessions", 1*time.Hour, func() error {
 		return scheduler.CleanupOldSessions(db.DB)
@@ -476,13 +523,14 @@ func main() {
 	port := fmt.Sprintf("%d", httpPortInt)
 
 	// Get listen address - auto-detect reverse proxy
-	listenAddress := os.Getenv("SERVER_ADDRESS")
+	listenAddress := os.Getenv("SERVER_LISTEN")
+	if listenAddress == "" {
+		listenAddress = os.Getenv("SERVER_ADDRESS") // Backward compatibility
+	}
 	mode := ""
 	if listenAddress == "" {
-		// Check for reverse proxy indicators
-		reverseProxy := os.Getenv("REVERSE_PROXY") == "true" ||
-			os.Getenv("BEHIND_PROXY") == "true" ||
-			os.Getenv("USE_PROXY") == "true"
+		// Check for reverse proxy indicator
+		reverseProxy := os.Getenv("REVERSE_PROXY") == "true"
 
 		if reverseProxy {
 			listenAddress = "127.0.0.1"
@@ -495,15 +543,14 @@ func main() {
 	}
 
 	// Print startup messages
-	fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
-	fmt.Printf("🚀 Starting Weather%s on %s:%s\n", mode, listenAddress, port)
+	appLogger.Printf("🚀 Starting Weather%s on %s:%s", mode, listenAddress, port)
+	appLogger.Info("Data directory: %s", dirPaths.Data)
+	appLogger.Info("Config directory: %s", dirPaths.Config)
+	appLogger.Info("Log directory: %s", dirPaths.Log)
 
 	// Initialize SSL manager
-	sslDataDir := os.Getenv("DATA_DIR")
-	if sslDataDir == "" {
-		sslDataDir = "./data"
-	}
-	sslManager := utils.NewSSLManager(db.DB, sslDataDir)
+	sslCertsDir := utils.GetCertsPath(dirPaths)
+	sslManager := utils.NewSSLManager(db.DB, sslCertsDir)
 	httpsPort := httpsPortInt
 
 	// Check for SSL configuration
@@ -516,16 +563,19 @@ func main() {
 	if httpsPort > 0 {
 		found, err := sslManager.CheckExistingCerts(hostname)
 		if err != nil {
-			log.Printf("⚠️  SSL check failed: %v", err)
+			appLogger.Error("⚠️  SSL check failed: %v", err)
 		} else if found {
-			fmt.Printf("🔒 Found Let's Encrypt certificate for %s\n", hostname)
-			fmt.Printf("🔌 HTTPS enabled on port: %d\n", httpsPort)
+			appLogger.Printf("🔒 Found Let's Encrypt certificate for %s", hostname)
+			appLogger.Printf("🔌 HTTPS enabled on port: %d", httpsPort)
 		} else {
-			fmt.Printf("ℹ️  HTTPS port configured (%d) but no certificates found\n", httpsPort)
+			appLogger.Printf("ℹ️  HTTPS port configured (%d) but no certificates found", httpsPort)
 		}
 	}
 	// Note: Self-signed cert generation is optional and disabled by default
 	// Can be enabled via CLI flag or environment variable if needed
+
+	// Set directory paths for handlers
+	handlers.SetDirectoryPaths(dirPaths.Data, dirPaths.Log)
 
 	// Health check endpoints (Kubernetes standard)
 	r.GET("/healthz", handlers.ComprehensiveHealthCheck(db, port, httpsPort, sslManager))
@@ -998,9 +1048,6 @@ JSON API:
 	// Build final URL for documentation
 	finalHostname := os.Getenv("DOMAIN")
 	if finalHostname == "" {
-		finalHostname = os.Getenv("HOST")
-	}
-	if finalHostname == "" {
 		finalHostname = os.Getenv("HOSTNAME")
 	}
 	if finalHostname == "" {
@@ -1171,18 +1218,22 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 		port = "3000"
 	}
 
-	ginMode := os.Getenv("GIN_MODE")
-	if ginMode == "" {
-		ginMode = "release"
+	envMode := os.Getenv("ENV")
+	if envMode == "" {
+		envMode = os.Getenv("ENVIRONMENT")
+	}
+	if envMode == "" {
+		envMode = "production"
 	}
 
-	address := os.Getenv("SERVER_ADDRESS")
+	address := os.Getenv("SERVER_LISTEN")
+	if address == "" {
+		address = os.Getenv("SERVER_ADDRESS") // Backward compatibility
+	}
 	addressMode := ""
 	if address == "" {
 		// Check for reverse proxy indicators
-		reverseProxy := os.Getenv("REVERSE_PROXY") == "true" ||
-			os.Getenv("BEHIND_PROXY") == "true" ||
-			os.Getenv("USE_PROXY") == "true"
+		reverseProxy := os.Getenv("REVERSE_PROXY") == "true"
 
 		if reverseProxy {
 			address = "127.0.0.1"
@@ -1193,8 +1244,39 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 		}
 	}
 
+	// Load or generate session secret
+	sessionSecretPath := filepath.Join(dirPaths.Config, "session")
 	sessionSecret := os.Getenv("SESSION_SECRET")
-	hasSessionSecret := sessionSecret != ""
+
+	if sessionSecret == "" {
+		// Try to load from file
+		if data, err := os.ReadFile(sessionSecretPath); err == nil {
+			sessionSecret = strings.TrimSpace(string(data))
+		}
+	}
+
+	if sessionSecret == "" {
+		// Generate new random session secret
+		randomBytes := make([]byte, 32)
+		if _, err := rand.Read(randomBytes); err != nil {
+			appLogger.Fatal("Failed to generate session secret: %v", err)
+		}
+		sessionSecret = base64.URLEncoding.EncodeToString(randomBytes)
+
+		// Save to file
+		if err := os.WriteFile(sessionSecretPath, []byte(sessionSecret), 0600); err != nil {
+			appLogger.Printf("⚠️  Warning: Could not save session secret: %v", err)
+		} else {
+			appLogger.Printf("✓ Generated and saved new session secret")
+		}
+	} else if os.Getenv("SESSION_SECRET") != "" {
+		// If provided via env var, save it to file for persistence
+		if err := os.WriteFile(sessionSecretPath, []byte(sessionSecret), 0600); err != nil {
+			appLogger.Printf("⚠️  Warning: Could not save session secret: %v", err)
+		}
+	}
+
+	hasSessionSecret := true
 
 	// Get database statistics
 	var userCount, locationCount, tokenCount int
@@ -1212,7 +1294,7 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	fmt.Printf("   Build Date:     %s\n", BuildDate)
 	fmt.Printf("   Git Commit:     %s\n", GitCommit)
 	fmt.Printf("   Listen Address: %s:%s%s\n", address, port, addressMode)
-	fmt.Printf("   Gin Mode:       %s\n", ginMode)
+	fmt.Printf("   Environment:    %s\n", envMode)
 
 	fmt.Println("\n💾 Database:")
 	fmt.Printf("   Path:           %s\n", dbPath)
@@ -1258,7 +1340,7 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	fmt.Println("\n🌐 Network Configuration:")
 	fmt.Println("   Default:        :: (all interfaces, IPv4 + IPv6)")
 	fmt.Println("   Reverse Proxy:  127.0.0.1 (set REVERSE_PROXY=true)")
-	fmt.Println("   Custom:         Set SERVER_ADDRESS environment variable")
+	fmt.Println("   Custom:         Set SERVER_LISTEN environment variable")
 
 	fmt.Println("\n" + strings.Repeat("─", 56))
 	fmt.Println()

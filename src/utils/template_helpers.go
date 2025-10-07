@@ -1,22 +1,33 @@
 package utils
 
 import (
-	"weather-go/src/middleware"
-
 	"github.com/gin-gonic/gin"
 )
 
+// ServerContext holds server information for templates
+type ServerContext struct {
+	Title       string
+	Tagline     string
+	Description string
+	Version     string
+}
+
 // TemplateData enriches template data with server context
 func TemplateData(c *gin.Context, data gin.H) gin.H {
-	// Get server context from middleware
-	serverCtx, exists := middleware.GetServerContext(c)
+	// Get server context from Gin context (set by middleware)
+	serverCtxInterface, exists := c.Get("server")
+
+	var serverCtx interface{}
 	if !exists {
 		// Fallback to defaults
-		serverCtx = middleware.ServerContext{
-			Title:       "Weather Service",
-			Tagline:     "Your personal weather dashboard",
-			Description: "Weather information service",
+		serverCtx = map[string]string{
+			"title":       "Weather Service",
+			"tagline":     "Your personal weather dashboard",
+			"description": "Weather information service",
+			"version":     "unknown",
 		}
+	} else {
+		serverCtx = serverCtxInterface
 	}
 
 	// Create enriched data

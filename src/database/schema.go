@@ -613,6 +613,84 @@ func InitDB(dbPath string) (*DB, error) {
 	return &DB{db}, nil
 }
 
+// InitDBFromConnectionString initializes database from a connection string
+// Supports: sqlite:///path/to/db, postgres://user:pass@host/db, mysql://user:pass@host/db
+func InitDBFromConnectionString(connString string) (*DB, error) {
+	// Parse connection string to determine database type
+	var driver string
+	var dsn string
+
+	if strings.HasPrefix(connString, "sqlite://") || strings.HasPrefix(connString, "sqlite:") {
+		driver = "sqlite"
+		dsn = strings.TrimPrefix(connString, "sqlite://")
+		dsn = strings.TrimPrefix(dsn, "sqlite:")
+		dsn = strings.TrimPrefix(dsn, "//")
+	} else if strings.HasPrefix(connString, "postgres://") || strings.HasPrefix(connString, "postgresql://") {
+		// For PostgreSQL, we'd need to add the driver
+		return nil, fmt.Errorf("PostgreSQL support via connection string not yet implemented - use DB_TYPE, DB_HOST, etc.")
+	} else if strings.HasPrefix(connString, "mysql://") {
+		// For MySQL, we'd need to add the driver
+		return nil, fmt.Errorf("MySQL support via connection string not yet implemented - use DB_TYPE, DB_HOST, etc.")
+	} else {
+		// Assume it's a raw SQLite path
+		driver = "sqlite"
+		dsn = connString
+	}
+
+	// Open database
+	db, err := sql.Open(driver, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	// Enable foreign keys and WAL mode for SQLite
+	if driver == "sqlite" {
+		if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
+			return nil, fmt.Errorf("failed to enable foreign keys: %w", err)
+		}
+		if _, err := db.Exec("PRAGMA journal_mode = WAL"); err != nil {
+			return nil, fmt.Errorf("failed to enable WAL mode: %w", err)
+		}
+	}
+
+	// Create schema
+	if _, err := db.Exec(Schema); err != nil {
+		return nil, fmt.Errorf("failed to create schema: %w", err)
+	}
+
+	// Check schema version
+	var currentVersion int
+	err = db.QueryRow("SELECT COALESCE(MAX(version), 0) FROM schema_version").Scan(&currentVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check schema version: %w", err)
+	}
+
+	// Insert schema version if new database
+	if currentVersion == 0 {
+		if _, err := db.Exec("INSERT INTO schema_version (version) VALUES (?)", SchemaVersion); err != nil {
+			return nil, fmt.Errorf("failed to insert schema version: %w", err)
+		}
+
+		// Insert default settings
+		for key, value := range DefaultSettings {
+			_, err := db.Exec(`
+				INSERT INTO settings (key, value) VALUES (?, ?)
+				ON CONFLICT(key) DO NOTHING
+			`, key, value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to insert default setting %s: %w", key, err)
+			}
+		}
+	} else if currentVersion < SchemaVersion {
+		// Run migrations
+		if err := runMigrations(db, currentVersion, SchemaVersion); err != nil {
+			return nil, fmt.Errorf("failed to run migrations: %w", err)
+		}
+	}
+
+	return &DB{db}, nil
+}
+
 // IsFirstRun checks if this is the first run (no users exist)
 func (db *DB) IsFirstRun() (bool, error) {
 	var count int

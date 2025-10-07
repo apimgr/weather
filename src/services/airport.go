@@ -36,11 +36,14 @@ type AirportService struct {
 }
 
 // NewAirportService creates a new airport service
+// Recommended usage: Pass utils.GetAirportDataPath(dirPaths) for cachePath
 func NewAirportService(dataURL, cachePath string) *AirportService {
 	if dataURL == "" {
 		dataURL = "https://raw.githubusercontent.com/mwgg/Airports/refs/heads/master/airports.json"
 	}
 	if cachePath == "" {
+		// Fallback to temp for backward compatibility
+		// TODO: Should use config/databases/airports.json
 		cachePath = "/tmp/airports.json"
 	}
 

@@ -67,10 +67,16 @@ fi
 
 # Create directories
 echo "📁 Creating directories..."
-mkdir -p "${DATA_DIR}"
-mkdir -p "${CONFIG_DIR}"
+mkdir -p "${DATA_DIR}/db"
+mkdir -p "${DATA_DIR}/backups"
+mkdir -p "${CONFIG_DIR}/certs"
+mkdir -p "${CONFIG_DIR}/databases"
+mkdir -p "/var/log/weather"
+mkdir -p "/var/cache/weather/weather"
 chown -R "${SERVICE_USER}:${SERVICE_USER}" "${DATA_DIR}"
 chown -R "${SERVICE_USER}:${SERVICE_USER}" "${CONFIG_DIR}"
+chown -R "${SERVICE_USER}:${SERVICE_USER}" "/var/log/weather"
+chown -R "${SERVICE_USER}:${SERVICE_USER}" "/var/cache/weather"
 
 # Create systemd service
 echo "⚙️  Creating systemd service..."
@@ -87,18 +93,23 @@ Group=${SERVICE_USER}
 Environment="PORT=3000"
 Environment="GIN_MODE=release"
 Environment="TZ=UTC"
-ExecStart=${INSTALL_DIR}/${BINARY_NAME} --data ${DATA_DIR} --config ${CONFIG_DIR}
+ExecStart=${INSTALL_DIR}/${BINARY_NAME}
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
 StandardError=journal
+SyslogIdentifier=weather
 
 # Security
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=${DATA_DIR} ${CONFIG_DIR}
+ReadWritePaths=${DATA_DIR} ${CONFIG_DIR} /var/log/weather /var/cache/weather
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target

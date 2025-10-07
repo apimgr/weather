@@ -67,6 +67,13 @@ try {
     if (!(Test-Path $DataDir)) {
         New-Item -ItemType Directory -Path $DataDir -Force | Out-Null
     }
+    # Create subdirectories
+    New-Item -ItemType Directory -Path "$DataDir\db" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$DataDir\backups" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$env:APPDATA\weather\certs" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$env:APPDATA\weather\databases" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$env:LOCALAPPDATA\weather\logs" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$env:LOCALAPPDATA\weather\cache\weather" -Force | Out-Null
 
     # Install binary
     $DestFile = Join-Path $InstallDir "weather.exe"

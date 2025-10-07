@@ -6,10 +6,13 @@ services:
     container_name: weather
     restart: unless-stopped
     environment:
-      - DB_TYPE=sqlite  # First run only
+      - PORT=80
+      - ENV=production
+      - DATA_DIR=/data
+      - CONFIG_DIR=/config
     volumes:
-      - ./rootfs/data/weather:/data
-      - ./rootfs/config/weather:/config
+      - ./rootfs/data:/data
+      - ./rootfs/config:/config
     ports:
       # Development (random port 64000-64999)
       - "127.0.0.1:64080:80"

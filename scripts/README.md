@@ -2,6 +2,11 @@
 
 Scripts for installing, running, and managing the Weather Service in production environments.
 
+## Quick Links
+
+- **[Service Installation Guide](SERVICE_INSTALL.md)** - Complete guide for Linux, macOS, and Windows
+- **[Windows Service Setup](WINDOWS_SERVICE.md)** - Detailed Windows service options
+
 ## Installation Scripts
 
 ### `install.sh`
@@ -23,9 +28,10 @@ Linux-specific installation (Ubuntu, Debian, RHEL, CentOS, Fedora, Arch).
 - Installs to `/usr/local/bin/weather`
 - Sets up systemd service
 - Creates directories:
-  - `/etc/weather/` - Configuration
-  - `/var/lib/weather/` - Data
-  - `/var/log/weather/` - Logs
+  - `/etc/weather/` - Configuration (certs, databases)
+  - `/var/lib/weather/` - Data (SQLite, backups)
+  - `/var/log/weather/` - Logs (access, error, audit)
+  - `/var/cache/weather/` - Cache
 
 **Usage:**
 ```bash
@@ -37,10 +43,11 @@ macOS-specific installation.
 
 **Features:**
 - Installs to `/usr/local/bin/weather`
-- Sets up LaunchDaemon
+- Sets up LaunchAgent (user) or LaunchDaemon (system)
 - Creates directories:
-  - `~/Library/Application Support/weather/` - Data
+  - `~/Library/Application Support/weather/` - Config and data
   - `~/Library/Logs/weather/` - Logs
+  - `~/Library/Caches/weather/` - Cache
 
 **Usage:**
 ```bash

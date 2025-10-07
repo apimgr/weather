@@ -6,6 +6,30 @@
 [![Go Version](https://img.shields.io/badge/go-1.23+-00ADD8.svg)](https://golang.org)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows%20%7C%20FreeBSD-lightgrey.svg)]()
 
+## 🚀 Quick Install
+
+```bash
+# Linux (Ubuntu, Debian, RHEL, CentOS, Fedora, Arch)
+curl -fsSL https://raw.githubusercontent.com/apimgr/weather/main/scripts/install.sh | sudo bash
+
+# macOS
+curl -fsSL https://raw.githubusercontent.com/apimgr/weather/main/scripts/install.sh | bash
+
+# Windows (PowerShell as Administrator)
+iwr -useb https://raw.githubusercontent.com/apimgr/weather/main/scripts/windows.ps1 | iex
+
+# Docker
+docker run -d -p 127.0.0.1:64080:80 \
+  -e PORT=80 \
+  -e DATA_DIR=/data \
+  -e CONFIG_DIR=/config \
+  -v ./rootfs/data:/data \
+  -v ./rootfs/config:/config \
+  ghcr.io/apimgr/weather:latest
+```
+
+After installation, visit `http://localhost:3000` to complete setup!
+
 ## ✨ Features
 
 ### 🌍 Weather & Environmental Data
@@ -69,10 +93,13 @@ iwr -useb https://raw.githubusercontent.com/apimgr/weather/main/scripts/windows.
 
 ```bash
 docker run -d \
-  -p 3000:3000 \
-  -v weather-data:/data \
-  -e SESSION_SECRET=$(openssl rand -base64 32) \
-  weather:latest
+  -p 127.0.0.1:64080:80 \
+  -e PORT=80 \
+  -e DATA_DIR=/data \
+  -e CONFIG_DIR=/config \
+  -v ./rootfs/data:/data \
+  -v ./rootfs/config:/config \
+  ghcr.io/apimgr/weather:latest
 ```
 
 ### From Source
@@ -193,31 +220,93 @@ London, GB: ☀️ 🌡️+22°C 🌬️↗11km/h 💧45%
 
 ### Environment Variables
 
+All configuration is stored in the database after first run. Environment variables are checked **only once** on initial startup.
+
+#### Core Server
+
 ```bash
-# Server
-PORT=3000                          # Listen port
-GIN_MODE=release                   # Gin mode (debug/release)
-SERVER_ADDRESS=0.0.0.0            # Listen address
-
-# Database (can be overridden with --data CLI flag)
-DATABASE_PATH=/data/weather.db     # SQLite database path (if not using --data flag)
-
-# Security
-SESSION_SECRET=your-random-secret  # Session encryption key
-
-# Rate Limiting
-RATE_LIMIT_ANON=120               # Anonymous requests/hour
-RATE_LIMIT_AUTH=1200              # Authenticated requests/hour
+PORT=3000                          # Server port (or "8080,8443" for HTTP+HTTPS)
+ENV=production                     # Environment: development, production, test
+ENVIRONMENT=production             # Alternative to ENV
+SERVER_LISTEN=0.0.0.0             # Listen address (default: auto-detect)
 ```
 
-### Configuration File
+#### Database
 
 ```bash
-# Copy example
-cp .env.example .env
+# Connection String (preferred for non-SQLite)
+DATABASE_URL=sqlite:///data/weather.db          # SQLite
+DATABASE_URL=postgres://user:pass@host/db       # PostgreSQL (planned)
+DATABASE_URL=mysql://user:pass@host/db          # MySQL (planned)
+DB_CONNECTION_STRING=sqlite:///data/weather.db  # Alternative to DATABASE_URL
 
-# Edit with your values
-nano .env
+# Direct Path (SQLite only)
+DATABASE_PATH=/data/db/weather.db  # Direct SQLite database path
+
+# Individual Parameters (first run only - not yet implemented)
+DB_TYPE=sqlite                     # Database type: sqlite, mysql, postgres, mssql
+DB_HOST=localhost                  # Database hostname
+DB_PORT=5432                       # Database port
+DB_NAME=weather                    # Database name
+DB_USER=weather                    # Database username
+DB_PASSWORD=secret                 # Database password
+```
+
+#### Directory Paths
+
+```bash
+DATA_DIR=/custom/data              # Override data directory
+CONFIG_DIR=/custom/config          # Override config directory
+LOG_DIR=/custom/logs               # Override log directory
+```
+
+#### Network & Proxy
+
+```bash
+REVERSE_PROXY=true                 # Enable reverse proxy mode (listen on 127.0.0.1)
+DOMAIN=weather.example.com         # Primary domain name
+HOSTNAME=server.local              # Server hostname
+```
+
+#### SSL/TLS
+
+```bash
+TLS_ENABLED=true                   # Enable TLS/SSL
+```
+
+#### Security
+
+```bash
+SESSION_SECRET=your-secret-key     # Session encryption (auto-generated if not set)
+                                   # Saved to {config}/session for persistence
+```
+
+#### Email/SMTP
+
+```bash
+SMTP_HOST=smtp.gmail.com           # SMTP server hostname
+SMTP_PORT=587                      # SMTP server port
+SMTP_USERNAME=user@example.com     # SMTP username
+SMTP_PASSWORD=app-password         # SMTP password
+SMTP_FROM_ADDRESS=noreply@example.com  # From email address
+SMTP_FROM_NAME=Weather Service     # From display name
+```
+
+### Docker Environment Variables
+
+For Docker deployments, set these in docker-compose.yml or docker run:
+
+```bash
+docker run -d \
+  -e PORT=80 \
+  -e ENV=production \
+  -e DATA_DIR=/data \
+  -e CONFIG_DIR=/config \
+  -e REVERSE_PROXY=true \
+  -e DOMAIN=weather.example.com \
+  -v ./rootfs/data:/data \
+  -v ./rootfs/config:/config \
+  ghcr.io/apimgr/weather:latest
 ```
 
 ## 🐳 Docker Deployment
