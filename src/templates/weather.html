@@ -42,29 +42,7 @@
         </form>
 
         {{if .WeatherData}}
-            <!-- Location Details Section -->
-            <div class="location-details-section" style="margin: 1.5rem 0; padding: 1rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-                <div class="location-info">
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
-                        <span style="color: var(--dracula-yellow);">{{if .WeatherData.Location.ShortName}}{{.WeatherData.Location.ShortName}}{{else}}{{.WeatherData.Location.Name}}, {{.WeatherData.Location.Country}}{{end}}</span>
-                    </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌍 <strong style="color: var(--dracula-cyan);">Country:</strong>
-                        <span style="color: var(--dracula-green);">{{.WeatherData.Location.Country}}</span>
-                    </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌐 <strong style="color: var(--dracula-cyan);">Coordinates:</strong>
-                        <span style="color: var(--dracula-pink);">{{printf "%.4f" .WeatherData.Location.Latitude}}, {{printf "%.4f" .WeatherData.Location.Longitude}}</span>
-                    </div>
-                    {{if .WeatherData.Location.Population}}
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        👥 <strong style="color: var(--dracula-cyan);">Population:</strong>
-                        <span style="color: var(--dracula-purple);">{{.WeatherData.Location.PopulationFormatted}}</span>
-                    </div>
-                    {{end}}
-                </div>
-            </div>
+            {{template "location_details" .WeatherData}}
         {{end}}
 
         {{if .Error}}

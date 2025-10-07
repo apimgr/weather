@@ -51,33 +51,7 @@
         </form>
 
         {{if .MoonData}}
-            <!-- Location Details Section -->
-            <div class="location-details-section" style="margin: 1.5rem 0; padding: 1rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-                <div class="location-info">
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
-                        <span style="color: var(--dracula-yellow);">{{if .MoonData.Location.ShortName}}{{.MoonData.Location.ShortName}}{{else}}{{.MoonData.Location.Name}}, {{.MoonData.Location.Country}}{{end}}</span>
-                    </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌍 <strong style="color: var(--dracula-cyan);">Country:</strong>
-                        <span style="color: var(--dracula-green);">{{.MoonData.Location.Country}}</span>
-                    </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌐 <strong style="color: var(--dracula-cyan);">Coordinates:</strong>
-                        <span style="color: var(--dracula-pink);">{{printf "%.4f" .MoonData.Location.Latitude}}, {{printf "%.4f" .MoonData.Location.Longitude}}</span>
-                    </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🕐 <strong style="color: var(--dracula-cyan);">Timezone:</strong>
-                        <span style="color: var(--dracula-orange);">{{.MoonData.Location.Timezone}}</span>
-                    </div>
-                    {{if gt .MoonData.Location.Population 0}}
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        👥 <strong style="color: var(--dracula-cyan);">Population:</strong>
-                        <span style="color: var(--dracula-purple);">{{.MoonData.Location.PopulationFormatted}}</span>
-                    </div>
-                    {{end}}
-                </div>
-            </div>
+            {{template "location_details" .MoonData}}
 
             <!-- Current Moon Phase -->
             <div class="current-weather">
