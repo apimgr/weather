@@ -30,37 +30,100 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 	location := c.Query("location")
 	lat := c.Query("lat")
 	lon := c.Query("lon")
+	cityID := c.Query("city_id")
+	nearest := c.Query("nearest")
 	unitsParam := c.Query("units")
 
 	var coords *services.Coordinates
+	var enhanced *services.EnhancedLocation
 	var err error
 
-	// Parse coordinates or location
-	if lat != "" && lon != "" {
+	// Priority: city_id > lat/lon > nearest > location > IP
+	if cityID != "" {
+		// Find city by ID
+		id, parseErr := strconv.Atoi(cityID)
+		if parseErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "INVALID_CITY_ID",
+					"message": "Invalid city ID format",
+				},
+			})
+			return
+		}
+		enhanced, err = h.locationEnhancer.FindCityByID(id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": gin.H{
+					"code":    "CITY_NOT_FOUND",
+					"message": fmt.Sprintf("City ID %d not found", id),
+				},
+			})
+			return
+		}
+	} else if lat != "" && lon != "" {
+		// Use coordinates
 		latitude, _ := strconv.ParseFloat(lat, 64)
 		longitude, _ := strconv.ParseFloat(lon, 64)
-		coords, err = h.weatherService.GetCoordinates(fmt.Sprintf("%f,%f", latitude, longitude), "")
+
+		if nearest == "true" || nearest == "1" {
+			// Find nearest city to coordinates
+			enhanced, err = h.locationEnhancer.FindNearestCity(latitude, longitude)
+			if err != nil {
+				// Fallback to coordinate-based location
+				coords, err = h.weatherService.GetCoordinates(fmt.Sprintf("%f,%f", latitude, longitude), "")
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"error": gin.H{
+							"code":    "LOCATION_ERROR",
+							"message": err.Error(),
+						},
+					})
+					return
+				}
+				enhanced = h.locationEnhancer.EnhanceLocation(coords)
+			}
+		} else {
+			coords, err = h.weatherService.GetCoordinates(fmt.Sprintf("%f,%f", latitude, longitude), "")
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": gin.H{
+						"code":    "LOCATION_ERROR",
+						"message": err.Error(),
+					},
+				})
+				return
+			}
+			enhanced = h.locationEnhancer.EnhanceLocation(coords)
+		}
 	} else if location != "" {
 		clientIP := utils.GetClientIP(c)
 		coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "LOCATION_ERROR",
+					"message": err.Error(),
+				},
+			})
+			return
+		}
+		enhanced = h.locationEnhancer.EnhanceLocation(coords)
 	} else {
 		// IP-based location detection
 		clientIP := utils.GetClientIP(c)
 		coords, err = h.weatherService.GetCoordinatesFromIP(clientIP)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "LOCATION_ERROR",
+					"message": err.Error(),
+				},
+			})
+			return
+		}
+		enhanced = h.locationEnhancer.EnhanceLocation(coords)
 	}
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "WEATHER_ERROR",
-				"message": err.Error(),
-			},
-		})
-		return
-	}
-
-	// Enhance location
-	enhanced := h.locationEnhancer.EnhanceLocation(coords)
 
 	// Determine units
 	units := "imperial"

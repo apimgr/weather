@@ -236,6 +236,15 @@ vendor/
 data
 rootfs
 
+# Testing and debugging
+tmp/
+temp/
+*.db
+*.db-shm
+*.db-wal
+nohup.out
+cookies.txt
+
 # Ignore the TODO.md
 TODO.md
 

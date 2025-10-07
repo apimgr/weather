@@ -506,3 +506,57 @@ func (le *LocationEnhancer) GetCitiesData() []City {
 	defer le.mu.RUnlock()
 	return le.citiesData
 }
+
+// FindCityByID finds a city by its ID and returns enhanced location
+func (le *LocationEnhancer) FindCityByID(cityID int) (*EnhancedLocation, error) {
+	le.mu.RLock()
+	defer le.mu.RUnlock()
+
+	if !le.initialized {
+		return nil, fmt.Errorf("location enhancer not initialized")
+	}
+
+	// Search for city by ID
+	for _, city := range le.citiesData {
+		if city.ID == cityID {
+			// Find country details
+			var countryData *Country
+			for i := range le.countriesData {
+				if strings.EqualFold(le.countriesData[i].CountryCode, city.Country) {
+					countryData = &le.countriesData[i]
+					break
+				}
+			}
+
+			enhanced := &EnhancedLocation{
+				Latitude:    city.Coord.Lat,
+				Longitude:   city.Coord.Lon,
+				Name:        city.Name,
+				Country:     city.Country,
+				CountryCode: city.Country,
+				Admin1:      city.State,
+				Population:  city.Population,
+			}
+
+			if countryData != nil {
+				enhanced.Capital = countryData.Capital
+				if len(countryData.Timezones) > 0 {
+					enhanced.Timezone = countryData.Timezones[0]
+				}
+			}
+
+			// Build display names
+			if city.State != "" {
+				enhanced.FullName = fmt.Sprintf("%s, %s, %s", city.Name, city.State, city.Country)
+				enhanced.ShortName = fmt.Sprintf("%s, %s", city.Name, city.State)
+			} else {
+				enhanced.FullName = fmt.Sprintf("%s, %s", city.Name, city.Country)
+				enhanced.ShortName = city.Name
+			}
+
+			return enhanced, nil
+		}
+	}
+
+	return nil, fmt.Errorf("city ID %d not found", cityID)
+}

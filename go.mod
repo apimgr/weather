@@ -7,6 +7,7 @@ toolchain go1.24.6
 require (
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	golang.org/x/crypto v0.42.0
 	modernc.org/sqlite v1.39.0

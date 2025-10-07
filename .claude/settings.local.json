@@ -103,7 +103,8 @@
       "Bash(ss:*)",
       "Read(//proc/2697226/**)",
       "Bash(rm:*)",
-      "Bash(go:*)"
+      "Bash(go:*)",
+      "Bash(./tests/run-tests.sh:*)"
     ],
     "deny": [],
     "ask": []
