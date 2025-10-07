@@ -1,28 +1,22 @@
-
-name: weather
+# NO version field
+# NO build definition
 services:
-  app:
+  weather:
     image: ghcr.io/apimgr/weather:latest
     container_name: weather
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:64000:80"
     environment:
-      - PORT=80
-      - GIN_MODE=release
-      - SESSION_SECRET=${SESSION_SECRET:-}
-      - TZ=${TZ:-America/New_York}
+      - DB_TYPE=sqlite  # First run only
     volumes:
-      - ./rootfs/data:/data
-      - ./rootfs/config:/config
+      - ./rootfs/data/weather:/data
+      - ./rootfs/config/weather:/config
+    ports:
+      # Development (random port 64000-64999)
+      - "127.0.0.1:64080:80"
+      # Production (uncomment)
+      # - "172.17.0.1:64080:80"
     networks:
       - weather
-    healthcheck:
-      test: ["/usr/local/bin/weather", "--healthcheck"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
 
 networks:
   weather:
