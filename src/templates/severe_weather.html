@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Weather</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚠️</text></svg>">
+    <style>
+        .severe-weather-header {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .alert-summary {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .summary-item {
+            background: var(--dracula-current-line);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .summary-count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--dracula-yellow);
+        }
+
+        .summary-label {
+            color: var(--dracula-comment);
+            font-size: 0.875rem;
+        }
+
+        .location-info {
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--dracula-cyan);
+        }
+
+        .alert-section {
+            margin: 2rem 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--dracula-current-line);
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--dracula-foreground);
+        }
+
+        .section-count {
+            margin-left: auto;
+            color: var(--dracula-comment);
+        }
+
+        .alerts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+        }
+
+        @media (max-width: 719px) {
+            .alerts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alert-card {
+            background: var(--dracula-current-line);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            border-left: 4px solid var(--dracula-purple);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .alert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+            border-left-width: 6px;
+        }
+
+        .alert-card.extreme {
+            border-left-color: var(--dracula-red);
+        }
+
+        .alert-card.severe {
+            border-left-color: var(--dracula-orange);
+        }
+
+        .alert-card.moderate {
+            border-left-color: var(--dracula-yellow);
+        }
+
+        .alert-card.minor {
+            border-left-color: var(--dracula-cyan);
+        }
+
+        .alert-event {
+            font-weight: bold;
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--dracula-comment);
+            flex-wrap: wrap;
+        }
+
+        .alert-area {
+            color: var(--dracula-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-headline {
+            color: var(--dracula-foreground);
+            line-height: 1.4;
+        }
+
+        .alert-details {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--dracula-bg);
+            font-size: 0.875rem;
+        }
+
+        .alert-details.show {
+            display: block;
+        }
+
+        .alert-distance {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--dracula-bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--dracula-cyan);
+        }
+
+        .storm-card {
+            background: var(--dracula-current-line);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border-left: 4px solid var(--dracula-purple);
+        }
+
+        .storm-card.cat5 { border-left-color: #8b0000; }
+        .storm-card.cat4 { border-left-color: var(--dracula-red); }
+        .storm-card.cat3 { border-left-color: var(--dracula-orange); }
+        .storm-card.cat2 { border-left-color: var(--dracula-yellow); }
+        .storm-card.cat1 { border-left-color: var(--dracula-green); }
+        .storm-card.tropical { border-left-color: var(--dracula-cyan); }
+
+        .storm-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .storm-category {
+            color: var(--dracula-yellow);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .storm-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .storm-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+
+        .detail-label {
+            color: var(--dracula-comment);
+        }
+
+        .detail-value {
+            color: var(--dracula-foreground);
+            font-weight: 500;
+        }
+
+        .no-alerts {
+            text-align: center;
+            padding: 3rem;
+            color: var(--dracula-comment);
+        }
+
+        .no-alerts-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .location-form {
+            max-width: 600px;
+            margin: 2rem auto;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .location-form input {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--dracula-selection);
+            background: var(--dracula-bg);
+            color: var(--dracula-foreground);
+        }
+
+        .location-form button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            border: none;
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .location-form button:hover {
+            background: var(--dracula-pink);
+        }
+
+        @media (max-width: 719px) {
+            .location-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    {{template "navbar" .}}
+
+    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+        <div class="severe-weather-header">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️ Severe Weather Alerts</h1>
+            <p style="color: var(--dracula-comment);">Real-time warnings for hurricanes, tornadoes, severe storms, winter weather, and floods</p>
+        </div>
+
+        {{if .HasLocation}}
+        <div class="location-info">
+            📍 Showing alerts for: <strong>{{.LocationName}}</strong>
+        </div>
+        {{end}}
+
+        <div class="location-form">
+            <input type="text" id="location-input" placeholder="Enter location or coordinates (e.g., Miami or 25.7617,-80.1918)" value="{{.LocationName}}">
+            <select id="type-select" style="padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--dracula-selection); background: var(--dracula-bg); color: var(--dracula-foreground);">
+                <option value="all" selected>All Types</option>
+                <option value="hurricanes">🌀 Hurricanes</option>
+                <option value="tornadoes">🌪️ Tornadoes</option>
+                <option value="storms">⛈️ Severe Storms</option>
+                <option value="winter">❄️ Winter Weather</option>
+                <option value="floods">🌊 Floods</option>
+            </select>
+            <select id="distance-select" style="padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--dracula-selection); background: var(--dracula-bg); color: var(--dracula-foreground);">
+                <option value="25">25 miles</option>
+                <option value="50" selected>50 miles</option>
+                <option value="100">100 miles</option>
+                <option value="250">250 miles</option>
+                <option value="500">500 miles</option>
+                <option value="0">All alerts</option>
+            </select>
+            <button onclick="updateLocation()">🔍 Update</button>
+        </div>
+
+        <div class="alert-summary">
+            <div class="summary-item">
+                <div class="summary-count">{{.TotalStorms}}</div>
+                <div class="summary-label">Hurricanes</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-count">{{.TotalAlerts}}</div>
+                <div class="summary-label">Active Alerts</div>
+            </div>
+        </div>
+
+        {{if .Data}}
+            {{/* Hurricanes Section */}}
+            {{if .Data.Hurricanes}}
+            <div class="alert-section">
+                <div class="section-header">
+                    <span class="section-icon">🌀</span>
+                    <span class="section-title">Hurricanes & Tropical Storms</span>
+                    <span class="section-count">{{len .Data.Hurricanes}}</span>
+                </div>
+                <div class="alerts-grid">
+                    {{range .Data.Hurricanes}}
+                    <div class="storm-card {{if ge .WindSpeed 157}}cat5{{else if ge .WindSpeed 130}}cat4{{else if ge .WindSpeed 111}}cat3{{else if ge .WindSpeed 96}}cat2{{else if ge .WindSpeed 74}}cat1{{else}}tropical{{end}}">
+                        <div class="storm-name">{{.Name}}</div>
+                        <div class="storm-category">{{.Intensity}}</div>
+                        <div class="storm-details">
+                            <div class="storm-detail">
+                                <span class="detail-label">Wind Speed:</span>
+                                <span class="detail-value">{{.WindSpeed}} mph</span>
+                            </div>
+                            <div class="storm-detail">
+                                <span class="detail-label">Pressure:</span>
+                                <span class="detail-value">{{.Pressure}} mb</span>
+                            </div>
+                            <div class="storm-detail">
+                                <span class="detail-label">Location:</span>
+                                <span class="detail-value">{{printf "%.2f" .Latitude}}, {{printf "%.2f" .Longitude}}</span>
+                            </div>
+                            {{if gt .DistanceMiles 0}}
+                            <div class="storm-detail">
+                                <span class="detail-label">Distance:</span>
+                                <span class="detail-value">{{printf "%.0f" .DistanceMiles}} miles</span>
+                            </div>
+                            {{end}}
+                            {{if gt .MovementSpeed 0}}
+                            <div class="storm-detail" style="grid-column: 1 / -1;">
+                                <span class="detail-label">Movement:</span>
+                                <span class="detail-value">{{.MovementDir}} at {{.MovementSpeed}} mph</span>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{/* Tornado Warnings */}}
+            {{if .Data.TornadoWarnings}}
+            <div class="alert-section">
+                <div class="section-header">
+                    <span class="section-icon">🌪️</span>
+                    <span class="section-title">Tornado Warnings</span>
+                    <span class="section-count">{{len .Data.TornadoWarnings}}</span>
+                </div>
+                <div class="alerts-grid">
+                    {{range .Data.TornadoWarnings}}
+                    <div class="alert-card {{.Severity | lower}}">
+                        {{if gt .DistanceMiles 0}}
+                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
+                        {{end}}
+                        <div class="alert-event">🌪️ {{.Event}}</div>
+                        <div class="alert-meta">
+                            <span>Severity: <strong>{{.Severity}}</strong></span>
+                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
+                        </div>
+                        <div class="alert-area">📍 {{.AreaDesc}}</div>
+                        {{if .Headline}}
+                        <div class="alert-headline">{{.Headline}}</div>
+                        {{end}}
+                        {{if .Description}}
+                        <div class="alert-details">
+                            <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--dracula-purple);">Details:</div>
+                            <div style="line-height: 1.6;">{{.Description}}</div>
+                            {{if .Instruction}}
+                            <div style="font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--dracula-orange);">Instructions:</div>
+                            <div style="line-height: 1.6;">{{.Instruction}}</div>
+                            {{end}}
+                            {{if .Expires}}
+                            <div style="margin-top: 1rem; color: var(--dracula-comment);">Expires: {{.Expires}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{/* Severe Thunderstorms */}}
+            {{if .Data.SevereStorms}}
+            <div class="alert-section">
+                <div class="section-header">
+                    <span class="section-icon">⛈️</span>
+                    <span class="section-title">Severe Thunderstorm Warnings</span>
+                    <span class="section-count">{{len .Data.SevereStorms}}</span>
+                </div>
+                <div class="alerts-grid">
+                    {{range .Data.SevereStorms}}
+                    <div class="alert-card {{.Severity | lower}}">
+                        {{if gt .DistanceMiles 0}}
+                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
+                        {{end}}
+                        <div class="alert-event">⛈️ {{.Event}}</div>
+                        <div class="alert-meta">
+                            <span>Severity: <strong>{{.Severity}}</strong></span>
+                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
+                        </div>
+                        <div class="alert-area">📍 {{.AreaDesc}}</div>
+                        {{if .Headline}}
+                        <div class="alert-headline">{{.Headline}}</div>
+                        {{end}}
+                        {{if .Description}}
+                        <div class="alert-details">
+                            <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--dracula-purple);">Details:</div>
+                            <div style="line-height: 1.6;">{{.Description}}</div>
+                            {{if .Instruction}}
+                            <div style="font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--dracula-orange);">Instructions:</div>
+                            <div style="line-height: 1.6;">{{.Instruction}}</div>
+                            {{end}}
+                            {{if .Expires}}
+                            <div style="margin-top: 1rem; color: var(--dracula-comment);">Expires: {{.Expires}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{/* Winter Storms */}}
+            {{if .Data.WinterStorms}}
+            <div class="alert-section">
+                <div class="section-header">
+                    <span class="section-icon">❄️</span>
+                    <span class="section-title">Winter Storm Warnings</span>
+                    <span class="section-count">{{len .Data.WinterStorms}}</span>
+                </div>
+                <div class="alerts-grid">
+                    {{range .Data.WinterStorms}}
+                    <div class="alert-card {{.Severity | lower}}">
+                        {{if gt .DistanceMiles 0}}
+                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
+                        {{end}}
+                        <div class="alert-event">❄️ {{.Event}}</div>
+                        <div class="alert-meta">
+                            <span>Severity: <strong>{{.Severity}}</strong></span>
+                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
+                        </div>
+                        <div class="alert-area">📍 {{.AreaDesc}}</div>
+                        {{if .Headline}}
+                        <div class="alert-headline">{{.Headline}}</div>
+                        {{end}}
+                        {{if .Description}}
+                        <div class="alert-details">
+                            <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--dracula-purple);">Details:</div>
+                            <div style="line-height: 1.6;">{{.Description}}</div>
+                            {{if .Instruction}}
+                            <div style="font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--dracula-orange);">Instructions:</div>
+                            <div style="line-height: 1.6;">{{.Instruction}}</div>
+                            {{end}}
+                            {{if .Expires}}
+                            <div style="margin-top: 1rem; color: var(--dracula-comment);">Expires: {{.Expires}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{/* Flood Warnings */}}
+            {{if .Data.FloodWarnings}}
+            <div class="alert-section">
+                <div class="section-header">
+                    <span class="section-icon">🌊</span>
+                    <span class="section-title">Flood Warnings</span>
+                    <span class="section-count">{{len .Data.FloodWarnings}}</span>
+                </div>
+                <div class="alerts-grid">
+                    {{range .Data.FloodWarnings}}
+                    <div class="alert-card {{.Severity | lower}}">
+                        {{if gt .DistanceMiles 0}}
+                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
+                        {{end}}
+                        <div class="alert-event">🌊 {{.Event}}</div>
+                        <div class="alert-meta">
+                            <span>Severity: <strong>{{.Severity}}</strong></span>
+                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
+                        </div>
+                        <div class="alert-area">📍 {{.AreaDesc}}</div>
+                        {{if .Headline}}
+                        <div class="alert-headline">{{.Headline}}</div>
+                        {{end}}
+                        {{if .Description}}
+                        <div class="alert-details">
+                            <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--dracula-purple);">Details:</div>
+                            <div style="line-height: 1.6;">{{.Description}}</div>
+                            {{if .Instruction}}
+                            <div style="font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--dracula-orange);">Instructions:</div>
+                            <div style="line-height: 1.6;">{{.Instruction}}</div>
+                            {{end}}
+                            {{if .Expires}}
+                            <div style="margin-top: 1rem; color: var(--dracula-comment);">Expires: {{.Expires}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{/* Other Alerts */}}
+            {{if .Data.OtherAlerts}}
+            <div class="alert-section">
+                <div class="section-header">
+                    <span class="section-icon">⚠️</span>
+                    <span class="section-title">Other Weather Alerts</span>
+                    <span class="section-count">{{len .Data.OtherAlerts}}</span>
+                </div>
+                <div class="alerts-grid">
+                    {{range .Data.OtherAlerts}}
+                    <div class="alert-card {{.Severity | lower}}">
+                        {{if gt .DistanceMiles 0}}
+                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
+                        {{end}}
+                        <div class="alert-event">⚠️ {{.Event}}</div>
+                        <div class="alert-meta">
+                            <span>Severity: <strong>{{.Severity}}</strong></span>
+                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
+                        </div>
+                        <div class="alert-area">📍 {{.AreaDesc}}</div>
+                        {{if .Headline}}
+                        <div class="alert-headline">{{.Headline}}</div>
+                        {{end}}
+                        {{if .Description}}
+                        <div class="alert-details">
+                            <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--dracula-purple);">Details:</div>
+                            <div style="line-height: 1.6;">{{.Description}}</div>
+                            {{if .Instruction}}
+                            <div style="font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--dracula-orange);">Instructions:</div>
+                            <div style="line-height: 1.6;">{{.Instruction}}</div>
+                            {{end}}
+                            {{if .Expires}}
+                            <div style="margin-top: 1rem; color: var(--dracula-comment);">Expires: {{.Expires}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{/* No Alerts Message */}}
+            {{if and (not .Data.Hurricanes) (not .Data.TornadoWarnings) (not .Data.SevereStorms) (not .Data.WinterStorms) (not .Data.FloodWarnings) (not .Data.OtherAlerts)}}
+            <div class="no-alerts">
+                <div class="no-alerts-icon">🌤️</div>
+                <h2 style="color: var(--dracula-green); font-size: 1.75rem; margin-bottom: 1rem;">All Clear!</h2>
+                <p style="margin-top: 0.5rem; color: var(--dracula-foreground); font-size: 1.125rem;">No active severe weather alerts in your area.</p>
+                <p style="margin-top: 1rem; color: var(--dracula-comment);">Enjoying calm weather conditions 🌈</p>
+                {{if .HasLocation}}
+                <p style="margin-top: 1rem; color: var(--dracula-cyan); font-size: 0.875rem;">
+                    Monitoring within {{.Distance}} miles of {{.LocationName}}
+                </p>
+                {{end}}
+            </div>
+            {{end}}
+
+        {{else}}
+            <div class="no-alerts">
+                <div class="no-alerts-icon">⚠️</div>
+                <h2>Unable to Load Weather Data</h2>
+                <p style="margin-top: 0.5rem;">Please try again later.</p>
+            </div>
+        {{end}}
+
+        <div style="text-align: center; margin-top: 3rem; padding: 1.5rem; background: var(--dracula-current-line); border-radius: 0.5rem;">
+            <p style="color: var(--dracula-comment); margin-bottom: 0.5rem;">
+                Data provided by <strong>NOAA</strong> and the <strong>National Weather Service</strong>
+            </p>
+            <p style="color: var(--dracula-comment); font-size: 0.875rem;">
+                Updates every 5 minutes • Last updated: {{.Data.LastUpdate}}
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function updateLocation() {
+            const location = document.getElementById('location-input').value.trim();
+            const type = document.getElementById('type-select').value;
+            const distance = document.getElementById('distance-select').value;
+
+            // Build URL based on type selection
+            let url;
+            if (type === 'all') {
+                // Use /severe-weather route
+                url = location ? `/severe-weather/${encodeURIComponent(location)}` : '/severe-weather';
+            } else {
+                // Use /severe/{type} route
+                url = location ? `/severe/${type}/${encodeURIComponent(location)}` : `/severe/${type}`;
+            }
+
+            // Add distance parameter if not default (50)
+            if (distance && distance !== '50') {
+                url += `?distance=${distance}`;
+            }
+
+            window.location.href = url;
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('location-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                updateLocation();
+            }
+        });
+
+        // Set selected filters from URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const distanceParam = urlParams.get('distance');
+
+            // Set distance
+            if (distanceParam) {
+                const distanceSelect = document.getElementById('distance-select');
+                if (distanceSelect) {
+                    distanceSelect.value = distanceParam;
+                }
+            }
+
+            // Detect type from URL path
+            const path = window.location.pathname;
+            const typeMatch = path.match(/\/severe\/(\w+)/);
+            if (typeMatch) {
+                const typeSelect = document.getElementById('type-select');
+                if (typeSelect) {
+                    typeSelect.value = typeMatch[1];
+                }
+            }
+        });
+
+        // Make alert cards clickable to expand/collapse details
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertCards = document.querySelectorAll('.alert-card');
+
+            alertCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const details = this.querySelector('.alert-details');
+                    if (details) {
+                        details.classList.toggle('show');
+                    }
+                });
+            });
+        });
+    </script>
+
+    {{template "footer" .}}
+</body>
+</html>

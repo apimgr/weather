@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - Weather Service</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+    <!-- Unified Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <!-- Brand Logo -->
+            <a href="/" class="navbar-brand">
+                🌤️ Weather Service
+            </a>
+
+            <!-- Desktop Navigation Menu -->
+            <div class="navbar-menu">
+                <a href="/" class="navbar-link">Weather</a>
+                <a href="/moon" class="navbar-link">Moon</a>
+                <a href="/earthquake" class="navbar-link">Earthquakes</a>
+                <a href="/hurricane" class="navbar-link">Hurricanes</a>
+                <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
+                {{ if eq .user.Role "admin" }}
+                <a href="/admin" class="navbar-link">Admin</a>
+                {{ end }}
+            </div>
+
+            <!-- Right Side Actions -->
+            <div class="navbar-actions">
+                <!-- Notification Bell -->
+                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+
+                <!-- Profile Avatar with Dropdown -->
+                <div class="profile-avatar">
+                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                        {{ if .user.Email }}
+                            {{ index .user.Email 0 | printf "%c" | upper }}
+                        {{ else }}
+                            U
+                        {{ end }}
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div>{{ .user.Email }}</div>
+                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
+                        </div>
+                        <nav class="profile-dropdown-menu">
+                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
+                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
+                    ☰
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="navbar-menu-mobile">
+            <a href="/" class="navbar-link">Weather</a>
+            <a href="/moon" class="navbar-link">Moon</a>
+            <a href="/earthquake" class="navbar-link">Earthquakes</a>
+            <a href="/hurricane" class="navbar-link">Hurricanes</a>
+            <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
+            {{ if eq .user.Role "admin" }}
+            <a href="/admin" class="navbar-link">Admin</a>
+            {{ end }}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+        <!-- Dashboard Header -->
+        <div style="margin-bottom: 2rem;">
+            <h1 class="text-purple">Welcome back!</h1>
+            <p class="text-comment">{{ .user.Email }} · {{ .user.Role }}</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-3" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-comment text-sm" style="margin-bottom: 0.5rem;">Saved Locations</h3>
+                    <div class="text-cyan" style="font-size: 2rem; font-weight: 700;">{{ .locationCount }}</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-comment text-sm" style="margin-bottom: 0.5rem;">Notifications</h3>
+                    <div class="text-cyan" style="font-size: 2rem; font-weight: 700;">{{ .unreadCount }}</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-comment text-sm" style="margin-bottom: 0.5rem;">Account Type</h3>
+                    <div class="text-cyan" style="font-size: 1.5rem; font-weight: 700;">{{ .user.Role }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Locations Section -->
+        <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="card-title" style="margin: 0;">Your Saved Locations</h2>
+                <a href="/locations/new" class="btn btn-primary">+ Add Location</a>
+            </div>
+
+            <div class="card-body">
+                {{ if gt .locationCount 0 }}
+                    <div class="grid grid-3">
+                        {{ range .locations }}
+                        <div class="card" style="background: var(--dracula-bg);">
+                            <div class="card-body">
+                                <h3 class="text-cyan" style="font-size: 1.2rem; margin-bottom: 0.5rem;">{{ .Name }}</h3>
+                                <p class="text-comment text-sm">📍 {{ printf "%.4f" .Latitude }}, {{ printf "%.4f" .Longitude }}</p>
+                                {{ if .Timezone }}
+                                <p class="text-comment text-sm">🕐 {{ .Timezone }}</p>
+                                {{ end }}
+
+                                <div style="margin-top: 1rem;">
+                                    {{ if .AlertsEnabled }}
+                                    <span class="badge badge-success">Alerts ON</span>
+                                    {{ else }}
+                                    <span class="badge badge-danger">Alerts OFF</span>
+                                    {{ end }}
+                                </div>
+
+                                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                                    <button onclick="window.location.href='/{{ .Latitude }},{{ .Longitude }}'" class="btn btn-secondary btn-sm" style="flex: 1;">View Weather</button>
+                                    <button onclick="window.location.href='/locations/{{ .ID }}/edit'" class="btn btn-primary btn-sm" style="flex: 1;">Edit</button>
+                                </div>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </div>
+                {{ else }}
+                    <div class="text-center" style="padding: 3rem;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">📍</div>
+                        <h3>No saved locations yet</h3>
+                        <p class="text-comment">Add your first location to start tracking weather</p>
+                        <br>
+                        <a href="/locations/new" class="btn btn-primary">Add Your First Location</a>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000); // Poll every 30 seconds
+        }
+    </script>
+</body>
+</html>

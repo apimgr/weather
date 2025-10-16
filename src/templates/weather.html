@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
+</head>
+<body>
+    {{template "navbar" .}}
+
+    <div class="weather-container">
+
+        <!-- Location Search Form -->
+        <form id="weather-form" class="search-form">
+            <div class="search-row-single">
+                <div class="search-input-wrapper">
+                    <input
+                        type="text"
+                        id="location-input"
+                        name="location"
+                        class="location-input"
+                        placeholder="Enter city or coordinates"
+                        value="{{.Location}}"
+                        autocomplete="off"
+                    >
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                </div>
+                <select name="units" id="units-select" class="units-select">
+                    <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
+                    <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
+                </select>
+                <button type="submit" class="search-button primary">
+                    Get Weather
+                </button>
+                <button type="button" id="location-btn" class="search-button secondary">
+                    📍 My Location
+                </button>
+            </div>
+        </form>
+
+        {{if .WeatherData}}
+            {{template "location_details" .WeatherData}}
+        {{end}}
+
+        {{if .Error}}
+            <div style="background-color: var(--dracula-red); color: var(--dracula-bg); padding: 10px; border-radius: 6px; margin: 20px 0;">
+                <strong>Error:</strong> {{.Error}}
+            </div>
+        {{end}}
+
+        {{if .WeatherData}}
+            <!-- Current Weather -->
+            <div class="current-weather">
+                <div class="weather-icon">
+                    {{.WeatherData.Current.Icon}}
+                </div>
+                <div class="weather-details">
+                    <div class="temperature">
+                        {{printf "%.0f" .WeatherData.Current.Temperature}}{{if eq .Units "imperial"}}°F{{else}}°C{{end}}
+                    </div>
+                    <div class="description">
+                        {{.WeatherData.Current.Description}}
+                    </div>
+                    <div class="weather-stats">
+                        <div class="stat">Feels like: <span class="stat-value">{{printf "%.0f" .WeatherData.Current.FeelsLike}}{{if eq .Units "imperial"}}°F{{else}}°C{{end}}</span></div>
+                        <div class="stat">Wind: <span class="stat-value">{{printf "%.0f" .WeatherData.Current.WindSpeed}} {{if eq .Units "imperial"}}mph{{else}}km/h{{end}}</span></div>
+                        <div class="stat">Humidity: <span class="stat-value">{{.WeatherData.Current.Humidity}}%</span></div>
+                        <div class="stat">Pressure: <span class="stat-value">{{if eq .Units "imperial"}}{{printf "%.2f" .WeatherData.Current.Pressure}} inHg{{else}}{{printf "%.0f" .WeatherData.Current.Pressure}} hPa{{end}}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile-Optimized Forecast -->
+            <div class="forecast-section">
+                <!-- Desktop Table (hidden on mobile) -->
+                <table class="forecast-table desktop-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Conditions</th>
+                            <th>Temperature</th>
+                            <th>Feels Like</th>
+                            <th>Wind</th>
+                            <th>Precipitation</th>
+                            <th>Wind Gusts</th>
+                            <th>Solar Radiation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {{range $day := .WeatherData.Forecast.Days}}
+                        <tr>
+                            <td class="day-header">{{$day.DateFormatted}}</td>
+                            <td class="forecast-condition">
+                                {{$day.Icon}} {{$day.Description}}
+                            </td>
+                            <td class="forecast-temp">
+                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                {{if eq $.Units "imperial"}}F{{else}}C{{end}}
+                            </td>
+                            <td style="color: var(--dracula-comment); font-size: 0.875rem;">
+                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
+                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
+                            </td>
+                            <td class="wind-info">
+                                💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}
+                                <div style="font-size: 0.75rem; color: var(--dracula-comment);">{{$day.WindDirection}}°</div>
+                            </td>
+                            <td class="precipitation">
+                                ☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}}
+                                <div style="font-size: 0.75rem; color: var(--dracula-comment);">{{$day.PrecipitationProbability}}% • {{printf "%.1f" $day.PrecipitationHours}}h</div>
+                            </td>
+                            <td class="wind-info">
+                                💨 {{printf "%.0f" $day.WindGustsMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}
+                            </td>
+                            <td style="color: var(--dracula-yellow);">
+                                ☀️ {{printf "%.1f" $day.SolarRadiation}} MJ/m²
+                            </td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+
+                <!-- Mobile Cards (shown on mobile, hidden on desktop) -->
+                <div class="mobile-forecast">
+                    {{range $day := .WeatherData.Forecast.Days}}
+                        <div class="forecast-card">
+                            <div class="forecast-card-header">
+                                {{$day.DateFormatted}}
+                            </div>
+                            <div class="forecast-card-content">
+                                <div class="forecast-main">
+                                    <span class="forecast-icon">{{$day.Icon}}</span>
+                                    <span class="forecast-temp">
+                                        <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                        <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                        {{if eq $.Units "imperial"}}F{{else}}C{{end}}
+                                    </span>
+                                </div>
+                                <div class="forecast-details" style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                                    <div style="font-weight: 500; color: var(--dracula-cyan);">{{$day.Description}}</div>
+                                    {{if $day.FeelsLikeMax}}
+                                    <div style="color: var(--dracula-comment);">
+                                        <strong>Feels like:</strong> ↑{{printf "%.0f" $day.FeelsLikeMax}}° ↓{{printf "%.0f" $day.FeelsLikeMin}}°
+                                    </div>
+                                    {{end}}
+                                    <div class="wind-info">
+                                        <strong>Wind:</strong> 💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}} ({{$day.WindDirection}}°)
+                                    </div>
+                                    <div class="wind-info">
+                                        <strong>Gusts:</strong> 💨 {{printf "%.0f" $day.WindGustsMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}
+                                    </div>
+                                    <div class="precipitation">
+                                        <strong>Precip:</strong> ☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} • {{$day.PrecipitationProbability}}% chance
+                                    </div>
+                                    <div style="color: var(--dracula-comment);">
+                                        <strong>Duration:</strong> {{printf "%.1f" $day.PrecipitationHours}} hours
+                                    </div>
+                                    <div style="color: var(--dracula-yellow);">
+                                        <strong>Solar:</strong> ☀️ {{printf "%.1f" $day.SolarRadiation}} MJ/m²
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {{end}}
+                </div>
+            </div>
+
+            <!-- Console Command Examples -->
+            <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-bg); border-radius: 6px;">
+                <h3 style="color: var(--dracula-purple); text-align: center; margin-top: 0;">Console Access</h3>
+                <div class="console-commands">
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Weather:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">One-Line:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Moon:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">Moon Location:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <strong style="color: var(--dracula-green);">JSON API:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}')">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{else}}
+            <div style="text-align: center; color: var(--dracula-comment); margin: 30px 0;">
+                <h2 style="color: var(--dracula-cyan); font-size: 18px; margin-bottom: 15px;">Welcome to Weather</h2>
+                <p style="font-size: 14px; margin-bottom: 20px;">Your location has been detected and pre-filled above. Try these examples:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
+                    <a href="?location=London" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇬🇧 London</a>
+                    <a href="?location=Tokyo" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇯🇵 Tokyo</a>
+                    <a href="?location=Paris" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇫🇷 Paris</a>
+                    <a href="?location=Sydney" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇦🇺 Sydney</a>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-current-line); border-radius: 6px;">
+                    <h4 style="color: var(--dracula-green);">Console Access:</h4>
+                    <div class="console-commands">
+                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/London</code>
+                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=Paris</code>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+
+    </div>
+
+    <script>
+        async function getLocation() {
+            const button = document.getElementById('location-btn');
+            if (!button) {
+                console.error('Location button not found');
+                return;
+            }
+            const originalText = button.textContent;
+            button.textContent = '📍 Getting...';
+            button.disabled = true;
+
+            try {
+                // console.log('Starting geolocation process...');
+
+                // Check permissions first
+                if (navigator.permissions) {
+                    const permission = await navigator.permissions.query({name: 'geolocation'});
+                    // console.log('Geolocation permission state:', permission.state);
+                }
+
+                if (!navigator.geolocation) {
+                    throw new Error('Geolocation not supported');
+                }
+
+                // Try high-accuracy GPS first
+                button.textContent = '📍 GPS...';
+                let position = null;
+
+                try {
+                    console.log('📡 Attempting high-accuracy GPS location (protocol:', window.location.protocol + ')');
+
+                    // Check if this is a "force refresh" (long press or double click)
+                    const forceRefresh = button.dataset.forceRefresh === 'true';
+                    if (forceRefresh) {
+                        console.log('🔄 Force refresh requested - bypassing cache');
+                        button.dataset.forceRefresh = 'false';
+                    }
+
+                    position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                console.log('✅ GPS success! Accuracy:', pos.coords.accuracy + 'm');
+                                console.log('📍 GPS coordinates:', pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6));
+
+                                // Show accuracy warning if location is imprecise
+                                if (pos.coords.accuracy > 1000) {
+                                    console.warn('⚠️ Low accuracy GPS reading:', pos.coords.accuracy + 'm');
+                                    button.textContent = '📍 Low Accuracy';
+                                    setTimeout(() => {
+                                        button.textContent = '📍 My Location';
+                                    }, 2000);
+                                }
+
+                                resolve(pos);
+                            },
+                            (err) => {
+                                console.log('❌ GPS failed - Code:', err.code, 'Message:', err.message);
+                                console.log('Error codes: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT');
+                                reject(err);
+                            },
+                            {
+                                timeout: forceRefresh ? 30000 : 20000, // Longer timeout for force refresh
+                                enableHighAccuracy: true, // Try GPS first
+                                maximumAge: forceRefresh ? 0 : 60000 // No cache for force refresh
+                            }
+                        );
+                    });
+                } catch (gpsError) {
+                    console.log('🔄 High-accuracy GPS failed, trying network location...');
+                    button.textContent = '📍 Location...';
+
+                    // Fallback to network-based location
+                    try {
+                        console.log('🌐 Attempting network-based location...');
+                        position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(
+                                (pos) => {
+                                    console.log('✅ Network location success! Accuracy:', pos.coords.accuracy + 'm');
+                                    console.log('📍 Network coordinates:', pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6));
+                                    resolve(pos);
+                                },
+                                (err) => {
+                                    console.log('❌ Network location failed - Code:', err.code, 'Message:', err.message);
+                                    reject(err);
+                                },
+                                {
+                                    timeout: 12000, // Increased from 10 to 12 seconds
+                                    enableHighAccuracy: false, // Network-based
+                                    maximumAge: 600000 // 10 minute cache
+                                }
+                            );
+                        });
+                    } catch (networkError) {
+                        console.log('🔄 Network location failed, trying IP-based detection...');
+                        throw networkError; // This will trigger IP fallback
+                    }
+                }
+
+                console.log('Geolocation success:', position);
+                const lat = position.coords.latitude.toFixed(4);
+                const lon = position.coords.longitude.toFixed(4);
+                const units = document.getElementById('units-select').value;
+
+                console.log('Setting coordinates:', lat + ',' + lon);
+
+                // Build clean coordinate URL and redirect directly
+                const coordinateLocation = `${lat},${lon}`;
+                const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                const newUrl = `${window.location.origin}/${coordinateLocation}${unitsParam}`;
+
+                console.log('Geolocation redirecting to:', newUrl);
+
+                // Visual feedback before redirect
+                button.textContent = '📍 Found!';
+                setTimeout(() => {
+                    window.location.href = newUrl;
+                }, 500);
+
+            } catch (error) {
+                console.error('Geolocation failed:', error);
+                button.textContent = originalText;
+                button.disabled = false;
+
+                let userMessage = 'Unable to get your location';
+
+                if (error.code === 1) {
+                    userMessage = 'Location access denied. Using IP-based location instead';
+                    // Try IP fallback even for permission denied
+                    console.log('Location permission denied, attempting IP-based fallback');
+                    tryIPLocationFallback(button, originalText);
+                    return;
+                } else {
+                    // For all other errors (GPS unavailable, timeout, etc), try IP fallback
+                    userMessage = 'Location services unavailable. Using IP-based location instead';
+                    console.log('All location services failed, attempting IP-based fallback');
+                    tryIPLocationFallback(button, originalText);
+                    return;
+                }
+
+                // Show error in a more user-friendly way
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'background: #ff5555; color: #282a36; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: center;';
+                errorDiv.textContent = userMessage + '. Please enter a location manually.';
+
+                const form = document.querySelector('form');
+                form.parentNode.insertBefore(errorDiv, form.nextSibling);
+
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+        }
+
+        function tryIPLocationFallback(button, originalText) {
+            console.log('🌐 Attempting IP-based location detection via our server');
+            console.log('ℹ️ This indicates GPS/Network location failed or was denied');
+            button.textContent = '📍 IP Location...';
+
+            // Use our own server's IP detection endpoint
+            fetch('/debug/ip')
+                .then(response => {
+                    console.log('📡 IP detection response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('🗺️ Server IP location data:', data);
+                    if (data.location && data.location.value) {
+                        const detectedLocation = data.location.value;
+                        console.log('✅ IP-based location detected:', detectedLocation);
+                        const units = document.getElementById('units-select').value;
+
+                        console.log('Using server-detected location:', detectedLocation);
+
+                        // Build clean URL and redirect directly
+                        const cleanLocation = detectedLocation.replace(/ /g, '+');
+                        const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                        const newUrl = `${window.location.origin}/${cleanLocation}${unitsParam}`;
+
+                        console.log('IP fallback redirecting to:', newUrl);
+
+                        button.textContent = '📍 Found!';
+                        setTimeout(() => {
+                            window.location.href = newUrl;
+                        }, 800);
+                    } else {
+                        throw new Error('No location in server response');
+                    }
+                })
+                .catch(ipError => {
+                    console.log('IP location fallback failed:', ipError);
+                    button.textContent = originalText;
+                    button.disabled = false;
+
+                    // Show helpful message about already detected location
+                    const currentLocation = document.querySelector('input[name="location"]').value || 'your approximate location';
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'background: #ffb86c; color: #282a36; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: center; font-size: 0.875rem;';
+                    errorDiv.innerHTML = `📍 Location detection not available on this device.<br>The form above is pre-filled with: <strong>${currentLocation}</strong>`;
+
+                    const form = document.querySelector('form');
+                    form.parentNode.insertBefore(errorDiv, form.nextSibling);
+
+                    setTimeout(() => errorDiv.remove(), 6000);
+                });
+        }
+
+        // Form handling and autocomplete functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const locationInput = document.getElementById('location-input');
+            const unitsSelect = document.getElementById('units-select');
+            const weatherForm = document.getElementById('weather-form');
+            const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+
+            if (locationInput && !locationInput.value) {
+                locationInput.focus();
+            }
+
+            // Handle form submission - redirect to proper URL path format
+            weatherForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const location = locationInput.value.trim();
+                const units = unitsSelect.value;
+
+                console.log('Form submitted with location:', location, 'units:', units);
+
+                if (!location) {
+                    // Instead of popup, redirect to root with no location to show IP-based weather
+                    const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                    window.location.href = `${window.location.origin}/${unitsParam}`;
+                    return;
+                }
+
+                // Build clean URL: /Albany,NY instead of /Albany%2CNY
+                const cleanLocation = location.replace(/ /g, '+'); // Only encode spaces as +
+                const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+
+                // Use absolute URL to avoid inheriting current path
+                const baseUrl = window.location.origin;
+                const newUrl = `${baseUrl}/${cleanLocation}${unitsParam}`;
+
+                console.log('Redirecting to:', newUrl);
+
+                // Navigate to the proper URL format
+                window.location.href = newUrl;
+            });
+
+            // Autocomplete functionality
+            let autocompleteTimeout;
+            locationInput.addEventListener('input', function() {
+                const query = this.value.trim();
+
+                clearTimeout(autocompleteTimeout);
+
+                if (query.length < 3) {
+                    hideAutocomplete();
+                    return;
+                }
+
+                autocompleteTimeout = setTimeout(() => {
+                    searchLocations(query);
+                }, 300); // Debounce search
+            });
+
+            // Hide autocomplete when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#location-input') && !e.target.closest('#autocomplete-dropdown')) {
+                    hideAutocomplete();
+                }
+            });
+
+            // Attach geolocation button event listener with double-tap for force refresh
+            const locationBtn = document.getElementById('location-btn');
+            if (locationBtn) {
+                let lastTap = 0;
+                let tapTimeout;
+
+                locationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const currentTime = new Date().getTime();
+                    const tapLength = currentTime - lastTap;
+
+                    // Clear any pending single tap
+                    clearTimeout(tapTimeout);
+
+                    if (tapLength < 500 && tapLength > 0) {
+                        // Double tap detected - force refresh location
+                        console.log('🔄 Double tap detected - force refresh location');
+                        this.dataset.forceRefresh = 'true';
+                        this.textContent = '🔄 Force Refresh...';
+                        setTimeout(() => {
+                            this.textContent = '📍 My Location';
+                        }, 1000);
+                        getLocation();
+                    } else {
+                        // Single tap - normal location detection
+                        tapTimeout = setTimeout(() => {
+                            getLocation();
+                        }, 250);
+                    }
+
+                    lastTap = currentTime;
+                });
+
+                // Add tooltip hint for mobile users
+                locationBtn.title = "Tap for location, double-tap for fresh GPS";
+            }
+        });
+
+        function searchLocations(query) {
+            // Use our search API endpoint
+            fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        showAutocomplete(data.results);
+                    } else {
+                        hideAutocomplete();
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    hideAutocomplete();
+                });
+        }
+
+        function showAutocomplete(results) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            dropdown.innerHTML = '';
+
+            results.slice(0, 5).forEach(result => { // Show max 5 results
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `
+                    <div class="city-name">${result.shortName || result.name}</div>
+                    <div class="location-details">${result.fullName}</div>
+                `;
+
+                item.addEventListener('click', function() {
+                    const locationInput = document.getElementById('location-input');
+                    const unitsSelect = document.getElementById('units-select');
+
+                    // Use short name with state/country code
+                    const locationName = result.shortName || result.name;
+                    locationInput.value = locationName;
+                    hideAutocomplete();
+
+                    // Use coordinates for navigation (more accurate)
+                    const coords = `${result.latitude.toFixed(4)},${result.longitude.toFixed(4)}`;
+                    const units = unitsSelect.value;
+                    const unitsParam = units !== 'imperial' ? `?units=${units}` : '';
+                    const newUrl = `${window.location.origin}/${coords}${unitsParam}`;
+
+                    console.log('Autocomplete selected:', locationName, 'navigating to coords:', coords);
+
+                    // Direct navigation instead of form submission
+                    window.location.href = newUrl;
+                });
+
+                dropdown.appendChild(item);
+            });
+
+            dropdown.classList.add('show');
+        }
+
+        function hideAutocomplete() {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            dropdown.classList.remove('show');
+        }
+
+        // Copy command to clipboard
+        function copyCommand(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = '✗ Failed';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+
+{{if not .HideFooter}}
+{{template "footer" .}}
+{{else}}
+</body>
+</html>
+{{end}}

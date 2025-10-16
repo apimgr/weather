@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Editor</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+    <style>
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 1rem;
+            height: calc(100vh - 200px);
+        }
+        .template-list {
+            border-right: 1px solid var(--dracula-comment);
+            padding-right: 1rem;
+            overflow-y: auto;
+        }
+        .template-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--dracula-current-line);
+            border: 1px solid var(--dracula-comment);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .template-item:hover {
+            border-color: var(--dracula-purple);
+        }
+        .template-item.active {
+            border-color: var(--dracula-green);
+            background: rgba(80, 250, 123, 0.1);
+        }
+        .template-item.default {
+            border-left: 3px solid var(--dracula-yellow);
+        }
+        .template-name {
+            font-weight: bold;
+            color: var(--dracula-cyan);
+            margin-bottom: 0.25rem;
+        }
+        .template-type {
+            font-size: 0.75rem;
+            color: var(--dracula-comment);
+        }
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .editor-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--dracula-comment);
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .btn-primary {
+            background: var(--dracula-purple);
+            color: white;
+        }
+        .btn-success {
+            background: var(--dracula-green);
+            color: black;
+        }
+        .btn-danger {
+            background: var(--dracula-red);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--dracula-comment);
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            color: var(--dracula-cyan);
+            margin-bottom: 0.25rem;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--dracula-current-line);
+            border: 1px solid var(--dracula-comment);
+            color: var(--dracula-foreground);
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .code-editor {
+            min-height: 200px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        .preview-panel {
+            background: var(--dracula-current-line);
+            border: 1px solid var(--dracula-comment);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .preview-title {
+            color: var(--dracula-pink);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .variable-chip {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            background: var(--dracula-purple);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .variable-chip:hover {
+            background: var(--dracula-pink);
+        }
+        .help-section {
+            background: rgba(189, 147, 249, 0.1);
+            border: 1px solid var(--dracula-purple);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .help-title {
+            color: var(--dracula-purple);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .help-content {
+            font-size: 0.875rem;
+            color: var(--dracula-comment);
+        }
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .channel-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: var(--dracula-comment);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                🌤️ Weather Service
+            </a>
+            <div class="navbar-menu">
+                <a href="/" class="navbar-link">Weather</a>
+                <a href="/moon" class="navbar-link">Moon</a>
+                <a href="/earthquake" class="navbar-link">Earthquakes</a>
+                <a href="/hurricane" class="navbar-link">Hurricanes</a>
+                <a href="/user/dashboard" class="navbar-link">Dashboard</a>
+                {{ if eq .user.Role "admin" }}
+                <a href="/admin" class="navbar-link active">Admin</a>
+                {{ end }}
+            </div>
+            <div class="navbar-actions">
+                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+                <div class="profile-avatar">
+                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                        {{ if .user.Email }}
+                            {{ index .user.Email 0 | printf "%c" | upper }}
+                        {{ else }}
+                            U
+                        {{ end }}
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div>{{ .user.Email }}</div>
+                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
+                        </div>
+                        <nav class="profile-dropdown-menu">
+                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
+                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        </nav>
+                    </div>
+                </div>
+                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
+                    ☰
+                </button>
+            </div>
+        </div>
+        <div class="navbar-menu-mobile">
+            <a href="/" class="navbar-link">Weather</a>
+            <a href="/moon" class="navbar-link">Moon</a>
+            <a href="/earthquake" class="navbar-link">Earthquakes</a>
+            <a href="/hurricane" class="navbar-link">Hurricanes</a>
+            <a href="/user/dashboard" class="navbar-link">Dashboard</a>
+            {{ if eq .user.Role "admin" }}
+            <a href="/admin" class="navbar-link active">Admin</a>
+            {{ end }}
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>📝 Template Editor</h1>
+
+        <div class="editor-layout">
+            <!-- Template List -->
+            <div class="template-list">
+                <button class="btn btn-success" style="width: 100%; margin-bottom: 1rem;" onclick="createNew()">
+                    ➕ New Template
+                </button>
+                <div id="template-list"></div>
+            </div>
+
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <div class="editor-toolbar">
+                    <button class="btn btn-primary" onclick="saveTemplate()">💾 Save</button>
+                    <button class="btn btn-secondary" onclick="previewTemplate()">👁️ Preview</button>
+                    <button class="btn btn-secondary" onclick="cloneTemplate()">📋 Clone</button>
+                    <button class="btn btn-danger" onclick="deleteTemplate()">🗑️ Delete</button>
+                </div>
+
+                <div id="editor-content">
+                    <div class="form-group">
+                        <label>Template Name:</label>
+                        <input type="text" id="template-name" placeholder="my_template">
+                    </div>
+
+                    <div class="split-view">
+                        <div class="form-group">
+                            <label>Channel Type:</label>
+                            <select id="channel-type">
+                                <option value="email">Email</option>
+                                <option value="slack">Slack</option>
+                                <option value="discord">Discord</option>
+                                <option value="telegram">Telegram</option>
+                                <option value="sms">SMS</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Template Type:</label>
+                            <select id="template-type">
+                                <option value="general">General</option>
+                                <option value="alert">Alert</option>
+                                <option value="system">System</option>
+                                <option value="marketing">Marketing</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Subject Template:
+                            <span style="float: right; font-size: 0.75rem; font-weight: normal;">
+                                <label><input type="checkbox" id="is-default"> Set as default</label>
+                            </span>
+                        </label>
+                        <input type="text" id="subject-template" placeholder="{{.Subject}}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Available Variables (click to insert):</label>
+                        <div id="variable-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Body Template:</label>
+                        <textarea id="body-template" class="code-editor" placeholder="Enter your template here..."></textarea>
+                    </div>
+
+                    <!-- Help Section -->
+                    <div class="help-section">
+                        <div class="help-title">Template Syntax Help</div>
+                        <div class="help-content">
+                            <strong>Variables:</strong> <code>&#123;&#123;.VariableName&#125;&#125;</code><br>
+                            <strong>Uppercase:</strong> <code>&#123;&#123;upper .Text&#125;&#125;</code><br>
+                            <strong>Lowercase:</strong> <code>&#123;&#123;lower .Text&#125;&#125;</code><br>
+                            <strong>Title Case:</strong> <code>&#123;&#123;title .Text&#125;&#125;</code><br>
+                            <strong>Default Value:</strong> <code>&#123;&#123;default "N/A" .Value&#125;&#125;</code><br>
+                            <strong>Current Time:</strong> <code>&#123;&#123;now&#125;&#125;</code><br>
+                            <strong>Format Date:</strong> <code>&#123;&#123;formatDate .Date "2006-01-02"&#125;&#125;</code><br>
+                            <strong>Conditionals:</strong> <code>&#123;&#123;if .Value&#125;&#125;...&#123;&#123;end&#125;&#125;</code>
+                        </div>
+                    </div>
+
+                    <!-- Preview Panel -->
+                    <div class="preview-panel" id="preview-panel" style="display: none;">
+                        <div class="preview-title">Preview</div>
+                        <div id="preview-subject" style="margin-bottom: 1rem;"></div>
+                        <div id="preview-body"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let templates = [];
+        let currentTemplate = null;
+        let availableVariables = {};
+
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/api/v1/admin/templates');
+                const data = await response.json();
+                templates = data.templates || [];
+                renderTemplateList();
+            } catch (error) {
+                console.error('Failed to load templates:', error);
+            }
+        }
+
+        async function loadVariables() {
+            try {
+                const response = await fetch('/api/v1/admin/templates/variables');
+                availableVariables = await response.json();
+            } catch (error) {
+                console.error('Failed to load variables:', error);
+            }
+        }
+
+        function renderTemplateList() {
+            const container = document.getElementById('template-list');
+            container.innerHTML = '';
+
+            const grouped = {};
+            templates.forEach(tmpl => {
+                if (!grouped[tmpl.channel_type]) grouped[tmpl.channel_type] = [];
+                grouped[tmpl.channel_type].push(tmpl);
+            });
+
+            Object.entries(grouped).forEach(([channel, tmpls]) => {
+                const header = document.createElement('div');
+                header.style.cssText = 'color: var(--dracula-pink); font-weight: bold; margin: 1rem 0 0.5rem 0;';
+                header.textContent = channel.toUpperCase();
+                container.appendChild(header);
+
+                tmpls.forEach(tmpl => {
+                    const item = document.createElement('div');
+                    item.className = `template-item ${tmpl.is_default ? 'default' : ''} ${currentTemplate?.id === tmpl.id ? 'active' : ''}`;
+                    item.onclick = () => loadTemplate(tmpl);
+                    item.innerHTML = `
+                        <div class="template-name">${tmpl.template_name}</div>
+                        <div class="template-type">${tmpl.template_type}${tmpl.is_default ? ' • Default' : ''}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            });
+        }
+
+        function loadTemplate(template) {
+            currentTemplate = template;
+            document.getElementById('template-name').value = template.template_name;
+            document.getElementById('channel-type').value = template.channel_type;
+            document.getElementById('template-type').value = template.template_type;
+            document.getElementById('subject-template').value = template.subject_template || '';
+            document.getElementById('body-template').value = template.body_template || '';
+            document.getElementById('is-default').checked = template.is_default;
+            renderTemplateList();
+            renderVariables();
+        }
+
+        function renderVariables() {
+            const container = document.getElementById('variable-list');
+            container.innerHTML = '';
+
+            const categories = ['common', 'weather', 'system'];
+            categories.forEach(cat => {
+                if (availableVariables[cat]) {
+                    availableVariables[cat].forEach(v => {
+                        const chip = document.createElement('span');
+                        chip.className = 'variable-chip';
+                        chip.textContent = String.fromCharCode(123,123) + "." + v.name + String.fromCharCode(125,125);
+                        chip.title = v.description;
+                        chip.onclick = () => insertVariable(v.name);
+                        container.appendChild(chip);
+                    });
+                }
+            });
+        }
+
+        function insertVariable(varName) {
+            const textarea = document.getElementById('body-template');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const before = text.substring(0, start);
+            const after = text.substring(end, text.length);
+            textarea.value = before + String.fromCharCode(123,123) + "." + varName + String.fromCharCode(125,125) + after;
+            textarea.selectionStart = textarea.selectionEnd = start + varName.length + 5;
+            textarea.focus();
+        }
+
+        function createNew() {
+            currentTemplate = {
+                id: null,
+                template_name: '',
+                channel_type: 'email',
+                template_type: 'general',
+                subject_template: '',
+                body_template: '',
+                is_default: false
+            };
+            loadTemplate(currentTemplate);
+        }
+
+        async function saveTemplate() {
+            const data = {
+                channel_type: document.getElementById('channel-type').value,
+                template_name: document.getElementById('template-name').value,
+                template_type: document.getElementById('template-type').value,
+                subject_template: document.getElementById('subject-template').value,
+                body_template: document.getElementById('body-template').value,
+                is_default: document.getElementById('is-default').checked,
+                variables: {}
+            };
+
+            if (!data.template_name || !data.body_template) {
+                showAlert('Template name and body are required');
+                return;
+            }
+
+            try {
+                let response;
+                if (currentTemplate?.id) {
+                    response = await fetch(`/api/v1/admin/templates/${currentTemplate.id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/api/v1/admin/templates', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                const result = await response.json();
+                if (response.ok) {
+                    showAlert('✅ Template saved successfully!');
+                    loadTemplates();
+                } else {
+                    showAlert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                showAlert('❌ Failed to save template: ' + error.message);
+            }
+        }
+
+        async function previewTemplate() {
+            const data = {
+                subject_template: document.getElementById('subject-template').value,
+                body_template: document.getElementById('body-template').value,
+                variables: {
+                    Title: 'Sample Notification',
+                    Subject: 'Test Subject',
+                    Body: 'This is a test message body.',
+                    Message: 'Sample message content',
+                    Location: 'New York, NY',
+                    Temperature: '72°F',
+                    Condition: 'Partly Cloudy',
+                    Priority: 'high',
+                    Component: 'Weather Service'
+                }
+            };
+
+            try {
+                const response = await fetch('/api/v1/admin/templates/preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    document.getElementById('preview-subject').innerHTML =
+                        `<strong>Subject:</strong> ${result.subject || '(no subject)'}`;
+                    document.getElementById('preview-body').innerHTML = result.body;
+                    document.getElementById('preview-panel').style.display = 'block';
+                } else {
+                    showAlert('❌ Preview error: ' + result.error);
+                }
+            } catch (error) {
+                showAlert('❌ Failed to preview: ' + error.message);
+            }
+        }
+
+        async function cloneTemplate() {
+            if (!currentTemplate?.id) {
+                showAlert('Please select a template to clone');
+                return;
+            }
+
+            const newName = prompt('Enter name for cloned template:', currentTemplate.template_name + '_copy');
+            if (!newName) return;
+
+            try {
+                const response = await fetch(`/api/v1/admin/templates/${currentTemplate.id}/clone`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({new_name: newName})
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showAlert('✅ Template cloned successfully!');
+                    loadTemplates();
+                } else {
+                    showAlert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                showAlert('❌ Failed to clone template: ' + error.message);
+            }
+        }
+
+        async function deleteTemplate() {
+            if (!currentTemplate?.id) {
+                showAlert('Please select a template to delete');
+                return;
+            }
+
+            if (!showConfirm(`Delete template "${currentTemplate.template_name}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/admin/templates/${currentTemplate.id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showAlert('✅ Template deleted successfully!');
+                    currentTemplate = null;
+                    loadTemplates();
+                    createNew();
+                } else {
+                    showAlert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                showAlert('❌ Failed to delete template: ' + error.message);
+            }
+        }
+
+        // Load on page load
+        loadTemplates();
+        loadVariables().then(() => {
+            if (templates.length > 0) {
+                loadTemplate(templates[0]);
+            } else {
+                createNew();
+            }
+        });
+
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000);
+        }
+    </script>
+</body>
+</html>

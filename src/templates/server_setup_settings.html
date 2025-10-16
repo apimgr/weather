@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
+    <style>
+        .setup-container {
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .setup-card {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--dracula-current-line);
+            border-radius: 1rem;
+            padding: 3rem;
+        }
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .setup-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .setup-title {
+            font-size: 2rem;
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+        }
+        .setup-subtitle {
+            color: var(--dracula-comment);
+        }
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            color: var(--dracula-cyan);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--dracula-selection);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            color: var(--dracula-foreground);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dracula-bg);
+            border: 1px solid var(--dracula-selection);
+            border-radius: 0.5rem;
+            color: var(--dracula-foreground);
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-group small {
+            display: block;
+            color: var(--dracula-comment);
+            margin-top: 0.25rem;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+        }
+        .btn-primary:hover {
+            background: #bd93f9;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: var(--dracula-selection);
+            color: var(--dracula-foreground);
+        }
+        .btn-secondary:hover {
+            background: var(--dracula-comment);
+        }
+        .error-message {
+            background: var(--dracula-red);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .success-message {
+            background: var(--dracula-green);
+            color: var(--dracula-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <div class="setup-header">
+                <div class="setup-icon">⚙️</div>
+                <h1 class="setup-title">Server Settings</h1>
+                <p class="setup-subtitle">Configure your weather service</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <form id="settingsForm">
+                <!-- Server Information -->
+                <div class="form-section">
+                    <h2 class="section-title">Server Information</h2>
+                    <div class="form-group">
+                        <label for="serverName">Server Name</label>
+                        <input type="text" id="serverName" name="serverName" value="Weather Service" required>
+                        <small>Display name for your weather service</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="serverDescription">Description</label>
+                        <textarea id="serverDescription" name="serverDescription">Comprehensive weather forecasting platform</textarea>
+                        <small>Brief description shown on the homepage</small>
+                    </div>
+                </div>
+
+                <!-- Default Preferences -->
+                <div class="form-section">
+                    <h2 class="section-title">Default Preferences</h2>
+                    <div class="form-group">
+                        <label for="temperatureUnit">Temperature Unit</label>
+                        <select id="temperatureUnit" name="temperatureUnit">
+                            <option value="fahrenheit" selected>Fahrenheit (°F)</option>
+                            <option value="celsius">Celsius (°C)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="windSpeedUnit">Wind Speed Unit</label>
+                        <select id="windSpeedUnit" name="windSpeedUnit">
+                            <option value="mph" selected>Miles per hour (mph)</option>
+                            <option value="kph">Kilometers per hour (kph)</option>
+                            <option value="ms">Meters per second (m/s)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="precipitationUnit">Precipitation Unit</label>
+                        <select id="precipitationUnit" name="precipitationUnit">
+                            <option value="inch" selected>Inches</option>
+                            <option value="mm">Millimeters</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Rate Limiting -->
+                <div class="form-section">
+                    <h2 class="section-title">Rate Limiting</h2>
+                    <div class="form-group">
+                        <label for="rateLimitAnon">Anonymous Request Limit (per hour)</label>
+                        <input type="number" id="rateLimitAnon" name="rateLimitAnon" value="120" min="0" max="10000">
+                        <small>Maximum requests per hour for unauthenticated users</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateLimitAuth">Authenticated Request Limit (per hour)</label>
+                        <input type="number" id="rateLimitAuth" name="rateLimitAuth" value="1200" min="0" max="100000">
+                        <small>Maximum requests per hour for authenticated users</small>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="form-section">
+                    <h2 class="section-title">Features</h2>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="enableRegistration" name="enableRegistration" checked>
+                        <label for="enableRegistration">Allow user registration</label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="enableAlerts" name="enableAlerts" checked>
+                        <label for="enableAlerts">Enable weather alerts</label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="enableNotifications" name="enableNotifications" checked>
+                        <label for="enableNotifications">Enable notifications</label>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="enableAuditLog" name="enableAuditLog" checked>
+                        <label for="enableAuditLog">Enable audit logging</label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/setup/server/welcome'">
+                        Back
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Save & Continue
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const settings = {};
+
+            // Convert form data to settings object with proper types
+            for (const [key, value] of formData.entries()) {
+                const element = document.getElementById(key);
+                if (key.startsWith('enable')) {
+                    settings[key] = element.checked;
+                } else if (element && element.type === 'number') {
+                    settings[key] = parseInt(value, 10) || 0;
+                } else {
+                    settings[key] = value;
+                }
+            }
+
+            try {
+                const response = await fetch('/setup/server/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('successMessage').textContent = 'Settings saved successfully!';
+                    document.getElementById('successMessage').style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/setup/complete';
+                    }, 1000);
+                } else {
+                    document.getElementById('errorMessage').textContent = data.error || 'Failed to save settings';
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

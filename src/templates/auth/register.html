@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <style>
+        .register-container {
+            max-width: 450px;
+            margin: 80px auto;
+            padding: 2rem;
+            background: var(--dracula-current-line);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-header h1 {
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .register-header p {
+            color: var(--dracula-comment);
+        }
+
+        .setup-badge {
+            display: inline-block;
+            background: var(--dracula-green);
+            color: var(--dracula-bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dracula-foreground);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dracula-bg);
+            border: 1px solid var(--dracula-comment);
+            border-radius: 4px;
+            color: var(--dracula-foreground);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--dracula-purple);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: var(--dracula-comment);
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--dracula-pink);
+        }
+
+        .btn-primary.setup {
+            background: var(--dracula-green);
+        }
+
+        .btn-primary.setup:hover {
+            background: var(--dracula-cyan);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--dracula-comment);
+        }
+
+        .form-footer a {
+            color: var(--dracula-cyan);
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(255, 85, 85, 0.1);
+            border: 1px solid var(--dracula-red);
+            color: var(--dracula-red);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .password-strength {
+            margin-top: 0.5rem;
+            height: 4px;
+            background: var(--dracula-comment);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+        }
+
+        .password-strength-bar.weak {
+            width: 33%;
+            background: var(--dracula-red);
+        }
+
+        .password-strength-bar.medium {
+            width: 66%;
+            background: var(--dracula-yellow);
+        }
+
+        .password-strength-bar.strong {
+            width: 100%;
+            background: var(--dracula-green);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .back-link a {
+            color: var(--dracula-comment);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link a:hover {
+            color: var(--dracula-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            {{ if .isSetup }}
+            <span class="setup-badge">✨ SETUP</span>
+            {{ end }}
+            <h1>🌤️ Weather Service</h1>
+            <p>{{ if .isSetup }}Create Server Administrator Account{{ else }}Create a new account{{ end }}</p>
+            {{ if .isSetup }}
+            <p style="font-size: 0.9rem; color: var(--dracula-comment); margin-top: 0.5rem;">
+                ⚠️ This will create a dedicated admin account for server management.<br>
+                Please use an administrative email address.
+            </p>
+            {{ end }}
+        </div>
+
+        {{ if .error }}
+        <div class="error-message">{{ .error }}</div>
+        {{ end }}
+
+        <form method="POST" action="/register" id="registerForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="8">
+                <small>Minimum 8 characters</small>
+                <div class="password-strength">
+                    <div class="password-strength-bar" id="strengthBar"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+
+            <button type="submit" class="btn-primary {{ if .isSetup }}setup{{ end }}">
+                {{ if .isSetup }}Create Admin Account{{ else }}Create Account{{ end }}
+            </button>
+        </form>
+
+        {{ if not .isSetup }}
+        <div class="form-footer">
+            <p>Already have an account? <a href="/login">Sign in here</a></p>
+        </div>
+        {{ end }}
+
+        <div class="back-link">
+            <a href="/">← Back to Weather</a>
+        </div>
+    </div>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirm_password');
+        const strengthBar = document.getElementById('strengthBar');
+        const form = document.getElementById('registerForm');
+
+        // Password strength checker
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            strengthBar.className = 'password-strength-bar';
+            if (strength <= 1) {
+                strengthBar.classList.add('weak');
+            } else if (strength <= 3) {
+                strengthBar.classList.add('medium');
+            } else {
+                strengthBar.classList.add('strong');
+            }
+        });
+
+        // Form validation
+        form.addEventListener('submit', function(e) {
+            const password = passwordInput.value;
+            const confirm = confirmInput.value;
+
+            if (password.length < 8) {
+                e.preventDefault();
+                showAlert('Password must be at least 8 characters long');
+                return;
+            }
+
+            if (password !== confirm) {
+                e.preventDefault();
+                showAlert('Passwords do not match');
+                return;
+            }
+        });
+
+        // Match confirmation password visual feedback
+        confirmInput.addEventListener('input', function() {
+            if (this.value && this.value !== passwordInput.value) {
+                this.style.borderColor = 'var(--dracula-red)';
+            } else {
+                this.style.borderColor = 'var(--dracula-comment)';
+            }
+        });
+    </script>
+</body>
+</html>

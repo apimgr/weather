@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--dracula-bg);
+            color: var(--dracula-foreground);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--dracula-current-line);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dracula-purple);
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--dracula-foreground);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--dracula-cyan);
+        }
+
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--dracula-red);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .admin-header {
+            margin-bottom: 2rem;
+        }
+
+        .admin-header h1 {
+            color: var(--dracula-red);
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: var(--dracula-red);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--dracula-current-line);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card h3 {
+            color: var(--dracula-comment);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dracula-purple);
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--dracula-current-line);
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            color: var(--dracula-comment);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--dracula-foreground);
+        }
+
+        .tab.active {
+            color: var(--dracula-purple);
+            border-bottom-color: var(--dracula-purple);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .admin-section {
+            background: var(--dracula-current-line);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+            color: var(--dracula-cyan);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+        }
+
+        .btn-primary:hover {
+            background: var(--dracula-pink);
+        }
+
+        .btn-danger {
+            background: var(--dracula-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .placeholder-text {
+            color: var(--dracula-comment);
+            text-align: center;
+            padding: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .navbar-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .admin-tabs {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Unified Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <!-- Brand Logo -->
+            <a href="/" class="navbar-brand">
+                🌤️ Weather Service
+            </a>
+
+            <!-- Desktop Navigation Menu -->
+            <div class="navbar-menu">
+                <a href="/" class="navbar-link">Weather</a>
+                <a href="/moon" class="navbar-link">Moon</a>
+                <a href="/earthquake" class="navbar-link">Earthquakes</a>
+                <a href="/hurricane" class="navbar-link">Hurricanes</a>
+                <a href="/user/dashboard" class="navbar-link">Dashboard</a>
+                {{ if eq .user.Role "admin" }}
+                <a href="/admin" class="navbar-link active">Admin</a>
+                {{ end }}
+            </div>
+
+            <!-- Right Side Actions -->
+            <div class="navbar-actions">
+                <!-- Notification Bell -->
+                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+
+                <!-- Profile Avatar with Dropdown -->
+                <div class="profile-avatar">
+                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                        {{ if .user.Email }}
+                            {{ index .user.Email 0 | printf "%c" | upper }}
+                        {{ else }}
+                            U
+                        {{ end }}
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div>{{ .user.Email }}</div>
+                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
+                        </div>
+                        <nav class="profile-dropdown-menu">
+                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
+                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
+                    ☰
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="navbar-menu-mobile">
+            <a href="/" class="navbar-link">Weather</a>
+            <a href="/moon" class="navbar-link">Moon</a>
+            <a href="/earthquake" class="navbar-link">Earthquakes</a>
+            <a href="/hurricane" class="navbar-link">Hurricanes</a>
+            <a href="/user/dashboard" class="navbar-link">Dashboard</a>
+            {{ if eq .user.Role "admin" }}
+            <a href="/admin" class="navbar-link active">Admin</a>
+            {{ end }}
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="admin-header">
+            <h1>Admin Panel</h1>
+            <p style="color: var(--dracula-comment);">Manage users, settings, and system configuration</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-value">{{ .totalUsers }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Admin Users</h3>
+                <div class="stat-value">{{ .adminCount }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Locations</h3>
+                <div class="stat-value">{{ .totalLocations }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>System Status</h3>
+                <div class="stat-value" style="font-size: 1.5rem; color: var(--dracula-green);">✓ Online</div>
+            </div>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="tab active" data-tab="users">Users</button>
+            <button class="tab" data-tab="settings">Settings</button>
+            <button class="tab" data-tab="tokens">API Tokens</button>
+            <button class="tab" data-tab="logs">Audit Logs</button>
+            <button class="tab" data-tab="tasks">Scheduled Tasks</button>
+        </div>
+
+        <div id="users" class="tab-content active">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>User Management</h2>
+                    <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
+                </div>
+                <div id="users-list" style="overflow-x: auto;">
+                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading users...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Server Settings</h2>
+                </div>
+                <div id="settings-list" style="overflow-x: auto;">
+                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading settings...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tokens" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>API Token Management</h2>
+                    <button class="btn btn-primary" onclick="showGenerateTokenModal()">+ Generate Token</button>
+                </div>
+                <div id="tokens-list" style="overflow-x: auto;">
+                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading tokens...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="logs" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Audit Logs</h2>
+                    <button class="btn btn-danger" onclick="clearAuditLogs()">Clear Old Logs</button>
+                </div>
+                <div id="logs-list" style="overflow-x: auto;">
+                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading logs...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tasks" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Scheduled Tasks</h2>
+                </div>
+                <div id="tasks-list" style="overflow-x: auto;">
+                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading scheduled tasks...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+
+                // Load data when tab is clicked
+                if (tabId === 'users') loadUsers();
+                if (tabId === 'settings') loadSettings();
+                if (tabId === 'tokens') loadTokens();
+                if (tabId === 'logs') loadLogs();
+                if (tabId === 'tasks') loadScheduledTasks();
+            });
+        });
+
+        // Load users on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+        });
+
+        // User Management
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/v1/admin/users');
+                const users = await response.json();
+
+                const html = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
+                                <th style="text-align: left; padding: 1rem;">ID</th>
+                                <th style="text-align: left; padding: 1rem;">Email</th>
+                                <th style="text-align: left; padding: 1rem;">Role</th>
+                                <th style="text-align: left; padding: 1rem;">Created</th>
+                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${users.map(user => `
+                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
+                                    <td style="padding: 1rem;">${user.id}</td>
+                                    <td style="padding: 1rem;">${user.email}</td>
+                                    <td style="padding: 1rem;"><span style="background: ${user.role === 'admin' ? 'var(--dracula-red)' : 'var(--dracula-purple)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">${user.role}</span></td>
+                                    <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td style="padding: 1rem; text-align: right;">
+                                        <button onclick="deleteUser(${user.id})" style="background: var(--dracula-red); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('users-list').innerHTML = html;
+            } catch (error) {
+                document.getElementById('users-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading users</p>';
+            }
+        }
+
+        async function deleteUser(id) {
+            const confirmed = await showConfirm('Are you sure you want to delete this user? This action cannot be undone.', 'Delete User');
+            if (!confirmed) return;
+
+            try {
+                await fetch(`/api/v1/admin/users/${id}`, { method: 'DELETE' });
+                Toast.success('User deleted successfully');
+                loadUsers();
+            } catch (error) {
+                Toast.error('Failed to delete user');
+            }
+        }
+
+        function showAddUserModal() {
+            const modalId = 'add-user-modal-' + Date.now();
+
+            Modal.create({
+                id: modalId,
+                title: 'Add New User',
+                body: `
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label for="newUsername">Username</label>
+                            <input type="text" id="newUsername" class="form-input" required placeholder="username" pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="50">
+                            <small style="color: var(--dracula-comment);">3-50 characters, letters, numbers, and underscores only</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserEmail">Email Address</label>
+                            <input type="email" id="newUserEmail" class="form-input" required placeholder="user@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserPassword">Password</label>
+                            <input type="password" id="newUserPassword" class="form-input" required minlength="8" placeholder="Minimum 8 characters">
+                            <small style="color: var(--dracula-comment);">Minimum 8 characters</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserRole">Role</label>
+                            <select id="newUserRole" class="form-input">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="createUserFromModal('${modalId}')">Create User</button>
+                `,
+                size: 'md'
+            });
+        }
+
+        async function createUserFromModal(modalId) {
+            const username = document.getElementById('newUsername').value;
+            const email = document.getElementById('newUserEmail').value;
+            const password = document.getElementById('newUserPassword').value;
+            const role = document.getElementById('newUserRole').value;
+
+            if (!username || !email || !password) {
+                Toast.error('Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 8) {
+                Toast.error('Password must be at least 8 characters');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password, role })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create user');
+                }
+
+                Modal.close(modalId);
+                Toast.success('User created successfully');
+                loadUsers();
+            } catch (error) {
+                Toast.error('Failed to create user: ' + error.message);
+            }
+        }
+
+        // Settings Management
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/v1/admin/settings');
+                const settings = await response.json();
+
+                // Group settings by category
+                const grouped = {};
+                settings.forEach(setting => {
+                    const category = setting.key.split('.')[0];
+                    if (!grouped[category]) grouped[category] = [];
+                    grouped[category].push(setting);
+                });
+
+                // Category display names
+                const categoryNames = {
+                    'server': '🌐 Server Configuration',
+                    'security': '🔒 Security Settings',
+                    'features': '✨ Feature Toggles',
+                    'backup': '💾 Backup Settings',
+                    'logging': '📝 Logging Settings',
+                    'smtp': '📧 Email (SMTP) Settings'
+                };
+
+                let html = '';
+                for (const [category, categorySettings] of Object.entries(grouped)) {
+                    const displayName = categoryNames[category] || category;
+                    html += `
+                        <div style="background: var(--dracula-current-line); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0 0 1rem 0; color: var(--dracula-purple); font-size: 1.1rem;">${displayName}</h3>
+                            <div style="display: grid; gap: 1rem;">
+                                ${categorySettings.map(setting => {
+                                    const name = setting.key.split('.')[1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                    const isBoolean = setting.type === 'boolean';
+                                    const value = isBoolean ? (setting.value === 'true' ? 'Enabled' : 'Disabled') : setting.value;
+                                    const valueColor = isBoolean ? (setting.value === 'true' ? 'var(--dracula-green)' : 'var(--dracula-red)') : 'var(--dracula-foreground)';
+
+                                    return `
+                                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--dracula-background); border-radius: 6px; border: 1px solid var(--dracula-comment);">
+                                            <div style="flex: 1;">
+                                                <div style="font-weight: 600; margin-bottom: 0.25rem;">${name}</div>
+                                                <div style="font-size: 0.85rem; color: var(--dracula-comment);">${setting.description || setting.key}</div>
+                                                <div style="margin-top: 0.5rem; font-family: monospace; font-size: 0.9rem; color: ${valueColor};">${value}</div>
+                                            </div>
+                                            <button onclick="editSetting('${setting.key}', '${setting.value.replace(/'/g, "\\'")}', '${setting.type}', '${(setting.description || '').replace(/'/g, "\\'")}', '${name}')"
+                                                style="background: var(--dracula-purple); color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 1rem;">
+                                                Edit
+                                            </button>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('settings-list').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                document.getElementById('settings-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading settings: ' + error.message + '</p>';
+            }
+        }
+
+        async function editSetting(key, currentValue, type, description, name) {
+            // Generate a unique modal ID first
+            const modalId = 'edit-setting-modal-' + Date.now();
+
+            // Build appropriate input based on type
+            let inputHtml = '';
+            if (type === 'boolean') {
+                const isTrue = currentValue === 'true';
+                inputHtml = `
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="settingValue" ${isTrue ? 'checked' : ''} style="width: 20px; height: 20px; margin-right: 0.75rem;">
+                            <span>Enable ${name}</span>
+                        </label>
+                    </div>
+                `;
+            } else if (type === 'number') {
+                inputHtml = `
+                    <div class="form-group">
+                        <label for="settingValue">Value</label>
+                        <input type="number" id="settingValue" class="form-input" value="${currentValue}" required>
+                    </div>
+                `;
+            } else if (key.includes('description') || key.includes('tagline')) {
+                inputHtml = `
+                    <div class="form-group">
+                        <label for="settingValue">Value</label>
+                        <textarea id="settingValue" class="form-input" rows="3" required>${currentValue}</textarea>
+                    </div>
+                `;
+            } else {
+                inputHtml = `
+                    <div class="form-group">
+                        <label for="settingValue">Value</label>
+                        <input type="text" id="settingValue" class="form-input" value="${currentValue}" required>
+                    </div>
+                `;
+            }
+
+            Modal.create({
+                id: modalId,
+                title: `Edit: ${name}`,
+                body: `
+                    <form id="editSettingForm">
+                        ${description ? `<p style="color: var(--dracula-comment); margin-bottom: 1rem; font-size: 0.9rem;">${description}</p>` : ''}
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label style="font-size: 0.85rem; color: var(--dracula-comment);">Setting Key</label>
+                            <div style="font-family: monospace; font-size: 0.9rem; color: var(--dracula-cyan); padding: 0.5rem; background: var(--dracula-current-line); border-radius: 4px;">${key}</div>
+                        </div>
+                        ${inputHtml}
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="updateSettingFromModal('${modalId}', '${key}', '${currentValue}', '${type}')">Save</button>
+                `,
+                size: 'md'
+            });
+        }
+
+        async function updateSettingFromModal(modalId, key, currentValue, type) {
+            const element = document.getElementById('settingValue');
+            let newValue;
+
+            if (type === 'boolean') {
+                newValue = element.checked ? 'true' : 'false';
+            } else if (element.tagName === 'TEXTAREA') {
+                newValue = element.value;
+            } else {
+                newValue = element.value;
+            }
+
+            if (newValue === currentValue) {
+                Modal.close(modalId);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/admin/settings/${key}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: newValue })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update setting');
+                }
+
+                Modal.close(modalId);
+                Toast.success('Setting updated successfully');
+                loadSettings();
+            } catch (error) {
+                Toast.error('Failed to update setting: ' + error.message);
+            }
+        }
+
+        // Token Management
+        async function loadTokens() {
+            try {
+                const response = await fetch('/api/v1/admin/tokens');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const tokens = await response.json();
+
+                // Handle empty array
+                if (!Array.isArray(tokens) || tokens.length === 0) {
+                    document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-comment); text-align: center; padding: 2rem;">No API tokens found. Generate one to get started.</p>';
+                    return;
+                }
+
+                const html = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
+                                <th style="text-align: left; padding: 1rem;">ID</th>
+                                <th style="text-align: left; padding: 1rem;">User</th>
+                                <th style="text-align: left; padding: 1rem;">Name</th>
+                                <th style="text-align: left; padding: 1rem;">Created</th>
+                                <th style="text-align: left; padding: 1rem;">Last Used</th>
+                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tokens.map(token => `
+                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
+                                    <td style="padding: 1rem;">${token.id}</td>
+                                    <td style="padding: 1rem;">${token.user_email || 'N/A'}</td>
+                                    <td style="padding: 1rem;">${token.name}</td>
+                                    <td style="padding: 1rem;">${new Date(token.created_at).toLocaleDateString()}</td>
+                                    <td style="padding: 1rem;">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : 'Never'}</td>
+                                    <td style="padding: 1rem; text-align: right;">
+                                        <button onclick="revokeToken(${token.id})" style="background: var(--dracula-red); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Revoke</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('tokens-list').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading tokens: ' + error.message + '</p>';
+            }
+        }
+
+        async function revokeToken(id) {
+            const confirmed = await showConfirm('Are you sure you want to revoke this token? Applications using this token will no longer have access.', 'Revoke Token');
+            if (!confirmed) return;
+
+            try {
+                await fetch(`/api/v1/admin/tokens/${id}`, { method: 'DELETE' });
+                Toast.success('Token revoked successfully');
+                loadTokens();
+            } catch (error) {
+                Toast.error('Failed to revoke token');
+            }
+        }
+
+        async function showGenerateTokenModal() {
+            // Load users first
+            const usersResponse = await fetch('/api/v1/admin/users');
+            const users = await usersResponse.json();
+
+            const userOptions = users.map(u =>
+                `<option value="${u.id}">${u.email}</option>`
+            ).join('');
+
+            const modalId = 'generate-token-modal-' + Date.now();
+
+            Modal.create({
+                id: modalId,
+                title: 'Generate API Token',
+                body: `
+                    <form id="generateTokenForm">
+                        <div class="form-group">
+                            <label for="tokenUser">Select User</label>
+                            <select id="tokenUser" class="form-input" required>
+                                <option value="">-- Select User --</option>
+                                ${userOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tokenName">Token Name</label>
+                            <input type="text" id="tokenName" class="form-input" required placeholder="e.g., Production API Key">
+                            <small style="color: var(--dracula-comment);">A descriptive name to identify this token</small>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="generateTokenFromModal('${modalId}')">Generate Token</button>
+                `,
+                size: 'md'
+            });
+        }
+
+        async function generateTokenFromModal(modalId) {
+            const userId = document.getElementById('tokenUser').value;
+            const tokenName = document.getElementById('tokenName').value;
+
+            if (!userId || !tokenName) {
+                Toast.error('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: parseInt(userId), name: tokenName })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate token');
+                }
+
+                const result = await response.json();
+                Modal.close(modalId);
+
+                // Show token in a new modal
+                showTokenModal(result.token);
+                loadTokens();
+            } catch (error) {
+                Toast.error('Failed to generate token: ' + error.message);
+            }
+        }
+
+        function showTokenModal(token) {
+            const modalId = 'token-display-modal-' + Date.now();
+
+            Modal.create({
+                id: modalId,
+                title: '✅ Token Generated Successfully',
+                body: `
+                    <div style="margin-bottom: 1rem;">
+                        <p style="color: var(--dracula-orange); margin-bottom: 1rem;">
+                            ⚠️ <strong>Important:</strong> Copy this token now. For security reasons, it will not be shown again!
+                        </p>
+                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-green);">
+                            <code style="font-family: monospace; word-break: break-all; color: var(--dracula-green); font-size: 0.9rem;">${token}</code>
+                        </div>
+                    </div>
+                `,
+                footer: `
+                    <button class="btn btn-primary" onclick="copyToken('${token}', '${modalId}')">📋 Copy to Clipboard</button>
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Close</button>
+                `,
+                size: 'lg'
+            });
+        }
+
+        async function copyToken(token, modalId) {
+            try {
+                await navigator.clipboard.writeText(token);
+                Toast.success('Token copied to clipboard!');
+            } catch (error) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = token;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                Toast.success('Token copied to clipboard!');
+            }
+        }
+
+        // Logs Management
+        async function loadLogs() {
+            try {
+                const response = await fetch('/api/v1/admin/logs?limit=50');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const logs = await response.json();
+
+                if (!Array.isArray(logs) || logs.length === 0) {
+                    document.getElementById('logs-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No audit logs found</p>';
+                    return;
+                }
+
+                const html = `
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
+                                <th style="text-align: left; padding: 0.75rem;">Time</th>
+                                <th style="text-align: left; padding: 0.75rem;">User</th>
+                                <th style="text-align: left; padding: 0.75rem;">Action</th>
+                                <th style="text-align: left; padding: 0.75rem;">Resource</th>
+                                <th style="text-align: left; padding: 0.75rem;">IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${logs.map(log => `
+                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
+                                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;">${new Date(log.created_at).toLocaleString()}</td>
+                                    <td style="padding: 0.75rem;">${log.user_email || 'Anonymous'}</td>
+                                    <td style="padding: 0.75rem; color: var(--dracula-cyan);">${log.action}</td>
+                                    <td style="padding: 0.75rem; color: var(--dracula-comment);">${log.resource || '-'}</td>
+                                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;">${log.ip_address || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('logs-list').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                document.getElementById('logs-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading logs: ' + error.message + '</p>';
+            }
+        }
+
+        async function clearAuditLogs() {
+            const modalId = 'clear-logs-modal-' + Date.now();
+
+            Modal.create({
+                id: modalId,
+                title: 'Clear Audit Logs',
+                body: `
+                    <form id="clearLogsForm">
+                        <div class="form-group">
+                            <label for="logDays">Delete logs older than (days)</label>
+                            <input type="number" id="logDays" class="form-input" value="30" min="1" required>
+                            <small style="color: var(--dracula-comment);">Logs older than this many days will be permanently deleted</small>
+                        </div>
+                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-orange); margin-top: 1rem;">
+                            <p style="color: var(--dracula-orange); margin: 0;">
+                                ⚠️ <strong>Warning:</strong> This action cannot be undone. Deleted logs cannot be recovered.
+                            </p>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-danger" onclick="confirmClearLogs('${modalId}')">Delete Logs</button>
+                `,
+                size: 'md'
+            });
+        }
+
+        async function confirmClearLogs(modalId) {
+            const days = document.getElementById('logDays').value;
+
+            if (!days || days < 1) {
+                Toast.error('Please enter a valid number of days');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/admin/logs?days=${days}`, { method: 'DELETE' });
+
+                if (!response.ok) {
+                    throw new Error('Failed to clear logs');
+                }
+
+                Modal.close(modalId);
+                Toast.success(`Audit logs older than ${days} days have been deleted`);
+                loadLogs();
+            } catch (error) {
+                Toast.error('Failed to clear logs: ' + error.message);
+            }
+        }
+
+        // Scheduled Tasks Management
+        async function loadScheduledTasks() {
+            try {
+                const response = await fetch('/api/v1/admin/tasks');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const tasks = await response.json();
+
+                if (!Array.isArray(tasks) || tasks.length === 0) {
+                    document.getElementById('tasks-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No scheduled tasks found</p>';
+                    return;
+                }
+
+                const html = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
+                                <th style="text-align: left; padding: 1rem;">Task Name</th>
+                                <th style="text-align: left; padding: 1rem;">Interval</th>
+                                <th style="text-align: left; padding: 1rem;">Status</th>
+                                <th style="text-align: left; padding: 1rem;">Last Run</th>
+                                <th style="text-align: left; padding: 1rem;">Next Run</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tasks.map(task => `
+                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
+                                    <td style="padding: 1rem; font-family: monospace; color: var(--dracula-cyan);">${task.name}</td>
+                                    <td style="padding: 1rem;">${task.interval || 'N/A'}</td>
+                                    <td style="padding: 1rem;">
+                                        <span style="background: ${task.running ? 'var(--dracula-green)' : 'var(--dracula-comment)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">
+                                            ${task.running ? 'Running' : 'Idle'}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 1rem; font-size: 0.9rem;">${task.last_run ? new Date(task.last_run).toLocaleString() : 'Never'}</td>
+                                    <td style="padding: 1rem; font-size: 0.9rem;">${task.next_run ? new Date(task.next_run).toLocaleString() : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('tasks-list').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading scheduled tasks:', error);
+                document.getElementById('tasks-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading scheduled tasks: ' + error.message + '</p>';
+            }
+        }
+
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000); // Poll every 30 seconds
+        }
+    </script>
+</body>
+</html>

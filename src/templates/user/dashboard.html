@@ -1,0 +1,91 @@
+{{template "head" .}}
+{{template "navbar" .}}
+
+<!-- Main Content -->
+    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+        <!-- Dashboard Header -->
+        <div style="margin-bottom: 2rem;">
+            <h1 class="text-purple">Welcome back!</h1>
+            <p class="text-comment">{{ .user.Email }} · {{ .user.Role }}</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-3" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-comment text-sm" style="margin-bottom: 0.5rem;">Saved Locations</h3>
+                    <div class="text-cyan" style="font-size: 2rem; font-weight: 700;">{{ .locationCount }}</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-comment text-sm" style="margin-bottom: 0.5rem;">Notifications</h3>
+                    <div class="text-cyan" style="font-size: 2rem; font-weight: 700;">{{ .unreadCount }}</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="text-comment text-sm" style="margin-bottom: 0.5rem;">Account Type</h3>
+                    <div class="text-cyan" style="font-size: 1.5rem; font-weight: 700;">{{ .user.Role }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Locations Section -->
+        <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="card-title" style="margin: 0;">Your Saved Locations</h2>
+                <a href="/locations/new" class="btn btn-primary">+ Add Location</a>
+            </div>
+
+            <div class="card-body">
+                {{ if gt .locationCount 0 }}
+                    <div class="grid grid-3">
+                        {{ range .locations }}
+                        <div class="card" style="background: var(--dracula-bg);">
+                            <div class="card-body">
+                                <h3 class="text-cyan" style="font-size: 1.2rem; margin-bottom: 0.5rem;">{{ .Name }}</h3>
+                                <p class="text-comment text-sm">📍 {{ printf "%.4f" .Latitude }}, {{ printf "%.4f" .Longitude }}</p>
+                                {{ if .Timezone }}
+                                <p class="text-comment text-sm">🕐 {{ .Timezone }}</p>
+                                {{ end }}
+
+                                <div style="margin-top: 1rem;">
+                                    {{ if .AlertsEnabled }}
+                                    <span class="badge badge-success">Alerts ON</span>
+                                    {{ else }}
+                                    <span class="badge badge-danger">Alerts OFF</span>
+                                    {{ end }}
+                                </div>
+
+                                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                                    <button onclick="window.location.href='/{{ .Latitude }},{{ .Longitude }}'" class="btn btn-secondary btn-sm" style="flex: 1;">View Weather</button>
+                                    <button onclick="window.location.href='/locations/{{ .ID }}/edit'" class="btn btn-primary btn-sm" style="flex: 1;">Edit</button>
+                                </div>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </div>
+                {{ else }}
+                    <div class="text-center" style="padding: 3rem;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">📍</div>
+                        <h3>No saved locations yet</h3>
+                        <p class="text-comment">Add your first location to start tracking weather</p>
+                        <br>
+                        <a href="/locations/new" class="btn btn-primary">Add Your First Location</a>
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000); // Poll every 30 seconds
+        }
+    </script>
+
+{{template "footer" .}}

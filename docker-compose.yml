@@ -1,0 +1,28 @@
+services:
+  weather:
+    image: ghcr.io/apimgr/weather:latest
+    container_name: weather
+    restart: unless-stopped
+    environment:
+      - PORT=80
+      - ENV=production
+      - DATA_DIR=/data
+      - CONFIG_DIR=/config
+      - LOG_DIR=/var/log/weather
+    volumes:
+      - ./rootfs/data/weather:/data
+      - ./rootfs/config/weather:/config
+      - ./rootfs/logs/weather:/var/log/weather
+    ports:
+      # Development: random port on localhost
+      - "127.0.0.1:64080:80"
+      # Production (uncomment and change port as needed):
+      # - "172.17.0.1:64080:80"
+    networks:
+      - weather
+
+networks:
+  weather:
+    name: weather
+    driver: bridge
+    external: false

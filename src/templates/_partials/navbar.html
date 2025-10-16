@@ -1,0 +1,82 @@
+{{define "navbar"}}
+<nav class="navbar">
+    <div class="navbar-container">
+        <!-- Brand Logo -->
+        <a href="/" class="navbar-brand">
+            <span class="navbar-brand-icon">🌤️</span>
+            <span class="navbar-brand-text">{{.server.Title}}</span>
+        </a>
+
+        <!-- Desktop Navigation Menu -->
+        <div class="navbar-menu">
+            <a href="/" class="navbar-link {{if eq .page "weather"}}active{{end}}">Weather</a>
+            <a href="/moon" class="navbar-link {{if eq .page "moon"}}active{{end}}">Moon</a>
+            <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}">Earthquakes</a>
+            <a href="/severe-weather" class="navbar-link {{if eq .page "severe-weather"}}active{{end}}">Severe Weather</a>
+            <a href="/user/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}">Dashboard</a>
+            {{if eq .user.Role "admin"}}
+            <a href="/admin" class="navbar-link {{if eq .page "admin"}}active{{end}}">Admin</a>
+            {{end}}
+        </div>
+
+        <!-- Right Side Actions -->
+        <div class="navbar-actions">
+            <!-- Notification Bell -->
+            <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                🔔
+                <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+            </button>
+
+            <!-- Profile Avatar with Dropdown -->
+            <div class="profile-avatar">
+                <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                    {{if .user.Email}}
+                        {{ index .user.Email 0 | printf "%c" | upper }}
+                    {{else}}
+                        U
+                    {{end}}
+                </div>
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <div class="profile-dropdown-header">
+                        <div>{{.user.Email}}</div>
+                        <div class="profile-dropdown-role">{{.user.Role}}</div>
+                    </div>
+                    <nav class="profile-dropdown-menu">
+                        <a href="/profile" class="profile-dropdown-item">👤 Profile</a>
+                        <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                        <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
+                        <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" onclick="Dropdown.toggle('mobile-menu', 'mobile-menu-toggle')" id="mobile-menu-toggle">
+                ☰
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="/" class="mobile-menu-item">Weather</a>
+        <a href="/moon" class="mobile-menu-item">Moon</a>
+        <a href="/earthquake" class="mobile-menu-item">Earthquakes</a>
+        <a href="/severe-weather" class="mobile-menu-item">Severe Weather</a>
+        <a href="/user/dashboard" class="mobile-menu-item">Dashboard</a>
+        {{if eq .user.Role "admin"}}
+        <a href="/admin" class="mobile-menu-item">Admin</a>
+        {{end}}
+    </div>
+</nav>
+
+<script>
+    // Initialize notifications on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Notifications !== 'undefined') {
+            Notifications.fetch();
+            Notifications.startPolling(60000);
+        }
+    });
+</script>
+{{end}}

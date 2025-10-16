@@ -1,0 +1,622 @@
+{{template "head" .}}
+{{template "navbar" .}}
+
+<style>
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid var(--background);
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    .tab {
+        padding: 1rem 1.5rem;
+        background: var(--current-line);
+        color: var(--foreground);
+        border: none;
+        cursor: pointer;
+        border-radius: 8px 8px 0 0;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .tab:hover {
+        background: var(--comment);
+    }
+    .tab.active {
+        background: var(--purple);
+        color: white;
+    }
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: var(--current-line);
+        border-radius: 12px;
+    }
+    .profile-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--purple), var(--pink));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        font-weight: bold;
+    }
+    .profile-info h1 {
+        margin: 0 0 0.5rem 0;
+        color: var(--cyan);
+    }
+    .profile-info p {
+        margin: 0.25rem 0;
+        color: var(--comment);
+    }
+    .token-display {
+        font-family: 'Courier New', monospace;
+        background: var(--current-line);
+        padding: 1rem;
+        border-radius: 8px;
+        word-break: break-all;
+        font-size: 0.9rem;
+    }
+    .activity-item {
+        padding: 1rem;
+        border-left: 3px solid var(--purple);
+        background: var(--current-line);
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+    .activity-time {
+        font-size: 0.85rem;
+        color: var(--comment);
+    }
+</style>
+
+<!-- Main Content -->
+    <main class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar-large">{{ index .user.Username 0 | printf "%c" | upper }}</div>
+            <div class="profile-info">
+                <h1>{{if .user.DisplayName}}{{.user.DisplayName}}{{else}}{{.user.Username}}{{end}}</h1>
+                <p>@{{.user.Username}} • {{.user.Email}}</p>
+                <p><span class="badge {{if eq .user.Role "admin"}}badge-danger{{else}}badge-primary{{end}}">{{.user.Role}}</span></p>
+                <p>Member since {{.user.CreatedAt.Format "January 2, 2006"}}</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="tab" onclick="switchTab('locations')">📍 Locations</button>
+            <button class="tab" onclick="switchTab('preferences')">⚙️ Preferences</button>
+            <button class="tab" onclick="switchTab('tokens')">🔑 API Tokens</button>
+            <button class="tab" onclick="switchTab('notifications')">🔔 Notifications</button>
+            <button class="tab" onclick="switchTab('activity')">📋 Activity Log</button>
+            <button class="tab" onclick="switchTab('security')">🔒 Security</button>
+        </div>
+
+        <!-- Tab 1: Overview -->
+        <div id="overview" class="tab-content active">
+            <div class="card">
+                <h2>Account Overview</h2>
+                <form id="profileForm" onsubmit="updateProfile(event)">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" value="{{.user.Username}}" readonly>
+                        <small>Contact an administrator to change your username</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="display_name">Display Name</label>
+                        <input type="text" id="display_name" value="{{.user.DisplayName}}" placeholder="Enter your display name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" value="{{.user.Email}}" readonly>
+                        <small>Contact an administrator to change your email</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number (Private)</label>
+                        <input type="tel" id="phone" value="{{.user.Phone}}" placeholder="+1234567890" pattern="[\+]?[0-9]{10,15}">
+                        <small>Used for SMS notifications. Keep this private. Format: +1234567890</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📍</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="locationCount">0</div>
+                        <div class="stat-label">Saved Locations</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔑</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="tokenCount">0</div>
+                        <div class="stat-label">API Tokens</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔔</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="notificationCount">0</div>
+                        <div class="stat-label">Notifications</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Locations -->
+        <div id="locations" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📍 Saved Locations</h2>
+                    <a href="/locations/new" class="btn btn-primary">➕ Add Location</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Coordinates</th>
+                                <th>Alerts</th>
+                                <th>Added</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locationsTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Preferences -->
+        <div id="preferences" class="tab-content">
+            <div class="card">
+                <h2>⚙️ User Preferences</h2>
+                <form id="preferencesForm" onsubmit="savePreferences(event)">
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="pref_email_notifications" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Email Notifications</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="pref_weather_alerts" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Weather Alerts</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="pref_timezone">Timezone</label>
+                        <select id="pref_timezone">
+                            <option value="America/New_York">Eastern Time</option>
+                            <option value="America/Chicago">Central Time</option>
+                            <option value="America/Denver">Mountain Time</option>
+                            <option value="America/Los_Angeles">Pacific Time</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pref_temp_unit">Temperature Unit</label>
+                        <select id="pref_temp_unit">
+                            <option value="fahrenheit">Fahrenheit (°F)</option>
+                            <option value="celsius">Celsius (°C)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Preferences</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab 4: API Tokens -->
+        <div id="tokens" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔑 API Tokens</h2>
+                    <button class="btn btn-primary" onclick="showGenerateTokenModal()">➕ Generate Token</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Created</th>
+                                <th>Last Used</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tokensTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Notifications -->
+        <div id="notifications" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔔 Notifications</h2>
+                    <button class="btn btn-secondary" onclick="markAllRead()">Mark All Read</button>
+                </div>
+                <div id="notificationsList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: Activity Log -->
+        <div id="activity" class="tab-content">
+            <div class="card">
+                <h2>📋 Activity Log</h2>
+                <div id="activityList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 7: Security -->
+        <div id="security" class="tab-content">
+            <div class="card">
+                <h2>🔒 Change Password</h2>
+                <form id="passwordForm" onsubmit="changePassword(event)">
+                    <div class="form-group">
+                        <label for="current_password">Current Password</label>
+                        <input type="password" id="current_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password">New Password</label>
+                        <input type="password" id="new_password" required minlength="8">
+                        <small>Minimum 8 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm New Password</label>
+                        <input type="password" id="confirm_password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>🔐 Active Sessions</h2>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>User Agent</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load data for the tab
+            loadTabData(tabName);
+        }
+
+        // Load data for specific tab
+        function loadTabData(tabName) {
+            switch(tabName) {
+                case 'locations':
+                    loadLocations();
+                    break;
+                case 'tokens':
+                    loadTokens();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+                case 'activity':
+                    loadActivity();
+                    break;
+                case 'security':
+                    loadSessions();
+                    break;
+            }
+        }
+
+        // Load overview stats
+        async function loadOverviewStats() {
+            try {
+                const [locations, tokens, notifications] = await Promise.all([
+                    fetch('/api/v1/locations').then(r => r.json()),
+                    fetch('/api/v1/admin/tokens?user_id={{.user.ID}}').then(r => r.json()),
+                    fetch('/api/v1/notifications').then(r => r.json())
+                ]);
+
+                document.getElementById('locationCount').textContent = locations.length || 0;
+                document.getElementById('tokenCount').textContent = tokens.length || 0;
+                document.getElementById('notificationCount').textContent = notifications.length || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load locations
+        async function loadLocations() {
+            try {
+                const response = await fetch('/api/v1/locations');
+                const locations = await response.json();
+                renderLocations(locations);
+            } catch (error) {
+                Toast.error('Failed to load locations');
+            }
+        }
+
+        function renderLocations(locations) {
+            const tbody = document.getElementById('locationsTableBody');
+            tbody.innerHTML = '';
+
+            if (locations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No locations saved</td></tr>';
+                return;
+            }
+
+            locations.forEach(loc => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${loc.nickname || loc.name}</td>
+                    <td>${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}</td>
+                    <td><span class="badge ${loc.alerts_enabled ? 'badge-success' : 'badge-secondary'}">${loc.alerts_enabled ? 'Enabled' : 'Disabled'}</span></td>
+                    <td>${new Date(loc.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <a href="/locations/${loc.id}/edit" class="btn btn-sm btn-secondary">Edit</a>
+                        <button class="btn btn-sm btn-danger" onclick="deleteLocation(${loc.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Load tokens
+        async function loadTokens() {
+            try {
+                const response = await fetch('/api/v1/admin/tokens?user_id={{.user.ID}}');
+                const tokens = await response.json();
+                renderTokens(tokens);
+            } catch (error) {
+                Toast.error('Failed to load tokens');
+            }
+        }
+
+        function renderTokens(tokens) {
+            const tbody = document.getElementById('tokensTableBody');
+            tbody.innerHTML = '';
+
+            if (tokens.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No tokens generated</td></tr>';
+                return;
+            }
+
+            tokens.forEach(token => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${token.name}</td>
+                    <td>${new Date(token.created_at).toLocaleString()}</td>
+                    <td>${token.last_used_at ? new Date(token.last_used_at).toLocaleString() : 'Never'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="revokeToken(${token.id})">Revoke</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Generate new token
+        function showGenerateTokenModal() {
+            const name = prompt('Enter a name for this token:');
+            if (!name) return;
+
+            generateToken(name);
+        }
+
+        async function generateToken(name) {
+            try {
+                const response = await fetch('/api/v1/admin/tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: {{.user.ID}}, name: name })
+                });
+
+                const result = await response.json();
+                showAlert('Token generated! Save it now - it won\'t be shown again:\n\n' + result.token);
+                loadTokens();
+            } catch (error) {
+                Toast.error('Failed to generate token');
+            }
+        }
+
+        async function revokeToken(id) {
+            if (!showConfirm('Are you sure you want to revoke this token?')) return;
+
+            try {
+                await fetch(`/api/v1/admin/tokens/${id}`, { method: 'DELETE' });
+                Toast.success('Token revoked');
+                loadTokens();
+            } catch (error) {
+                Toast.error('Failed to revoke token');
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/v1/notifications');
+                const notifications = await response.json();
+                renderNotifications(notifications);
+            } catch (error) {
+                Toast.error('Failed to load notifications');
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notificationsList');
+            container.innerHTML = '';
+
+            if (notifications.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--comment);">No notifications</p>';
+                return;
+            }
+
+            notifications.forEach(notif => {
+                const div = document.createElement('div');
+                div.className = 'activity-item';
+                div.innerHTML = `
+                    <h4>${notif.title}</h4>
+                    <p>${notif.message}</p>
+                    <p class="activity-time">${new Date(notif.created_at).toLocaleString()}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function markAllRead() {
+            try {
+                await fetch('/api/v1/notifications/read-all', { method: 'PUT' });
+                Toast.success('All notifications marked as read');
+                loadNotifications();
+            } catch (error) {
+                Toast.error('Failed to mark notifications as read');
+            }
+        }
+
+        // Load activity log
+        async function loadActivity() {
+            const container = document.getElementById('activityList');
+            container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--comment);">Activity tracking coming soon</p>';
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            const tbody = document.getElementById('sessionsTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Session management coming soon</td></tr>';
+        }
+
+        // Update profile
+        async function updateProfile(event) {
+            event.preventDefault();
+
+            const displayName = document.getElementById('display_name').value;
+            const phone = document.getElementById('phone').value;
+
+            // Validate phone format if provided
+            if (phone && !phone.match(/^[\+]?[0-9]{10,15}$/)) {
+                Toast.error('Invalid phone number format. Use +1234567890');
+                return;
+            }
+
+            try {
+                await fetch('/api/v1/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        display_name: displayName,
+                        phone: phone || null
+                    })
+                });
+
+                Toast.success('Profile updated successfully');
+            } catch (error) {
+                Toast.error('Failed to update profile');
+            }
+        }
+
+        // Save preferences
+        async function savePreferences(event) {
+            event.preventDefault();
+            Toast.success('Preferences saved');
+        }
+
+        // Change password
+        async function changePassword(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('current_password').value;
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (newPassword !== confirmPassword) {
+                Toast.error('Passwords do not match');
+                return;
+            }
+
+            try {
+                await fetch('/api/v1/user/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+                });
+
+                Toast.success('Password changed successfully');
+                document.getElementById('passwordForm').reset();
+            } catch (error) {
+                Toast.error('Failed to change password');
+            }
+        }
+
+        // Delete location
+        async function deleteLocation(id) {
+            if (!showConfirm('Are you sure you want to delete this location?')) return;
+
+            try {
+                await fetch(`/api/v1/locations/${id}`, { method: 'DELETE' });
+                Toast.success('Location deleted');
+                loadLocations();
+            } catch (error) {
+                Toast.error('Failed to delete location');
+            }
+        }
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverviewStats();
+            Notifications.fetch();
+            Notifications.startPolling(60000);
+        });
+    </script>
+
+{{template "footer" .}}

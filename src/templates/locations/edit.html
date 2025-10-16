@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--dracula-bg);
+            color: var(--dracula-foreground);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            color: var(--dracula-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .back-link {
+            color: var(--dracula-cyan);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .form-card {
+            background: var(--dracula-current-line);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dracula-foreground);
+            font-weight: 500;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dracula-bg);
+            border: 1px solid var(--dracula-comment);
+            border-radius: 4px;
+            color: var(--dracula-foreground);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--dracula-purple);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: var(--dracula-comment);
+            font-size: 0.85rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--dracula-purple);
+            color: var(--dracula-bg);
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--dracula-pink);
+        }
+
+        .btn-secondary {
+            background: var(--dracula-comment);
+            color: var(--dracula-foreground);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dracula-cyan);
+        }
+
+        .btn-danger {
+            background: var(--dracula-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .error-message {
+            background: rgba(255, 85, 85, 0.1);
+            border: 1px solid var(--dracula-red);
+            color: var(--dracula-red);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .success-message {
+            background: rgba(80, 250, 123, 0.1);
+            border: 1px solid var(--dracula-green);
+            color: var(--dracula-green);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                🌤️ Weather Service
+            </a>
+            <div class="navbar-menu">
+                <a href="/" class="navbar-link">Weather</a>
+                <a href="/moon" class="navbar-link">Moon</a>
+                <a href="/earthquake" class="navbar-link">Earthquakes</a>
+                <a href="/hurricane" class="navbar-link">Hurricanes</a>
+                <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
+                {{ if eq .user.Role "admin" }}
+                <a href="/admin" class="navbar-link">Admin</a>
+                {{ end }}
+            </div>
+            <div class="navbar-actions">
+                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+                <div class="profile-avatar">
+                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                        {{ if .user.Email }}
+                            {{ index .user.Email 0 | printf "%c" | upper }}
+                        {{ else }}
+                            U
+                        {{ end }}
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <div>{{ .user.Email }}</div>
+                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
+                        </div>
+                        <nav class="profile-dropdown-menu">
+                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
+                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
+                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
+                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        </nav>
+                    </div>
+                </div>
+                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
+                    ☰
+                </button>
+            </div>
+        </div>
+        <div class="navbar-menu-mobile">
+            <a href="/" class="navbar-link">Weather</a>
+            <a href="/moon" class="navbar-link">Moon</a>
+            <a href="/earthquake" class="navbar-link">Earthquakes</a>
+            <a href="/hurricane" class="navbar-link">Hurricanes</a>
+            <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
+            {{ if eq .user.Role "admin" }}
+            <a href="/admin" class="navbar-link">Admin</a>
+            {{ end }}
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Edit Location</h1>
+            <a href="/user/dashboard" class="back-link">← Back to Dashboard</a>
+        </div>
+
+        <div class="form-card">
+            <div id="message"></div>
+
+            <form id="locationForm">
+                <div class="form-group">
+                    <label for="name">Location Name</label>
+                    <input type="text" id="name" name="name" value="{{ .location.Name }}" required>
+                    <small>Give this location a memorable name</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" name="latitude" step="0.000001" min="-90" max="90" value="{{ .location.Latitude }}" required>
+                    <small>Between -90 and 90</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" name="longitude" step="0.000001" min="-180" max="180" value="{{ .location.Longitude }}" required>
+                    <small>Between -180 and 180</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="timezone">Timezone</label>
+                    <input type="text" id="timezone" name="timezone" value="{{ .location.Timezone }}">
+                    <small>IANA timezone identifier</small>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="alerts_enabled" name="alerts_enabled" {{ if .location.AlertsEnabled }}checked{{ end }}>
+                        <label for="alerts_enabled">Enable weather alerts for this location</label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Location</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/user/dashboard'">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteLocation()">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('locationForm');
+        const messageDiv = document.getElementById('message');
+        const locationId = {{ .location.ID }};
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                name: document.getElementById('name').value,
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                timezone: document.getElementById('timezone').value || '',
+                alerts_enabled: document.getElementById('alerts_enabled').checked
+            };
+
+            try {
+                const response = await fetch(`/api/v1/locations/${locationId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showMessage('Location updated successfully! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/user/dashboard';
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Failed to update location', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteLocation() {
+            const confirmed = await showConfirm('Are you sure you want to delete this location? This cannot be undone.');
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/locations/${locationId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showMessage('Location deleted successfully! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/user/dashboard';
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Failed to delete location', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+        }
+
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000);
+        }
+    </script>
+</body>
+</html>

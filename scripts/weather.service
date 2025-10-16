@@ -1,0 +1,45 @@
+[Unit]
+Description=Weather Service
+After=network.target
+Documentation=https://github.com/apimgr/weather
+
+[Service]
+Type=simple
+User=weather
+Group=weather
+WorkingDirectory=/var/lib/weather
+
+# Application runs from /usr/local/bin/weather (installed by package manager or make install)
+ExecStart=/usr/local/bin/weather
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=weather
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/weather /var/log/weather /etc/weather /var/cache/weather
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Resource limits
+LimitNOFILE=65536
+TasksMax=4096
+
+[Install]
+WantedBy=multi-user.target
