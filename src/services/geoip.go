@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/oschwald/geoip2-golang"
@@ -25,32 +24,38 @@ type GeoIPData struct {
 	Timezone    string
 }
 
-// GeoIPService handles IP-based geolocation
+// GeoIPService handles IP-based geolocation using sapics/ip-location-db
 type GeoIPService struct {
-	mu           sync.RWMutex
-	enabled      bool
-	ipv4Path     string
-	ipv6Path     string
-	ipv4URL      string
-	ipv6URL      string
+	mu          sync.RWMutex
+	enabled     bool
+	cityIPv4Path string
+	cityIPv6Path string
+	countryPath  string
+	asnPath      string
 	cache        map[string]*GeoIPData
 	cacheTime    map[string]int64
 }
 
+// Database URLs from sapics/ip-location-db (SPEC Section 16)
+const (
+	cityIPv4URL  = "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv4.mmdb"
+	cityIPv6URL  = "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv6.mmdb"
+	countryURL   = "https://cdn.jsdelivr.net/npm/@ip-location-db/geo-whois-asn-country-mmdb/geo-whois-asn-country.mmdb"
+	asnURL       = "https://cdn.jsdelivr.net/npm/@ip-location-db/asn-mmdb/asn.mmdb"
+)
+
 // NewGeoIPService creates a new GeoIP service
-// Downloads DB-IP City databases (separate IPv4 and IPv6) on first run, updates weekly
+// Downloads 4 databases from sapics/ip-location-db on first run, updates weekly
 func NewGeoIPService(configDir string) *GeoIPService {
 	geoipDir := filepath.Join(configDir, "geoip")
-	ipv4Path := filepath.Join(geoipDir, "dbip-city-ipv4.mmdb")
-	ipv6Path := filepath.Join(geoipDir, "dbip-city-ipv6.mmdb")
 
 	gs := &GeoIPService{
-		ipv4URL:   "https://cdn.jsdelivr.net/npm/@ip-location-db/dbip-city-mmdb/dbip-city-ipv4.mmdb",
-		ipv6URL:   "https://cdn.jsdelivr.net/npm/@ip-location-db/dbip-city-mmdb/dbip-city-ipv6.mmdb",
-		ipv4Path:  ipv4Path,
-		ipv6Path:  ipv6Path,
-		cache:     make(map[string]*GeoIPData),
-		cacheTime: make(map[string]int64),
+		cityIPv4Path: filepath.Join(geoipDir, "geolite2-city-ipv4.mmdb"),
+		cityIPv6Path: filepath.Join(geoipDir, "geolite2-city-ipv6.mmdb"),
+		countryPath:  filepath.Join(geoipDir, "geo-whois-asn-country.mmdb"),
+		asnPath:      filepath.Join(geoipDir, "asn.mmdb"),
+		cache:        make(map[string]*GeoIPData),
+		cacheTime:    make(map[string]int64),
 	}
 
 	// Try to load databases in background
@@ -59,61 +64,69 @@ func NewGeoIPService(configDir string) *GeoIPService {
 	return gs
 }
 
-// loadDatabases downloads and prepares both IPv4 and IPv6 GeoIP databases
+// loadDatabases downloads and prepares all 4 GeoIP databases from sapics/ip-location-db
 func (gs *GeoIPService) loadDatabases() {
-	fmt.Println("🌍 Loading GeoIP databases...")
+	fmt.Println("🌍 Loading GeoIP databases (sapics/ip-location-db)...")
 
 	// Create directory if needed
-	dir := filepath.Dir(gs.ipv4Path)
+	dir := filepath.Dir(gs.cityIPv4Path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		fmt.Printf("❌ Failed to create directory: %v\n", err)
 		return
 	}
 
-	// Check if both databases exist
-	ipv4Exists := false
-	ipv6Exists := false
-
-	if _, err := os.Stat(gs.ipv4Path); err == nil {
-		ipv4Exists = true
-	}
-	if _, err := os.Stat(gs.ipv6Path); err == nil {
-		ipv6Exists = true
+	// Check if all 4 databases exist
+	databases := map[string]string{
+		"City IPv4":  gs.cityIPv4Path,
+		"City IPv6":  gs.cityIPv6Path,
+		"Country":    gs.countryPath,
+		"ASN":        gs.asnPath,
 	}
 
-	if ipv4Exists && ipv6Exists {
+	allExist := true
+	for name, path := range databases {
+		if _, err := os.Stat(path); err != nil {
+			allExist = false
+			fmt.Printf("  📥 %s database not found, will download\n", name)
+		}
+	}
+
+	if allExist {
 		gs.mu.Lock()
 		gs.enabled = true
 		gs.mu.Unlock()
-		fmt.Println("📂 GeoIP databases loaded from cache (IPv4 + IPv6)")
+		fmt.Println("📂 GeoIP databases loaded from cache (4 databases)")
 		return
 	}
 
-	// Download IPv4 database
-	if !ipv4Exists {
-		fmt.Printf("📥 Downloading IPv4 GeoIP database...\n")
-		if err := gs.downloadDatabase(gs.ipv4URL, gs.ipv4Path); err != nil {
-			fmt.Printf("❌ Failed to download IPv4 database: %v\n", err)
-			return
-		}
-		fmt.Println("✅ IPv4 GeoIP database downloaded")
+	// Download all 4 databases
+	downloads := map[string]string{
+		gs.cityIPv4Path: cityIPv4URL,
+		gs.cityIPv6Path: cityIPv6URL,
+		gs.countryPath:  countryURL,
+		gs.asnPath:      asnURL,
 	}
 
-	// Download IPv6 database
-	if !ipv6Exists {
-		fmt.Printf("📥 Downloading IPv6 GeoIP database...\n")
-		if err := gs.downloadDatabase(gs.ipv6URL, gs.ipv6Path); err != nil {
-			fmt.Printf("❌ Failed to download IPv6 database: %v\n", err)
+	for path, url := range downloads {
+		if _, err := os.Stat(path); err == nil {
+			continue // Already exists
+		}
+
+		filename := filepath.Base(path)
+		fmt.Printf("📥 Downloading %s...\n", filename)
+
+		if err := gs.downloadDatabase(url, path); err != nil {
+			fmt.Printf("❌ Failed to download %s: %v\n", filename, err)
 			return
 		}
-		fmt.Println("✅ IPv6 GeoIP database downloaded")
+		fmt.Printf("✅ %s downloaded\n", filename)
 	}
 
 	gs.mu.Lock()
 	gs.enabled = true
 	gs.mu.Unlock()
 
-	fmt.Println("✅ GeoIP databases ready (IPv4 + IPv6 from DB-IP)")
+	fmt.Println("✅ All 4 GeoIP databases ready (sapics/ip-location-db: ~103MB total)")
 }
 
 // downloadDatabase downloads a database file
@@ -168,24 +181,27 @@ func (gs *GeoIPService) LookupIP(ip string) (*GeoIPData, error) {
 		return nil, fmt.Errorf("cannot geolocate private/local IP: %s", ip)
 	}
 
-	// Determine which database to use (IPv4 or IPv6)
-	dbPath := gs.ipv4Path
-	if strings.Contains(ip, ":") {
+	// Determine which city database to use (IPv4 or IPv6)
+	cityDBPath := gs.cityIPv4Path
+	if parsedIP.To4() == nil {
 		// IPv6 address
-		dbPath = gs.ipv6Path
+		cityDBPath = gs.cityIPv6Path
 	}
 
-	// Open and query appropriate database
-	reader, err := geoip2.Open(dbPath)
+	// Try city database first
+	cityReader, err := geoip2.Open(cityDBPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open GeoIP database: %w", err)
+		// Fallback to country database
+		return gs.lookupCountry(parsedIP, ip)
 	}
-	defer reader.Close()
+	defer cityReader.Close()
 
 	// Lookup city data
-	record, err := reader.City(parsedIP)
+	record, err := cityReader.City(parsedIP)
 	if err != nil {
-		return nil, fmt.Errorf("IP lookup failed: %w", err)
+		// Fallback to country database
+		cityReader.Close()
+		return gs.lookupCountry(parsedIP, ip)
 	}
 
 	// Extract city name (prefer English)
@@ -245,6 +261,50 @@ func (gs *GeoIPService) LookupIP(ip string) (*GeoIPData, error) {
 	return geoData, nil
 }
 
+// lookupCountry performs country-level lookup (fallback when city lookup fails)
+func (gs *GeoIPService) lookupCountry(parsedIP net.IP, ipStr string) (*GeoIPData, error) {
+	// Open country database (combined IPv4/IPv6)
+	countryReader, err := geoip2.Open(gs.countryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open country database: %w", err)
+	}
+	defer countryReader.Close()
+
+	// Lookup country data
+	record, err := countryReader.Country(parsedIP)
+	if err != nil {
+		return nil, fmt.Errorf("country lookup failed: %w", err)
+	}
+
+	// Extract country info
+	country := ""
+	countryCode := ""
+	if len(record.Country.Names) > 0 {
+		if name, ok := record.Country.Names["en"]; ok {
+			country = name
+		}
+		countryCode = record.Country.IsoCode
+	}
+
+	geoData := &GeoIPData{
+		IP:          ipStr,
+		City:        "", // Country-level only, no city
+		Region:      "",
+		Country:     country,
+		CountryCode: countryCode,
+		Latitude:    0, // Country database doesn't have coordinates
+		Longitude:   0,
+		Timezone:    "",
+	}
+
+	// Cache result
+	gs.mu.Lock()
+	gs.cache[ipStr] = geoData
+	gs.mu.Unlock()
+
+	return geoData, nil
+}
+
 // IsEnabled returns whether GeoIP is enabled
 func (gs *GeoIPService) IsEnabled() bool {
 	gs.mu.RLock()
@@ -252,18 +312,23 @@ func (gs *GeoIPService) IsEnabled() bool {
 	return gs.enabled
 }
 
-// UpdateDatabase downloads the latest GeoIP databases (both IPv4 and IPv6)
+// UpdateDatabase downloads the latest GeoIP databases (all 4 from sapics)
 func (gs *GeoIPService) UpdateDatabase() error {
-	fmt.Println("📥 Updating GeoIP databases...")
+	fmt.Println("📥 Updating GeoIP databases (sapics/ip-location-db)...")
 
-	// Update IPv4 database
-	if err := gs.updateSingleDatabase(gs.ipv4URL, gs.ipv4Path, "IPv4"); err != nil {
-		return fmt.Errorf("failed to update IPv4 database: %w", err)
+	// Update all 4 databases
+	updates := map[string]string{
+		gs.cityIPv4Path: cityIPv4URL,
+		gs.cityIPv6Path: cityIPv6URL,
+		gs.countryPath:  countryURL,
+		gs.asnPath:      asnURL,
 	}
 
-	// Update IPv6 database
-	if err := gs.updateSingleDatabase(gs.ipv6URL, gs.ipv6Path, "IPv6"); err != nil {
-		return fmt.Errorf("failed to update IPv6 database: %w", err)
+	for path, url := range updates {
+		filename := filepath.Base(path)
+		if err := gs.updateSingleDatabase(url, path, filename); err != nil {
+			return fmt.Errorf("failed to update %s: %w", filename, err)
+		}
 	}
 
 	// Clear cache to force fresh lookups
@@ -272,7 +337,7 @@ func (gs *GeoIPService) UpdateDatabase() error {
 	gs.cacheTime = make(map[string]int64)
 	gs.mu.Unlock()
 
-	fmt.Println("✅ GeoIP databases updated successfully (IPv4 + IPv6)")
+	fmt.Println("✅ All 4 GeoIP databases updated successfully")
 	return nil
 }
 

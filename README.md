@@ -1,636 +1,399 @@
-# 🌤️ Weather Service
+# Weather Service
 
-> **A comprehensive weather platform with beautiful forecasts, real-time alerts, and powerful admin dashboard**
+> A production-grade weather API service providing global weather forecasts, severe weather alerts, earthquake data, moon phase information, and hurricane tracking.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/go-1.23+-00ADD8.svg)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/go-1.24+-00ADD8.svg)](https://golang.org)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows%20%7C%20FreeBSD-lightgrey.svg)]()
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue.svg)](https://ghcr.io/apimgr/weather)
 
-## 🚀 Quick Install
+## About
 
-```bash
-# Linux (Ubuntu, Debian, RHEL, CentOS, Fedora, Arch)
-curl -fsSL https://raw.githubusercontent.com/apimgr/weather/main/scripts/install.sh | sudo bash
+Weather Service is a comprehensive weather platform built with Go, providing:
 
-# macOS
-curl -fsSL https://raw.githubusercontent.com/apimgr/weather/main/scripts/install.sh | bash
+- **Global Weather Forecasts** - 16-day forecasts for any location worldwide via Open-Meteo
+- **Severe Weather Alerts** - Real-time alerts for hurricanes, tornadoes, storms, floods, and winter weather
+- **International Support** - Weather alerts from US, Canada, UK, Australia, Japan, and Mexico
+- **Earthquake Tracking** - Real-time earthquake data from USGS with interactive maps
+- **Moon Phases** - Detailed lunar information including phases, illumination, rise/set times
+- **Hurricane Tracking** - Active storm tracking with advisories and forecasts from NOAA
+- **GeoIP Location** - Automatic location detection via IP address (IPv4 and IPv6)
+- **Location Persistence** - Cookie-based location memory (30 days)
+- **Mobile Responsive** - Optimized for desktop, tablet, and mobile devices
+- **Dracula Theme** - Beautiful dark theme with cyan accents
 
-# Windows (PowerShell as Administrator)
-iwr -useb https://raw.githubusercontent.com/apimgr/weather/main/scripts/windows.ps1 | iex
+### Key Features
 
-# Docker
-docker run -d -p 127.0.0.1:64080:80 \
-  -e PORT=80 \
-  -e DATA_DIR=/data \
-  -e CONFIG_DIR=/config \
-  -v ./rootfs/data:/data \
-  -v ./rootfs/config:/config \
-  ghcr.io/apimgr/weather:latest
-```
+- ✅ **Single Static Binary** - No external dependencies, all assets embedded
+- ✅ **Multi-Platform** - Linux, macOS, Windows, FreeBSD (amd64/arm64)
+- ✅ **Docker Ready** - Official images on GitHub Container Registry
+- ✅ **Production Grade** - Rate limiting, caching, health checks, graceful shutdown
+- ✅ **RESTful JSON API** - Clean, well-documented API endpoints
+- ✅ **Web Interface** - Modern, responsive UI with Dracula theme
+- ✅ **Lightweight** - <50MB memory, <200ms response times
+- ✅ **Zero Configuration** - Works out of the box with sensible defaults
 
-After installation, visit `http://localhost:3000` to complete setup!
+### Technology Stack
 
-## ✨ Features
+- **Language**: Go 1.24+
+- **Web Framework**: Gin
+- **Weather Data**: Open-Meteo (global), NOAA NWS/NHC (US), international APIs
+- **GeoIP**: sapics/ip-location-db with 4 databases (IPv4/IPv6 city, country, ASN)
+- **Frontend**: HTML templates, vanilla CSS/JS, Dracula theme
+- **Deployment**: Docker, systemd, launchd, Windows service
 
-### 🌍 Weather & Environmental Data
-- **Beautiful Weather Forecasts** - ASCII art for terminal, responsive web dashboard
-- **3-Day Forecasts** - Hourly breakdowns with temperature, conditions, wind
-- **Moon Phases** - Current phase with illumination percentage
-- **Hurricane Tracking** - Real-time cyclone data from NOAA
-- **Earthquake Monitoring** - Recent seismic activity from USGS
-- **wttr.in Compatible** - Drop-in replacement with formats 0-4
+## Official Links
 
-### 🔐 Authentication & Security
-- **User Authentication** - Email/password with bcrypt hashing
-- **Role System** - Admin and User roles with granular permissions
-- **Session Management** - Secure cookie-based sessions
-- **API Tokens** - Generate secure tokens with custom rate limits
-- **First-Run Wizard** - Automatic admin account creation
+- **Documentation**: [https://weather.readthedocs.io](https://weather.readthedocs.io)
+- **GitHub**: [https://github.com/apimgr/weather](https://github.com/apimgr/weather)
+- **Docker Hub**: [https://ghcr.io/apimgr/weather](https://ghcr.io/apimgr/weather)
+- **Issues**: [https://github.com/apimgr/weather/issues](https://github.com/apimgr/weather/issues)
+- **Discussions**: [https://github.com/apimgr/weather/discussions](https://github.com/apimgr/weather/discussions)
 
-### 📍 Saved Locations & Alerts
-- **Personal Library** - Save unlimited favorite locations
-- **Weather Alerts** - Automatic notifications for severe conditions
-- **Custom Nicknames** - Label locations with friendly names
-- **Dashboard View** - Quick access to all saved locations
-- **Alert History** - Track past weather events
+---
 
-### 🎛️ Admin Dashboard
-- **User Management** - Create, edit, delete user accounts
-- **API Token Control** - Generate, revoke, monitor tokens
-- **Activity Logs** - Comprehensive audit trail
-- **System Settings** - Configure alerts and rate limits
-- **Real-Time Stats** - Server metrics and health monitoring
+## Production Deployment
 
-### 📱 Modern Web Experience
-- **PWA Support** - Install as a native app
-- **Offline Mode** - Works without internet via service worker
-- **Dracula Theme** - Beautiful dark theme
-- **Responsive Design** - Works on all devices (mobile, tablet, desktop)
-- **Fast & Lightweight** - <50MB memory, <200ms response times
+### Binary Installation
 
-### 🚀 Developer Features
-- **RESTful JSON API** - Clean, well-documented endpoints
-- **Rate Limiting** - 120 req/hr anonymous, 1200 req/hr authenticated
-- **Caching** - Intelligent caching for optimal performance
-- **CLI Commands** - Rich command-line interface
-- **Docker Ready** - Full Docker & Docker Compose support
+Download pre-built binaries for your platform from [GitHub Releases](https://github.com/apimgr/weather/releases/latest).
 
-## 🚀 Quick Start
-
-### One-Line Install (Linux/macOS)
+#### Linux (systemd)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/apimgr/weather/main/scripts/install.sh | bash
-```
-
-### Windows (PowerShell)
-
-```powershell
-iwr -useb https://raw.githubusercontent.com/apimgr/weather/main/scripts/windows.ps1 | iex
-```
-
-### Docker
-
-```bash
-docker run -d \
-  -p 127.0.0.1:64080:80 \
-  -e PORT=80 \
-  -e DATA_DIR=/data \
-  -e CONFIG_DIR=/config \
-  -v ./rootfs/data:/data \
-  -v ./rootfs/config:/config \
-  ghcr.io/apimgr/weather:latest
-```
-
-### From Source
-
-```bash
-git clone https://github.com/apimgr/weather.git
-cd weather
-make build
-./weather
-```
-
-## 📖 Usage
-
-### Web Interface
-
-```bash
-# Start server
-./weather
-
-# Access dashboard
-open http://localhost:3000
-```
-
-### Terminal (ASCII Art)
-
-```bash
-# Current weather
-curl localhost:3000/London
-
-# With format
-curl "localhost:3000/NYC?format=3"
-```
-
-### API
-
-```bash
-# JSON weather data
-curl "localhost:3000/api/weather?location=Paris"
-
-# With authentication
-curl -H "Authorization: Bearer your-token" \
-  "localhost:3000/api/v1/forecast?location=Tokyo&days=7"
-```
-
-## 🎨 Format Examples
-
-### Format 0 (ASCII Art - Default)
-
-```bash
-curl localhost:3000/London
-```
-
-```
-Weather Report: London, GB
-
-     \   /     Sunny
-      .-.      🌡️ +22°C  💨 ↗ 11 km/h  💧 45%
-   ― (   ) ―
-      `-'      Timezone: Europe/London
-     /   \     Updated: 2024-10-02 14:30 UTC
-
-┌────────────┬────────────┬────────────┐
-│ Morning    │ Afternoon  │ Evening    │
-├────────────┼────────────┼────────────┤
-│ ⛅  +18°C  │ ☀️   +24°C  │ 🌙  +20°C  │
-└────────────┴────────────┴────────────┘
-```
-
-### Format 1-4 (One-Line)
-
-```bash
-# Format 1: Icon + Temp
-curl "localhost:3000/London?format=1"
-☀️ +22°C
-
-# Format 2: + Wind
-curl "localhost:3000/London?format=2"
-☀️ 🌡️+22°C 🌬️↗11km/h
-
-# Format 3: Location + Weather
-curl "localhost:3000/London?format=3"
-London, GB: ☀️ +22°C
-
-# Format 4: Full Details
-curl "localhost:3000/London?format=4"
-London, GB: ☀️ 🌡️+22°C 🌬️↗11km/h 💧45%
-```
-
-## 🛠️ CLI Commands
-
-```bash
-# Show version
-./weather --version
-
-# Server status
-./weather --status
-
-# Custom port
-./weather --port 8080
-
-# Custom data directory (database will be stored as <dir>/weather.db)
-./weather --data /var/lib/weather
-
-# Custom config directory
-./weather --config /etc/weather
-
-# Both data and config
-./weather --data /var/lib/weather --config /etc/weather
-
-# Custom address
-./weather --address 127.0.0.1
-
-# Health check (Docker)
-./weather --healthcheck
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-All configuration is stored in the database after first run. Environment variables are checked **only once** on initial startup.
-
-#### Core Server
-
-```bash
-PORT=3000                          # Server port (or "8080,8443" for HTTP+HTTPS)
-ENV=production                     # Environment: development, production, test
-ENVIRONMENT=production             # Alternative to ENV
-SERVER_LISTEN=0.0.0.0             # Listen address (default: auto-detect)
-```
-
-#### Database
-
-**Supported Databases:**
-- ✅ SQLite (default, embedded, fully tested)
-- ✅ PostgreSQL (connection support added)
-- ✅ MariaDB/MySQL (connection support added)
-- ✅ Microsoft SQL Server (connection support added)
-
-**Optional Caching:**
-- ✅ Valkey/Redis (for performance optimization)
-
-```bash
-# Connection String (currently SQLite only)
-DATABASE_URL=sqlite:///data/weather.db          # SQLite (supported)
-DATABASE_URL=postgres://user:pass@host/db       # PostgreSQL (planned)
-DATABASE_URL=mysql://user:pass@host/db          # MariaDB/MySQL (planned)
-DATABASE_URL=sqlserver://user:pass@host/db      # MSSQL (planned)
-DB_CONNECTION_STRING=sqlite:///data/weather.db  # Alternative to DATABASE_URL
-
-# Direct Path (SQLite only)
-DATABASE_PATH=/data/db/weather.db  # Direct SQLite database path
-
-# Individual Parameters (fully supported)
-DB_TYPE=sqlite                     # Database type: sqlite, mariadb, postgres, mssql
-DB_HOST=localhost                  # Database hostname
-DB_PORT=5432                       # Database port (3306 for MariaDB, 1433 for MSSQL)
-DB_NAME=weather                    # Database name
-DB_USER=weather                    # Database username
-DB_PASSWORD=secret                 # Database password
-DB_SSLMODE=disable                 # PostgreSQL SSL mode: disable, require, verify-ca, verify-full
-
-# Optional Caching (Valkey/Redis)
-CACHE_ENABLED=true                 # Enable Valkey/Redis caching
-CACHE_HOST=localhost               # Valkey/Redis hostname
-CACHE_PORT=6379                    # Valkey/Redis port
-CACHE_PASSWORD=secret              # Valkey/Redis password (optional)
-CACHE_DB=0                         # Valkey/Redis database number
-```
-
-#### Directory Paths
-
-```bash
-DATA_DIR=/custom/data              # Override data directory
-CONFIG_DIR=/custom/config          # Override config directory
-LOG_DIR=/custom/logs               # Override log directory
-```
-
-#### Network & Proxy
-
-```bash
-REVERSE_PROXY=true                 # Enable reverse proxy mode (listen on 127.0.0.1)
-DOMAIN=weather.example.com         # Primary domain name
-HOSTNAME=server.local              # Server hostname
-```
-
-#### SSL/TLS
-
-```bash
-TLS_ENABLED=true                   # Enable TLS/SSL
-```
-
-#### Security
-
-```bash
-SESSION_SECRET=your-secret-key     # Session encryption (auto-generated if not set)
-                                   # Saved to {config}/session for persistence
-```
-
-#### Email/SMTP
-
-```bash
-SMTP_HOST=smtp.gmail.com           # SMTP server hostname
-SMTP_PORT=587                      # SMTP server port
-SMTP_USERNAME=user@example.com     # SMTP username
-SMTP_PASSWORD=app-password         # SMTP password
-SMTP_FROM_ADDRESS=noreply@example.com  # From email address
-SMTP_FROM_NAME=Weather Service     # From display name
-```
-
-### Docker Environment Variables
-
-For Docker deployments, set these in docker-compose.yml or docker run:
-
-```bash
-docker run -d \
-  -e PORT=80 \
-  -e ENV=production \
-  -e DATA_DIR=/data \
-  -e CONFIG_DIR=/config \
-  -e REVERSE_PROXY=true \
-  -e DOMAIN=weather.example.com \
-  -v ./rootfs/data:/data \
-  -v ./rootfs/config:/config \
-  ghcr.io/apimgr/weather:latest
-```
-
-## 🐳 Docker Deployment
-
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  weather:
-    image: weather:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - weather-data:/data
-    environment:
-      - SESSION_SECRET=${SESSION_SECRET}
-      - GIN_MODE=release
-    restart: unless-stopped
-
-volumes:
-  weather-data:
-```
-
-```bash
-# Start
-docker-compose up -d
-
-# Logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-## 📊 API Reference
-
-### Weather Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/weather?location={loc}` | GET | Current weather |
-| `/api/forecast?location={loc}&days={n}` | GET | Forecast (1-7 days) |
-| `/api/moon` | GET | Moon phase |
-| `/api/hurricanes` | GET | Active hurricanes |
-| `/api/earthquakes?mag={m}&days={d}` | GET | Recent earthquakes |
-
-### Response Example
-
-```json
-{
-  "location": {
-    "name": "New York, NY",
-    "latitude": 40.7128,
-    "longitude": -74.0060,
-    "timezone": "America/New_York"
-  },
-  "current": {
-    "temperature": 72,
-    "condition": "Partly Cloudy",
-    "icon": "⛅",
-    "wind_speed": 8,
-    "wind_direction": "NE",
-    "humidity": 65,
-    "pressure": 1013,
-    "visibility": 10,
-    "uv_index": 5
-  },
-  "forecast": [
-    {
-      "date": "2024-10-02",
-      "high": 75,
-      "low": 62,
-      "condition": "Sunny",
-      "icon": "☀️",
-      "precipitation": 0,
-      "hourly": [...]
-    }
-  ]
-}
-```
-
-### Authentication
-
-```bash
-# Generate API token in admin panel or:
-curl -X POST http://localhost:3000/api/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name":"My API Token","scopes":"read,write"}'
-
-# Use token
-curl -H "Authorization: Bearer your-token" \
-  http://localhost:3000/api/v1/forecast?location=NYC
-```
-
-### Rate Limits
-
-- **Anonymous**: 120 requests/hour
-- **Authenticated**: 1200 requests/hour
-- **Custom**: Per-token limits via admin panel
-
-## 🏗️ System Architecture
-
-```
-┌─────────────────────────────────────────┐
-│           Client Applications            │
-│  (Browser, Mobile PWA, Terminal, API)   │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│         Gin HTTP Server (Go)            │
-│  ┌─────────────────────────────────┐   │
-│  │ Middleware                       │   │
-│  │ - Logging, CORS, Security       │   │
-│  │ - Authentication, Rate Limiting  │   │
-│  └─────────────────────────────────┘   │
-│  ┌─────────────────────────────────┐   │
-│  │ Handlers & Services              │   │
-│  │ - Weather, Hurricane, Earthquake │   │
-│  │ - Auth, Admin, Dashboard         │   │
-│  └─────────────────────────────────┘   │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│            Data Layer                    │
-│  ┌──────────┐  ┌───────────────────┐   │
-│  │ SQLite   │  │ External APIs      │   │
-│  │ Database │  │ - Open-Meteo       │   │
-│  │          │  │ - NOAA, USGS       │   │
-│  └──────────┘  └───────────────────┘   │
-└──────────────────────────────────────────┘
-```
-
-## 📁 Project Structure
-
-```
-weather/
-├── main.go              # Application entry
-├── handlers/            # HTTP handlers
-├── services/            # Business logic
-├── src/
-│   ├── database/       # Database layer
-│   ├── handlers/       # Auth handlers
-│   ├── middleware/     # Custom middleware
-│   └── scheduler/      # Background tasks
-├── templates/          # HTML templates
-├── static/             # CSS, JS, images
-├── scripts/            # Install scripts
-└── data/               # SQLite database
-```
-
-## 🔧 Development
-
-### Prerequisites
-
-- Go 1.23+
-- Git
-- Make (optional)
-
-### Build
-
-```bash
-# Clone repository
-git clone https://github.com/apimgr/weather.git
-cd weather
-
-# Install dependencies
-go mod download
-
-# Build
-make build
-
-# Run
-./weather
-```
-
-### Development Mode
-
-```bash
-# With auto-reload
-GIN_MODE=debug go run main.go
-
-# Or use make
-make dev
-```
-
-### Testing
-
-```bash
-# Run tests
-go test ./...
-
-# With coverage
-go test -cover ./...
-```
-
-## 🌟 Features in Detail
-
-### Saved Locations
-
-1. **Save Your Favorites**
-   - Click "Save Location" on any weather page
-   - Add custom nicknames
-   - Enable/disable alerts per location
-
-2. **Weather Alerts**
-   - Automatic checks every 15 minutes
-   - Notifications for:
-     - Severe weather (storms, hurricanes)
-     - Temperature extremes
-     - High winds, heavy precipitation
-
-3. **Dashboard Access**
-   - View all locations at once
-   - Quick weather overview
-   - One-click detailed forecasts
-
-### Admin Panel
-
-Access at `/admin` (admin role required)
-
-1. **User Management**
-   - Create/edit/delete users
-   - Assign roles (admin/user)
-   - View login history
-
-2. **API Tokens**
-   - Generate secure tokens
-   - Set custom rate limits
-   - Monitor usage statistics
-
-3. **System Settings**
-   - Configure alert thresholds
-   - Adjust rate limits
-   - Database management
-
-4. **Activity Logs**
-   - Track all user actions
-   - API usage metrics
-   - Security events
-
-### PWA Installation
-
-**Desktop (Chrome/Edge)**
-1. Visit http://localhost:3000
-2. Click install icon in address bar
-3. Follow prompts
-
-**Mobile**
-1. Open in Safari/Chrome
-2. Tap "Add to Home Screen"
-3. Confirm installation
-
-**Features**
-- Works offline
-- App shortcuts
-- Push notifications (coming soon)
-
-## 🌐 Deployment
-
-### Linux (systemd)
-
-```bash
-# Install
-sudo ./scripts/linux.sh
-
-# Service commands
-sudo systemctl start weather
+# Download binary
+wget https://github.com/apimgr/weather/releases/latest/download/weather-linux-amd64
+chmod +x weather-linux-amd64
+sudo mv weather-linux-amd64 /usr/local/bin/weather
+
+# Create service user
+sudo useradd -r -s /bin/false weather
+
+# Create directories
+sudo mkdir -p /var/lib/weather/{data,config}
+sudo mkdir -p /var/log/weather
+sudo chown -R weather:weather /var/lib/weather /var/log/weather
+
+# Create systemd service
+sudo tee /etc/systemd/system/weather.service > /dev/null <<EOF
+[Unit]
+Description=Weather API Service
+After=network.target
+
+[Service]
+Type=simple
+User=weather
+Group=weather
+WorkingDirectory=/var/lib/weather
+ExecStart=/usr/local/bin/weather
+Restart=always
+RestartSec=10
+Environment="PORT=80"
+Environment="DATA_DIR=/var/lib/weather/data"
+Environment="CONFIG_DIR=/var/lib/weather/config"
+Environment="LOG_DIR=/var/log/weather"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start
+sudo systemctl daemon-reload
 sudo systemctl enable weather
+sudo systemctl start weather
 sudo systemctl status weather
-sudo systemctl stop weather
 
-# Logs
+# View logs
 sudo journalctl -u weather -f
 ```
 
-### macOS (LaunchAgent)
+#### macOS (launchd)
 
 ```bash
-# Install
-./scripts/macos.sh
+# Download binary (Apple Silicon)
+wget https://github.com/apimgr/weather/releases/latest/download/weather-darwin-arm64
+chmod +x weather-darwin-arm64
+sudo mv weather-darwin-arm64 /usr/local/bin/weather
 
-# Service commands
-launchctl load ~/Library/LaunchAgents/com.apimgr.weather.plist
-launchctl unload ~/Library/LaunchAgents/com.apimgr.weather.plist
+# Create directories
+sudo mkdir -p /usr/local/var/weather/{data,config}
+sudo mkdir -p /usr/local/var/log/weather
 
-# Logs
-tail -f ~/Library/Application\ Support/Weather/stdout.log
+# Create launchd service
+sudo tee /Library/LaunchDaemons/com.apimgr.weather.plist > /dev/null <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.apimgr.weather</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/weather</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/var/log/weather/error.log</string>
+    <key>StandardOutPath</key>
+    <string>/usr/local/var/log/weather/output.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PORT</key>
+        <string>80</string>
+    </dict>
+</dict>
+</plist>
+EOF
+
+# Load and start
+sudo launchctl load /Library/LaunchDaemons/com.apimgr.weather.plist
 ```
 
-### Windows (Service)
+#### Windows (NSSM Service)
 
 ```powershell
-# Install NSSM first
-choco install nssm
+# Download binary
+Invoke-WebRequest -Uri "https://github.com/apimgr/weather/releases/latest/download/weather-windows-amd64.exe" -OutFile "weather.exe"
 
-# Install service
-.\scripts\windows.ps1 -InstallService
+# Create directories
+New-Item -ItemType Directory -Force -Path "C:\ProgramData\Weather\data"
+New-Item -ItemType Directory -Force -Path "C:\ProgramData\Weather\config"
+New-Item -ItemType Directory -Force -Path "C:\ProgramData\Weather\logs"
 
-# Service commands
+# Move binary
+Move-Item weather.exe "C:\Program Files\Weather\weather.exe"
+
+# Install as Windows Service using NSSM
+# Download NSSM from https://nssm.cc/download
+nssm install Weather "C:\Program Files\Weather\weather.exe"
+nssm set Weather AppDirectory "C:\ProgramData\Weather"
+nssm set Weather AppStdout "C:\ProgramData\Weather\logs\output.log"
+nssm set Weather AppStderr "C:\ProgramData\Weather\logs\error.log"
+nssm set Weather AppEnvironmentExtra "PORT=80"
 nssm start Weather
-nssm stop Weather
-nssm restart Weather
 ```
 
-### Kubernetes
+#### FreeBSD (rc.d)
+
+```bash
+# Download binary
+fetch https://github.com/apimgr/weather/releases/latest/download/weather-bsd-amd64
+chmod +x weather-bsd-amd64
+sudo mv weather-bsd-amd64 /usr/local/bin/weather
+
+# Create service user
+sudo pw useradd weather -d /var/db/weather -s /usr/sbin/nologin
+
+# Create directories
+sudo mkdir -p /var/db/weather/{data,config}
+sudo mkdir -p /var/log/weather
+sudo chown -R weather:weather /var/db/weather /var/log/weather
+
+# Create rc.d script
+sudo tee /usr/local/etc/rc.d/weather > /dev/null <<'EOF'
+#!/bin/sh
+# PROVIDE: weather
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="weather"
+rcvar="weather_enable"
+command="/usr/local/bin/weather"
+weather_user="weather"
+pidfile="/var/run/${name}.pid"
+command_args="&"
+
+load_rc_config $name
+run_rc_command "$1"
+EOF
+
+sudo chmod +x /usr/local/etc/rc.d/weather
+
+# Enable and start
+sudo sysrc weather_enable="YES"
+sudo service weather start
+```
+
+### Environment Variables
+
+Configure the service using environment variables:
+
+```bash
+# Server Configuration
+PORT=80                              # HTTP server port (default: 80)
+DOMAIN=weather.example.com           # Public domain name (for URL generation)
+HOSTNAME=server.local                # Server hostname (fallback for DOMAIN)
+
+# Directory Paths (OS-specific defaults if not set)
+DATA_DIR=/var/lib/weather/data       # Data directory
+CONFIG_DIR=/var/lib/weather/config   # Configuration directory
+LOG_DIR=/var/log/weather             # Log directory
+CACHE_DIR=/var/cache/weather         # Cache directory (optional)
+TEMP_DIR=/tmp/weather                # Temporary directory (optional)
+```
+
+### Configuration File
+
+Optional configuration file at `$CONFIG_DIR/weather.yaml`:
+
+```yaml
+server:
+  port: 80
+  domain: weather.example.com
+
+logging:
+  level: info  # debug, info, warn, error
+  format: json  # json, text
+
+geoip:
+  update_interval: 168h  # Update weekly (hours)
+  databases:
+    - geolite2-city-ipv4
+    - geolite2-city-ipv6
+    - geo-whois-asn-country
+    - asn
+
+cache:
+  weather_ttl: 15m
+  severe_ttl: 5m
+  moon_ttl: 1h
+  earthquake_ttl: 10m
+
+rate_limit:
+  requests_per_window: 100
+  window_duration: 15m
+  burst: 20
+```
+
+---
+
+## Docker Deployment
+
+### Quick Start
+
+```bash
+# Pull and run
+docker pull ghcr.io/apimgr/weather:latest
+docker run -d \
+  --name weather \
+  -p 172.17.0.1:64080:80 \
+  -v ./rootfs/data/weather:/data \
+  -v ./rootfs/config/weather:/config \
+  -v ./rootfs/logs/weather:/var/log/weather \
+  -e DOMAIN=weather.example.com \
+  --restart unless-stopped \
+  ghcr.io/apimgr/weather:latest
+
+# View logs
+docker logs -f weather
+
+# Check status
+curl http://172.17.0.1:64080/api/health
+```
+
+### Docker Compose (Production)
+
+Create `docker-compose.yml`:
+
+```yaml
+services:
+  weather:
+    image: ghcr.io/apimgr/weather:latest
+    container_name: weather
+    restart: unless-stopped
+
+    environment:
+      - CONFIG_DIR=/config
+      - DATA_DIR=/data
+      - LOGS_DIR=/var/log/weather
+      - PORT=80
+      - DOMAIN=weather.example.com
+
+    volumes:
+      - ./rootfs/config/weather:/config
+      - ./rootfs/data/weather:/data
+      - ./rootfs/logs/weather:/var/log/weather
+
+    ports:
+      - "172.17.0.1:64080:80"
+
+    networks:
+      - weather
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  weather:
+    name: weather
+    external: false
+    driver: bridge
+```
+
+Start the service:
+
+```bash
+docker compose up -d
+docker compose logs -f
+docker compose ps
+```
+
+### Docker Compose (Development)
+
+For development/testing with ephemeral storage:
+
+```yaml
+services:
+  weather:
+    image: weather:dev
+    container_name: weather-test
+    restart: "no"
+
+    environment:
+      - CONFIG_DIR=/config
+      - DATA_DIR=/data
+      - LOGS_DIR=/var/log/weather
+      - PORT=80
+      - DEV=true
+
+    volumes:
+      - /tmp/weather/rootfs/config/weather:/config
+      - /tmp/weather/rootfs/data/weather:/data
+      - /tmp/weather/rootfs/logs/weather:/var/log/weather
+
+    ports:
+      - "64181:80"
+
+    networks:
+      - weather
+
+networks:
+  weather:
+    name: weather
+    external: false
+    driver: bridge
+```
+
+### Building Custom Images
+
+```bash
+# Development image (local testing)
+make docker-dev
+
+# Production image (multi-platform push to registry)
+make docker
+```
+
+### Kubernetes Deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -649,16 +412,14 @@ spec:
     spec:
       containers:
       - name: weather
-        image: weather:latest
+        image: ghcr.io/apimgr/weather:latest
         ports:
-        - containerPort: 3000
+        - containerPort: 80
         env:
-        - name: SESSION_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: weather-secrets
-              key: session-secret
-        # Note: --data and --config flags are set in Dockerfile CMD
+        - name: PORT
+          value: "80"
+        - name: DOMAIN
+          value: "weather.example.com"
         volumeMounts:
         - name: data
           mountPath: /data
@@ -666,14 +427,14 @@ spec:
           mountPath: /config
         livenessProbe:
           httpGet:
-            path: /livez
-            port: 3000
+            path: /api/health
+            port: 80
           initialDelaySeconds: 60
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /readyz
-            port: 3000
+            path: /api/health
+            port: 80
           initialDelaySeconds: 30
           periodSeconds: 5
       volumes:
@@ -693,186 +454,503 @@ spec:
     app: weather
   ports:
   - port: 80
-    targetPort: 3000
+    targetPort: 80
   type: LoadBalancer
 ```
 
-## 🔒 Security
+---
+
+## API Usage
+
+### Quick Examples
+
+```bash
+# Weather forecast (IP-based location)
+curl http://localhost/
+
+# Weather for specific location
+curl http://localhost/weather/Brooklyn,NY
+
+# Severe weather alerts
+curl http://localhost/severe-weather
+
+# Moon phase
+curl http://localhost/moon
+
+# Earthquakes
+curl http://localhost/earthquake
+
+# API endpoints (JSON)
+curl http://localhost/api/weather?location=London
+curl http://localhost/api/severe?location=Miami,FL&distance=50
+curl http://localhost/api/moon?location=Tokyo
+```
+
+### API Endpoints
+
+#### Weather
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /` | GET | Weather for your location (IP-based) |
+| `GET /weather/{location}` | GET | Weather for specific location |
+| `GET /{location}` | GET | Weather (backwards compatible) |
+| `GET /api/weather?location={loc}` | GET | JSON weather data |
+
+#### Severe Weather
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /severe-weather` | GET | Alerts for your location |
+| `GET /severe-weather/{location}` | GET | Alerts for specific location |
+| `GET /severe/{type}` | GET | Filter by type (hurricanes, tornadoes, storms, winter, floods) |
+| `GET /severe/{type}/{location}` | GET | Filtered alerts for location |
+| `GET /api/severe?location={loc}&distance={mi}&type={t}` | GET | JSON alerts |
+
+#### Other Data
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /moon` | GET | Moon phase for your location |
+| `GET /moon/{location}` | GET | Moon phase for specific location |
+| `GET /api/moon?location={loc}` | GET | JSON moon data |
+| `GET /earthquake` | GET | Recent earthquakes near you |
+| `GET /earthquake/{location}` | GET | Earthquakes near location |
+| `GET /api/earthquake?location={loc}&radius={km}` | GET | JSON earthquake data |
+| `GET /api/health` | GET | Health check |
+
+### Location Formats
+
+The service accepts multiple location formats:
+
+- **City, State**: `Brooklyn, NY` or `Brooklyn,NY`
+- **City, Country**: `London, UK` or `Tokyo, JP`
+- **ZIP Code**: `10001` (US only)
+- **Coordinates**: `40.7128,-74.0060` (lat,lon)
+- **Airport Code**: `JFK` or `LAX`
+
+### Response Example
+
+```json
+{
+  "location": "Brooklyn, NY",
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "timezone": "America/New_York",
+  "current": {
+    "time": "2025-10-16T12:00:00-04:00",
+    "temperature": 72.5,
+    "humidity": 65,
+    "wind_speed": 10.5,
+    "weather_code": 2
+  },
+  "daily": [
+    {
+      "date": "2025-10-16",
+      "temperature_max": 75.2,
+      "temperature_min": 62.1,
+      "sunrise": "06:42:00",
+      "sunset": "18:15:00",
+      "uv_index_max": 5.2
+    }
+  ]
+}
+```
+
+### Rate Limiting
+
+- **Default**: 100 requests per 15 minutes per IP
+- HTTP 429 response when rate limit exceeded
+- Burst allowance: Up to 20 requests in rapid succession
+
+### Health Check
+
+```bash
+curl http://localhost/api/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-10-16T12:00:00Z"
+}
+```
+
+---
+
+## Reverse Proxy Setup
+
+### Nginx
+
+```nginx
+server {
+    listen 80;
+    server_name weather.example.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name weather.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/weather.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/weather.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://172.17.0.1:64080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### Caddy
+
+```caddy
+weather.example.com {
+    reverse_proxy 172.17.0.1:64080
+
+    header {
+        Strict-Transport-Security "max-age=31536000"
+    }
+
+    encode gzip
+}
+```
+
+---
+
+## Data Sources
+
+- **Weather**: [Open-Meteo](https://open-meteo.com/) - Global weather forecasts
+- **US Severe Weather**: [NOAA NWS](https://www.weather.gov/) - National Weather Service
+- **Hurricanes**: [NOAA NHC](https://www.nhc.noaa.gov/) - National Hurricane Center
+- **Canadian Alerts**: [Environment Canada](https://weather.gc.ca/)
+- **UK Alerts**: [Met Office](https://www.metoffice.gov.uk/)
+- **Australian Alerts**: [Bureau of Meteorology](http://www.bom.gov.au/)
+- **Japanese Alerts**: [JMA](https://www.jma.go.jp/)
+- **Mexican Alerts**: [CONAGUA](https://www.gob.mx/conagua)
+- **Earthquakes**: [USGS](https://earthquake.usgs.gov/)
+- **GeoIP**: [sapics/ip-location-db](https://github.com/sapics/ip-location-db)
+
+---
+
+## Security
 
 ### Production Checklist
 
-- [ ] **Set SESSION_SECRET**
-  ```bash
-  export SESSION_SECRET=$(openssl rand -base64 32)
-  ```
+- ✅ **Use HTTPS** - Deploy behind reverse proxy with TLS certificates
+- ✅ **Firewall Rules** - Restrict access to necessary ports only
+- ✅ **Regular Updates** - Keep service and dependencies updated
+- ✅ **Monitor Logs** - Set up log monitoring and alerting
+- ✅ **Backup Data** - Regular backups of data directory
+- ✅ **Rate Limiting** - Configured automatically (100 req/15min per IP)
 
-- [ ] **Use HTTPS** (with Nginx/Caddy reverse proxy)
-  ```nginx
-  server {
-      listen 443 ssl http2;
-      server_name weather.example.com;
-
-      ssl_certificate /path/to/cert.pem;
-      ssl_certificate_key /path/to/key.pem;
-
-      location / {
-          proxy_pass http://localhost:3000;
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-      }
-  }
-  ```
-
-- [ ] **Restrict Database Permissions**
-  ```bash
-  chmod 600 /data/weather.db
-  chown weather:weather /data/weather.db
-  ```
-
-- [ ] **Enable Firewall**
-  ```bash
-  # UFW (Ubuntu/Debian)
-  sudo ufw allow 3000/tcp
-  sudo ufw enable
-
-  # firewalld (RHEL/CentOS)
-  sudo firewall-cmd --add-port=3000/tcp --permanent
-  sudo firewall-cmd --reload
-  ```
-
-- [ ] **Regular Backups**
-  ```bash
-  # Automated backup script
-  #!/bin/bash
-  DATE=$(date +%Y%m%d-%H%M%S)
-  sqlite3 /data/weather.db ".backup /backups/weather-$DATE.db"
-  find /backups -name "weather-*.db" -mtime +7 -delete
-  ```
-
-## 📈 Performance
-
-### Benchmarks
-
-- **Startup Time**: <1 second
-- **Memory Usage**: ~50MB
-- **Response Time**: <200ms (cached)
-- **Request Handling**: 1000+ req/sec
-- **Database Queries**: <10ms average
-
-### Optimization Tips
-
-1. **Enable Caching**
-   - Weather data cached for 10 minutes
-   - Geocoding cached for 1 hour
-   - Reduces external API calls
-
-2. **Use Connection Pooling**
-   - Database connections reused
-   - Configurable pool size
-
-3. **Rate Limiting**
-   - Protects against abuse
-   - Configurable per endpoint
-
-## 🐛 Troubleshooting
-
-### Database Locked Error
+### Firewall Configuration
 
 ```bash
-# Check for stale connections
-./weather --status
+# UFW (Ubuntu/Debian)
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
 
-# Restart service
-systemctl restart weather
+# firewalld (RHEL/CentOS)
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
 ```
 
-### Port Already in Use
+---
+
+## Monitoring
+
+### Health Checks
 
 ```bash
-# Find process using port
-lsof -i :3000
+# Check service health
+curl http://localhost/api/health
 
-# Kill process
-kill -9 <PID>
+# Expected response
+{"status":"healthy","timestamp":"2025-10-16T12:00:00Z"}
+```
 
-# Or use different port
-./weather --port 8080
+### Logs
+
+```bash
+# Docker
+docker logs -f weather
+
+# systemd
+sudo journalctl -u weather -f
+
+# Direct file
+tail -f /var/log/weather/weather.log
+```
+
+### Metrics
+
+Monitor these key metrics:
+
+- Request rate (requests per second)
+- Response time (average latency)
+- Error rate (5xx errors per minute)
+- Memory usage (RSS in MB)
+- GeoIP database age (days since update)
+
+---
+
+## Troubleshooting
+
+### Service Won't Start
+
+```bash
+# Check logs
+docker logs weather
+# or
+sudo journalctl -u weather -n 50
+
+# Check port availability
+sudo netstat -tulpn | grep :80
 ```
 
 ### High Memory Usage
 
 ```bash
-# Check database size
-du -h /data/weather.db
-
-# Clean old cache
-sqlite3 /data/weather.db "DELETE FROM weather_cache WHERE expires_at < datetime('now');"
+# Check memory usage
+docker stats weather
+# or
+ps aux | grep weather
 ```
 
-### API Rate Limit Exceeded
+### GeoIP Not Working
 
 ```bash
-# Check current limits
-./weather --status
+# Check database files
+ls -lh /data/geoip/
 
-# Adjust in .env or admin panel
-RATE_LIMIT_AUTH=5000
+# Force database update
+rm -rf /data/geoip/*.mmdb
+docker restart weather
 ```
 
-## 🤝 Contributing
+---
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## Development
+
+### Prerequisites
+
+- Go 1.24+
+- Git
+- Make
+- Docker (optional, for containerized builds)
+
+### Clone and Build
+
+```bash
+# Clone repository
+git clone https://github.com/apimgr/weather.git
+cd weather
+
+# Install dependencies
+go mod download
+
+# Build all platforms
+make build
+
+# Build for host platform only
+CGO_ENABLED=0 go build -o binaries/weather ./src
+
+# Run
+./binaries/weather
+```
+
+### Build System
+
+```bash
+# Available targets
+make help
+
+# Build for all platforms (8 binaries)
+make build
+
+# Build development Docker image
+make docker-dev
+
+# Build and push production Docker images (multi-arch)
+make docker
+
+# Create GitHub release (auto-increment version)
+make release
+
+# Create release with specific version
+make release VERSION=2.0.0
+
+# Run tests
+make test
+
+# Clean build artifacts
+make clean
+```
+
+### Development Mode
+
+```bash
+# Run with auto-reload (requires air or similar)
+go run ./src
+
+# Run with development flags
+PORT=3050 go run ./src
+
+# Run tests
+go test -v ./...
+
+# Run tests with coverage
+go test -v -race -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+### Project Structure
+
+```
+weather/
+├── .github/workflows/     # GitHub Actions (release.yml, docker.yml)
+├── .readthedocs.yml       # ReadTheDocs configuration
+├── CLAUDE.md              # Project specification
+├── Dockerfile             # Multi-stage Alpine build
+├── docker-compose.yml     # Production compose
+├── docker-compose.test.yml # Development compose
+├── Makefile               # Build system
+├── README.md              # This file
+├── LICENSE.md             # MIT License
+├── release.txt            # Version tracking
+├── docs/                  # Documentation (ReadTheDocs)
+│   ├── index.md
+│   ├── API.md
+│   ├── SERVER.md
+│   ├── mkdocs.yml
+│   ├── requirements.txt
+│   └── stylesheets/dracula.css
+├── src/                   # Source code
+│   ├── main.go           # Entry point
+│   ├── handlers/         # HTTP handlers
+│   ├── services/         # Business logic
+│   ├── middleware/       # Custom middleware
+│   ├── paths/            # OS-specific paths
+│   ├── utils/            # Helper functions
+│   ├── static/           # CSS, JS (embedded)
+│   └── templates/        # HTML templates (embedded)
+├── binaries/             # Build output (gitignored)
+└── rootfs/               # Docker volumes (gitignored)
+    ├── config/weather/
+    ├── data/weather/
+    └── logs/weather/
+```
+
+### Testing
+
+#### Unit Tests
+
+```bash
+# Run all tests
+go test ./...
+
+# Run with verbose output
+go test -v ./...
+
+# Run with race detector
+go test -race ./...
+
+# Run specific package
+go test -v ./src/services/...
+```
+
+#### Docker Testing
+
+```bash
+# Build development image
+make docker-dev
+
+# Start test environment
+docker compose -f docker-compose.test.yml up -d
+
+# View logs
+docker compose -f docker-compose.test.yml logs -f
+
+# Stop test environment
+docker compose -f docker-compose.test.yml down
+
+# Clean up test data
+rm -rf /tmp/weather/rootfs
+```
+
+### CI/CD
+
+#### GitHub Actions
+
+Two workflows are configured:
+
+1. **release.yml** - Binary builds and GitHub releases
+   - Triggers: Push to main, monthly schedule (1st at 3:00 AM UTC)
+   - Builds 8 platform binaries
+   - Creates GitHub release with all binaries
+
+2. **docker.yml** - Docker image builds
+   - Triggers: Push to main, monthly schedule (1st at 3:00 AM UTC)
+   - Builds multi-arch images (amd64, arm64)
+   - Pushes to ghcr.io/apimgr/weather
+
+Version is read from `release.txt` (not modified by Actions).
+
+### Contributing
+
+We welcome contributions! Please follow these guidelines:
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`make test`)
+5. Commit changes (`git commit -m 'Add amazing feature'`)
+6. Push to branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-## 📝 License
+#### Code Style
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+- Follow standard Go conventions (`gofmt`, `golint`)
+- Write tests for new features
+- Update documentation as needed
+- Keep commits atomic and well-described
 
-## 🙏 Acknowledgments
+---
 
-- **Weather Data**: [Open-Meteo](https://open-meteo.com) - Free weather API
+## License
+
+This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) for details.
+
+---
+
+## Acknowledgments
+
+- **Weather Data**: [Open-Meteo](https://open-meteo.com/) - Free weather API
 - **Hurricane Data**: [NOAA National Hurricane Center](https://www.nhc.noaa.gov/)
 - **Earthquake Data**: [USGS Earthquake Catalog](https://earthquake.usgs.gov/)
-- **Geocoding**: [Nominatim (OpenStreetMap)](https://nominatim.org/)
 - **City Database**: [apimgr/citylist](https://github.com/apimgr/citylist) - 209K+ cities
+- **GeoIP**: [sapics/ip-location-db](https://github.com/sapics/ip-location-db)
 - **Theme**: [Dracula Theme](https://draculatheme.com/)
 
-## 📞 Support
+---
 
-- **Issues**: [GitHub Issues](https://github.com/apimgr/weather/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/apimgr/weather/discussions)
-- **Documentation**: [CLAUDE.md](CLAUDE.md)
+## Support
 
-## 🗺️ Roadmap
-
-- [ ] Multi-language support (i18n)
-- [ ] Push notifications for alerts
-- [ ] Historical weather data
-- [ ] Weather maps integration
-- [ ] Mobile apps (iOS/Android)
-- [ ] GraphQL API
-- [ ] Webhook support
-- [ ] Custom themes
-- [ ] Plugin system
-
-## 📊 Stats
-
-- **Lines of Code**: ~15,000
-- **Supported Platforms**: 8 (Linux, macOS, Windows, FreeBSD × amd64/arm64)
-- **Cities Supported**: 209,579
-- **Countries**: 247
-- **Database Tables**: 11
-- **API Endpoints**: 20+
-- **Built with**: Go 1.23, Gin, SQLite
+- **Documentation**: [https://weather.readthedocs.io](https://weather.readthedocs.io)
+- **Issues**: [https://github.com/apimgr/weather/issues](https://github.com/apimgr/weather/issues)
+- **Discussions**: [https://github.com/apimgr/weather/discussions](https://github.com/apimgr/weather/discussions)
 
 ---
 
 <p align="center">
-  <strong>Built with ❤️</strong><br>
-  <sub>Weather Service • Version 3.0.0 • 2024</sub>
+  <strong>Built with ❤️ by apimgr</strong><br>
+  <sub>Weather Service • Production Grade • MIT License</sub>
 </p>

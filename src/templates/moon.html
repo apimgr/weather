@@ -14,36 +14,34 @@
     <div class="weather-container">
 
         <!-- Location Search Form - Mobile First -->
-        <form id="moon-form" style="margin: 1rem 0; width: 100%;">
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+        <form id="moon-form" class="moon-form">
+            <div class="moon-form__wrapper">
                 <!-- First row: Location input and units -->
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <div style="position: relative; flex: 1;">
+                <div class="moon-form__row">
+                    <div class="moon-form__input-wrapper">
                         <input
                             type="text"
                             id="moon-location-input"
                             name="location"
-                            class="location-input"
+                            class="location-input moon-form__input"
                             placeholder="Enter city or coordinates"
                             value="{{.Location}}"
-                            style="flex: 1; min-width: 0; width: 100%;"
                             autocomplete="off"
                         >
                         <div id="moon-autocomplete-dropdown" class="autocomplete-dropdown"></div>
                     </div>
-                    <select name="units" id="moon-units-select" class="location-input" style="flex-shrink: 0; width: 5rem;">
+                    <select name="units" id="moon-units-select" class="location-input moon-form__units">
                         <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
                         <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
                     </select>
                 </div>
 
                 <!-- Second row: Buttons -->
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <button type="submit" class="search-button" style="flex: 1;">
+                <div class="moon-form__row">
+                    <button type="submit" class="search-button moon-form__button">
                         🌙 Moon Info
                     </button>
-                    <button type="button" id="moon-location-btn" class="search-button"
-                            style="flex: 1; background-color: var(--dracula-cyan);">
+                    <button type="button" id="moon-location-btn" class="search-button moon-form__button--location">
                         📍 My Location
                     </button>
                 </div>
@@ -55,11 +53,11 @@
 
             <!-- Current Moon Phase -->
             <div class="current-weather">
-                <div class="weather-icon" style="font-size: 4rem;">
+                <div class="weather-icon moon-weather-icon">
                     {{.MoonData.Moon.Icon}}
                 </div>
                 <div class="weather-details">
-                    <div class="temperature" style="color: var(--dracula-purple);">
+                    <div class="temperature moon-temp-display">
                         {{.MoonData.Moon.Phase}}
                     </div>
                     <div class="description">
@@ -75,87 +73,87 @@
             </div>
 
             <!-- Moon and Sun Times -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+            <div class="grid-auto-fit-300">
                 <!-- Moon Times -->
-                <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-                    <h3 style="color: var(--dracula-purple); margin-top: 0; text-align: center;">🌙 Lunar Information</h3>
-                    <div style="color: var(--dracula-foreground);">
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Phase:</strong>
-                            <span style="color: var(--dracula-yellow);">{{.MoonData.Moon.Phase}}</span>
+                <div class="info-box">
+                    <h3 class="info-box__title info-box__title--lunar">🌙 Lunar Information</h3>
+                    <div class="info-box__content">
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Phase:</strong>
+                            <span class="info-box__value--primary">{{.MoonData.Moon.Phase}}</span>
                         </div>
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Illumination:</strong>
-                            <span style="color: var(--dracula-green);">{{.MoonData.Moon.Illumination}}%</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Illumination:</strong>
+                            <span class="info-box__value--green">{{.MoonData.Moon.Illumination}}%</span>
                         </div>
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Age:</strong>
-                            <span style="color: var(--dracula-pink);">{{.MoonData.Moon.Age}} days</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Age:</strong>
+                            <span class="info-box__value--pink">{{.MoonData.Moon.Age}} days</span>
                         </div>
                         {{if and .MoonData.Moon.Rise .MoonData.Moon.Set}}
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Moonrise:</strong>
-                            <span style="color: var(--dracula-orange);">{{.MoonData.Moon.RiseFormatted}}</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Moonrise:</strong>
+                            <span class="info-box__value--orange">{{.MoonData.Moon.RiseFormatted}}</span>
                         </div>
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Moonset:</strong>
-                            <span style="color: var(--dracula-orange);">{{.MoonData.Moon.SetFormatted}}</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Moonset:</strong>
+                            <span class="info-box__value--orange">{{.MoonData.Moon.SetFormatted}}</span>
                         </div>
                         {{end}}
                     </div>
                 </div>
 
                 <!-- Sun Times -->
-                <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-                    <h3 style="color: var(--dracula-yellow); margin-top: 0; text-align: center;">☀️ Solar Information</h3>
-                    <div style="color: var(--dracula-foreground);">
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Sunrise:</strong>
-                            <span style="color: var(--dracula-yellow);">{{.MoonData.Sun.SunriseFormatted}}</span>
+                <div class="info-box">
+                    <h3 class="info-box__title info-box__title--solar">☀️ Solar Information</h3>
+                    <div class="info-box__content">
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Sunrise:</strong>
+                            <span class="info-box__value--primary">{{.MoonData.Sun.SunriseFormatted}}</span>
                         </div>
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Sunset:</strong>
-                            <span style="color: var(--dracula-red);">{{.MoonData.Sun.SunsetFormatted}}</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Sunset:</strong>
+                            <span class="info-box__value--red">{{.MoonData.Sun.SunsetFormatted}}</span>
                         </div>
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Solar Noon:</strong>
-                            <span style="color: var(--dracula-green);">{{.MoonData.Sun.SolarNoonFormatted}}</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Solar Noon:</strong>
+                            <span class="info-box__value--green">{{.MoonData.Sun.SolarNoonFormatted}}</span>
                         </div>
-                        <div style="margin: 0.75rem 0;">
-                            <strong style="color: var(--dracula-cyan);">Day Length:</strong>
-                            <span style="color: var(--dracula-pink);">{{.MoonData.Sun.DayLengthFormatted}}</span>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Day Length:</strong>
+                            <span class="info-box__value--pink">{{.MoonData.Sun.DayLengthFormatted}}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Console Command Examples -->
-            <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-bg); border-radius: 6px;">
-                <h3 style="color: var(--dracula-purple); text-align: center; margin-top: 0;">Console Access</h3>
+            <div class="console-section">
+                <h3 class="console-section__title">Console Access</h3>
                 <div class="console-commands">
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Weather:</strong>
+                        <strong class="console-section__label">Weather:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.MoonData.Location.NameEncoded}}</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.MoonData.Location.NameEncoded}}')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">One-Line:</strong>
+                        <strong class="console-section__label">One-Line:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.MoonData.Location.NameEncoded}}?format=3</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.MoonData.Location.NameEncoded}}?format=3')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Moon:</strong>
+                        <strong class="console-section__label">Moon:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Moon Location:</strong>
+                        <strong class="console-section__label">Moon Location:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.MoonData.Location.NameEncoded}}</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.MoonData.Location.NameEncoded}}')">Copy</button>
@@ -164,14 +162,14 @@
                 </div>
             </div>
         {{else}}
-            <div style="text-align: center; color: var(--dracula-comment); margin: 40px 0;">
-                <h2 style="color: var(--dracula-purple);">🌙 Moon Phase Information</h2>
+            <div class="welcome-section">
+                <h2 class="welcome-section__title">🌙 Moon Phase Information</h2>
                 <p>Enter a location above to see moon phase information, or try these examples:</p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
-                    <a href="?location=London" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇬🇧 London</a>
-                    <a href="?location=Tokyo" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇯🇵 Tokyo</a>
-                    <a href="?location=New York" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇺🇸 New York</a>
-                    <a href="?location=Sydney" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇦🇺 Sydney</a>
+                <div class="city-links-grid">
+                    <a href="?location=London" class="city-link">🇬🇧 London</a>
+                    <a href="?location=Tokyo" class="city-link">🇯🇵 Tokyo</a>
+                    <a href="?location=New York" class="city-link">🇺🇸 New York</a>
+                    <a href="?location=Sydney" class="city-link">🇦🇺 Sydney</a>
                 </div>
             </div>
         {{end}}
@@ -307,8 +305,8 @@
                     : `${result.name}, ${result.country_code}`;
 
                 item.innerHTML = `
-                    <span style="color: var(--dracula-cyan); font-weight: 500;">${result.name}</span>
-                    <span style="color: var(--dracula-comment); font-size: 0.875rem;">${result.admin1 ? result.admin1 + ', ' : ''}${result.country_code}</span>
+                    <span class="autocomplete-item city-name">${result.name}</span>
+                    <span class="autocomplete-item location-details">${result.admin1 ? result.admin1 + ', ' : ''}${result.country_code}</span>
                 `;
 
                 item.addEventListener('click', function() {

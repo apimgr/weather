@@ -110,7 +110,12 @@
       "Bash(sed:*)",
       "Bash(GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build:*)",
       "WebFetch(domain:github.com)",
-      "Read(//root/Projects/github/apimgr/**)"
+      "Read(//root/Projects/github/apimgr/**)",
+      "Bash(test:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker images:*)",
+      "Bash(for i in {1..5})",
+      "Bash(do curl -s -o /dev/null -w \"Request $i: HTTP %{http_code}, Rate-Limit-Remaining: %{header_json}\\n\" -I \"http://localhost:64181/api/health\")"
     ],
     "deny": [],
     "ask": []

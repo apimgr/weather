@@ -1734,3 +1734,772 @@ a:hover {
   gap: var(--space-xs);
   color: var(--dracula-foreground);
 }
+
+/* ============================================
+   PAGE-SPECIFIC STYLES (Extracted from inline)
+   ============================================ */
+
+/* ==================== SEVERE WEATHER PAGE ==================== */
+
+.page-header {
+  font-size: 2rem;
+  margin-bottom: var(--space-sm);
+}
+
+.page-subtitle {
+  color: var(--dracula-comment);
+}
+
+.page-container {
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+/* Select elements for forms */
+.select-input {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--dracula-selection);
+  background: var(--dracula-bg);
+  color: var(--dracula-foreground);
+}
+
+/* Alert detail sections */
+.alert-detail__title {
+  font-weight: bold;
+  margin-bottom: var(--space-sm);
+  color: var(--dracula-purple);
+}
+
+.alert-detail__content {
+  line-height: 1.6;
+}
+
+.alert-detail__instruction-title {
+  font-weight: bold;
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-sm);
+  color: var(--dracula-orange);
+}
+
+.alert-detail__expires {
+  margin-top: var(--space-md);
+  color: var(--dracula-comment);
+}
+
+/* Storm detail specific */
+.storm-detail--full-width {
+  grid-column: 1 / -1;
+}
+
+/* All Clear message */
+.all-clear__title {
+  color: var(--dracula-green);
+  font-size: 1.75rem;
+  margin-bottom: var(--space-md);
+}
+
+.all-clear__message {
+  margin-top: var(--space-sm);
+  color: var(--dracula-foreground);
+  font-size: 1.125rem;
+}
+
+.all-clear__note {
+  margin-top: var(--space-md);
+  color: var(--dracula-comment);
+}
+
+.all-clear__location-info {
+  margin-top: var(--space-md);
+  color: var(--dracula-cyan);
+  font-size: 0.875rem;
+}
+
+/* Data source footer */
+.data-source-box {
+  text-align: center;
+  margin-top: var(--space-2xl);
+  padding: var(--space-lg);
+  background: var(--dracula-current-line);
+  border-radius: var(--radius-md);
+}
+
+.data-source-box__primary {
+  color: var(--dracula-comment);
+  margin-bottom: var(--space-sm);
+}
+
+.data-source-box__meta {
+  color: var(--dracula-comment);
+  font-size: 0.875rem;
+}
+
+/* ==================== MOON PAGE ==================== */
+
+/* Moon form layout */
+.moon-form {
+  margin: var(--space-md) 0;
+  width: 100%;
+}
+
+.moon-form__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.moon-form__row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.moon-form__input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.moon-form__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.moon-form__units {
+  flex-shrink: 0;
+  width: 5rem;
+}
+
+.moon-form__button {
+  flex: 1;
+}
+
+.moon-form__button--location {
+  flex: 1;
+  background-color: var(--dracula-cyan);
+}
+
+/* Moon weather display */
+.moon-weather-icon {
+  font-size: 4rem;
+}
+
+.moon-temp-display {
+  color: var(--dracula-purple);
+}
+
+/* Console section */
+.console-section {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: var(--dracula-bg);
+  border-radius: 6px;
+}
+
+.console-section__title {
+  color: var(--dracula-purple);
+  text-align: center;
+  margin-top: 0;
+}
+
+.console-section__label {
+  color: var(--dracula-green);
+}
+
+/* Moon/Sun info boxes */
+.info-box {
+  background-color: var(--dracula-bg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--dracula-current-line);
+}
+
+.info-box__title {
+  color: var(--dracula-purple);
+  margin-top: 0;
+  text-align: center;
+}
+
+.info-box__title--lunar {
+  color: var(--dracula-purple);
+}
+
+.info-box__title--solar {
+  color: var(--dracula-yellow);
+}
+
+.info-box__content {
+  color: var(--dracula-foreground);
+}
+
+.info-box__item {
+  margin: 0.75rem 0;
+}
+
+.info-box__label {
+  color: var(--dracula-cyan);
+}
+
+.info-box__value {
+  color: var(--dracula-foreground);
+}
+
+.info-box__value--primary {
+  color: var(--dracula-yellow);
+}
+
+.info-box__value--green {
+  color: var(--dracula-green);
+}
+
+.info-box__value--pink {
+  color: var(--dracula-pink);
+}
+
+.info-box__value--orange {
+  color: var(--dracula-orange);
+}
+
+.info-box__value--red {
+  color: var(--dracula-red);
+}
+
+/* Grid layouts */
+.grid-auto-fit-300 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+/* Moon-specific */
+.moon-temp-display {
+  color: var(--dracula-purple);
+}
+
+/* Welcome/intro sections */
+.welcome-section {
+  text-align: center;
+  color: var(--dracula-comment);
+  margin: 40px 0;
+}
+
+.welcome-section__title {
+  color: var(--dracula-purple);
+}
+
+.city-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.city-link {
+  color: var(--dracula-pink);
+  text-decoration: none;
+  padding: 8px;
+  background: var(--dracula-bg);
+  border-radius: var(--radius-sm);
+  display: block;
+}
+
+/* ==================== EARTHQUAKE PAGE ==================== */
+
+/* Statistics boxes */
+.stat-box {
+  background: var(--dracula-bg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--dracula-current-line);
+  text-align: center;
+}
+
+.stat-box__value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.stat-box__value--cyan {
+  color: var(--dracula-cyan);
+}
+
+.stat-box__value--orange {
+  color: var(--dracula-orange);
+}
+
+.stat-box__value--purple {
+  color: var(--dracula-purple);
+}
+
+.stat-box__label {
+  color: var(--dracula-comment);
+  margin-top: var(--space-sm);
+}
+
+.grid-auto-fit-200 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+/* Map */
+.map-container {
+  height: 600px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--dracula-current-line);
+  margin: var(--space-lg) 0;
+}
+
+/* Earthquake items */
+.earthquake-item {
+  background: var(--dracula-bg);
+  padding: var(--space-md);
+  margin: var(--space-sm) 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.earthquake-item--minor {
+  border-left: 4px solid var(--dracula-green);
+}
+
+.earthquake-item--light {
+  border-left: 4px solid var(--dracula-yellow);
+}
+
+.earthquake-item--moderate {
+  border-left: 4px solid var(--dracula-orange);
+}
+
+.earthquake-item--strong {
+  border-left: 4px solid var(--dracula-red);
+}
+
+.earthquake-item--tsunami {
+  border-left: 4px solid var(--dracula-cyan);
+}
+
+.magnitude-badge {
+  display: inline-block;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 3rem;
+  font-weight: bold;
+}
+
+.magnitude-badge--minor {
+  background-color: var(--dracula-green);
+}
+
+.magnitude-badge--light {
+  background-color: var(--dracula-yellow);
+}
+
+.magnitude-badge--moderate {
+  background-color: var(--dracula-orange);
+}
+
+.magnitude-badge--strong {
+  background-color: var(--dracula-red);
+}
+
+.magnitude-badge--major {
+  background-color: var(--dracula-purple);
+}
+
+.eq-info {
+  color: var(--dracula-comment);
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.eq-details {
+  display: none;
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--dracula-current-line);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+/* Console section */
+.console-section {
+  background-color: var(--dracula-bg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--dracula-current-line);
+  margin-top: var(--space-xl);
+}
+
+.console-section__title {
+  color: var(--dracula-green);
+  margin-top: 0;
+}
+
+/* Footer section */
+.page-footer {
+  text-align: center;
+  margin-top: var(--space-2xl);
+  padding: var(--space-xl) var(--space-md);
+  border-top: 1px solid var(--dracula-current-line);
+  color: var(--dracula-comment);
+}
+
+.page-footer__text {
+  margin: var(--space-sm) 0;
+  font-size: 0.875rem;
+}
+
+.page-footer__links {
+  margin: 0;
+  font-size: 0.875rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.page-footer__divider {
+  color: var(--dracula-pink);
+}
+
+/* ==================== HURRICANE PAGE ==================== */
+
+/* Hurricane classification colors */
+.storm-card.cat5 {
+  border-left-color: #8b0000;
+}
+
+.storm-card.cat4 {
+  border-left-color: var(--dracula-red);
+}
+
+.storm-card.cat3 {
+  border-left-color: var(--dracula-orange);
+}
+
+.storm-card.cat2 {
+  border-left-color: var(--dracula-yellow);
+}
+
+.storm-card.cat1 {
+  border-left-color: var(--dracula-green);
+}
+
+.storm-card.tropical {
+  border-left-color: var(--dracula-cyan);
+}
+
+/* ==================== WEATHER PAGE ==================== */
+
+/* Error messages */
+.error-box {
+  background-color: var(--dracula-red);
+  color: var(--dracula-bg);
+  padding: 10px;
+  border-radius: 6px;
+  margin: 20px 0;
+}
+
+/* Forecast table elements */
+.day-header {
+  /* Additional styles if needed */
+}
+
+.forecast-condition {
+  /* Additional styles if needed */
+}
+
+.forecast-temp {
+  /* Additional styles if needed */
+}
+
+.wind-info {
+  /* Additional styles if needed */
+}
+
+.precipitation {
+  /* Additional styles if needed */
+}
+
+/* Wind direction */
+.wind-direction {
+  font-size: 0.75rem;
+  color: var(--dracula-comment);
+}
+
+/* Precipitation details */
+.precip-prob {
+  font-size: 0.75rem;
+  color: var(--dracula-comment);
+}
+
+/* ==================== SHARED UTILITY CLASSES ==================== */
+
+/* Color utilities (foreground text) */
+.color-primary {
+  color: var(--dracula-purple);
+}
+
+.color-cyan {
+  color: var(--dracula-cyan);
+}
+
+.color-yellow {
+  color: var(--dracula-yellow);
+}
+
+.color-green {
+  color: var(--dracula-green);
+}
+
+.color-orange {
+  color: var(--dracula-orange);
+}
+
+.color-red {
+  color: var(--dracula-red);
+}
+
+.color-pink {
+  color: var(--dracula-pink);
+}
+
+.color-comment {
+  color: var(--dracula-comment);
+}
+
+.color-foreground {
+  color: var(--dracula-foreground);
+}
+
+/* Display utilities */
+.flex-align-center {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.flex-column-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.flex-row-gap {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+/* Responsive flex to column */
+@media (max-width: 719px) {
+  .flex-column-mobile {
+    flex-direction: column;
+  }
+}
+
+/* Margin utilities - refined */
+.margin-y-md {
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.margin-y-lg {
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+/* Scroll container */
+.scroll-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Full-width grid spans */
+.grid-span-full {
+  grid-column: 1 / -1;
+}
+
+/* ==================== HURRICANE PAGE ==================== */
+
+.hurricane-header {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.storm-count {
+  color: var(--dracula-yellow);
+  font-size: 1.2rem;
+  margin: 1rem 0;
+}
+
+.storms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.storm-card {
+  background: var(--dracula-current-line);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  border-left: 4px solid var(--dracula-red);
+  transition: transform 0.2s;
+}
+
+.storm-card:hover {
+  transform: translateY(-5px);
+}
+
+.storm-card.category-5 {
+  border-left-color: var(--dracula-red);
+}
+
+.storm-card.category-4 {
+  border-left-color: var(--dracula-orange);
+}
+
+.storm-card.category-3 {
+  border-left-color: var(--dracula-yellow);
+}
+
+.storm-card.category-2 {
+  border-left-color: var(--dracula-green);
+}
+
+.storm-card.category-1 {
+  border-left-color: var(--dracula-cyan);
+}
+
+.storm-card.tropical-storm {
+  border-left-color: var(--dracula-purple);
+}
+
+.storm-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--dracula-cyan);
+  margin-bottom: 0.5rem;
+}
+
+.storm-classification {
+  color: var(--dracula-yellow);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.storm-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  color: var(--dracula-comment);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  color: var(--dracula-foreground);
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.storm-location {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--dracula-bg);
+  border-radius: 0.375rem;
+}
+
+.storm-update {
+  color: var(--dracula-comment);
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.advisory-links {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.advisory-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--dracula-purple);
+  color: var(--dracula-bg);
+  text-decoration: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.advisory-link:hover {
+  background: var(--dracula-pink);
+}
+
+.no-storms {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--dracula-comment);
+}
+
+.no-storms-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .storms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storm-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== DATA SOURCE FOOTER ==================== */
+
+.data-footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding: 2rem 1rem;
+  border-top: 1px solid var(--dracula-current-line);
+  color: var(--dracula-comment);
+}
+
+.data-footer__text {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.data-footer__link {
+  color: var(--dracula-cyan);
+  text-decoration: none;
+}
+
+.data-footer__link:hover {
+  color: var(--dracula-purple);
+}

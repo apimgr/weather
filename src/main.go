@@ -41,7 +41,29 @@ var (
 	GitCommit = "unknown"
 )
 
+// getDefaultListenAddress auto-detects IPv6 support and returns dual-stack (::) or IPv4-only (0.0.0.0)
+func getDefaultListenAddress() string {
+	// Try to listen on dual-stack IPv6
+	listener, err := net.Listen("tcp", "[::]:0")
+	if err == nil {
+		listener.Close()
+		return "::" // IPv6 dual-stack supported (includes IPv4)
+	}
+
+	// Fallback to IPv4 only
+	return "0.0.0.0"
+}
+
 func main() {
+	// Check for DEBUG environment variable
+	debugEnv := strings.ToLower(os.Getenv("DEBUG"))
+	debugMode := debugEnv != "" && debugEnv != "0" && debugEnv != "false" && debugEnv != "no"
+
+	if debugMode {
+		log.Println("⚠️  DEBUG MODE ENABLED")
+		log.Println("⚠️  This mode should NEVER be used in production!")
+	}
+
 	// CLI flags
 	var (
 		showStatus  = flag.Bool("status", false, "Show server status and configuration")
@@ -322,6 +344,9 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Global rate limiting middleware (100 req/s)
+	r.Use(middleware.GlobalRateLimitMiddleware())
+
 	// Server context middleware - injects server title/tagline/description
 	r.Use(middleware.InjectServerContext(db.DB, Version))
 
@@ -580,7 +605,7 @@ func main() {
 
 	port := fmt.Sprintf("%d", httpPortInt)
 
-	// Get listen address - auto-detect reverse proxy
+	// Get listen address - auto-detect reverse proxy and IPv6 support
 	listenAddress := os.Getenv("SERVER_LISTEN")
 	if listenAddress == "" {
 		listenAddress = os.Getenv("SERVER_ADDRESS") // Backward compatibility
@@ -594,9 +619,13 @@ func main() {
 			listenAddress = "127.0.0.1"
 			mode = " in reverse proxy mode"
 		} else {
-			// Listen on all interfaces (IPv4 and IPv6)
-			listenAddress = "::"
-			mode = " (all interfaces)"
+			// Auto-detect IPv6 support and use dual-stack if available
+			listenAddress = getDefaultListenAddress()
+			if listenAddress == "::" {
+				mode = " (dual-stack: IPv4 + IPv6)"
+			} else {
+				mode = " (IPv4 only)"
+			}
 		}
 	}
 
@@ -644,15 +673,21 @@ func main() {
 	r.GET("/livez", handlers.LivenessCheck)
 	r.GET("/healthz/setup", setupHandler.GetSetupStatus)
 
-	// Debug endpoints
-	r.GET("/debug/info", handlers.DebugInfo)
-	r.GET("/debug/params", func(c *gin.Context) {
-		// Parse parameters and return debug info
-		c.JSON(http.StatusOK, gin.H{
-			"query":  c.Request.URL.Query(),
-			"params": "Parameter parsing debug",
-		})
-	})
+	// Debug endpoints (only enabled when DEBUG environment variable is set)
+	if debugMode {
+		debugHandlers := handlers.NewDebugHandlers(db.DB, r)
+		debugHandlers.RegisterDebugRoutes(r)
+
+		log.Println("🔧 Debug endpoints enabled:")
+		log.Println("   GET  /debug/routes  - List all routes")
+		log.Println("   GET  /debug/config  - Show configuration")
+		log.Println("   GET  /debug/memory  - Memory statistics")
+		log.Println("   GET  /debug/db      - Database statistics")
+		log.Println("   POST /debug/reload  - Reload configuration")
+		log.Println("   POST /debug/gc      - Trigger garbage collection")
+	}
+
+	// IP detection endpoint (always available for My Location feature)
 	r.GET("/debug/ip", func(c *gin.Context) {
 		// IP detection for My Location button
 		clientIP := utils.GetClientIP(c)
@@ -740,10 +775,11 @@ func main() {
 		userRoutes.GET("/dashboard", dashboardHandler.ShowDashboard) // /user/dashboard -> user dashboard
 	}
 
-	// Admin routes (require admin role)
+	// Admin routes (require admin role + stricter rate limiting)
 	adminRoutes := r.Group("/admin")
 	adminRoutes.Use(middleware.RequireAuth(db.DB))
 	adminRoutes.Use(middleware.RequireAdmin())
+	adminRoutes.Use(middleware.AdminRateLimitMiddleware())
 	adminRoutes.Use(middleware.AuditLogger(db.DB)) // Log all admin actions
 	{
 		adminRoutes.GET("", dashboardHandler.ShowAdminPanel) // /admin -> admin dashboard
@@ -846,10 +882,10 @@ func main() {
 	// API v1 routes - all API endpoints under /api/v1
 	apiV1 := r.Group("/api/v1")
 
-	// Weather API routes (optional auth + rate limiting)
+	// Weather API routes (optional auth + API rate limiting)
 	weatherAPI := apiV1.Group("")
 	weatherAPI.Use(middleware.OptionalAuth(db.DB))
-	weatherAPI.Use(middleware.RateLimitMiddleware(db.DB))
+	weatherAPI.Use(middleware.APIRateLimitMiddleware())
 	{
 		weatherAPI.GET("/weather", apiHandler.GetWeather)
 		weatherAPI.GET("/weather/:location", apiHandler.GetWeatherByLocation)
@@ -934,10 +970,11 @@ func main() {
 		notificationAPI.DELETE("/:id", notificationHandler.DeleteNotification)
 	}
 
-	// Admin API routes (require admin role)
+	// Admin API routes (require admin role + stricter rate limiting)
 	adminAPI := apiV1.Group("/admin")
 	adminAPI.Use(middleware.RequireAuth(db.DB))
 	adminAPI.Use(middleware.RequireAdmin())
+	adminAPI.Use(middleware.AdminRateLimitMiddleware())
 	adminAPI.Use(middleware.AuditLogger(db.DB)) // Log all admin API actions
 	{
 		// User management
@@ -1163,30 +1200,72 @@ JSON API:
 		}
 	}()
 
-	// Setup graceful shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	// Setup signal handling
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan,
+		syscall.SIGTERM, // Graceful shutdown (systemctl stop)
+		syscall.SIGINT,  // Ctrl+C
+		syscall.SIGHUP,  // Reload config
+		syscall.SIGUSR1, // Reopen log files
+		syscall.SIGUSR2, // Toggle debug mode
+	)
 
-	log.Println("🛑 Shutting down server...")
+	// Handle signals
+	for sig := range sigChan {
+		switch sig {
+		case syscall.SIGTERM, syscall.SIGINT:
+			log.Println("🛑 Received shutdown signal, shutting down gracefully...")
 
-	// Stop scheduler
-	taskScheduler.Stop()
+			// Stop scheduler
+			taskScheduler.Stop()
 
-	// Close cache connection
-	if err := cacheManager.Close(); err != nil {
-		log.Printf("⚠️  Cache shutdown error: %v", err)
+			// Close cache connection
+			if err := cacheManager.Close(); err != nil {
+				log.Printf("⚠️  Cache shutdown error: %v", err)
+			}
+
+			// Shutdown HTTP server with 5 second timeout
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if err := srv.Shutdown(ctx); err != nil {
+				log.Printf("⚠️  Server forced to shutdown: %v", err)
+			}
+
+			log.Println("✅ Server exited gracefully")
+			return
+
+		case syscall.SIGHUP:
+			log.Println("🔄 Received SIGHUP, reloading configuration...")
+			// Reload settings from database
+			settingsModel := &models.SettingsModel{DB: db.DB}
+			if err := settingsModel.InitializeDefaults(utils.GetBackupPath(dirPaths)); err != nil {
+				log.Printf("⚠️  Failed to reload settings: %v", err)
+			} else {
+				log.Println("✅ Configuration reloaded")
+			}
+
+		case syscall.SIGUSR1:
+			log.Println("📝 Received SIGUSR1, reopening log files...")
+			// Rotate logs
+			if err := appLogger.RotateLogs(); err != nil {
+				log.Printf("⚠️  Failed to rotate logs: %v", err)
+			} else {
+				log.Println("✅ Log files reopened")
+			}
+
+		case syscall.SIGUSR2:
+			log.Println("🔧 Received SIGUSR2, toggling debug mode...")
+			// Toggle Gin mode between debug and release
+			if gin.Mode() == gin.DebugMode {
+				gin.SetMode(gin.ReleaseMode)
+				log.Println("✅ Debug mode: OFF (release mode)")
+			} else {
+				gin.SetMode(gin.DebugMode)
+				log.Println("✅ Debug mode: ON (debug mode)")
+			}
+		}
 	}
-
-	// Shutdown HTTP server with 5 second timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("⚠️  Server forced to shutdown: %v", err)
-	}
-
-	log.Println("✅ Server exited gracefully")
 }
 
 // apacheLoggingMiddleware logs requests in Apache2 combined format
