@@ -25,6 +25,25 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     -o weather ./src && \
     chmod +x weather
 
+# Download GeoIP databases (for Docker images only)
+# This embeds the databases in the image for faster first startup
+# Binary installations still download on first run
+RUN mkdir -p /tmp/geoip && \
+    echo "📥 Downloading GeoIP databases for Docker image..." && \
+    curl -L -o /tmp/geoip/geolite2-city-ipv4.mmdb \
+      https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv4.mmdb && \
+    echo "✅ geolite2-city-ipv4.mmdb downloaded" && \
+    curl -L -o /tmp/geoip/geolite2-city-ipv6.mmdb \
+      https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv6.mmdb && \
+    echo "✅ geolite2-city-ipv6.mmdb downloaded" && \
+    curl -L -o /tmp/geoip/geo-whois-asn-country.mmdb \
+      https://cdn.jsdelivr.net/npm/@ip-location-db/geo-whois-asn-country-mmdb/geo-whois-asn-country.mmdb && \
+    echo "✅ geo-whois-asn-country.mmdb downloaded" && \
+    curl -L -o /tmp/geoip/asn.mmdb \
+      https://cdn.jsdelivr.net/npm/@ip-location-db/asn-mmdb/asn.mmdb && \
+    echo "✅ asn.mmdb downloaded" && \
+    echo "✅ All 4 GeoIP databases ready (~103MB)"
+
 # Final stage - Alpine with curl and bash
 FROM alpine:latest
 
@@ -62,6 +81,9 @@ RUN apk add --no-cache curl bash
 # Copy binary to /usr/local/bin
 COPY --from=builder /app/weather /usr/local/bin/weather
 
+# Copy GeoIP databases to /config/geoip (pre-downloaded for faster startup)
+COPY --from=builder /tmp/geoip /config/geoip
+
 # Set working directory
 WORKDIR /config
 
@@ -74,7 +96,8 @@ ENV PORT=80 \
     LOG_DIR=/var/log/weather
 
 # Create required directories
-RUN mkdir -p /data /config /var/log/weather /data/db
+RUN mkdir -p /data /config /var/log/weather /data/db && \
+    echo "✅ GeoIP databases embedded in image (4 files, ~103MB)"
 
 # Expose port
 EXPOSE 80

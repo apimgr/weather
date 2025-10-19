@@ -115,7 +115,17 @@
       "Bash(docker compose:*)",
       "Bash(docker images:*)",
       "Bash(for i in {1..5})",
-      "Bash(do curl -s -o /dev/null -w \"Request $i: HTTP %{http_code}, Rate-Limit-Remaining: %{header_json}\\n\" -I \"http://localhost:64181/api/health\")"
+      "Bash(do curl -s -o /dev/null -w \"Request $i: HTTP %{http_code}, Rate-Limit-Remaining: %{header_json}\\n\" -I \"http://localhost:64181/api/health\")",
+      "Bash(time curl -s http://localhost:64182/healthz)",
+      "Bash(docker stop:*)",
+      "Bash(incus list:*)",
+      "Bash(CGO_ENABLED=0 go build:*)",
+      "Bash(incus launch:*)",
+      "Bash(incus file push:*)",
+      "Bash(incus exec:*)",
+      "Bash(incus delete:*)",
+      "Bash(for endpoint in routes config memory db)",
+      "Bash(do echo -n \"  /debug/$endpoint: \")"
     ],
     "deny": [],
     "ask": []

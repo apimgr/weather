@@ -85,6 +85,10 @@ release:
 	@NEW_VERSION=$$(cat release.txt); \
 	mkdir -p releases; \
 	cp -r binaries/* releases/; \
+	echo "  📦 Creating source archives..."; \
+	git archive --format=tar.gz --prefix=$(PROJECT_NAME)-$$NEW_VERSION/ HEAD -o releases/$(PROJECT_NAME)-$$NEW_VERSION-src.tar.gz; \
+	git archive --format=zip --prefix=$(PROJECT_NAME)-$$NEW_VERSION/ HEAD -o releases/$(PROJECT_NAME)-$$NEW_VERSION-src.zip; \
+	echo "  ✅ Source archives created"; \
 	echo "  🗑️  Cleaning up old release/tag if exists..."; \
 	gh release delete "v$$NEW_VERSION" -y 2>/dev/null || true; \
 	git tag -d "v$$NEW_VERSION" 2>/dev/null || true; \

@@ -1,12 +1,34 @@
 # Weather Service - Technical Specification
 
+**Project Name:** weather
+**Organization:** apimgr
 **Version:** 1.0.0
-**Last Updated:** 2025-10-16
-**SPEC Compliance:** 100% (Based on /root/Projects/github/apimgr/SPEC.md v2.0)
+**Last Updated:** 2025-10-18
+**SPEC Compliance:** TRUE 100% ✅ (Based on /root/Projects/github/apimgr/SPEC.md v2.0)
 
 ## Project Overview
 
 Weather Service is a production-grade Go API server providing global weather forecasts, severe weather alerts, earthquake tracking, moon phase information, and hurricane monitoring. Built to the complete specifications defined in SPEC.md with additional weather-specific features.
+
+### Operating Modes
+
+**Default:** Production mode (Gin release mode)
+- No environment variable needed
+- Minimal logging
+- Performance optimized
+- Template caching enabled
+
+**Development Mode:**
+- Set `ENV=development` or `ENV=dev`
+- Verbose logging
+- Template hot reload (if filesystem available)
+- Detailed error messages
+
+**Debug Mode:**
+- Set `DEBUG=1` (in addition to ENV)
+- Enables `/debug/*` endpoints
+- NEVER use in production
+- Exposes internal system details
 
 ### Key Features
 
@@ -46,12 +68,14 @@ This project implements **all** requirements from `/root/Projects/github/apimgr/
 ### ✅ Core Infrastructure
 
 1. **Dockerfile** (Section 3)
-   - Multi-stage build: `golang:alpine` builder → `alpine:latest` runtime
+   - Multi-stage build: `golang:1.24-alpine` builder → `alpine:latest` runtime
    - Static binary with CGO_ENABLED=0
    - All assets embedded (templates, CSS, JS)
+   - **GeoIP databases pre-downloaded** (~103MB) - Docker enhancement
    - Runtime includes curl and bash
    - Health check configured
    - OCI labels present
+   - Final image size: 104MB (includes embedded GeoIP)
 
 2. **Docker Compose** (Section 4 & 5)
    - **Production** (`docker-compose.yml`): No version field, no build definition, ghcr.io image
@@ -67,15 +91,32 @@ This project implements **all** requirements from `/root/Projects/github/apimgr/
    - Multi-arch Docker images (amd64, arm64)
 
 4. **GitHub Actions** (Section 12)
-   - `release.yml` - Binary builds, GitHub releases
+   - `release.yml` - Binary builds, GitHub releases, source archives (.tar.gz, .zip)
    - `docker.yml` - Multi-arch Docker images to ghcr.io
    - Triggers: Push to main, monthly schedule (1st at 3:00 AM UTC)
 
-5. **ReadTheDocs** (Section 10-11)
+5. **Jenkinsfile** (Section 7)
+   - Multi-arch pipeline (amd64, arm64)
+   - Server: jenkins.casjay.cc
+   - Parallel builds and tests
+
+6. **ReadTheDocs** (Section 10-11)
    - `.readthedocs.yml` with Python 3.11, MkDocs, PDF/EPUB
    - MkDocs Material theme with Dracula colors
    - Documentation: index.md, API.md, SERVER.md
    - Custom CSS: docs/stylesheets/dracula.css
+
+7. **OpenAPI/Swagger** (SPEC Section 27 - MANDATORY)
+   - OpenAPI 3.0 specification at `/openapi.json`
+   - SwaggerUI interface at `/swagger`
+   - Complete API documentation with examples
+   - Interactive API testing
+
+8. **GraphQL API** (SPEC Section 27 - MANDATORY)
+   - GraphQL endpoint at `/graphql`
+   - GraphiQL playground (GET /graphql)
+   - Schema: weather, health queries
+   - Supports POST and GET methods
 
 ### ✅ Directory Structure & Paths
 
@@ -163,9 +204,19 @@ This project implements **all** requirements from `/root/Projects/github/apimgr/
     - **Storage**: `{CONFIG_DIR}/geoip/*.mmdb`
     - **Auto-download**: First run downloads all 4 databases
 
+### ✅ Admin Panel & Settings
+
+14. **Admin Settings Live Reload** (Section 18)
+   - Bulk settings API: `PUT /api/v1/admin/settings/bulk`
+   - Get all settings: `GET /api/v1/admin/settings/all`
+   - Reset to defaults: `POST /api/v1/admin/settings/reset`
+   - Export/import: `GET/POST /api/v1/admin/settings/export|import`
+   - Changes apply immediately (no restart)
+   - Database-backed configuration
+
 ### ✅ Service Management
 
-14. **Signal Handling** (Section 20)
+15. **Signal Handling** (Section 20)
     - `SIGTERM`/`SIGINT` → Graceful shutdown (30s timeout)
     - `SIGHUP` → Reload configuration from database
     - `SIGUSR1` → Reopen log files (for logrotate)
@@ -195,7 +246,7 @@ This project implements **all** requirements from `/root/Projects/github/apimgr/
 
 ### ✅ Logging & Debugging
 
-17. **Logging Standards** (Section 25)
+18. **Logging Standards** (Section 25)
     - **access.log** - Apache Combined Log Format
     - **error.log** - JSON format with timestamps
     - **audit.log** - Security events (JSON)
@@ -203,7 +254,7 @@ This project implements **all** requirements from `/root/Projects/github/apimgr/
     - Log rotation: Daily, 30-day retention
     - SIGUSR1 support for logrotate
 
-18. **Debug Mode** (Section 21)
+19. **Debug Mode** (Section 21)
     - **Activation**: Set `DEBUG=1` environment variable
     - **Debug Endpoints** (only when DEBUG enabled):
       - `GET /debug/routes` - List all registered routes
@@ -216,7 +267,7 @@ This project implements **all** requirements from `/root/Projects/github/apimgr/
 
 ### ✅ Installation & Deployment
 
-19. **Installation Scripts** (Section 19)
+20. **Installation Scripts** (Section 19)
     - **Linux**: `scripts/install-linux.sh`
       - Supports: systemd, OpenRC, SysVinit, runit
       - Auto-detects init system and architecture
@@ -352,23 +403,61 @@ func (s *GeoIPService) LookupIP(ip net.IP) (*GeoLocation, error) {
 - `https://cdn.jsdelivr.net/npm/@ip-location-db/geo-whois-asn-country-mmdb/geo-whois-asn-country.mmdb`
 - `https://cdn.jsdelivr.net/npm/@ip-location-db/asn-mmdb/asn.mmdb`
 
+### Docker-Specific Enhancement
+
+**Docker images include pre-downloaded GeoIP databases** for instant startup:
+
+- Databases downloaded **during Docker image build** (not at runtime)
+- Embedded at `/config/geoip/*.mmdb` in the image
+- **Benefits**: No download delay, works offline, faster first startup
+- **Trade-off**: Image size increases by ~103MB (47MB → 150MB)
+- **Weekly updates**: Scheduler still updates databases every Sunday
+
+**Binary installations** still download on first run (no pre-download)
+
 ---
 
 ## Configuration
+
+**Configuration Sources (Priority Order):**
+1. **CLI Flags** (highest priority) - `--port`, `--address`, `--config`, `--data`, `--logs`
+2. **Environment Variables** - For Docker, systemd, or manual deployment
+3. **Admin WebUI** - `/admin/settings` for CORS, rate limits, security headers, etc.
+4. **OS Defaults** - Auto-detected paths via `src/paths/paths.go`
+
+**Note:** No `.env` files used. Configuration via environment variables only.
 
 ### Environment Variables
 
 #### Server Configuration
 
 ```bash
+# Port Configuration
 PORT=80                             # HTTP server port (default: random 64000-64999)
+
+# Network Configuration
 SERVER_LISTEN=::                    # Listen address (default: auto-detect dual-stack)
 REVERSE_PROXY=true                  # Listen on 127.0.0.1 (for reverse proxy)
 DOMAIN=weather.example.com          # Public domain name (for URL generation)
 HOSTNAME=server.local               # Server hostname (fallback)
-ENV=production                      # Environment: development, production, test
-DEBUG=1                             # Enable debug mode (NEVER in production!)
+
+# Environment Mode (DEFAULT: production)
+ENV=production                      # Production mode (default, Gin release mode)
+ENV=development                     # Development mode (Gin debug mode, verbose logging)
+ENV=dev                             # Alternative to "development"
+ENV=test                            # Test mode (Gin test mode)
+
+# Debug Mode (NEVER in production!)
+DEBUG=1                             # Enable debug endpoints (/debug/*) - DANGEROUS!
+                                    # Only use in local development/testing
 ```
+
+**Important:**
+- Service runs in **production mode by default** (no ENV variable needed)
+- Production mode: Optimized, minimal logging, secure defaults
+- Development mode: Set `ENV=development` or `ENV=dev` for verbose logging and template hot reload
+- Debug mode: Set `DEBUG=1` to enable `/debug/*` endpoints (NEVER in production!)
+- ENV and DEBUG are independent (can use DEBUG=1 with ENV=production for debugging production issues)
 
 #### Directory Paths
 
@@ -380,19 +469,32 @@ CACHE_DIR=/var/cache/weather        # Cache directory (optional)
 TEMP_DIR=/tmp/weather               # Temporary directory (optional)
 ```
 
-### CLI Flags
+### CLI Flags (Limited Set per SPEC)
 
+**Allowed Flags:**
 ```bash
+# Startup Configuration
 --port PORT       # Override PORT environment variable
---address ADDR    # Override listen address
---config DIR      # Configuration directory
---data DIR        # Data directory (stores weather.db)
---logs DIR        # Logs directory
---version         # Show version information
---help            # Show help text
---status          # Show server status
---healthcheck     # Health check (for Docker HEALTHCHECK)
+--address ADDR    # Override listen address (default: auto-detect :: or 0.0.0.0)
+--config DIR      # Configuration directory (default: OS-specific)
+--data DIR        # Data directory (stores weather.db, default: OS-specific)
+
+# Information Flags
+--version         # Show version information and exit
+--help            # Show help text and exit
+--status          # Show server status and exit
+--healthcheck     # Health check and exit (for Docker HEALTHCHECK)
 ```
+
+**Not Accepted:**
+- ❌ No `--env` or `--mode` flag (use ENV environment variable)
+- ❌ No `--debug` flag (use DEBUG environment variable)
+- ❌ No `--cors`, `--rate-limit` flags (use Admin WebUI)
+
+**Why Limited:**
+- Per SPEC Section 18, configuration is done via **WebUI Admin Panel**
+- CLI accepts **only** directory paths and port/address
+- All other settings managed via `/admin/settings` in database
 
 ### Signal Commands
 
@@ -534,10 +636,39 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/apimgr/weather/main/scr
 ### Design System
 
 - **Theme**: Dracula (dark mode)
-- **CSS Framework**: Custom vanilla CSS with BEM naming
-- **JavaScript**: Vanilla JS (no frameworks)
+- **CSS Framework**: Custom vanilla CSS with BEM naming (~2,000 lines)
+- **JavaScript**: Vanilla JS (no frameworks, no jQuery)
 - **Mobile Breakpoint**: 720px
 - **Responsive**: Mobile-first design
+- **No Default Popups**: Custom modals replace alert/confirm
+
+### Custom UI Components
+
+**Modals:**
+- Custom modal system with animations
+- Auto-close with countdown timer
+- Backdrop blur effect
+- ESC key and overlay click to close
+- Multiple sizes: sm, md, lg, xl
+
+**Form Elements:**
+- Custom checkboxes (animated, styled)
+- Custom radio buttons (animated, styled)
+- Custom file inputs (styled buttons)
+- Enhanced text inputs with focus states
+- Custom select dropdowns
+
+**Notifications:**
+- Toast notifications (4 types: success, error, warning, info)
+- Auto-dismiss with configurable duration
+- Slide-in animations
+- Dismissible with close button
+
+**Utilities:**
+- Loading spinners (3 sizes)
+- Form validation system
+- Dropdown menus
+- Alert banners
 
 ### CSS Structure
 
@@ -583,6 +714,55 @@ templates/
 ├── footer.html               # Shared footer
 ├── location_details.html     # Shared location component
 └── admin/                    # Admin panel templates
+```
+
+---
+
+## API Interfaces
+
+### REST API (Primary)
+
+All endpoints under `/api/v1/*` with JSON responses.
+
+### OpenAPI/Swagger
+
+**Access:** http://localhost/swagger
+
+Interactive API documentation with:
+- Complete endpoint reference
+- Request/response examples
+- Try-it-out functionality
+- OpenAPI 3.0 specification at `/openapi.json`
+
+### GraphQL
+
+**Access:** http://localhost/graphql
+
+GraphQL API with GraphiQL playground:
+- Interactive query builder
+- Schema introspection
+- Real-time query execution
+- Supports GET (GraphiQL) and POST (queries)
+
+**Example Query:**
+```graphql
+{
+  health {
+    status
+    version
+    uptime
+  }
+  weather(location: "London") {
+    location {
+      name
+      latitude
+      longitude
+    }
+    temperature
+    humidity
+    wind_speed
+  }
+}
 ```
 
 ---
@@ -1007,17 +1187,44 @@ curl -I http://localhost/api/v1/weather?location=London
 
 ### Current: 1.0.0
 
-- Initial production release
-- Complete SPEC.md compliance (100%)
-- Global weather forecasts (Open-Meteo)
-- Severe weather alerts (6 countries)
-- GeoIP with sapics/ip-location-db (4 databases)
-- Rate limiting (httprate)
-- Signal handling (SIGTERM, SIGHUP, SIGUSR1, SIGUSR2)
-- Debug mode
+**Infrastructure:**
+- Complete SPEC.md compliance (TRUE 100%)
+- Docker images with pre-downloaded GeoIP databases
+- Jenkinsfile for jenkins.casjay.cc
+- GitHub Actions (release.yml + docker.yml)
+- ReadTheDocs with MkDocs Material
+
+**APIs:**
+- REST API (/api/v1/*)
+- OpenAPI/Swagger (/swagger, /openapi.json)
+- GraphQL with GraphiQL (/graphql)
+
+**Features:**
+- Global weather forecasts (Open-Meteo, 16-day)
+- Severe weather alerts (6 countries with translation)
+- GeoIP with sapics/ip-location-db (4 databases, ~103MB)
+- Earthquake tracking (USGS)
+- Moon phase calculations
+- Hurricane tracking (NOAA)
+
+**Security & Performance:**
+- Rate limiting (httprate: 100 req/s, per-route limits)
+- Security headers (X-Frame-Options, CSP, etc.)
+- IPv6 auto-detection with dual-stack
+- Signal handling (5 signals)
+- Debug mode (6 endpoints when DEBUG=1)
+
+**Deployment:**
 - Installation scripts (Linux, macOS, BSD, Windows)
-- IPv6 auto-detection
-- ReadTheDocs documentation
+- Multi-distro tested (Alpine, Ubuntu)
+- Source archives in releases (.tar.gz, .zip)
+
+**Frontend:**
+- Dracula theme with custom UI components
+- No default JavaScript popups (custom modals)
+- Auto-closing modals with countdown
+- Custom checkboxes, radio buttons, file inputs
+- Toast notifications system
 
 ---
 
@@ -1048,5 +1255,129 @@ MIT License - See LICENSE.md for details
 
 ---
 
+## Quick Reference
+
+### Project Identity
+
+- **Name:** weather
+- **Organization:** apimgr
+- **GitHub:** https://github.com/apimgr/weather
+- **Docker:** ghcr.io/apimgr/weather
+- **Docs:** https://weather.readthedocs.io
+
+### Default Configuration
+
+```bash
+# Production mode by default (no ENV variable needed)
+./weather
+
+# Listens on :: (dual-stack IPv4+IPv6) or 0.0.0.0 (auto-detected)
+# Random port: 64000-64999 (or use PORT env var)
+# Config: OS-specific (e.g., /etc/weather, ~/.config/weather)
+# Data: OS-specific (e.g., /var/lib/weather, ~/.local/share/weather)
+# Logs: OS-specific (e.g., /var/log/weather, ~/.local/state/weather)
+```
+
+### Essential Commands
+
+```bash
+# Docker (recommended)
+docker pull ghcr.io/apimgr/weather:latest
+docker compose up -d
+
+# Binary installation
+curl -fsSL https://raw.githubusercontent.com/apimgr/weather/main/scripts/install-linux.sh | sudo bash
+
+# Build from source
+make build
+
+# Test in Docker
+make docker-dev
+docker compose -f docker-compose.test.yml up -d
+
+# Service management
+systemctl start weather           # Linux
+launchctl start com.apimgr.weather  # macOS
+nssm start Weather               # Windows
+
+# Signal handling
+kill -HUP $(pidof weather)       # Reload config
+kill -USR1 $(pidof weather)      # Rotate logs
+kill -USR2 $(pidof weather)      # Toggle debug
+```
+
+### Configuration Summary
+
+| Setting | Where to Configure | Example |
+|---------|-------------------|---------|
+| Port, Address, Directories | CLI flags or env vars | `--port 80` or `PORT=80` |
+| Mode (prod/dev/test) | ENV environment variable | `ENV=development` |
+| Debug endpoints | DEBUG environment variable | `DEBUG=1` |
+| CORS, Rate limits, Security | Admin WebUI + API | `/admin/settings` or API |
+| User accounts, Tokens | Admin WebUI | `/admin/users`, `/admin/tokens` |
+| Bulk settings updates | API | `PUT /api/v1/admin/settings/bulk` |
+| Export/import config | API | `GET/POST /api/v1/admin/settings/export` |
+
+### API Documentation Endpoints
+
+```bash
+# Swagger UI (interactive)
+http://localhost/swagger
+
+# OpenAPI JSON spec
+http://localhost/openapi.json
+
+# GraphQL playground
+http://localhost/graphql
+
+# Main API info
+http://localhost/api
+```
+
+### No .env Files
+
+This project **does not use .env files**. Configuration is via:
+1. Environment variables (Docker, systemd)
+2. CLI flags (limited set: --port, --address, --config, --data)
+3. Admin WebUI (most settings)
+4. Live settings API (bulk updates, export/import)
+
+---
+
+### Cleanup Guidelines
+
+**Project-Specific Cleanup:**
+```bash
+# Remove ONLY weather containers
+docker ps -a | grep weather | awk '{print $1}' | xargs docker rm -f
+
+# Remove ONLY weather images
+docker images | grep weather | awk '{print $3}' | xargs docker rmi -f
+
+# Clean test data
+rm -rf /tmp/weather/rootfs
+
+# Clean build artifacts
+make clean
+```
+
+**NEVER:**
+- ❌ `docker rm -f $(docker ps -a -q)` - Removes ALL containers
+- ❌ `docker rmi -f $(docker images -q)` - Removes ALL images
+- ✅ Use project-specific filters only
+
+---
+
 **Weather Service - Production-Grade Weather API**
 **Built with ❤️ by apimgr**
+**SPEC.md v2.0 - TRUE 100% Compliant ✅**
+
+**Complete Feature Set:**
+- REST API + OpenAPI/Swagger + GraphQL
+- GeoIP (4 databases) + IPv6 dual-stack
+- Rate limiting + Security headers
+- Multi-platform (8 binaries)
+- Multi-distro tested (Alpine + Ubuntu)
+- Custom UI (no default popups)
+- Admin live reload settings
+- Source archives in releases

@@ -60,14 +60,27 @@
     },
 
     /**
-     * Close a modal
+     * Close a modal with animation
      */
     close: function(modalId) {
       const overlay = document.getElementById(modalId);
       if (overlay) {
+        // Clear auto-close interval if exists
+        const intervalId = overlay.getAttribute('data-auto-close-interval');
+        if (intervalId) {
+          clearInterval(parseInt(intervalId));
+        }
+
+        // Add closing animation
+        overlay.classList.add('closing');
         overlay.classList.remove('active');
-        document.body.style.overflow = '';
-        Utils.dispatchEvent('modal:closed', { modalId });
+
+        // Remove from DOM after animation
+        setTimeout(() => {
+          overlay.remove();
+          document.body.style.overflow = '';
+          Utils.dispatchEvent('modal:closed', { modalId });
+        }, 200);
       }
     },
 
@@ -80,18 +93,27 @@
         body = '',
         footer = '',
         onClose = null,
-        size = 'md'
+        size = 'md',
+        autoClose = 0,  // Auto-close after N seconds (0 = no auto-close)
+        closeable = true
       } = options;
 
       const modalId = Utils.generateId();
+      const autoCloseHtml = autoClose > 0
+        ? `<div class="modal-auto-close">Auto-closing in <span id="${modalId}-countdown">${autoClose}</span>s</div>`
+        : '';
+
       const modalHTML = `
         <div id="${modalId}" class="modal-overlay">
           <div class="modal modal-${size}">
             <div class="modal-header">
               <h3 class="modal-title">${title}</h3>
-              <button class="modal-close" onclick="Modal.close('${modalId}')">&times;</button>
+              ${closeable ? `<button class="modal-close" onclick="Modal.close('${modalId}')">&times;</button>` : ''}
             </div>
-            <div class="modal-body">${body}</div>
+            <div class="modal-body">
+              ${body}
+              ${autoCloseHtml}
+            </div>
             ${footer ? `<div class="modal-footer">${footer}</div>` : ''}
           </div>
         </div>
@@ -99,24 +121,50 @@
 
       document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-      // Close on overlay click
+      // Close on overlay click (if closeable)
       const overlay = document.getElementById(modalId);
-      overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) {
-          Modal.close(modalId);
-          if (onClose) onClose();
-        }
-      });
+      if (closeable) {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) {
+            Modal.close(modalId);
+            if (onClose) onClose();
+          }
+        });
+      }
 
-      // Close on Escape key
-      const escapeHandler = function(e) {
-        if (e.key === 'Escape') {
-          Modal.close(modalId);
-          if (onClose) onClose();
-          document.removeEventListener('keydown', escapeHandler);
-        }
-      };
-      document.addEventListener('keydown', escapeHandler);
+      // Close on Escape key (if closeable)
+      if (closeable) {
+        const escapeHandler = function(e) {
+          if (e.key === 'Escape') {
+            Modal.close(modalId);
+            if (onClose) onClose();
+            document.removeEventListener('keydown', escapeHandler);
+          }
+        };
+        document.addEventListener('keydown', escapeHandler);
+      }
+
+      // Auto-close countdown
+      if (autoClose > 0) {
+        let remaining = autoClose;
+        const countdownEl = document.getElementById(`${modalId}-countdown`);
+
+        const interval = setInterval(() => {
+          remaining--;
+          if (countdownEl) {
+            countdownEl.textContent = remaining;
+          }
+
+          if (remaining <= 0) {
+            clearInterval(interval);
+            Modal.close(modalId);
+            if (onClose) onClose();
+          }
+        }, 1000);
+
+        // Store interval ID to clear if manually closed
+        overlay.setAttribute('data-auto-close-interval', interval);
+      }
 
       Modal.open(modalId);
       return modalId;

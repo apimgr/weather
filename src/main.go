@@ -989,6 +989,14 @@ func main() {
 		adminAPI.GET("/settings/:key", adminHandler.GetSetting)
 		adminAPI.PUT("/settings/:key", adminHandler.UpdateSetting)
 
+		// Live settings management (SPEC Section 18)
+		adminSettingsHandler := &handlers.AdminSettingsHandler{DB: db.DB}
+		adminAPI.GET("/settings/all", adminSettingsHandler.GetAllSettings)
+		adminAPI.PUT("/settings/bulk", adminSettingsHandler.UpdateSettings)
+		adminAPI.POST("/settings/reset", adminSettingsHandler.ResetSettings)
+		adminAPI.GET("/settings/export", adminSettingsHandler.ExportSettings)
+		adminAPI.POST("/settings/import", adminSettingsHandler.ImportSettings)
+
 		// API token management
 		adminAPI.GET("/tokens", adminHandler.ListTokens)
 		adminAPI.POST("/tokens", adminHandler.GenerateToken)
@@ -1067,8 +1075,26 @@ func main() {
 			},
 			"current_version": "v1",
 			"documentation":   "http://" + c.Request.Host + "/docs",
+			"openapi":         "http://" + c.Request.Host + "/openapi",
+			"swagger":         "http://" + c.Request.Host + "/swagger",
+			"graphql":         "http://" + c.Request.Host + "/graphql",
 		})
 	})
+
+	// OpenAPI/Swagger documentation
+	r.GET("/openapi.json", handlers.GetOpenAPISpec)
+	r.GET("/openapi", handlers.GetOpenAPISpec)
+	r.GET("/swagger", handlers.GetSwaggerUI)
+
+	// GraphQL API
+	graphqlHandler, err := handlers.InitGraphQL()
+	if err != nil {
+		log.Printf("⚠️  Failed to initialize GraphQL: %v", err)
+	} else {
+		r.POST("/graphql", handlers.GraphQLHandler(graphqlHandler))
+		r.GET("/graphql", handlers.GraphQLHandler(graphqlHandler)) // GET for GraphiQL
+		appLogger.Printf("✅ GraphQL API enabled at /graphql")
+	}
 
 	// HTML documentation page at /docs
 	r.GET("/docs", apiHandler.GetDocsHTML)
