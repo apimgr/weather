@@ -1220,11 +1220,25 @@ curl -I http://localhost/api/v1/weather?location=London
 - Source archives in releases (.tar.gz, .zip)
 
 **Frontend:**
-- Dracula theme with custom UI components
-- No default JavaScript popups (custom modals)
-- Auto-closing modals with countdown
-- Custom checkboxes, radio buttons, file inputs
-- Toast notifications system
+- Dracula theme with custom UI components (~2,900 lines CSS)
+- **No default JavaScript popups** (custom modals replace alert/confirm/prompt)
+  - `showAlert(message, title)` - Custom modal with auto-close
+  - `showConfirm(message, title)` - Custom modal with yes/no buttons
+  - `showPrompt(message, default, title)` - Custom modal with input field
+- Auto-closing modals with countdown timer (configurable: 3s, 5s, etc.)
+- Custom checkboxes, radio buttons, file inputs (all animated)
+- Toast notifications system (4 types: success, error, warning, info)
+- **Uniform location display** across ALL pages (weather, moon, earthquake, severe-weather)
+  - Format: 📍 Location, 🌍 Country, 🌐 Coordinates, 🕐 Timezone, 👥 Population
+  - Uses `{{template "location_details" .}}` partial
+  - Consistent styling with CSS classes (no inline styles)
+- **Improved Admin UI:**
+  - Scheduled tasks: "Never" instead of "-" for null dates
+  - Next run countdown: "in 5m" or "in 2h 15m"
+  - Settings save: Auto-closing success modal + toast
+  - Task logs: Proper modal-overlay structure
+  - All forms use styled inputs/selects/checkboxes
+  - No `confirm()` popups - all use custom modals
 
 ---
 

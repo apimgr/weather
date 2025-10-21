@@ -141,12 +141,43 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 	if isBrowser {
 		// Render HTML template
 		hostInfo := utils.GetHostInfo(c)
+
+		// Create Location object for uniform display
+		var locationData interface{}
+		if latitude != 0 && longitude != 0 {
+			coords := services.Coordinates{
+				Latitude:  latitude,
+				Longitude: longitude,
+			}
+			enhanced := h.locationEnhancer.EnhanceLocation(&coords)
+
+			// Format population with commas
+			popFormatted := ""
+			if enhanced.Population > 0 {
+				popFormatted = formatPopulation(enhanced.Population)
+			}
+
+			locationData = gin.H{
+				"Location": gin.H{
+					"Name":                enhanced.FullName,
+					"ShortName":           enhanced.ShortName,
+					"Country":             enhanced.Country,
+					"Latitude":            latitude,
+					"Longitude":           longitude,
+					"Timezone":            enhanced.Timezone,
+					"Population":          enhanced.Population,
+					"PopulationFormatted": popFormatted,
+				},
+			}
+		}
+
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
 			"Title":            "Severe Weather Alerts",
 			"Data":             data,
 			"TotalAlerts":      totalAlerts,
 			"TotalStorms":      totalStorms,
 			"LocationName":     locationName,
+			"LocationData":     locationData,
 			"Latitude":         latitude,
 			"Longitude":        longitude,
 			"Distance":         distance,
@@ -289,12 +320,43 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	if isBrowser {
 		// Render HTML template
 		hostInfo := utils.GetHostInfo(c)
+
+		// Create Location object for uniform display
+		var locationData interface{}
+		if latitude != 0 && longitude != 0 {
+			coords := services.Coordinates{
+				Latitude:  latitude,
+				Longitude: longitude,
+			}
+			enhanced := h.locationEnhancer.EnhanceLocation(&coords)
+
+			// Format population with commas
+			popFormatted := ""
+			if enhanced.Population > 0 {
+				popFormatted = formatPopulation(enhanced.Population)
+			}
+
+			locationData = gin.H{
+				"Location": gin.H{
+					"Name":                enhanced.FullName,
+					"ShortName":           enhanced.ShortName,
+					"Country":             enhanced.Country,
+					"Latitude":            latitude,
+					"Longitude":           longitude,
+					"Timezone":            enhanced.Timezone,
+					"Population":          enhanced.Population,
+					"PopulationFormatted": popFormatted,
+				},
+			}
+		}
+
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
 			"Title":            fmt.Sprintf("%s - Severe Weather Alerts", strings.Title(alertType)),
 			"Data":             filteredData,
 			"TotalAlerts":      totalAlerts,
 			"TotalStorms":      totalStorms,
 			"LocationName":     locationName,
+			"LocationData":     locationData,
 			"Latitude":         latitude,
 			"Longitude":        longitude,
 			"Distance":         distance,

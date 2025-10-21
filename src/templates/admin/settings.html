@@ -303,13 +303,22 @@
                     }
                 }
 
-                // Show success message
-                if (typeof Toast !== 'undefined') {
-                    Toast.success(`${category} settings saved successfully`);
-                } else {
-                    // Fallback if Toast is not available
-                    showSuccessMessage(form, 'Settings saved successfully!');
-                }
+                // Show success toast
+                Toast.success(`${capitalize(category)} settings saved successfully`, {
+                    title: 'Settings Saved',
+                    duration: 3000
+                });
+
+                // Show success modal that auto-closes
+                Modal.create({
+                    title: '✅ Settings Saved',
+                    body: `<p style="margin: 0; text-align: center; font-size: 1.1rem;">
+                        Your ${category} settings have been saved successfully.
+                    </p>`,
+                    size: 'sm',
+                    autoClose: 3,
+                    closeable: true
+                });
 
                 // Reset button state
                 submitButton.textContent = '✓ Saved';
@@ -341,6 +350,11 @@
             messageDiv.textContent = message;
             form.insertAdjacentElement('afterend', messageDiv);
             setTimeout(() => messageDiv.remove(), 3000);
+        }
+
+        // Capitalize first letter
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
         // Show error message near form

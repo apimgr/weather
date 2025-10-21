@@ -695,6 +695,54 @@
     });
   };
 
+  /**
+   * Modern prompt replacement using modals
+   */
+  window.showPrompt = function(message, defaultValue = '', title = 'Input') {
+    return new Promise((resolve) => {
+      const inputId = Utils.generateId();
+      const modalId = Modal.create({
+        title: title,
+        body: `
+          <p style="margin: 0 0 1rem 0; line-height: 1.6;">${message}</p>
+          <input type="text" id="${inputId}" class="form-input" value="${defaultValue}"
+                 placeholder="Enter value..." style="width: 100%;">
+        `,
+        footer: `
+          <button class="btn btn-secondary" onclick="Modal.close('${modalId}'); window._promptResolve(null);">
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="
+            const value = document.getElementById('${inputId}').value;
+            Modal.close('${modalId}');
+            window._promptResolve(value);
+          ">
+            OK
+          </button>
+        `,
+        size: 'sm',
+        onClose: () => resolve(null)
+      });
+
+      window._promptResolve = resolve;
+
+      // Focus input and allow Enter to submit
+      setTimeout(() => {
+        const input = document.getElementById(inputId);
+        if (input) {
+          input.focus();
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              const value = input.value;
+              Modal.close(modalId);
+              resolve(value);
+            }
+          });
+        }
+      }, 100);
+    });
+  };
+
   // ============================================
   // EXPOSE TO GLOBAL SCOPE
   // ============================================

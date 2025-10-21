@@ -172,16 +172,37 @@ func (h *EarthquakeHandler) HandleEarthquakesByLocation(c *gin.Context) {
 	// Get host info for console commands
 	hostInfo := utils.GetHostInfo(c)
 
+	// Create LocationData for uniform display
+	// Format population with commas
+	popFormatted := ""
+	if enhanced.Population > 0 {
+		popFormatted = formatPopulation(enhanced.Population)
+	}
+
+	locationData := gin.H{
+		"Location": gin.H{
+			"Name":                enhanced.FullName,
+			"ShortName":           enhanced.ShortName,
+			"Country":             enhanced.Country,
+			"Latitude":            enhanced.Latitude,
+			"Longitude":           enhanced.Longitude,
+			"Timezone":            enhanced.Timezone,
+			"Population":          enhanced.Population,
+			"PopulationFormatted": popFormatted,
+		},
+	}
+
 	// Render earthquake page
 	c.HTML(http.StatusOK, "earthquake.html", gin.H{
-		"Earthquakes": earthquakes.Earthquakes,
-		"Metadata":    earthquakes.Metadata,
-		"FeedType":    feedType,
-		"Location":    enhanced.ShortName,
-		"Radius":      radius,
-		"CenterLat":   enhanced.Latitude,
-		"CenterLon":   enhanced.Longitude,
-		"HostInfo":    hostInfo,
+		"Earthquakes":  earthquakes.Earthquakes,
+		"Metadata":     earthquakes.Metadata,
+		"FeedType":     feedType,
+		"Location":     enhanced.ShortName,
+		"LocationData": locationData,
+		"Radius":       radius,
+		"CenterLat":    enhanced.Latitude,
+		"CenterLon":    enhanced.Longitude,
+		"HostInfo":     hostInfo,
 	})
 }
 

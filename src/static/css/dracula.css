@@ -2039,6 +2039,56 @@ a:hover {
   font-size: 0.875rem;
 }
 
+/* ==================== LOCATION DETAILS (Uniform Across All Pages) ==================== */
+
+.location-details-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: var(--dracula-bg);
+  border-radius: 0.5rem;
+  border: 1px solid var(--dracula-current-line);
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.location-detail {
+  margin: 0;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.location-detail__label {
+  color: var(--dracula-cyan);
+  font-weight: bold;
+}
+
+.location-detail__value--name {
+  color: var(--dracula-yellow);
+}
+
+.location-detail__value--country {
+  color: var(--dracula-green);
+}
+
+.location-detail__value--coords {
+  color: var(--dracula-pink);
+  font-family: var(--font-mono);
+}
+
+.location-detail__value--timezone {
+  color: var(--dracula-orange);
+}
+
+.location-detail__value--population {
+  color: var(--dracula-purple);
+}
+
 /* ==================== MOON PAGE ==================== */
 
 /* Moon form layout */
@@ -2706,4 +2756,135 @@ a:hover {
 
 .data-footer__link:hover {
   color: var(--dracula-purple);
+}
+
+/* ==================== PROFILE PAGE ==================== */
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--dracula-bg);
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 1rem 1.5rem;
+  background: var(--dracula-current-line);
+  color: var(--dracula-foreground);
+  border: none;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.tab:hover {
+  background: var(--dracula-comment);
+}
+
+.tab.active {
+  background: var(--dracula-purple);
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: var(--dracula-current-line);
+  border-radius: 12px;
+}
+
+.profile-avatar-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--dracula-purple), var(--dracula-pink));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
+  font-weight: bold;
+}
+
+.profile-info h1 {
+  margin: 0 0 0.5rem 0;
+  color: var(--dracula-cyan);
+}
+
+.profile-info p {
+  margin: 0.25rem 0;
+  color: var(--dracula-comment);
+}
+
+.token-display {
+  font-family: 'Courier New', monospace;
+  background: var(--dracula-current-line);
+  padding: 1rem;
+  border-radius: 8px;
+  word-break: break-all;
+  font-size: 0.9rem;
+}
+
+.activity-item {
+  padding: 1rem;
+  border-left: 3px solid var(--dracula-purple);
+  background: var(--dracula-current-line);
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.activity-time {
+  font-size: 0.85rem;
+  color: var(--dracula-comment);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.stat-card {
+  background: var(--dracula-current-line);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--dracula-purple);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--dracula-cyan);
+  margin: 0.5rem 0;
+}
+
+.stat-label {
+  color: var(--dracula-comment);
+  font-size: 0.875rem;
 }

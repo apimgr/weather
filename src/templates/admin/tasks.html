@@ -70,16 +70,16 @@
 </main>
 
 <!-- Task Logs Modal -->
-<div id="taskLogsModal" class="modal">
-    <div class="modal-content modal-lg">
+<div id="taskLogsModal" class="modal-overlay">
+    <div class="modal modal-lg">
         <div class="modal-header">
-            <h2>Task Logs: <span id="taskLogTitle"></span></h2>
+            <h2 class="modal-title">📋 Task Logs: <span id="taskLogTitle"></span></h2>
             <button class="modal-close" onclick="Modal.close('taskLogsModal')">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label for="logLimit">Show Last</label>
-                <select id="logLimit" onchange="loadTaskLogs()">
+                <label for="logLimit" class="form-label">Show Last</label>
+                <select id="logLimit" class="form-select" onchange="loadTaskLogs()">
                     <option value="10">10 executions</option>
                     <option value="25" selected>25 executions</option>
                     <option value="50">50 executions</option>
@@ -208,15 +208,42 @@
 
         tasks.forEach(task => {
             const tr = document.createElement('tr');
+
+            // Format last run with relative time
+            let lastRunHtml = formatDateTime(task.last_run);
+
+            // Format next run with countdown if available
+            let nextRunHtml = formatDateTime(task.next_run);
+            if (task.next_run && task.next_run !== '' && task.next_run !== null) {
+                try {
+                    const nextDate = new Date(task.next_run);
+                    if (!isNaN(nextDate.getTime())) {
+                        const now = new Date();
+                        const diffMs = nextDate - now;
+                        if (diffMs > 0) {
+                            const diffMins = Math.floor(diffMs / 60000);
+                            if (diffMins < 60) {
+                                nextRunHtml = `<span style="color: var(--dracula-green);">in ${diffMins}m</span>`;
+                            } else if (diffMins < 1440) {
+                                nextRunHtml = `<span style="color: var(--dracula-cyan);">in ${Math.floor(diffMins/60)}h ${diffMins%60}m</span>`;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+
             tr.innerHTML = `
-                <td><strong>${escapeHtml(task.task_name || task.name || 'Unknown Task')}</strong></td>
-                <td>${getScheduleText(task)}</td>
-                <td>${formatDateTime(task.last_run)}</td>
-                <td>${formatDateTime(task.next_run)}</td>
+                <td>
+                    <strong style="color: var(--dracula-purple);">${escapeHtml(task.task_name || task.name || 'Unknown Task')}</strong>
+                    ${task.description ? `<div style="font-size: 0.75rem; color: var(--dracula-comment); margin-top: 0.25rem;">${escapeHtml(task.description)}</div>` : ''}
+                </td>
+                <td><code style="font-size: 0.875rem;">${getScheduleText(task)}</code></td>
+                <td>${lastRunHtml}</td>
+                <td>${nextRunHtml}</td>
                 <td><span class="badge ${getStatusBadge(task.status)}">${escapeHtml(task.status || 'pending')}</span></td>
                 <td>
                     <button class="btn btn-sm btn-primary" onclick="viewTaskLogs('${escapeHtml(task.task_name || task.name)}')">
-                        📋 View Logs
+                        📋 Logs
                     </button>
                 </td>
             `;
@@ -261,10 +288,14 @@
 
     // Format date and time
     function formatDateTime(dateString) {
-        if (!dateString) return '-';
+        if (!dateString || dateString === '' || dateString === null) {
+            return '<span style="color: var(--dracula-comment); font-style: italic;">Never</span>';
+        }
         try {
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '-';
+            if (isNaN(date.getTime())) {
+                return '<span style="color: var(--dracula-comment); font-style: italic;">Never</span>';
+            }
 
             const now = new Date();
             const diff = Math.abs(now - date) / 1000; // difference in seconds
@@ -349,10 +380,8 @@
         return div.innerHTML;
     }
 
-    // Show confirm dialog (using built-in confirm for now)
-    function showConfirm(message) {
-        return confirm(message);
-    }
+    // Note: showConfirm is globally available from app.js
+    // Uses custom modal instead of default confirm()
 </script>
 
 {{template "footer" .}}

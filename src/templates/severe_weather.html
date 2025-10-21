@@ -17,10 +17,8 @@
             <p class="page-subtitle">Real-time warnings for hurricanes, tornadoes, severe storms, winter weather, and floods</p>
         </div>
 
-        {{if .HasLocation}}
-        <div class="location-info">
-            📍 Showing alerts for: <strong>{{.LocationName}}</strong>
-        </div>
+        {{if .LocationData}}
+            {{template "location_details" .}}
         {{end}}
 
         <div class="location-form">
