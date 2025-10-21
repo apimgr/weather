@@ -32,10 +32,13 @@
                     <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
                     <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
                 </select>
-                <button type="submit" class="search-button primary">
-                    Get Weather
+            </div>
+
+            <div class="search-row-single">
+                <button type="submit" class="search-button primary flex-1">
+                    🌤️ Get Weather
                 </button>
-                <button type="button" id="location-btn" class="search-button secondary">
+                <button type="button" id="location-btn" class="search-button secondary flex-1">
                     📍 My Location
                 </button>
             </div>
@@ -46,7 +49,7 @@
         {{end}}
 
         {{if .Error}}
-            <div style="background-color: var(--dracula-red); color: var(--dracula-bg); padding: 10px; border-radius: 6px; margin: 20px 0;">
+            <div class="error-box">
                 <strong>Error:</strong> {{.Error}}
             </div>
         {{end}}
@@ -97,26 +100,26 @@
                                 {{$day.Icon}} {{$day.Description}}
                             </td>
                             <td class="forecast-temp">
-                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
-                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                <span class="text-orange">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                <span class="text-cyan">↓{{printf "%.0f" $day.TempMin}}°</span>
                                 {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                             </td>
-                            <td style="color: var(--dracula-comment); font-size: 0.875rem;">
-                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
-                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
+                            <td class="text-comment text-sm">
+                                <span class="text-orange">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
+                                <span class="text-cyan">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
                             </td>
                             <td class="wind-info">
                                 💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}
-                                <div style="font-size: 0.75rem; color: var(--dracula-comment);">{{$day.WindDirection}}°</div>
+                                <div class="text-xs text-comment">{{$day.WindDirection}}°</div>
                             </td>
                             <td class="precipitation">
                                 ☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}}
-                                <div style="font-size: 0.75rem; color: var(--dracula-comment);">{{$day.PrecipitationProbability}}% • {{printf "%.1f" $day.PrecipitationHours}}h</div>
+                                <div class="text-xs text-comment">{{$day.PrecipitationProbability}}% • {{printf "%.1f" $day.PrecipitationHours}}h</div>
                             </td>
                             <td class="wind-info">
                                 💨 {{printf "%.0f" $day.WindGustsMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}
                             </td>
-                            <td style="color: var(--dracula-yellow);">
+                            <td class="text-yellow">
                                 ☀️ {{printf "%.1f" $day.SolarRadiation}} MJ/m²
                             </td>
                         </tr>
@@ -135,15 +138,15 @@
                                 <div class="forecast-main">
                                     <span class="forecast-icon">{{$day.Icon}}</span>
                                     <span class="forecast-temp">
-                                        <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
-                                        <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                        <span class="text-orange">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                        <span class="text-cyan">↓{{printf "%.0f" $day.TempMin}}°</span>
                                         {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                                     </span>
                                 </div>
-                                <div class="forecast-details" style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.35rem;">
-                                    <div style="font-weight: 500; color: var(--dracula-cyan);">{{$day.Description}}</div>
+                                <div class="forecast-details text-sm">
+                                    <div class="text-cyan font-medium">{{$day.Description}}</div>
                                     {{if $day.FeelsLikeMax}}
-                                    <div style="color: var(--dracula-comment);">
+                                    <div class="text-comment">
                                         <strong>Feels like:</strong> ↑{{printf "%.0f" $day.FeelsLikeMax}}° ↓{{printf "%.0f" $day.FeelsLikeMin}}°
                                     </div>
                                     {{end}}
@@ -156,10 +159,10 @@
                                     <div class="precipitation">
                                         <strong>Precip:</strong> ☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} • {{$day.PrecipitationProbability}}% chance
                                     </div>
-                                    <div style="color: var(--dracula-comment);">
+                                    <div class="text-comment">
                                         <strong>Duration:</strong> {{printf "%.1f" $day.PrecipitationHours}} hours
                                     </div>
-                                    <div style="color: var(--dracula-yellow);">
+                                    <div class="text-yellow">
                                         <strong>Solar:</strong> ☀️ {{printf "%.1f" $day.SolarRadiation}} MJ/m²
                                     </div>
                                 </div>
@@ -170,39 +173,39 @@
             </div>
 
             <!-- Console Command Examples -->
-            <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-bg); border-radius: 6px;">
-                <h3 style="color: var(--dracula-purple); text-align: center; margin-top: 0;">Console Access</h3>
+            <div class="console-section">
+                <h3 class="console-section__title">Console Access</h3>
                 <div class="console-commands">
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Weather:</strong>
+                        <strong class="console-section__label">Weather:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">One-Line:</strong>
+                        <strong class="console-section__label">One-Line:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Moon:</strong>
+                        <strong class="console-section__label">Moon:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Moon Location:</strong>
+                        <strong class="console-section__label">Moon Location:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}')">Copy</button>
                         </div>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">JSON API:</strong>
+                        <strong class="console-section__label">JSON API:</strong>
                         <div class="code-wrapper">
                             <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}</code>
                             <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}')">Copy</button>
@@ -211,21 +214,32 @@
                 </div>
             </div>
         {{else}}
-            <div style="text-align: center; color: var(--dracula-comment); margin: 30px 0;">
-                <h2 style="color: var(--dracula-cyan); font-size: 18px; margin-bottom: 15px;">Welcome to Weather</h2>
-                <p style="font-size: 14px; margin-bottom: 20px;">Your location has been detected and pre-filled above. Try these examples:</p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
-                    <a href="?location=London" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇬🇧 London</a>
-                    <a href="?location=Tokyo" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇯🇵 Tokyo</a>
-                    <a href="?location=Paris" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇫🇷 Paris</a>
-                    <a href="?location=Sydney" style="color: var(--dracula-pink); text-decoration: none; padding: 8px; background: var(--dracula-bg); border-radius: 4px; display: block;">🇦🇺 Sydney</a>
+            <div class="welcome-section">
+                <h2 class="welcome-section__title">🌤️ Weather Forecasts</h2>
+                <p>Enter a city or coordinates above to get a 16-day forecast, or try one of these featured locations:</p>
+                <div class="city-links-grid">
+                    <a href="?location=London" class="city-link">🇬🇧 London</a>
+                    <a href="?location=Tokyo" class="city-link">🇯🇵 Tokyo</a>
+                    <a href="?location=Paris" class="city-link">🇫🇷 Paris</a>
+                    <a href="?location=Sydney" class="city-link">🇦🇺 Sydney</a>
                 </div>
-
-                <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-current-line); border-radius: 6px;">
-                    <h4 style="color: var(--dracula-green);">Console Access:</h4>
+                <div class="console-section margin-y-md">
+                    <h4 class="console-section__title">Quick Console Examples</h4>
                     <div class="console-commands">
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/London</code>
-                        <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=Paris</code>
+                        <div class="command-item">
+                            <strong class="console-section__label">London:</strong>
+                            <div class="code-wrapper">
+                                <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/London</code>
+                                <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/London')">Copy</button>
+                            </div>
+                        </div>
+                        <div class="command-item">
+                            <strong class="console-section__label">Paris JSON:</strong>
+                            <div class="code-wrapper">
+                                <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=Paris</code>
+                                <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=Paris')">Copy</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

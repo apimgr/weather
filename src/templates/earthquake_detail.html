@@ -1,184 +1,189 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🌍 Earthquake Details - Weather</title>
-    <link rel="stylesheet" href="/static/css/dracula.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-</head>
-<body>
-    <div class="weather-container">
-        <div class="weather-header">
-            🌍 <a href="/" style="color: inherit; text-decoration: none;">Weather</a>
-        </div>
+{{template "head" .}}
+{{template "navbar" .}}
 
-        <!-- Navigation Bar -->
-        <nav style="display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0; padding: 0.75rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-            <a href="/" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">🏠 Home</a>
-            <a href="/moon" style="color: var(--dracula-purple); text-decoration: none; font-weight: 500;">🌙 Moon</a>
-            <a href="/earthquake" style="color: var(--dracula-orange); text-decoration: none; font-weight: 500;">🌍 Earthquakes</a>
-        </nav>
+{{$titleClass := "eq-detail-title--red"}}
+{{if eq .Earthquake.Tsunami 1}}
+    {{$titleClass = "eq-detail-title--cyan"}}
+{{else if lt .Earthquake.Magnitude 2.0}}
+    {{$titleClass = "eq-detail-title--green"}}
+{{else if lt .Earthquake.Magnitude 4.0}}
+    {{$titleClass = "eq-detail-title--yellow"}}
+{{else if lt .Earthquake.Magnitude 5.0}}
+    {{$titleClass = "eq-detail-title--orange"}}
+{{end}}
 
-        <!-- Back Button -->
-        <div style="margin: 1rem 0;">
-            <a href="/earthquake" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">← Back to Earthquakes</a>
-        </div>
+{{$magnitudeClass := "eq-magnitude__badge--major"}}
+{{if lt .Earthquake.Magnitude 2.0}}
+    {{$magnitudeClass = "eq-magnitude__badge--minor"}}
+{{else if lt .Earthquake.Magnitude 4.0}}
+    {{$magnitudeClass = "eq-magnitude__badge--light"}}
+{{else if lt .Earthquake.Magnitude 5.0}}
+    {{$magnitudeClass = "eq-magnitude__badge--moderate"}}
+{{else if lt .Earthquake.Magnitude 6.0}}
+    {{$magnitudeClass = "eq-magnitude__badge--strong"}}
+{{end}}
 
-        <!-- Earthquake Details -->
-        <div style="background: var(--dracula-bg); padding: 2rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); margin: 1rem 0;">
-            <h1 style="color: var(--dracula-fg); margin-top: 0; border-left: 4px solid {{if eq .Earthquake.Tsunami 1}}var(--dracula-cyan){{else if lt .Earthquake.Magnitude 2.0}}var(--dracula-green){{else if lt .Earthquake.Magnitude 4.0}}var(--dracula-yellow){{else if lt .Earthquake.Magnitude 5.0}}var(--dracula-orange){{else}}var(--dracula-red){{end}}; padding-left: 1rem;">
-                {{.Earthquake.Place}}
-            </h1>
+<div class="weather-container page-container earthquake-detail">
+    <nav class="eq-detail-nav">
+        <a href="/" class="eq-detail-nav__link eq-detail-nav__link--home">🏠 Home</a>
+        <a href="/moon" class="eq-detail-nav__link eq-detail-nav__link--moon">🌙 Moon</a>
+        <a href="/earthquake" class="eq-detail-nav__link eq-detail-nav__link--earthquake">🌍 Earthquakes</a>
+    </nav>
 
-            <!-- Magnitude Badge -->
-            <div style="display: flex; align-items: center; gap: 2rem; margin: 1.5rem 0;">
-                <div style="text-align: center;">
-                    <span style="display: inline-block; width: 5rem; height: 5rem; border-radius: 50%; text-align: center; line-height: 5rem; font-weight: bold; font-size: 2rem; background-color: {{if lt .Earthquake.Magnitude 2.0}}var(--dracula-green){{else if lt .Earthquake.Magnitude 4.0}}var(--dracula-yellow){{else if lt .Earthquake.Magnitude 5.0}}var(--dracula-orange){{else if lt .Earthquake.Magnitude 6.0}}var(--dracula-red){{else}}var(--dracula-purple){{end}};">
-                        {{printf "%.1f" .Earthquake.Magnitude}}
-                    </span>
-                    <div style="color: var(--dracula-comment); margin-top: 0.5rem; font-size: 0.875rem;">Magnitude</div>
-                </div>
+    <a href="/earthquake" class="eq-detail-back-link">← Back to Earthquakes</a>
 
-                {{if eq .Earthquake.Tsunami 1}}
-                <div style="background: var(--dracula-cyan); color: var(--dracula-bg); padding: 1rem 2rem; border-radius: 0.5rem; font-weight: bold; font-size: 1.2rem;">
-                    🌊 TSUNAMI WARNING
-                </div>
-                {{end}}
+    <section class="eq-detail-card">
+        <h1 class="eq-detail-title {{$titleClass}}">{{.Earthquake.Place}}</h1>
+
+        <div class="eq-detail-summary">
+            <div class="eq-magnitude">
+                <span class="eq-magnitude__badge {{$magnitudeClass}}">{{printf "%.1f" .Earthquake.Magnitude}}</span>
+                <span class="eq-magnitude__label">Magnitude</span>
             </div>
 
-            <!-- Details Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">Time</div>
-                    <div style="color: var(--dracula-fg);">{{.Earthquake.Time.Format "2006-01-02 15:04:05"}}</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">{{.Earthquake.Time.Format "MST"}}</div>
-                </div>
-
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">Location</div>
-                    <div style="color: var(--dracula-fg);">{{printf "%.4f" .Earthquake.Latitude}}°, {{printf "%.4f" .Earthquake.Longitude}}°</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Latitude, Longitude</div>
-                </div>
-
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">Depth</div>
-                    <div style="color: var(--dracula-fg);">{{printf "%.1f" .Earthquake.Depth}} km</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Below surface</div>
-                </div>
-
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">Status</div>
-                    <div style="color: var(--dracula-green);">{{.Earthquake.Status}}</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">{{.Earthquake.MagnitudeType}} {{.Earthquake.Type}}</div>
-                </div>
-
-                {{if .Earthquake.Felt}}
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">Felt Reports</div>
-                    <div style="color: var(--dracula-fg);">{{.Earthquake.Felt}} people</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Reported feeling it</div>
-                </div>
-                {{end}}
-
-                {{if .Earthquake.CDI}}
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">CDI</div>
-                    <div style="color: var(--dracula-fg);">{{printf "%.1f" .Earthquake.CDI}}</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Community Internet Intensity</div>
-                </div>
-                {{end}}
-
-                {{if .Earthquake.MMI}}
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">MMI</div>
-                    <div style="color: var(--dracula-fg);">{{printf "%.1f" .Earthquake.MMI}}</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Modified Mercalli Intensity</div>
-                </div>
-                {{end}}
-
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">Network</div>
-                    <div style="color: var(--dracula-fg);">{{.Earthquake.Network}}</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Reporting network</div>
-                </div>
-
-                <div style="background: var(--dracula-current-line); padding: 1.5rem; border-radius: 0.5rem;">
-                    <div style="color: var(--dracula-orange); font-weight: bold; margin-bottom: 0.5rem;">ID</div>
-                    <div style="color: var(--dracula-fg); font-family: monospace; font-size: 0.875rem;">{{.Earthquake.ID}}</div>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.25rem;">Event identifier</div>
-                </div>
-            </div>
-
-            <!-- Map -->
-            <div id="map" style="height: 400px; width: 100%; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); margin: 2rem 0;"></div>
-
-            <!-- External Link -->
-            <div style="text-align: center; margin: 2rem 0;">
-                <a href="{{.Earthquake.URL}}" target="_blank" style="display: inline-block; padding: 0.75rem 2rem; background: var(--dracula-cyan); color: var(--dracula-bg); border-radius: 0.5rem; text-decoration: none; font-weight: bold;">
-                    View on USGS →
-                </a>
-            </div>
+            {{if eq .Earthquake.Tsunami 1}}
+            <div class="eq-tsunami-alert">🌊 Tsunami Warning</div>
+            {{end}}
         </div>
 
-        <!-- Console Command -->
-        <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); margin-top: 2rem;">
-            <h3 style="color: var(--dracula-green); margin-top: 0;">📟 Console Command</h3>
-            <div style="font-family: monospace; font-size: 0.875rem;">
-                <code style="color: var(--dracula-cyan);">curl {{.HostInfo.FullHost}}/earthquake/detail/{{.Earthquake.ID}}</code>
+        <div class="eq-detail-grid">
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Time</div>
+                <div class="eq-detail-attribute__value">{{.Earthquake.Time.Format "2006-01-02 15:04:05"}}</div>
+                <div class="eq-detail-attribute__meta">{{.Earthquake.Time.Format "MST"}}</div>
             </div>
+
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Location</div>
+                <div class="eq-detail-attribute__value">{{printf "%.4f" .Earthquake.Latitude}}°, {{printf "%.4f" .Earthquake.Longitude}}°</div>
+                <div class="eq-detail-attribute__meta">Latitude, Longitude</div>
+            </div>
+
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Depth</div>
+                <div class="eq-detail-attribute__value">{{printf "%.1f" .Earthquake.Depth}} km</div>
+                <div class="eq-detail-attribute__meta">Below surface</div>
+            </div>
+
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Status</div>
+                <div class="eq-detail-attribute__value">{{.Earthquake.Status | upper}}</div>
+                <div class="eq-detail-attribute__meta">Reviewed by USGS</div>
+            </div>
+
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Type</div>
+                <div class="eq-detail-attribute__value">{{.Earthquake.MagnitudeType}} {{.Earthquake.Type | upper}}</div>
+            </div>
+
+            {{if .Earthquake.Felt}}
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Reported Felt</div>
+                <div class="eq-detail-attribute__value">{{.Earthquake.Felt}} people</div>
+                <div class="eq-detail-attribute__meta">USGS Did You Feel It?</div>
+            </div>
+            {{end}}
+
+            {{if .Earthquake.CDI}}
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">CDI</div>
+                <div class="eq-detail-attribute__value">{{printf "%.1f" .Earthquake.CDI}}</div>
+                <div class="eq-detail-attribute__meta">Community Determined Intensity</div>
+            </div>
+            {{end}}
+
+            {{if .Earthquake.MMI}}
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">MMI</div>
+                <div class="eq-detail-attribute__value">{{printf "%.1f" .Earthquake.MMI}}</div>
+                <div class="eq-detail-attribute__meta">Modified Mercalli Intensity</div>
+            </div>
+            {{end}}
+
+            {{if .Earthquake.Alert}}
+            <div class="eq-detail-attribute">
+                <div class="eq-detail-attribute__label">Alert Level</div>
+                <div class="eq-detail-attribute__value">{{.Earthquake.Alert | upper}}</div>
+            </div>
+            {{end}}
         </div>
 
-        <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
-            <p style="margin: 0.5rem 0; font-size: 0.875rem;">Data from <a href="https://earthquake.usgs.gov/" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">USGS Earthquake Hazards Program</a></p>
-            <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
-                <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
-                <span style="color: var(--dracula-pink);">•</span>
-                <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
-                <span style="color: var(--dracula-pink);">•</span>
-                <a href="/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
-            </p>
+        <div id="map" class="map-container eq-detail-map"></div>
+    </section>
+
+    <section class="console-section">
+        <h3 class="console-section__title text-green">📟 Console Command</h3>
+        <div class="console-commands">
+            <div class="command-item">
+                <strong class="console-section__label">Detail:</strong>
+                <div class="code-wrapper">
+                    <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/earthquake/detail/{{.Earthquake.ID}}</code>
+                    <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/earthquake/detail/{{.Earthquake.ID}}')">Copy</button>
+                </div>
+            </div>
         </div>
+    </section>
+
+    <div class="data-footer">
+        <p class="data-footer__text">
+            Data provided by <a href="https://earthquake.usgs.gov/" target="_blank" class="data-footer__link">USGS Earthquake Hazards Program</a><br>
+            Updated frequently throughout the day
+        </p>
     </div>
+</div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Initialize map centered on earthquake
-        const map = L.map('map').setView([{{.Earthquake.Latitude}}, {{.Earthquake.Longitude}}], 8);
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map').setView([{{.Earthquake.Latitude}}, {{.Earthquake.Longitude}}], 8);
 
-        // Add tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 18
-        }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+    }).addTo(map);
 
-        // Add earthquake marker
-        const size = Math.max(10, {{.Earthquake.Magnitude}} * 5);
-        const color = {{.Earthquake.Magnitude}} < 2 ? '#50fa7b' :
-                     {{.Earthquake.Magnitude}} < 4 ? '#f1fa8c' :
-                     {{.Earthquake.Magnitude}} < 5 ? '#ffb86c' :
-                     {{.Earthquake.Magnitude}} < 6 ? '#ff5555' : '#bd93f9';
+    const size = Math.max(10, {{.Earthquake.Magnitude}} * 5);
+    const color = {{.Earthquake.Magnitude}} < 2 ? '#50fa7b' :
+                 {{.Earthquake.Magnitude}} < 4 ? '#f1fa8c' :
+                 {{.Earthquake.Magnitude}} < 5 ? '#ffb86c' :
+                 {{.Earthquake.Magnitude}} < 6 ? '#ff5555' : '#bd93f9';
 
-        const marker = L.circleMarker([{{.Earthquake.Latitude}}, {{.Earthquake.Longitude}}], {
-            radius: size,
-            fillColor: color,
-            color: '#f8f8f2',
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 0.8
-        }).addTo(map);
+    const marker = L.circleMarker([{{.Earthquake.Latitude}}, {{.Earthquake.Longitude}}], {
+        radius: size,
+        fillColor: color,
+        color: '#f8f8f2',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.8
+    }).addTo(map);
 
-        // Popup content
-        const popupContent = `
-            <div style="color: #282a36; font-family: sans-serif;">
-                <strong style="font-size: 1.2em;">M {{printf "%.1f" .Earthquake.Magnitude}}</strong><br>
-                {{.Earthquake.Place}}<br>
-                <span style="font-size: 0.9em;">{{.Earthquake.Time.Format "2006-01-02 15:04:05"}}</span><br>
-                Depth: {{printf "%.1f" .Earthquake.Depth}}km
-                {{if eq .Earthquake.Tsunami 1}}<br><strong style="color: #8be9fd;">🌊 TSUNAMI WARNING</strong>{{end}}
-            </div>
-        `;
-        marker.bindPopup(popupContent).openPopup();
-    </script>
-</body>
-</html>
+    const popupContent = `
+        <div class="map-popup">
+            <strong class="map-popup__title">M {{printf "%.1f" .Earthquake.Magnitude}}</strong>
+            <div class="map-popup__place">{{.Earthquake.Place}}</div>
+            <div class="map-popup__time">{{.Earthquake.Time.Format "2006-01-02 15:04:05"}}</div>
+            <div class="map-popup__meta">Depth: {{printf "%.1f" .Earthquake.Depth}}km</div>
+            {{if eq .Earthquake.Tsunami 1}}<div class="map-popup__warning">🌊 Tsunami Warning</div>{{end}}
+        </div>
+    `;
+    marker.bindPopup(popupContent).openPopup();
+
+    function copyCommand(button, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = button.textContent;
+            button.textContent = '✓ Copied!';
+            button.classList.add('copied');
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            button.textContent = '✗ Failed';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+            }, 2000);
+        });
+    }
+</script>
+
+{{template "footer" .}}

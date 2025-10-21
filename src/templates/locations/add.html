@@ -6,114 +6,6 @@
     <title>{{ .title }}</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
     <script src="/static/js/app.js" defer></script>
-    <style>
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 var(--space-md);
-        }
-
-        .tabs {
-            display: flex;
-            gap: var(--space-sm);
-            margin-bottom: var(--space-lg);
-            border-bottom: 2px solid var(--dracula-current-line);
-        }
-
-        .tab {
-            padding: var(--space-md) var(--space-lg);
-            background: transparent;
-            border: none;
-            color: var(--dracula-comment);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .tab:hover {
-            color: var(--dracula-foreground);
-        }
-
-        .tab.active {
-            color: var(--dracula-purple);
-            border-bottom-color: var(--dracula-purple);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .search-results {
-            position: relative;
-            margin-top: var(--space-sm);
-        }
-
-        .results-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--dracula-current-line);
-            border: 1px solid var(--dracula-purple);
-            border-radius: var(--radius-md);
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: var(--z-dropdown);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .results-dropdown.active {
-            display: block;
-        }
-
-        .result-item {
-            padding: var(--space-md);
-            cursor: pointer;
-            border-bottom: 1px solid var(--dracula-bg);
-            transition: all 0.2s ease;
-        }
-
-        .result-item:hover {
-            background: var(--dracula-purple);
-            color: var(--dracula-bg);
-        }
-
-        .result-item:last-child {
-            border-bottom: none;
-        }
-
-        .result-city {
-            font-weight: 700;
-            color: var(--dracula-cyan);
-        }
-
-        .result-item:hover .result-city {
-            color: var(--dracula-bg);
-        }
-
-        .result-details {
-            font-size: 0.875rem;
-            color: var(--dracula-comment);
-            margin-top: var(--space-xs);
-        }
-
-        .result-item:hover .result-details {
-            color: var(--dracula-bg);
-            opacity: 0.8;
-        }
-
-        .gps-button {
-            width: 100%;
-            margin-bottom: var(--space-lg);
-        }
-    </style>
 </head>
 <body>
     <!-- Unified Navigation Bar -->
@@ -135,7 +27,7 @@
             <div class="navbar-actions">
                 <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
                     🔔
-                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    <span class="notification-badge" id="notification-badge">0</span>
                 </button>
                 <div class="profile-avatar">
                     <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
@@ -175,10 +67,10 @@
         </div>
     </nav>
 
-    <div class="container">
-        <div style="margin-bottom: 2rem;">
+    <div class="weather-container location-manager">
+        <div class="location-manager__header">
             <h1 class="text-purple">Add New Location</h1>
-            <a href="/user/dashboard" style="color: var(--dracula-cyan);">← Back to Dashboard</a>
+            <a href="/user/dashboard" class="back-link">← Back to Dashboard</a>
         </div>
 
         <div class="card">
@@ -191,14 +83,14 @@
                 </button>
 
                 <!-- Tabs -->
-                <div class="tabs">
-                    <button class="tab active" onclick="switchTab('search')">🔍 Search</button>
-                    <button class="tab" onclick="switchTab('zip')">📮 ZIP Code</button>
-                    <button class="tab" onclick="switchTab('coords')">🗺️ Coordinates</button>
+                <div class="location-tabs">
+                    <button class="location-tab active" onclick="switchTab(event, 'search')">🔍 Search</button>
+                    <button class="location-tab" onclick="switchTab(event, 'zip')">📮 ZIP Code</button>
+                    <button class="location-tab" onclick="switchTab(event, 'coords')">🗺️ Coordinates</button>
                 </div>
 
                 <!-- Search Tab -->
-                <div id="search-tab" class="tab-content active">
+                <div id="search-tab" class="location-tab-content active">
                     <div class="form-group">
                         <label class="form-label">Search for a City</label>
                         <input type="text"
@@ -215,7 +107,7 @@
                 </div>
 
                 <!-- ZIP Code Tab -->
-                <div id="zip-tab" class="tab-content">
+                <div id="zip-tab" class="location-tab-content">
                     <div class="form-group">
                         <label class="form-label">ZIP / Postal Code</label>
                         <input type="text"
@@ -228,7 +120,7 @@
                 </div>
 
                 <!-- Coordinates Tab -->
-                <div id="coords-tab" class="tab-content">
+                <div id="coords-tab" class="location-tab-content">
                     <div class="form-group">
                         <label class="form-label">Latitude</label>
                         <input type="number"
@@ -256,8 +148,8 @@
                 </div>
 
                 <!-- Location Form (shown after selection) -->
-                <form id="locationForm" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--dracula-current-line);">
-                    <h3 class="text-cyan" style="margin-bottom: 1rem;">Confirm Location Details</h3>
+                <form id="locationForm" class="location-confirm-form hidden">
+                    <h3 class="text-cyan mb-md">Confirm Location Details</h3>
 
                     <div class="form-group">
                         <label class="form-label">Location Name</label>
@@ -279,7 +171,7 @@
                     <input type="hidden" id="longitude" name="longitude">
                     <input type="hidden" id="timezone" name="timezone">
 
-                    <div class="flex gap-md" style="margin-top: 2rem;">
+                    <div class="flex gap-md mt-lg">
                         <button type="submit" class="btn btn-primary">💾 Save Location</button>
                         <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 Start Over</button>
                         <button type="button" class="btn btn-ghost" onclick="window.location.href='/user/dashboard'">Cancel</button>
@@ -293,10 +185,10 @@
         let searchTimeout;
         let selectedLocation = null;
 
-        function switchTab(tabName) {
+        function switchTab(event, tabName) {
             // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.location-tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.location-tab').forEach(tab => tab.classList.remove('active'));
 
             // Show selected tab
             document.getElementById(tabName + '-tab').classList.add('active');
@@ -338,9 +230,9 @@
             container.innerHTML = results.map(result => `
                 <div class="result-item" onclick='selectLocation(${JSON.stringify(result)})'>
                     <div class="result-city">${result.name}</div>
-                    <div class="result-details">
+                <div class="result-details">
                         ${result.admin1 ? result.admin1 + ', ' : ''}${result.country}
-                        <span style="opacity: 0.6;">• ${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}</span>
+                        <span class="result-coords">• ${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}</span>
                     </div>
                 </div>
             `).join('');
@@ -361,7 +253,7 @@
             document.getElementById('timezone').value = location.timezone || '';
 
             // Show the form
-            document.getElementById('locationForm').style.display = 'block';
+            document.getElementById('locationForm').classList.remove('hidden');
             showMessage('Location selected! Adjust the name if needed and click Save.', 'success');
         }
 
@@ -451,7 +343,7 @@
         }
 
         function resetForm() {
-            document.getElementById('locationForm').style.display = 'none';
+            document.getElementById('locationForm').classList.add('hidden');
             document.getElementById('searchResults').classList.remove('active');
             document.getElementById('citySearch').value = '';
             document.getElementById('zipCode').value = '';

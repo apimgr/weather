@@ -31,12 +31,24 @@
             <div class="no-storms-icon">🌊</div>
             <h3>All Clear!</h3>
             <p>No active tropical storms or hurricanes at this time.</p>
-            <p style="margin-top: 1rem; font-size: 0.875rem;">Data from NOAA National Hurricane Center</p>
+            <p class="text-sm margin-y-md">Data from NOAA National Hurricane Center</p>
         </div>
         {{ else }}
         <div class="storms-grid">
             {{ range .Storms }}
-            <div class="storm-card">
+            {{ $category := "tropical-storm" }}
+            {{ if ge .WindSpeed 157 }}
+                {{ $category = "category-5" }}
+            {{ else if ge .WindSpeed 130 }}
+                {{ $category = "category-4" }}
+            {{ else if ge .WindSpeed 111 }}
+                {{ $category = "category-3" }}
+            {{ else if ge .WindSpeed 96 }}
+                {{ $category = "category-2" }}
+            {{ else if ge .WindSpeed 74 }}
+                {{ $category = "category-1" }}
+            {{ end }}
+            <div class="storm-card {{$category}}">
                 <div class="storm-name">
                     {{ if ge .WindSpeed 74 }}🌀{{ else if ge .WindSpeed 39 }}🌊{{ else }}🌧️{{ end }}
                     {{.Name}}
@@ -110,5 +122,5 @@
             Notifications.startPolling(30000);
         }
     </script>
-</body>
-</html>
+
+{{template "footer" .}}

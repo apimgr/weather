@@ -274,10 +274,13 @@ func (h *EarthquakeHandler) HandleEarthquakeDetail(c *gin.Context) {
 	} else {
 		// Browser output
 		hostInfo := utils.GetHostInfo(c)
-		c.HTML(http.StatusOK, "earthquake_detail.html", gin.H{
+		title := fmt.Sprintf("Earthquake Detail · %s", earthquake.Place)
+		c.HTML(http.StatusOK, "earthquake_detail.html", utils.TemplateData(c, gin.H{
 			"Earthquake": earthquake,
 			"HostInfo":   hostInfo,
-		})
+			"title":      title,
+			"page":       "earthquake",
+		}))
 	}
 }
 

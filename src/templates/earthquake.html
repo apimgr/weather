@@ -14,45 +14,69 @@
     <div class="weather-container">
 
         <!-- Location Search Form -->
-        <form id="earthquake-form" style="margin: 1rem 0; width: 100%;">
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <input type="text" name="location" id="eq-location-input" placeholder="🔍 Search location..."
-                           value="{{.Location}}" autocomplete="off"
-                           style="flex: 1; padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--dracula-current-line); border-radius: 0.375rem; background-color: var(--dracula-bg); color: var(--dracula-fg);">
-                    <select name="feed" style="padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--dracula-current-line); border-radius: 0.375rem; background-color: var(--dracula-bg); color: var(--dracula-fg);">
-                        <option value="all_hour" {{if eq .FeedType "all_hour"}}selected{{end}}>Past Hour</option>
-                        <option value="all_day" {{if eq .FeedType "all_day"}}selected{{end}}>Past Day</option>
-                        <option value="all_week" {{if eq .FeedType "all_week"}}selected{{end}}>Past Week</option>
-                        <option value="all_month" {{if eq .FeedType "all_month"}}selected{{end}}>Past Month</option>
-                        <option value="4.5_day" {{if eq .FeedType "4.5_day"}}selected{{end}}>M4.5+ Day</option>
-                        <option value="4.5_week" {{if eq .FeedType "4.5_week"}}selected{{end}}>M4.5+ Week</option>
-                        <option value="significant_day" {{if eq .FeedType "significant_day"}}selected{{end}}>Significant Day</option>
-                        <option value="significant_week" {{if eq .FeedType "significant_week"}}selected{{end}}>Significant Week</option>
-                    </select>
-                    <select name="sort" style="padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--dracula-current-line); border-radius: 0.375rem; background-color: var(--dracula-bg); color: var(--dracula-fg);">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="magnitude">By Magnitude</option>
-                        <option value="depth">By Depth</option>
-                    </select>
-                    <input type="number" name="number" placeholder="Limit (0=all)" min="0" value="{{.Number}}"
-                           style="padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--dracula-current-line); border-radius: 0.375rem; background-color: var(--dracula-bg); color: var(--dracula-fg); width: 150px;">
-                </div>
+        <form id="earthquake-form" class="search-form">
+            <div class="search-row-single flex-column-mobile">
+                <input
+                    type="text"
+                    name="location"
+                    id="eq-location-input"
+                    class="location-input flex-1"
+                    placeholder="🔍 Search location or coordinates"
+                    value="{{if .Location}}{{.Location}}{{end}}"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="search-row flex-column-mobile">
+                <select name="feed" class="select-input flex-1">
+                    <option value="all_hour" {{if eq .FeedType "all_hour"}}selected{{end}}>Past Hour</option>
+                    <option value="all_day" {{if eq .FeedType "all_day"}}selected{{end}}>Past Day</option>
+                    <option value="all_week" {{if eq .FeedType "all_week"}}selected{{end}}>Past Week</option>
+                    <option value="all_month" {{if eq .FeedType "all_month"}}selected{{end}}>Past Month</option>
+                    <option value="4.5_day" {{if eq .FeedType "4.5_day"}}selected{{end}}>M4.5+ Day</option>
+                    <option value="4.5_week" {{if eq .FeedType "4.5_week"}}selected{{end}}>M4.5+ Week</option>
+                    <option value="significant_day" {{if eq .FeedType "significant_day"}}selected{{end}}>Significant Day</option>
+                    <option value="significant_week" {{if eq .FeedType "significant_week"}}selected{{end}}>Significant Week</option>
+                </select>
+                <select name="sort" class="select-input flex-1">
+                    <option value="newest" {{if or (eq .Sort "newest") (not .Sort)}}selected{{end}}>Newest First</option>
+                    <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>Oldest First</option>
+                    <option value="magnitude" {{if eq .Sort "magnitude"}}selected{{end}}>By Magnitude</option>
+                    <option value="depth" {{if eq .Sort "depth"}}selected{{end}}>By Depth</option>
+                </select>
+                <input
+                    type="number"
+                    name="number"
+                    placeholder="Limit (0 = all)"
+                    min="0"
+                    value="{{if .Number}}{{.Number}}{{end}}"
+                    class="location-input flex-1"
+                >
+            </div>
+
+            {{if .Location}}
+            <div class="search-row-single">
+                <input
+                    type="number"
+                    name="radius"
+                    placeholder="Radius (km)"
+                    value="{{if .Radius}}{{.Radius}}{{end}}"
+                    min="100"
+                    max="20000"
+                    class="location-input"
+                >
+            </div>
+            {{end}}
+
+            <div class="search-row-single">
+                <button type="submit" class="search-button primary flex-1">
+                    🌍 Search Earthquakes
+                </button>
                 {{if .Location}}
-                <input type="number" name="radius" placeholder="Radius (km)" value="{{.Radius}}" min="100" max="20000"
-                       style="padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--dracula-current-line); border-radius: 0.375rem; background-color: var(--dracula-bg); color: var(--dracula-fg);">
+                <button type="button" class="search-button secondary flex-1" onclick="window.location.href='/earthquake?feed={{.FeedType}}'">
+                    🗺️ View All
+                </button>
                 {{end}}
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <button type="submit" class="search-button" style="flex: 1;">
-                        🌍 Search Earthquakes
-                    </button>
-                    {{if .Location}}
-                    <a href="/earthquake?feed={{.FeedType}}" class="search-button" style="flex: 1; text-align: center; line-height: 2.5rem; text-decoration: none;">
-                        🗺️ View All
-                    </a>
-                    {{end}}
-                </div>
             </div>
         </form>
 
@@ -61,55 +85,76 @@
         {{end}}
 
         <!-- Statistics -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
-            <div style="background: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); text-align: center;">
-                <div style="font-size: 2rem; font-weight: bold; color: var(--dracula-cyan);">{{len .Earthquakes}}</div>
-                <div style="color: var(--dracula-comment); margin-top: 0.5rem;">Total Earthquakes</div>
+        <div class="grid-auto-fit-200 margin-y-lg">
+            <div class="stat-box">
+                <div class="stat-box__value stat-box__value--cyan">{{len .Earthquakes}}</div>
+                <div class="stat-box__label">Total Earthquakes</div>
             </div>
-            <div style="background: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); text-align: center;">
-                <div style="font-size: 2rem; font-weight: bold; color: var(--dracula-orange);">
-                    {{$maxMag := 0.0}}
-                    {{range .Earthquakes}}
-                        {{if gt .Magnitude $maxMag}}{{$maxMag = .Magnitude}}{{end}}
-                    {{end}}
-                    {{printf "%.1f" $maxMag}}
-                </div>
-                <div style="color: var(--dracula-comment); margin-top: 0.5rem;">Largest Magnitude</div>
+            <div class="stat-box">
+                {{ $maxMag := 0.0 }}
+                {{range .Earthquakes}}
+                    {{if gt .Magnitude $maxMag}}{{$maxMag = .Magnitude}}{{end}}
+                {{end}}
+                <div class="stat-box__value stat-box__value--orange">{{printf "%.1f" $maxMag}}</div>
+                <div class="stat-box__label">Largest Magnitude</div>
             </div>
-            <div style="background: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); text-align: center;">
-                <div style="font-size: 2rem; font-weight: bold; color: var(--dracula-purple);">
-                    {{$tsunami := 0}}
-                    {{range .Earthquakes}}
-                        {{if eq .Tsunami 1}}{{$tsunami = 1}}{{end}}
-                    {{end}}
-                    {{if gt $tsunami 0}}⚠️{{else}}✓{{end}}
-                </div>
-                <div style="color: var(--dracula-comment); margin-top: 0.5rem;">Tsunami Warnings</div>
+            <div class="stat-box">
+                {{ $tsunami := 0 }}
+                {{range .Earthquakes}}
+                    {{if eq .Tsunami 1}}{{$tsunami = 1}}{{end}}
+                {{end}}
+                <div class="stat-box__value stat-box__value--purple">{{if gt $tsunami 0}}⚠️{{else}}✓{{end}}</div>
+                <div class="stat-box__label">Tsunami Warnings</div>
             </div>
         </div>
 
         <!-- Interactive Map -->
-        <div id="map" style="height: 600px; width: 100%; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); margin: 1.5rem 0;"></div>
+        <div id="map" class="map-container"></div>
 
         <!-- Earthquake List -->
-        <div style="margin-top: 1.5rem;">
-            <h2 style="color: var(--dracula-cyan);">Recent Earthquakes</h2>
-            <div style="max-height: 600px; overflow-y: auto;">
+        <div class="margin-y-lg">
+            <h2 class="text-cyan">Recent Earthquakes</h2>
+            <div class="scroll-container">
                 {{range .Earthquakes}}
-                <div onclick="focusEarthquake({{.Latitude}}, {{.Longitude}})" class="earthquake-item"
-                     style="background: var(--dracula-bg); padding: 1rem; margin: 0.5rem 0; border-radius: 0.5rem; border-left: 4px solid {{if eq .Tsunami 1}}var(--dracula-cyan){{else if lt .Magnitude 2.0}}var(--dracula-green){{else if lt .Magnitude 4.0}}var(--dracula-yellow){{else if lt .Magnitude 5.0}}var(--dracula-orange){{else}}var(--dracula-red){{end}}; cursor: pointer; transition: all 0.3s; position: relative;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="display: inline-block; width: 3rem; height: 3rem; border-radius: 50%; text-align: center; line-height: 3rem; font-weight: bold; background-color: {{if lt .Magnitude 2.0}}var(--dracula-green){{else if lt .Magnitude 4.0}}var(--dracula-yellow){{else if lt .Magnitude 5.0}}var(--dracula-orange){{else if lt .Magnitude 6.0}}var(--dracula-red){{else}}var(--dracula-purple){{end}};">
+                {{ $severity := "earthquake-item--moderate" }}
+                {{ if eq .Tsunami 1 }}
+                    {{ $severity = "earthquake-item--tsunami" }}
+                {{ else if lt .Magnitude 2.0 }}
+                    {{ $severity = "earthquake-item--minor" }}
+                {{ else if lt .Magnitude 4.0 }}
+                    {{ $severity = "earthquake-item--light" }}
+                {{ else if lt .Magnitude 5.0 }}
+                    {{ $severity = "earthquake-item--moderate" }}
+                {{ else }}
+                    {{ $severity = "earthquake-item--strong" }}
+                {{ end }}
+
+                {{ $badge := "magnitude-badge--moderate" }}
+                {{ if lt .Magnitude 2.0 }}
+                    {{ $badge = "magnitude-badge--minor" }}
+                {{ else if lt .Magnitude 4.0 }}
+                    {{ $badge = "magnitude-badge--light" }}
+                {{ else if lt .Magnitude 5.0 }}
+                    {{ $badge = "magnitude-badge--moderate" }}
+                {{ else if lt .Magnitude 6.0 }}
+                    {{ $badge = "magnitude-badge--strong" }}
+                {{ else }}
+                    {{ $badge = "magnitude-badge--major" }}
+                {{ end }}
+
+                <div onclick="focusEarthquake({{.Latitude}}, {{.Longitude}})" class="earthquake-item {{$severity}}">
+                    <div class="flex gap-md flex-column-mobile">
+                        <span class="magnitude-badge {{$badge}}">
                             {{printf "%.1f" .Magnitude}}
                         </span>
-                        <div style="flex: 1;">
-                            <strong style="color: var(--dracula-fg);">{{.Place}}</strong>
-                            {{if eq .Tsunami 1}}<span style="color: var(--dracula-cyan); margin-left: 0.5rem;">🌊 TSUNAMI</span>{{end}}
-                            <div style="color: var(--dracula-comment); margin-top: 0.25rem; font-size: 0.875rem;">
+                        <div class="flex-1">
+                            <div class="font-semibold">{{.Place}}</div>
+                            {{if eq .Tsunami 1}}<span class="text-cyan font-semibold">🌊 TSUNAMI</span>{{end}}
+                            <div class="eq-info">
                                 {{.Time.Format "2006-01-02 15:04:05"}} • Depth: {{printf "%.1f" .Depth}}km
                                 {{if .Felt}} • Felt by {{.Felt}} people{{end}}
                             </div>
-                            <div class="eq-details" style="display: none; margin-top: 0.5rem; padding: 0.5rem; background: var(--dracula-current-line); border-radius: 0.25rem; font-size: 0.875rem;">
+                            <div class="eq-details">
                                 <div><strong>Coordinates:</strong> {{printf "%.4f" .Latitude}}, {{printf "%.4f" .Longitude}}</div>
                                 <div><strong>Type:</strong> {{.MagnitudeType}} {{.Type}}</div>
                                 <div><strong>Status:</strong> {{.Status}}</div>
@@ -117,42 +162,44 @@
                                 {{if .MMI}}<div><strong>MMI:</strong> {{printf "%.1f" .MMI}}</div>{{end}}
                             </div>
                         </div>
-                        <a href="/earthquake/detail/{{.ID}}" onclick="event.stopPropagation();" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">Details →</a>
+                        <a href="/earthquake/detail/{{.ID}}" onclick="event.stopPropagation();" class="text-cyan font-medium">Details →</a>
                     </div>
                 </div>
                 {{else}}
-                <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No earthquakes found.</p>
+                <p class="text-center text-comment margin-y-lg">No earthquakes found.</p>
                 {{end}}
             </div>
         </div>
 
         {{if .Earthquakes}}
         <!-- Console Commands -->
-        <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line); margin-top: 2rem;">
-            <h3 style="color: var(--dracula-green); margin-top: 0;">📟 Console Commands</h3>
-            <div style="font-family: monospace; font-size: 0.875rem;">
-                <div style="margin: 0.75rem 0;">
-                    <strong style="color: var(--dracula-green);">All Earthquakes:</strong>
-                    <code style="color: var(--dracula-cyan);">curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}</code>
+        <div class="console-section">
+            <h3 class="console-section__title text-green">📟 Console Commands</h3>
+            <div class="console-commands">
+                <div class="command-item">
+                    <strong class="console-section__label">All Earthquakes:</strong>
+                    <div class="code-wrapper">
+                        <code class="mobile-code">curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}</code>
+                        <button class="copy-btn" onclick="copyCommand(this, 'curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}')">Copy</button>
+                    </div>
                 </div>
                 {{if .Location}}
-                <div style="margin: 0.75rem 0;">
-                    <strong style="color: var(--dracula-green);">Near Location:</strong>
-                    <code style="color: var(--dracula-cyan);">curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}</code>
+                <div class="command-item">
+                    <strong class="console-section__label">Selected Feed:</strong>
+                    <div class="code-wrapper">
+                        <code class="mobile-code">curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}</code>
+                        <button class="copy-btn" onclick="copyCommand(this, 'curl -s {{.HostInfo.FullHost}}/api/v1/earthquakes?feed={{.FeedType}}')">Copy</button>
+                    </div>
                 </div>
                 {{end}}
             </div>
         </div>
         {{end}}
 
-        <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
-            <p style="margin: 0.5rem 0; font-size: 0.875rem;">Data from <a href="https://earthquake.usgs.gov/" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">USGS Earthquake Hazards Program</a></p>
-            <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
-                <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
-                <span style="color: var(--dracula-pink);">•</span>
-                <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
-                <span style="color: var(--dracula-pink);">•</span>
-                <a href="/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
+        <div class="data-footer">
+            <p class="data-footer__text">
+                Data from <a href="https://earthquake.usgs.gov/" target="_blank" class="data-footer__link">USGS Earthquake Hazards Program</a><br>
+                Updated frequently throughout the day
             </p>
         </div>
     </div>
@@ -247,16 +294,16 @@
             }).addTo(map);
 
             // Popup content
-            const popupContent = `
-                <div style="color: #282a36; font-family: sans-serif;">
-                    <strong style="font-size: 1.2em;">M ${eq.mag.toFixed(1)}</strong><br>
-                    ${eq.place}<br>
-                    <span style="font-size: 0.9em;">${eq.time}</span><br>
-                    Depth: ${eq.depth.toFixed(1)}km
-                    ${eq.tsunami ? '<br><strong style="color: #8be9fd;">🌊 TSUNAMI WARNING</strong>' : ''}
-                    <br><a href="${eq.url}" target="_blank" style="color: #8be9fd;">View Details</a>
-                </div>
-            `;
+        const popupContent = `
+            <div class="map-popup">
+                <strong class="map-popup__title">M ${eq.mag.toFixed(1)}</strong>
+                <div class="map-popup__place">${eq.place}</div>
+                <div class="map-popup__time">${eq.time}</div>
+                <div class="map-popup__meta">Depth: ${eq.depth.toFixed(1)}km</div>
+                ${eq.tsunami ? '<div class="map-popup__warning">🌊 Tsunami Warning</div>' : ''}
+                <a href="${eq.url}" target="_blank" class="map-popup__link">View Details</a>
+            </div>
+        `;
             marker.bindPopup(popupContent);
             markers.push(marker);
         });
@@ -276,10 +323,11 @@
 
         // Toggle details on click
         document.querySelectorAll('.earthquake-item').forEach(item => {
-            item.addEventListener('click', function(e) {
+            item.addEventListener('click', function() {
                 const details = this.querySelector('.eq-details');
                 if (details) {
-                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                    const isHidden = window.getComputedStyle(details).display === 'none';
+                    details.style.display = isHidden ? 'block' : 'none';
                 }
             });
 
@@ -298,10 +346,29 @@
         // Auto-refresh every 5 minutes
         setTimeout(() => location.reload(), 300000);
 
+        // Copy command to clipboard
+        function copyCommand(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = '✗ Failed';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
         // Initialize notification polling
         if (typeof Notifications !== 'undefined') {
             Notifications.startPolling(30000);
         }
     </script>
-</body>
-</html>
+
+{{template "footer" .}}

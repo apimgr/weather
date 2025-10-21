@@ -11,7 +11,7 @@
 <body>
     {{template "navbar" .}}
 
-    <div class="container page-container">
+    <div class="weather-container page-container">
         <div class="severe-weather-header">
             <h1 class="page-header">⚠️ Severe Weather Alerts</h1>
             <p class="page-subtitle">Real-time warnings for hurricanes, tornadoes, severe storms, winter weather, and floods</p>
@@ -21,25 +21,38 @@
             {{template "location_details" .}}
         {{end}}
 
-        <div class="location-form">
-            <input type="text" id="location-input" placeholder="Enter location or coordinates (e.g., Miami or 25.7617,-80.1918)" value="{{.LocationName}}">
-            <select id="type-select" class="select-input">
-                <option value="all" selected>All Types</option>
-                <option value="hurricanes">🌀 Hurricanes</option>
-                <option value="tornadoes">🌪️ Tornadoes</option>
-                <option value="storms">⛈️ Severe Storms</option>
-                <option value="winter">❄️ Winter Weather</option>
-                <option value="floods">🌊 Floods</option>
-            </select>
-            <select id="distance-select" class="select-input">
-                <option value="25">25 miles</option>
-                <option value="50" selected>50 miles</option>
-                <option value="100">100 miles</option>
-                <option value="250">250 miles</option>
-                <option value="500">500 miles</option>
-                <option value="0">All alerts</option>
-            </select>
-            <button onclick="updateLocation()">🔍 Update</button>
+        <div class="search-form severe-location-form">
+            <div class="search-row-single flex-column-mobile">
+                <input
+                    type="text"
+                    id="location-input"
+                    class="location-input flex-1"
+                    placeholder="Enter location or coordinates (e.g., Miami or 25.7617,-80.1918)"
+                    value="{{.LocationName}}"
+                    autocomplete="off"
+                >
+            </div>
+            <div class="search-row flex-column-mobile">
+                <select id="type-select" class="select-input flex-1">
+                    <option value="all" selected>All Types</option>
+                    <option value="hurricanes">🌀 Hurricanes</option>
+                    <option value="tornadoes">🌪️ Tornadoes</option>
+                    <option value="storms">⛈️ Severe Storms</option>
+                    <option value="winter">❄️ Winter Weather</option>
+                    <option value="floods">🌊 Floods</option>
+                </select>
+                <select id="distance-select" class="select-input flex-1">
+                    <option value="25">25 miles</option>
+                    <option value="50" selected>50 miles</option>
+                    <option value="100">100 miles</option>
+                    <option value="250">250 miles</option>
+                    <option value="500">500 miles</option>
+                    <option value="0">All alerts</option>
+                </select>
+            </div>
+            <div class="search-row-single">
+                <button type="button" class="search-button primary flex-1" onclick="updateLocation()">🔍 Update</button>
+            </div>
         </div>
 
         <div class="alert-summary">
@@ -64,7 +77,19 @@
                 </div>
                 <div class="alerts-grid">
                     {{range .Data.Hurricanes}}
-                    <div class="storm-card {{if ge .WindSpeed 157}}cat5{{else if ge .WindSpeed 130}}cat4{{else if ge .WindSpeed 111}}cat3{{else if ge .WindSpeed 96}}cat2{{else if ge .WindSpeed 74}}cat1{{else}}tropical{{end}}">
+                    {{ $stormClass := "tropical-storm" }}
+                    {{ if ge .WindSpeed 157 }}
+                        {{ $stormClass = "category-5" }}
+                    {{ else if ge .WindSpeed 130 }}
+                        {{ $stormClass = "category-4" }}
+                    {{ else if ge .WindSpeed 111 }}
+                        {{ $stormClass = "category-3" }}
+                    {{ else if ge .WindSpeed 96 }}
+                        {{ $stormClass = "category-2" }}
+                    {{ else if ge .WindSpeed 74 }}
+                        {{ $stormClass = "category-1" }}
+                    {{ end }}
+                    <div class="storm-card {{$stormClass}}">
                         <div class="storm-name">{{.Name}}</div>
                         <div class="storm-category">{{.Intensity}}</div>
                         <div class="storm-details">
@@ -78,7 +103,11 @@
                             </div>
                             <div class="storm-detail">
                                 <span class="detail-label">Location:</span>
+                                {{if or (ne .Latitude 0) (ne .Longitude 0)}}
                                 <span class="detail-value">{{printf "%.2f" .Latitude}}, {{printf "%.2f" .Longitude}}</span>
+                                {{else}}
+                                <span class="detail-value">Unknown</span>
+                                {{end}}
                             </div>
                             {{if gt .DistanceMiles 0}}
                             <div class="storm-detail">
@@ -413,5 +442,3 @@
     </script>
 
     {{template "footer" .}}
-</body>
-</html>
