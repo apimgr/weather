@@ -253,7 +253,7 @@
                 <!-- Notification Bell -->
                 <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
                     🔔
-                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    <span class="notification-badge display-none" id="notification-badge">0</span>
                 </button>
 
                 <!-- Profile Avatar with Dropdown -->
@@ -302,7 +302,7 @@
     <div class="container">
         <div class="admin-header">
             <h1>Admin Panel</h1>
-            <p style="color: var(--dracula-comment);">Manage users, settings, and system configuration</p>
+            <p class="text-comment">Manage users, settings, and system configuration</p>
         </div>
 
         <div class="stats-grid">
@@ -320,7 +320,7 @@
             </div>
             <div class="stat-card">
                 <h3>System Status</h3>
-                <div class="stat-value" style="font-size: 1.5rem; color: var(--dracula-green);">✓ Online</div>
+                <div class="stat-value-success">✓ Online</div>
             </div>
         </div>
 
@@ -338,8 +338,8 @@
                     <h2>User Management</h2>
                     <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
                 </div>
-                <div id="users-list" style="overflow-x: auto;">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading users...</p>
+                <div id="users-list" class="overflow-auto">
+                    <p class="loading-text">Loading users...</p>
                 </div>
             </div>
         </div>
@@ -349,8 +349,8 @@
                 <div class="section-header">
                     <h2>Server Settings</h2>
                 </div>
-                <div id="settings-list" style="overflow-x: auto;">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading settings...</p>
+                <div id="settings-list" class="overflow-auto">
+                    <p class="loading-text">Loading settings...</p>
                 </div>
             </div>
         </div>
@@ -361,8 +361,8 @@
                     <h2>API Token Management</h2>
                     <button class="btn btn-primary" onclick="showGenerateTokenModal()">+ Generate Token</button>
                 </div>
-                <div id="tokens-list" style="overflow-x: auto;">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading tokens...</p>
+                <div id="tokens-list" class="overflow-auto">
+                    <p class="loading-text">Loading tokens...</p>
                 </div>
             </div>
         </div>
@@ -373,8 +373,8 @@
                     <h2>Audit Logs</h2>
                     <button class="btn btn-danger" onclick="clearAuditLogs()">Clear Old Logs</button>
                 </div>
-                <div id="logs-list" style="overflow-x: auto;">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading logs...</p>
+                <div id="logs-list" class="overflow-auto">
+                    <p class="loading-text">Loading logs...</p>
                 </div>
             </div>
         </div>
@@ -426,25 +426,25 @@
                 const users = await response.json();
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table class="table-full">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 1rem;">ID</th>
-                                <th style="text-align: left; padding: 1rem;">Email</th>
-                                <th style="text-align: left; padding: 1rem;">Role</th>
-                                <th style="text-align: left; padding: 1rem;">Created</th>
-                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            <tr class="table-border-bottom">
+                                <th class="table-cell text-left">ID</th>
+                                <th class="table-cell text-left">Email</th>
+                                <th class="table-cell text-left">Role</th>
+                                <th class="table-cell text-left">Created</th>
+                                <th class="table-cell-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${users.map(user => `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem;">${user.id}</td>
-                                    <td style="padding: 1rem;">${user.email}</td>
-                                    <td style="padding: 1rem;"><span style="background: ${user.role === 'admin' ? 'var(--dracula-red)' : 'var(--dracula-purple)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">${user.role}</span></td>
-                                    <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
-                                    <td style="padding: 1rem; text-align: right;">
-                                        <button onclick="deleteUser(${user.id})" style="background: var(--dracula-red); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Delete</button>
+                                <tr class="table-border-row">
+                                    <td class="table-cell">${user.id}</td>
+                                    <td class="table-cell">${user.email}</td>
+                                    <td class="table-cell"><span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span></td>
+                                    <td class="table-cell">${new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td class="table-cell-right">
+                                        <button onclick="deleteUser(${user.id})" class="btn-delete">Delete</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -453,7 +453,7 @@
                 `;
                 document.getElementById('users-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('users-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading users</p>';
+                document.getElementById('users-list').innerHTML = '<p class="text-error text-center">Error loading users</p>';
             }
         }
 
@@ -501,23 +501,23 @@
                 const settings = await response.json();
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table class="table-full">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 1rem;">Setting</th>
-                                <th style="text-align: left; padding: 1rem;">Value</th>
-                                <th style="text-align: left; padding: 1rem;">Description</th>
-                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            <tr class="table-border-bottom">
+                                <th class="table-cell text-left">Setting</th>
+                                <th class="table-cell text-left">Value</th>
+                                <th class="table-cell text-left">Description</th>
+                                <th class="table-cell-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${settings.map(setting => `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem; font-family: monospace; color: var(--dracula-cyan);">${setting.key}</td>
-                                    <td style="padding: 1rem; font-family: monospace;">${setting.value}</td>
-                                    <td style="padding: 1rem; color: var(--dracula-comment); font-size: 0.9rem;">${setting.description || '-'}</td>
-                                    <td style="padding: 1rem; text-align: right;">
-                                        <button onclick="editSetting('${setting.key}', '${setting.value}')" style="background: var(--dracula-purple); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Edit</button>
+                                <tr class="table-border-row">
+                                    <td class="table-cell-mono">${setting.key}</td>
+                                    <td class="table-cell-mono-plain">${setting.value}</td>
+                                    <td class="table-cell-comment">${setting.description || '-'}</td>
+                                    <td class="table-cell-right">
+                                        <button onclick="editSetting('${setting.key}', '${setting.value}')" class="btn-edit">Edit</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -526,7 +526,7 @@
                 `;
                 document.getElementById('settings-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('settings-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading settings</p>';
+                document.getElementById('settings-list').innerHTML = '<p class="text-error text-center">Error loading settings</p>';
             }
         }
 
@@ -553,27 +553,27 @@
                 const tokens = await response.json();
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table class="table-full">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 1rem;">ID</th>
-                                <th style="text-align: left; padding: 1rem;">User</th>
-                                <th style="text-align: left; padding: 1rem;">Name</th>
-                                <th style="text-align: left; padding: 1rem;">Created</th>
-                                <th style="text-align: left; padding: 1rem;">Last Used</th>
-                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            <tr class="table-border-bottom">
+                                <th class="table-cell text-left">ID</th>
+                                <th class="table-cell text-left">User</th>
+                                <th class="table-cell text-left">Name</th>
+                                <th class="table-cell text-left">Created</th>
+                                <th class="table-cell text-left">Last Used</th>
+                                <th class="table-cell-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${tokens.map(token => `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem;">${token.id}</td>
-                                    <td style="padding: 1rem;">${token.user_email}</td>
-                                    <td style="padding: 1rem;">${token.name}</td>
-                                    <td style="padding: 1rem;">${new Date(token.created_at).toLocaleDateString()}</td>
-                                    <td style="padding: 1rem;">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : 'Never'}</td>
-                                    <td style="padding: 1rem; text-align: right;">
-                                        <button onclick="revokeToken(${token.id})" style="background: var(--dracula-red); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Revoke</button>
+                                <tr class="table-border-row">
+                                    <td class="table-cell">${token.id}</td>
+                                    <td class="table-cell">${token.user_email}</td>
+                                    <td class="table-cell">${token.name}</td>
+                                    <td class="table-cell">${new Date(token.created_at).toLocaleDateString()}</td>
+                                    <td class="table-cell">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : 'Never'}</td>
+                                    <td class="table-cell-right">
+                                        <button onclick="revokeToken(${token.id})" class="btn-delete">Revoke</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -582,7 +582,7 @@
                 `;
                 document.getElementById('tokens-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading tokens</p>';
+                document.getElementById('tokens-list').innerHTML = '<p class="text-error text-center">Error loading tokens</p>';
             }
         }
 
@@ -639,29 +639,29 @@
                 const logs = await response.json();
 
                 if (logs.length === 0) {
-                    document.getElementById('logs-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No audit logs found</p>';
+                    document.getElementById('logs-list').innerHTML = '<p class="loading-text">No audit logs found</p>';
                     return;
                 }
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <table class="table-small">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 0.75rem;">Time</th>
-                                <th style="text-align: left; padding: 0.75rem;">User</th>
-                                <th style="text-align: left; padding: 0.75rem;">Action</th>
-                                <th style="text-align: left; padding: 0.75rem;">Resource</th>
-                                <th style="text-align: left; padding: 0.75rem;">IP</th>
+                            <tr class="table-border-bottom">
+                                <th class="table-cell-sm text-left">Time</th>
+                                <th class="table-cell-sm text-left">User</th>
+                                <th class="table-cell-sm text-left">Action</th>
+                                <th class="table-cell-sm text-left">Resource</th>
+                                <th class="table-cell-sm text-left">IP</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${logs.map(log => `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;">${new Date(log.created_at).toLocaleString()}</td>
-                                    <td style="padding: 0.75rem;">${log.user_email || 'Anonymous'}</td>
-                                    <td style="padding: 0.75rem; color: var(--dracula-cyan);">${log.action}</td>
-                                    <td style="padding: 0.75rem; color: var(--dracula-comment);">${log.resource || '-'}</td>
-                                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;">${log.ip_address || '-'}</td>
+                                <tr class="table-border-row">
+                                    <td class="table-cell-sm-mono">${new Date(log.created_at).toLocaleString()}</td>
+                                    <td class="table-cell-sm">${log.user_email || 'Anonymous'}</td>
+                                    <td class="table-cell-sm-cyan">${log.action}</td>
+                                    <td class="table-cell-sm-comment">${log.resource || '-'}</td>
+                                    <td class="table-cell-sm-mono">${log.ip_address || '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -669,7 +669,7 @@
                 `;
                 document.getElementById('logs-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('logs-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading logs</p>';
+                document.getElementById('logs-list').innerHTML = '<p class="text-error text-center">Error loading logs</p>';
             }
         }
 

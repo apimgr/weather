@@ -311,7 +311,7 @@
             tbody.innerHTML = '';
 
             if (locations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No locations saved</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No locations saved</td></tr>';
                 return;
             }
 
@@ -347,7 +347,7 @@
             tbody.innerHTML = '';
 
             if (tokens.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No tokens generated</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">No tokens generated</td></tr>';
                 return;
             }
 
@@ -453,7 +453,7 @@
         // Load sessions
         async function loadSessions() {
             const tbody = document.getElementById('sessionsTableBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Session management coming soon</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Session management coming soon</td></tr>';
         }
 
         // Update profile

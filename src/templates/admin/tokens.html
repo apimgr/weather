@@ -82,7 +82,7 @@
 
     <!-- Tokens Table -->
     <div class="card" style="background: var(--dracula-current-line); border-radius: 8px; overflow: hidden;">
-        <div style="overflow-x: auto;">
+        <div class="overflow-auto">
             <table class="table" id="tokensTable" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--dracula-bg); border-bottom: 2px solid var(--dracula-purple);">
@@ -379,7 +379,7 @@
                 html += `<button class="btn btn-sm" onclick="changePage(${i})"
                     style="padding: 0.5rem 1rem; background: ${active ? 'var(--dracula-purple)' : 'var(--dracula-current-line)'}; color: ${active ? 'var(--dracula-bg)' : 'var(--dracula-foreground)'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${active ? '600' : 'normal'};">${i}</button>`;
             } else if (i === currentPage - 3 || i === currentPage + 3) {
-                html += `<span style="color: var(--dracula-comment);">...</span>`;
+                html += `<span class="text-comment">...</span>`;
             }
         }
 

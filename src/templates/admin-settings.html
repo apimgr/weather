@@ -17,7 +17,7 @@
         <div class="nav-right">
             <button class="icon-button" onclick="Notifications.fetch()">
                 <span class="notification-bell">🔔</span>
-                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                <span class="notification-badge" id="notificationBadge" class="display-none">0</span>
             </button>
             <div class="profile-avatar">{{ index .user.Email 0 | printf "%c" | upper }}</div>
         </div>

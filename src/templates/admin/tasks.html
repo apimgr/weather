@@ -361,7 +361,7 @@
                     <td>${formatDateTime(log.executed_at || log.created_at)}</td>
                     <td><span class="badge ${getStatusBadge(log.status)}">${escapeHtml(log.status || 'unknown')}</span></td>
                     <td>${escapeHtml(duration)}</td>
-                    <td>${log.error_message ? `<span style="color: var(--dracula-red);">${escapeHtml(log.error_message)}</span>` : '-'}</td>
+                    <td>${log.error_message ? `<span class="text-error">${escapeHtml(log.error_message)}</span>` : '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });

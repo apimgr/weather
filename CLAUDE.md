@@ -636,11 +636,12 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/apimgr/weather/main/scr
 ### Design System
 
 - **Theme**: Dracula (dark mode)
-- **CSS Framework**: Custom vanilla CSS with BEM naming (~2,000 lines)
+- **CSS Framework**: Custom vanilla CSS with BEM naming (~3,900 lines)
 - **JavaScript**: Vanilla JS (no frameworks, no jQuery)
 - **Mobile Breakpoint**: 720px
 - **Responsive**: Mobile-first design
-- **No Default Popups**: Custom modals replace alert/confirm
+- **No Default Popups**: Custom modals replace alert/confirm/prompt
+- **NO Inline Styles**: All styling via CSS classes (BEM convention)
 
 ### Custom UI Components
 
@@ -672,7 +673,7 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/apimgr/weather/main/scr
 
 ### CSS Structure
 
-**File**: `src/static/css/dracula.css` (~1,900 lines)
+**File**: `src/static/css/dracula.css` (~3,900 lines)
 
 - Dracula color palette (CSS variables)
 - Component library (buttons, cards, forms, modals, toasts)
@@ -680,6 +681,15 @@ Invoke-WebRequest -Uri https://raw.githubusercontent.com/apimgr/weather/main/scr
 - BEM naming convention (`.block__element--modifier`)
 - Mobile-responsive utilities
 - Animation keyframes
+- **Utility classes** for NO inline styles:
+  - Text utilities (text-center, text-left, text-right, text-comment, text-error, text-success, text-sm)
+  - Display utilities (display-none, overflow-auto)
+  - Spacing utilities (padding-2, margin-top-sm, etc.)
+  - Badge styles (badge, badge-admin, badge-user)
+  - Table utilities (table-full, table-cell, table-cell-right, table-border-bottom, etc.)
+  - Button utilities (btn-delete, btn-edit, btn-revoke)
+  - Loading states (loading-text)
+  - Modal content (modal-body-text, modal-body-text-center, modal-input-full)
 
 ### Color Palette
 
@@ -855,6 +865,56 @@ X-RateLimit-Reset: 1729094400
   "message": "Too many requests. Please try again later.",
   "retry_after": 900
 }
+```
+
+---
+
+## Code Quality Standards
+
+### NO Inline CSS Policy
+
+**Policy**: ALL styling MUST use CSS classes. NO `style="..."` attributes allowed in HTML or JavaScript-generated content.
+
+**Enforcement**:
+- All modal content uses classes: `modal-body-text`, `modal-body-text-center`, `modal-input-full`
+- All JavaScript-generated HTML uses CSS classes (no inline styles)
+- Utility classes provided for common patterns
+
+**Key Files Verified (Zero Inline Styles)**:
+- `src/static/js/app.js` - Modal functions (showAlert, showConfirm, showPrompt)
+- `src/templates/admin/settings.html` - Admin settings page
+- `src/templates/admin/panel.html` - Admin panel with dynamic tables
+- `src/templates/auth/register.html` - Registration page
+
+**Utility Classes Available**:
+```css
+/* Text utilities */
+.text-center, .text-left, .text-right
+.text-comment, .text-error, .text-success, .text-sm
+
+/* Display */
+.display-none, .overflow-auto
+
+/* Spacing */
+.padding-2, .margin-top-sm
+
+/* Badges */
+.badge, .badge-admin, .badge-user
+
+/* Tables */
+.table-full, .table-small
+.table-cell, .table-cell-right, .table-cell-sm
+.table-cell-mono, .table-cell-comment
+
+/* Buttons */
+.btn-delete, .btn-edit, .btn-revoke
+
+/* Loading */
+.loading-text
+
+/* Modals */
+.modal-body-text, .modal-body-text-center
+.modal-input-full
 ```
 
 ---

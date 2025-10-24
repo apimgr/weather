@@ -659,7 +659,7 @@
     return new Promise((resolve) => {
       const modalId = Modal.create({
         title: title,
-        body: `<p style="margin: 0; line-height: 1.6;">${message}</p>`,
+        body: `<p class="modal-body-text">${message}</p>`,
         footer: `
           <button class="btn btn-primary" onclick="Modal.close('${modalId}'); window._alertResolve();">
             OK
@@ -679,7 +679,7 @@
     return new Promise((resolve) => {
       const modalId = Modal.create({
         title: title,
-        body: `<p style="margin: 0; line-height: 1.6;">${message}</p>`,
+        body: `<p class="modal-body-text">${message}</p>`,
         footer: `
           <button class="btn btn-secondary" onclick="Modal.close('${modalId}'); window._confirmResolve(false);">
             Cancel
@@ -704,9 +704,9 @@
       const modalId = Modal.create({
         title: title,
         body: `
-          <p style="margin: 0 0 1rem 0; line-height: 1.6;">${message}</p>
-          <input type="text" id="${inputId}" class="form-input" value="${defaultValue}"
-                 placeholder="Enter value..." style="width: 100%;">
+          <p class="modal-body-text-spacing">${message}</p>
+          <input type="text" id="${inputId}" class="modal-input-full" value="${defaultValue}"
+                 placeholder="Enter value...">
         `,
         footer: `
           <button class="btn btn-secondary" onclick="Modal.close('${modalId}'); window._promptResolve(null);">

@@ -885,6 +885,43 @@ a:hover {
   padding: var(--space-lg);
 }
 
+.modal-body-text {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--dracula-foreground);
+}
+
+.modal-body-text-spacing {
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+  color: var(--dracula-foreground);
+}
+
+.modal-body-text-center {
+  margin: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--dracula-foreground);
+}
+
+.modal-input-full {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--dracula-current-line);
+  border: 1px solid var(--dracula-purple);
+  border-radius: var(--radius-md);
+  color: var(--dracula-foreground);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.modal-input-full:focus {
+  outline: none;
+  border-color: var(--dracula-cyan);
+  box-shadow: 0 0 0 3px rgba(139, 233, 253, 0.1);
+}
+
 .modal-footer {
   padding: var(--space-lg);
   border-top: 1px solid var(--dracula-current-line);
@@ -3617,4 +3654,214 @@ a:hover {
 .stat-label {
   color: var(--dracula-comment);
   font-size: 0.875rem;
+}
+
+/* ============================================
+   UTILITY CLASSES (NO INLINE STYLES)
+   ============================================ */
+
+/* Text utilities */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-comment {
+  color: var(--dracula-comment);
+}
+
+.text-error {
+  color: var(--dracula-red);
+}
+
+.text-success {
+  color: var(--dracula-green);
+}
+
+.text-sm {
+  font-size: 0.9rem;
+}
+
+/* Display utilities */
+.display-none {
+  display: none;
+}
+
+.overflow-auto {
+  overflow-x: auto;
+}
+
+/* Spacing utilities */
+.padding-2 {
+  padding: 2rem;
+}
+
+.padding-top-sm {
+  padding-top: 0.5rem;
+}
+
+.margin-top-sm {
+  margin-top: 0.5rem;
+}
+
+/* Badge styles */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge-admin {
+  background: var(--dracula-red);
+  color: white;
+}
+
+.badge-user {
+  background: var(--dracula-purple);
+  color: white;
+}
+
+/* Table utility styles */
+.table-full {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-border-bottom {
+  border-bottom: 2px solid var(--dracula-comment);
+}
+
+.table-border-row {
+  border-bottom: 1px solid var(--dracula-comment);
+}
+
+.table-cell {
+  padding: 1rem;
+}
+
+.table-cell-right {
+  padding: 1rem;
+  text-align: right;
+}
+
+/* Button utilities */
+.btn-delete {
+  background: var(--dracula-red);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-delete:hover {
+  opacity: 0.8;
+}
+
+/* Loading state utilities */
+.loading-text {
+  text-align: center;
+  color: var(--dracula-comment);
+  padding: 2rem;
+}
+
+/* Notification badge */
+.notification-badge {
+  background: var(--dracula-red);
+  color: white;
+  border-radius: 50%;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+/* Stat value variations */
+.stat-value-success {
+  font-size: 1.5rem;
+  color: var(--dracula-green);
+}
+
+/* Table cell variations */
+.table-cell-mono {
+  padding: 1rem;
+  font-family: var(--font-mono);
+  color: var(--dracula-cyan);
+}
+
+.table-cell-mono-plain {
+  padding: 1rem;
+  font-family: var(--font-mono);
+}
+
+.table-cell-comment {
+  padding: 1rem;
+  color: var(--dracula-comment);
+  font-size: 0.9rem;
+}
+
+/* Button variations */
+.btn-edit {
+  background: var(--dracula-purple);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-edit:hover {
+  opacity: 0.8;
+}
+
+.btn-revoke {
+  background: var(--dracula-orange);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-revoke:hover {
+  opacity: 0.8;
+}
+
+/* Table size variations */
+.table-small {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+/* Table cell size variations */
+.table-cell-sm {
+  padding: 0.75rem;
+}
+
+.table-cell-sm-mono {
+  padding: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.table-cell-sm-cyan {
+  padding: 0.75rem;
+  color: var(--dracula-cyan);
+}
+
+.table-cell-sm-comment {
+  padding: 0.75rem;
+  color: var(--dracula-comment);
 }

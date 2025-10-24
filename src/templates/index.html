@@ -162,7 +162,7 @@
                                     <div class="wind-info">💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</div>
                                     <div class="precipitation">☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</div>
                                     {{if $day.FeelsLikeMax}}
-                                    <div style="color: var(--dracula-comment);">Feels like ↑{{printf "%.0f" $day.FeelsLikeMax}}° ↓{{printf "%.0f" $day.FeelsLikeMin}}°</div>
+                                    <div class="text-comment">Feels like ↑{{printf "%.0f" $day.FeelsLikeMax}}° ↓{{printf "%.0f" $day.FeelsLikeMin}}°</div>
                                     {{end}}
                                 </div>
                             </div>
@@ -224,7 +224,7 @@
             <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
                 <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
                 <span style="color: var(--dracula-pink);">•</span>
-                <span>Made with <span style="color: var(--dracula-red);">❤️</span></span>
+                <span>Made with <span class="text-error">❤️</span></span>
                 <span style="color: var(--dracula-pink);">•</span>
                 <a href="/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
             </p>
