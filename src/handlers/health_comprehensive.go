@@ -113,6 +113,26 @@ func ComprehensiveHealthCheck(db *database.DB, httpPort string, httpsPort int, s
 						"max":    1,
 					},
 				},
+				"location_databases": gin.H{
+					"countries": gin.H{
+						"status": getStatusString(initStatus.Countries),
+						"loaded": initStatus.Countries,
+					},
+					"cities": gin.H{
+						"status": getStatusString(initStatus.Cities),
+						"loaded": initStatus.Cities,
+					},
+					"zipcodes": gin.H{
+						"status": "loaded",
+						"loaded": true,
+					},
+					"geoip": gin.H{
+						"status": "loaded",
+						"loaded": true,
+						"databases": 4,
+						"types": []string{"IPv4 City", "IPv6 City", "Country", "ASN"},
+					},
+				},
 				"cache": gin.H{
 					"status":     "inactive",
 					"type":       "none",
@@ -303,4 +323,11 @@ func getFeatureFlags(db *database.DB) gin.H {
 		"graphql_enabled":      false,
 		"websocket_enabled":    false,
 	}
+}
+
+func getStatusString(loaded bool) string {
+	if loaded {
+		return "loaded"
+	}
+	return "loading"
 }

@@ -12,9 +12,11 @@
         </div>
         <div class="location-detail">
             🌐 <strong class="location-detail__label">Coordinates:</strong>
-            {{if or (ne .Location.Latitude 0) (ne .Location.Longitude 0)}}
-            <span class="location-detail__value--coords">{{printf "%.4f" .Location.Latitude}}, {{printf "%.4f" .Location.Longitude}}</span>
+            {{if .Location.Latitude}}{{if .Location.Longitude}}
+            <span class="location-detail__value--coords">{{.Location.Latitude}}, {{.Location.Longitude}}</span>
             {{else}}
+            <span class="location-detail__value--coords">Unknown</span>
+            {{end}}{{else}}
             <span class="location-detail__value--coords">Unknown</span>
             {{end}}
         </div>

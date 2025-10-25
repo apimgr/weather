@@ -44,7 +44,7 @@ Weather Service is a comprehensive weather platform built with Go, providing:
 
 ## Official Links
 
-- **Documentation**: [https://weather.readthedocs.io](https://weather.readthedocs.io)
+- **Documentation**: [https://apimgr-weather.readthedocs.io](https://apimgr-weather.readthedocs.io)
 - **GitHub**: [https://github.com/apimgr/weather](https://github.com/apimgr/weather)
 - **Docker Hub**: [https://ghcr.io/apimgr/weather](https://ghcr.io/apimgr/weather)
 - **Issues**: [https://github.com/apimgr/weather/issues](https://github.com/apimgr/weather/issues)
@@ -944,7 +944,7 @@ This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) fo
 
 ## Support
 
-- **Documentation**: [https://weather.readthedocs.io](https://weather.readthedocs.io)
+- **Documentation**: [https://apimgr-weather.readthedocs.io](https://apimgr-weather.readthedocs.io)
 - **Issues**: [https://github.com/apimgr/weather/issues](https://github.com/apimgr/weather/issues)
 - **Discussions**: [https://github.com/apimgr/weather/discussions](https://github.com/apimgr/weather/discussions)
 

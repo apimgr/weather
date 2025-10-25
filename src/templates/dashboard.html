@@ -38,7 +38,7 @@
                         <div class="card-body flex flex-col gap-md">
                             <div>
                                 <h3 class="text-cyan text-xl font-semibold">{{.Name}}</h3>
-                                <p class="text-comment text-sm">📍 {{printf "%.4f" .Latitude}}, {{printf "%.4f" .Longitude}}</p>
+                                <p class="text-comment text-sm">📍 {{.Latitude}}, {{.Longitude}}</p>
                                 {{if .Timezone}}
                                 <p class="text-comment text-sm">🕐 {{.Timezone}}</p>
                                 {{end}}

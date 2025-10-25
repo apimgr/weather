@@ -196,8 +196,8 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	current, err := h.weatherService.GetCurrentWeather(location.Latitude, location.Longitude, units)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "weather.html", utils.TemplateData(c, gin.H{
-			"error":    err.Error(),
-			"hostInfo": utils.GetHostInfo(c),
+			"Error":    err.Error(),
+			"HostInfo": utils.GetHostInfo(c),
 			"page":     "weather",
 		}))
 		return

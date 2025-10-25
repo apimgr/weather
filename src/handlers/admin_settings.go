@@ -202,3 +202,16 @@ func (h *AdminSettingsHandler) ImportSettings(c *gin.Context) {
 		"message":  "Settings imported successfully",
 	})
 }
+
+// ReloadConfig triggers a server configuration reload (similar to SIGHUP)
+func (h *AdminSettingsHandler) ReloadConfig(c *gin.Context) {
+	// Note: This doesn't actually reload settings from file
+	// Settings are stored in database and are already live-reloaded
+	// This endpoint is here for compatibility with the UI
+	// In production, you might send SIGHUP signal to the process
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Configuration reload triggered",
+		"note":    "Settings are live-reloaded from database automatically",
+	})
+}

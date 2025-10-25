@@ -81,7 +81,7 @@
         </form>
 
         {{if .LocationData}}
-            {{template "location_details" .}}
+            {{template "location_details" .LocationData}}
         {{end}}
 
         <!-- Statistics -->
@@ -155,7 +155,7 @@
                                 {{if .Felt}} • Felt by {{.Felt}} people{{end}}
                             </div>
                             <div class="eq-details">
-                                <div><strong>Coordinates:</strong> {{printf "%.4f" .Latitude}}, {{printf "%.4f" .Longitude}}</div>
+                                <div><strong>Coordinates:</strong> {{.Latitude}}, {{.Longitude}}</div>
                                 <div><strong>Type:</strong> {{.MagnitudeType}} {{.Type}}</div>
                                 <div><strong>Status:</strong> {{.Status}}</div>
                                 {{if .CDI}}<div><strong>CDI:</strong> {{printf "%.1f" .CDI}}</div>{{end}}

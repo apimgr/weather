@@ -740,7 +740,7 @@ Increase resources for single instance:
 
 ## Support
 
-- **Documentation**: https://weather.readthedocs.io
+- **Documentation**: https://apimgr-weather.readthedocs.io
 - **Issues**: https://github.com/apimgr/weather/issues
 - **Discussions**: https://github.com/apimgr/weather/discussions
 - **Docker Hub**: https://ghcr.io/apimgr/weather

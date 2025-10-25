@@ -178,7 +178,7 @@ Response:
 
 ## Support
 
-- **Documentation**: [https://weather.readthedocs.io](https://weather.readthedocs.io)
+- **Documentation**: [https://apimgr-weather.readthedocs.io](https://apimgr-weather.readthedocs.io)
 - **Issues**: [https://github.com/apimgr/weather/issues](https://github.com/apimgr/weather/issues)
 - **Docker Hub**: [https://ghcr.io/apimgr/weather](https://ghcr.io/apimgr/weather)
 

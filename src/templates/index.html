@@ -52,20 +52,20 @@
                 <div class="location-info">
                     <!-- Always show location name -->
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        📍 <strong style="color: var(--dracula-cyan);">Location:</strong>
+                        📍 <strong class="text-cyan">Location:</strong>
                         <span style="color: var(--dracula-yellow);">{{if .WeatherData.Location.ShortName}}{{.WeatherData.Location.ShortName}}{{else}}{{.WeatherData.Location.Name}}, {{.WeatherData.Location.Country}}{{end}}</span>
                     </div>
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🌍 <strong style="color: var(--dracula-cyan);">Country:</strong>
+                        🌍 <strong class="text-cyan">Country:</strong>
                         <span style="color: var(--dracula-green);">{{.WeatherData.Location.Country}}</span>
                     </div>
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        🗺️ <strong style="color: var(--dracula-cyan);">Coordinates:</strong>
-                        <span style="color: var(--dracula-pink);">{{printf "%.4f" .WeatherData.Location.Latitude}}, {{printf "%.4f" .WeatherData.Location.Longitude}}</span>
+                        🗺️ <strong class="text-cyan">Coordinates:</strong>
+                        <span class="text-pink">{{.WeatherData.Location.Latitude}}, {{.WeatherData.Location.Longitude}}</span>
                     </div>
                     {{if .WeatherData.Location.Population}}
                     <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
-                        👥 <strong style="color: var(--dracula-cyan);">Population:</strong>
+                        👥 <strong class="text-cyan">Population:</strong>
                         <span style="color: var(--dracula-orange);">{{.WeatherData.Location.PopulationFormatted}}</span>
                     </div>
                     {{end}}
@@ -125,12 +125,12 @@
                             </td>
                             <td class="forecast-temp">
                                 <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
-                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                <span class="text-cyan">↓{{printf "%.0f" $day.TempMin}}°</span>
                                 {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                             </td>
                             <td style="color: var(--dracula-comment); font-size: 0.875rem;">
                                 <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
-                                <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
+                                <span class="text-cyan">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
                             </td>
                             <td class="wind-info">{{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</td>
                             <td class="precipitation">{{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</td>
@@ -153,7 +153,7 @@
                                     <span class="forecast-icon">{{$day.Icon}}</span>
                                     <span class="forecast-temp">
                                         <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
-                                        <span style="color: var(--dracula-cyan);">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                        <span class="text-cyan">↓{{printf "%.0f" $day.TempMin}}°</span>
                                         {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                                     </span>
                                 </div>
@@ -223,9 +223,9 @@
         <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
             <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
                 <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
-                <span style="color: var(--dracula-pink);">•</span>
+                <span class="text-pink">•</span>
                 <span>Made with <span class="text-error">❤️</span></span>
-                <span style="color: var(--dracula-pink);">•</span>
+                <span class="text-pink">•</span>
                 <a href="/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
             </p>
         </div>

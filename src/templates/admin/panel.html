@@ -348,6 +348,7 @@
             <div class="admin-section">
                 <div class="section-header">
                     <h2>Server Settings</h2>
+                    <button class="btn btn-success" onclick="applyAllSettings()" id="apply-settings-btn">✓ Apply All & Reload</button>
                 </div>
                 <div id="settings-list" class="overflow-auto">
                     <p class="loading-text">Loading settings...</p>
@@ -494,7 +495,7 @@
             }
         }
 
-        // Settings Management
+        // Settings Management with inline editing
         async function loadSettings() {
             try {
                 const response = await fetch('/api/v1/admin/settings');
@@ -507,20 +508,41 @@
                                 <th class="table-cell text-left">Setting</th>
                                 <th class="table-cell text-left">Value</th>
                                 <th class="table-cell text-left">Description</th>
-                                <th class="table-cell-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${settings.map(setting => `
-                                <tr class="table-border-row">
-                                    <td class="table-cell-mono">${setting.key}</td>
-                                    <td class="table-cell-mono-plain">${setting.value}</td>
-                                    <td class="table-cell-comment">${setting.description || '-'}</td>
-                                    <td class="table-cell-right">
-                                        <button onclick="editSetting('${setting.key}', '${setting.value}')" class="btn-edit">Edit</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
+                            ${settings.map(setting => {
+                                const isBool = setting.value === 'true' || setting.value === 'false';
+                                const isNumber = !isNaN(setting.value) && setting.value !== '';
+
+                                let inputHtml = '';
+                                if (isBool) {
+                                    inputHtml = `
+                                        <select class="form-input" data-key="${setting.key}" onchange="markSettingChanged('${setting.key}')">
+                                            <option value="true" ${setting.value === 'true' ? 'selected' : ''}>✓ Enabled</option>
+                                            <option value="false" ${setting.value === 'false' ? 'selected' : ''}>✗ Disabled</option>
+                                        </select>
+                                    `;
+                                } else if (isNumber) {
+                                    inputHtml = `
+                                        <input type="number" class="form-input" data-key="${setting.key}"
+                                               value="${setting.value}" onchange="markSettingChanged('${setting.key}')">
+                                    `;
+                                } else {
+                                    inputHtml = `
+                                        <input type="text" class="form-input" data-key="${setting.key}"
+                                               value="${setting.value}" onchange="markSettingChanged('${setting.key}')">
+                                    `;
+                                }
+
+                                return `
+                                    <tr class="table-border-row" id="setting-row-${setting.key.replace(/\./g, '-')}">
+                                        <td class="table-cell-mono">${setting.key}</td>
+                                        <td class="table-cell">${inputHtml}</td>
+                                        <td class="table-cell-comment">${setting.description || '-'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 `;
@@ -530,19 +552,80 @@
             }
         }
 
-        async function editSetting(key, currentValue) {
-            const newValue = prompt(`Enter new value for ${key}:`, currentValue);
-            if (!newValue || newValue === currentValue) return;
+        const changedSettings = new Set();
+
+        function markSettingChanged(key) {
+            changedSettings.add(key);
+            const applyBtn = document.getElementById('apply-settings-btn');
+            if (changedSettings.size > 0) {
+                applyBtn.textContent = `✓ Apply ${changedSettings.size} Change(s) & Reload`;
+                applyBtn.classList.add('btn-warning');
+            }
+        }
+
+        async function applyAllSettings() {
+            if (changedSettings.size === 0) {
+                await showAlert('No changes to apply', 'Info');
+                return;
+            }
+
+            const confirmApply = await showConfirm(
+                `Apply ${changedSettings.size} setting(s) and reload server configuration?`,
+                'Apply Settings'
+            );
+            if (!confirmApply) return;
+
+            const applyBtn = document.getElementById('apply-settings-btn');
+            applyBtn.disabled = true;
+            applyBtn.textContent = '⏳ Applying...';
 
             try {
-                await fetch(`/api/v1/admin/settings/${key}`, {
+                // Collect all changed settings
+                const updates = {};
+                const inputs = document.querySelectorAll('[data-key]');
+                inputs.forEach(input => {
+                    if (changedSettings.has(input.dataset.key)) {
+                        updates[input.dataset.key] = input.value;
+                    }
+                });
+
+                // Apply via bulk update API
+                await fetch('/api/v1/admin/settings/bulk', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ value: newValue })
+                    body: JSON.stringify({ settings: updates })
                 });
-                loadSettings();
+
+                // Reload server configuration
+                await fetch('/api/v1/admin/reload', {
+                    method: 'POST'
+                });
+
+                // Show success modal with auto-close
+                Modal.create({
+                    title: '✅ Settings Applied',
+                    body: `<p class="modal-body-text-center">
+                        ${changedSettings.size} setting(s) applied successfully.<br>
+                        Server configuration reloaded.
+                    </p>`,
+                    size: 'sm',
+                    autoClose: 3,
+                    closeable: true
+                });
+
+                // Reset changed tracking
+                changedSettings.clear();
+                applyBtn.textContent = '✓ Apply All & Reload';
+                applyBtn.classList.remove('btn-warning');
+                applyBtn.disabled = false;
+
+                // Reload settings to show updated values
+                setTimeout(() => loadSettings(), 500);
+
             } catch (error) {
-                showAlert('Failed to update setting');
+                applyBtn.disabled = false;
+                applyBtn.textContent = '✓ Apply All & Reload';
+                await showAlert('Failed to apply settings: ' + error.message, 'Error');
             }
         }
 

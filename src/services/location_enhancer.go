@@ -92,7 +92,7 @@ func (le *LocationEnhancer) loadData() {
 	fmt.Printf("⏱️  Loading location databases at %s\n", startTime.Format("15:04:05.000"))
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1) // Only waiting for countries now
 
 	countriesLoaded := false
 	citiesLoaded := false
@@ -111,33 +111,36 @@ func (le *LocationEnhancer) loadData() {
 		}
 	}()
 
-	go func() {
-		defer wg.Done()
-		cityStart := time.Now()
-		fmt.Println("📥 Loading cities database...")
-		err := le.loadCitiesData()
-		elapsed := time.Since(cityStart)
-		if err != nil {
-			fmt.Printf("❌ Cities database failed after %s: %v\n", elapsed, err)
-		} else {
-			fmt.Printf("✅ Cities database loaded in %s (%d cities)\n", elapsed, len(le.citiesData))
-			citiesLoaded = true
-		}
-	}()
-
+	// Wait for countries only (zipcodes load separately in main.go)
 	wg.Wait()
 
+	// Mark as initialized so server can start serving requests
 	le.mu.Lock()
 	le.initialized = true
 	le.mu.Unlock()
 
 	totalElapsed := time.Since(startTime)
-	fmt.Printf("🎉 Database initialization complete in %s\n", totalElapsed)
+	fmt.Printf("🎉 Core databases loaded in %s (cities loading in background)\n", totalElapsed)
 
-	// Notify completion via callback
-	if le.onInitComplete != nil {
-		le.onInitComplete(countriesLoaded, citiesLoaded)
-	}
+	// Load cities in background (non-blocking)
+	go func() {
+		cityStart := time.Now()
+		fmt.Println("📥 Loading cities database (background)...")
+		err := le.loadCitiesData()
+		elapsed := time.Since(cityStart)
+		if err != nil {
+			fmt.Printf("❌ Cities database failed after %s: %v\n", elapsed, err)
+			citiesLoaded = false
+		} else {
+			fmt.Printf("✅ Cities database loaded in %s (%d cities)\n", elapsed, len(le.citiesData))
+			citiesLoaded = true
+		}
+
+		// Notify completion via callback
+		if le.onInitComplete != nil {
+			le.onInitComplete(countriesLoaded, citiesLoaded)
+		}
+	}()
 }
 
 // loadCountriesData loads country data from external source

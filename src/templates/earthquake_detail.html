@@ -55,7 +55,7 @@
 
             <div class="eq-detail-attribute">
                 <div class="eq-detail-attribute__label">Location</div>
-                <div class="eq-detail-attribute__value">{{printf "%.4f" .Earthquake.Latitude}}°, {{printf "%.4f" .Earthquake.Longitude}}°</div>
+                <div class="eq-detail-attribute__value">{{.Earthquake.Latitude}}°, {{.Earthquake.Longitude}}°</div>
                 <div class="eq-detail-attribute__meta">Latitude, Longitude</div>
             </div>
 

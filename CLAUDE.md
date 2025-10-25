@@ -1323,7 +1323,7 @@ MIT License - See LICENSE.md for details
 
 ## Support
 
-- **Documentation**: https://weather.readthedocs.io
+- **Documentation**: https://apimgr-weather.readthedocs.io
 - **Issues**: https://github.com/apimgr/weather/issues
 - **Discussions**: https://github.com/apimgr/weather/discussions
 
@@ -1337,7 +1337,7 @@ MIT License - See LICENSE.md for details
 - **Organization:** apimgr
 - **GitHub:** https://github.com/apimgr/weather
 - **Docker:** ghcr.io/apimgr/weather
-- **Docs:** https://weather.readthedocs.io
+- **Docs:** https://apimgr-weather.readthedocs.io
 
 ### Default Configuration
 

@@ -7,7 +7,14 @@
       "Bash(src/templates/admin/panel.html)",
       "Bash(find /root/Projects/github/apimgr/weather/src/templates -name \"*.html\" -exec sed -i )",
       "Bash({} ;)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Read(//tmp/**)",
+      "Bash(make build:*)",
+      "Bash(make:*)",
+      "Bash(docker compose:*)",
+      "WebFetch(domain:wthr.top)",
+      "Bash(wget:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

@@ -996,6 +996,7 @@ func main() {
 		adminAPI.POST("/settings/reset", adminSettingsHandler.ResetSettings)
 		adminAPI.GET("/settings/export", adminSettingsHandler.ExportSettings)
 		adminAPI.POST("/settings/import", adminSettingsHandler.ImportSettings)
+		adminAPI.POST("/reload", adminSettingsHandler.ReloadConfig)
 
 		// API token management
 		adminAPI.GET("/tokens", adminHandler.ListTokens)
@@ -1228,13 +1229,20 @@ JSON API:
 
 	// Setup signal handling
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan,
+	baseSignals := []os.Signal{
 		syscall.SIGTERM, // Graceful shutdown (systemctl stop)
 		syscall.SIGINT,  // Ctrl+C
 		syscall.SIGHUP,  // Reload config
-		syscall.SIGUSR1, // Reopen log files
-		syscall.SIGUSR2, // Toggle debug mode
-	)
+	}
+
+	// Add platform-specific signals (SIGUSR1/2 on Unix only)
+	allSignals := make([]os.Signal, len(baseSignals)+len(platformSignals))
+	copy(allSignals, baseSignals)
+	for i, sig := range platformSignals {
+		allSignals[len(baseSignals)+i] = sig
+	}
+
+	signal.Notify(sigChan, allSignals...)
 
 	// Handle signals
 	for sig := range sigChan {
@@ -1261,35 +1269,9 @@ JSON API:
 			log.Println("✅ Server exited gracefully")
 			return
 
-		case syscall.SIGHUP:
-			log.Println("🔄 Received SIGHUP, reloading configuration...")
-			// Reload settings from database
-			settingsModel := &models.SettingsModel{DB: db.DB}
-			if err := settingsModel.InitializeDefaults(utils.GetBackupPath(dirPaths)); err != nil {
-				log.Printf("⚠️  Failed to reload settings: %v", err)
-			} else {
-				log.Println("✅ Configuration reloaded")
-			}
-
-		case syscall.SIGUSR1:
-			log.Println("📝 Received SIGUSR1, reopening log files...")
-			// Rotate logs
-			if err := appLogger.RotateLogs(); err != nil {
-				log.Printf("⚠️  Failed to rotate logs: %v", err)
-			} else {
-				log.Println("✅ Log files reopened")
-			}
-
-		case syscall.SIGUSR2:
-			log.Println("🔧 Received SIGUSR2, toggling debug mode...")
-			// Toggle Gin mode between debug and release
-			if gin.Mode() == gin.DebugMode {
-				gin.SetMode(gin.ReleaseMode)
-				log.Println("✅ Debug mode: OFF (release mode)")
-			} else {
-				gin.SetMode(gin.DebugMode)
-				log.Println("✅ Debug mode: ON (debug mode)")
-			}
+		default:
+			// Handle platform-specific signals (SIGHUP, SIGUSR1, SIGUSR2 on Unix)
+			handlePlatformSignal(sig, db, appLogger, dirPaths)
 		}
 	}
 }
