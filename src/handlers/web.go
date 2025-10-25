@@ -266,11 +266,9 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 		},
 	}
 
-	// Use original input if provided, otherwise use detected location
-	displayLocation := originalInput
-	if displayLocation == "" {
-		displayLocation = enhanced.ShortName
-	}
+	// Always use full location (ShortName) for clarity
+	// This shows "Albany, NY" instead of just "Albany"
+	displayLocation := enhanced.ShortName
 
 	c.HTML(http.StatusOK, "moon.html", gin.H{
 		"Title":             "Moon Phase - " + enhanced.ShortName,

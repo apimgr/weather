@@ -45,6 +45,14 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 	isBrowser := utils.IsBrowser(c)
 	params := utils.ParseWttrParams(c)
 
+	// Check for location query parameter
+	locationQuery := c.Query("location")
+	if locationQuery != "" {
+		// If location param provided, redirect to path-based route
+		c.Redirect(http.StatusMovedPermanently, "/"+strings.ReplaceAll(locationQuery, " ", "+"))
+		return
+	}
+
 	var coords *services.Coordinates
 	var err error
 
@@ -279,11 +287,9 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	// Format location for URLs (replace spaces with +, use ShortName for clean format)
 	locationFormatted := strings.ReplaceAll(location.ShortName, " ", "+")
 
-	// Use original input if provided, otherwise use detected location
-	displayLocation := locationInput
-	if displayLocation == "" {
-		displayLocation = location.ShortName
-	}
+	// Always use full location (ShortName) for clarity
+	// This shows "Albany, NY" instead of just "Albany"
+	displayLocation := location.ShortName
 
 	c.HTML(http.StatusOK, "weather.html", utils.TemplateData(c, gin.H{
 		"Title": location.ShortName + " Weather",

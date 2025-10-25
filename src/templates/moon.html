@@ -296,17 +296,17 @@
             const dropdown = document.getElementById('moon-autocomplete-dropdown');
             dropdown.innerHTML = '';
 
-            results.slice(0, 8).forEach(result => {
+            results.slice(0, 15).forEach(result => {
                 const item = document.createElement('div');
                 item.className = 'autocomplete-item';
 
                 const locationName = result.admin1
-                    ? `${result.name}, ${result.admin1}, ${result.country_code}`
-                    : `${result.name}, ${result.country_code}`;
+                    ? `${result.name}, ${result.admin1}, ${result.countryCode}`
+                    : `${result.name}, ${result.countryCode}`;
 
                 item.innerHTML = `
                     <span class="autocomplete-item city-name">${result.name}</span>
-                    <span class="autocomplete-item location-details">${result.admin1 ? result.admin1 + ', ' : ''}${result.country_code}</span>
+                    <span class="autocomplete-item location-details">${result.admin1 ? result.admin1 + ', ' : ''}${result.countryCode}</span>
                 `;
 
                 item.addEventListener('click', function() {

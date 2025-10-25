@@ -182,11 +182,8 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		}
 		distanceFilter := fmt.Sprintf("%.0f", distance)
 
-		// Use original input if provided, otherwise use detected location
-		displayLocation := originalInput
-		if displayLocation == "" {
-			displayLocation = locationName
-		}
+		// Always use full detected location for clarity
+		displayLocation := locationName
 
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
 			"Title":          "Severe Weather Alerts",
@@ -377,11 +374,8 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		// Get distance filter
 		distanceFilter := fmt.Sprintf("%.0f", distance)
 
-		// Use original input if provided, otherwise use detected location
-		displayLocation := originalInput
-		if displayLocation == "" {
-			displayLocation = locationName
-		}
+		// Always use full detected location for clarity
+		displayLocation := locationName
 
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
 			"Title":          fmt.Sprintf("%s - Severe Weather Alerts", strings.Title(alertType)),

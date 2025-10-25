@@ -1900,7 +1900,7 @@ a:hover {
   border: 1px solid var(--dracula-cyan);
   border-radius: var(--radius-md);
   margin-top: var(--space-xs);
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
   z-index: var(--z-dropdown);
   box-shadow: var(--shadow-lg);
