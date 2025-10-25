@@ -14,7 +14,8 @@
       "Bash(docker compose:*)",
       "WebFetch(domain:wthr.top)",
       "Bash(wget:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python3 -m mkdocs:*)"
     ],
     "deny": [],
     "ask": []
