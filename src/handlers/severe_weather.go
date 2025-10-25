@@ -37,6 +37,9 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		locationParam = c.Query("location")
 	}
 
+	// Preserve original input for display in form field
+	originalInput := locationParam
+
 	// Get distance filter from query parameter (default 50 miles)
 	distanceParam := c.Query("distance")
 	distance := 50.0 // default
@@ -179,13 +182,19 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		}
 		distanceFilter := fmt.Sprintf("%.0f", distance)
 
+		// Use original input if provided, otherwise use detected location
+		displayLocation := originalInput
+		if displayLocation == "" {
+			displayLocation = locationName
+		}
+
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
 			"Title":          "Severe Weather Alerts",
 			"page":           "severe-weather",
 			"Data":           data,
 			"TotalAlerts":    totalAlerts,
 			"TotalStorms":    totalStorms,
-			"LocationName":   locationName,
+			"LocationName":   displayLocation,
 			"LocationData":   locationData,
 			"Latitude":       latitude,
 			"Longitude":      longitude,
@@ -206,6 +215,9 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	alertType := c.Param("type")
 	locationParam := c.Param("location")
+
+	// Preserve original input for display in form field
+	originalInput := locationParam
 
 	// Get distance filter from query parameter (default 50 miles)
 	distanceParam := c.Query("distance")
@@ -365,13 +377,19 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		// Get distance filter
 		distanceFilter := fmt.Sprintf("%.0f", distance)
 
+		// Use original input if provided, otherwise use detected location
+		displayLocation := originalInput
+		if displayLocation == "" {
+			displayLocation = locationName
+		}
+
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
 			"Title":          fmt.Sprintf("%s - Severe Weather Alerts", strings.Title(alertType)),
 			"page":           "severe-weather",
 			"Data":           filteredData,
 			"TotalAlerts":    totalAlerts,
 			"TotalStorms":    totalStorms,
-			"LocationName":   locationName,
+			"LocationName":   displayLocation,
 			"LocationData":   locationData,
 			"Latitude":       latitude,
 			"Longitude":      longitude,

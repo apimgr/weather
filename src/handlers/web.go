@@ -158,6 +158,9 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 		location = c.Query("location")
 	}
 
+	// Preserve original input for display in form field
+	originalInput := location
+
 	// Get units from query parameter (default to imperial)
 	units := c.Query("units")
 	if units == "" {
@@ -263,11 +266,17 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 		},
 	}
 
+	// Use original input if provided, otherwise use detected location
+	displayLocation := originalInput
+	if displayLocation == "" {
+		displayLocation = enhanced.ShortName
+	}
+
 	c.HTML(http.StatusOK, "moon.html", gin.H{
 		"Title":             "Moon Phase - " + enhanced.ShortName,
 		"MoonData":          moonData,
 		"HostInfo":          utils.GetHostInfo(c),
-		"Location":          enhanced.ShortName,
+		"Location":          displayLocation,
 		"LocationFormatted": strings.ReplaceAll(enhanced.ShortName, " ", "+"),
 		"Units":             units,
 		"HideFooter":        false,

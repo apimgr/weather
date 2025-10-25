@@ -279,6 +279,12 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	// Format location for URLs (replace spaces with +, use ShortName for clean format)
 	locationFormatted := strings.ReplaceAll(location.ShortName, " ", "+")
 
+	// Use original input if provided, otherwise use detected location
+	displayLocation := locationInput
+	if displayLocation == "" {
+		displayLocation = location.ShortName
+	}
+
 	c.HTML(http.StatusOK, "weather.html", utils.TemplateData(c, gin.H{
 		"Title": location.ShortName + " Weather",
 		"WeatherData": gin.H{
@@ -288,7 +294,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 			"Units":    units,
 		},
 		"HostInfo":          utils.GetHostInfo(c),
-		"Location":          location.Name,
+		"Location":          displayLocation,
 		"LocationFormatted": locationFormatted,
 		"Units":             units,
 		"HideFooter":        false,
