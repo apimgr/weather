@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - Weather</title>
+    <title>{{.Title}}</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
     <script src="/static/js/app.js" defer></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚠️</text></svg>">
@@ -11,434 +11,638 @@
 <body>
     {{template "navbar" .}}
 
-    <div class="weather-container page-container">
-        <div class="severe-weather-header">
-            <h1 class="page-header">⚠️ Severe Weather Alerts</h1>
-            <p class="page-subtitle">Real-time warnings for hurricanes, tornadoes, severe storms, winter weather, and floods</p>
-        </div>
+    <div class="weather-container">
+
+        <!-- Location Search Form - Mobile First (matching moon.html) -->
+        <form id="severe-weather-form" class="moon-form">
+            <div class="moon-form__wrapper">
+                <!-- First row: Location input with type and distance filters to the right -->
+                <div class="moon-form__row">
+                    <div class="moon-form__input-wrapper">
+                        <input
+                            type="text"
+                            id="location-input"
+                            name="location"
+                            class="location-input moon-form__input"
+                            placeholder="Enter city or coordinates"
+                            value="{{.LocationName}}"
+                            autocomplete="off"
+                        >
+                        <div id="severe-autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                    </div>
+                    <select name="type" id="type-select" class="location-input moon-form__units">
+                        <option value="all"{{if eq .TypeFilter "all"}} selected{{end}}>All Types</option>
+                        <option value="hurricanes"{{if eq .TypeFilter "hurricanes"}} selected{{end}}>🌀 Hurricanes</option>
+                        <option value="tornadoes"{{if eq .TypeFilter "tornadoes"}} selected{{end}}>🌪️ Tornadoes</option>
+                        <option value="storms"{{if eq .TypeFilter "storms"}} selected{{end}}>⛈️ Storms</option>
+                        <option value="winter"{{if eq .TypeFilter "winter"}} selected{{end}}>❄️ Winter</option>
+                        <option value="floods"{{if eq .TypeFilter "floods"}} selected{{end}}>🌊 Floods</option>
+                    </select>
+                    <select name="distance" id="distance-select" class="location-input moon-form__units">
+                        <option value="25"{{if eq .DistanceFilter "25"}} selected{{end}}>25 mi</option>
+                        <option value="50"{{if eq .DistanceFilter "50"}} selected{{end}}>50 mi</option>
+                        <option value="100"{{if eq .DistanceFilter "100"}} selected{{end}}>100 mi</option>
+                        <option value="250"{{if eq .DistanceFilter "250"}} selected{{end}}>250 mi</option>
+                        <option value="500"{{if eq .DistanceFilter "500"}} selected{{end}}>500 mi</option>
+                        <option value="0"{{if eq .DistanceFilter "0"}} selected{{end}}>All</option>
+                    </select>
+                </div>
+
+                <!-- Second row: Buttons -->
+                <div class="moon-form__row">
+                    <button type="submit" class="search-button moon-form__button">
+                        ⚠️ Get Alerts
+                    </button>
+                    <button type="button" id="location-btn" class="search-button moon-form__button--location">
+                        📍 My Location
+                    </button>
+                </div>
+            </div>
+        </form>
 
         {{if .LocationData}}
             {{template "location_details" .}}
-        {{end}}
 
-        <div class="search-form severe-location-form">
-            <div class="search-row-single flex-column-mobile">
-                <input
-                    type="text"
-                    id="location-input"
-                    class="location-input flex-1"
-                    placeholder="Enter location or coordinates (e.g., Miami or 25.7617,-80.1918)"
-                    value="{{.LocationName}}"
-                    autocomplete="off"
-                >
-            </div>
-            <div class="search-row flex-column-mobile">
-                <select id="type-select" class="select-input flex-1">
-                    <option value="all" selected>All Types</option>
-                    <option value="hurricanes">🌀 Hurricanes</option>
-                    <option value="tornadoes">🌪️ Tornadoes</option>
-                    <option value="storms">⛈️ Severe Storms</option>
-                    <option value="winter">❄️ Winter Weather</option>
-                    <option value="floods">🌊 Floods</option>
-                </select>
-                <select id="distance-select" class="select-input flex-1">
-                    <option value="25">25 miles</option>
-                    <option value="50" selected>50 miles</option>
-                    <option value="100">100 miles</option>
-                    <option value="250">250 miles</option>
-                    <option value="500">500 miles</option>
-                    <option value="0">All alerts</option>
-                </select>
-            </div>
-            <div class="search-row-single">
-                <button type="button" class="search-button primary flex-1" onclick="updateLocation()">🔍 Update</button>
-            </div>
-        </div>
-
-        <div class="alert-summary">
-            <div class="summary-item">
-                <div class="summary-count">{{.TotalStorms}}</div>
-                <div class="summary-label">Hurricanes</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-count">{{.TotalAlerts}}</div>
-                <div class="summary-label">Active Alerts</div>
-            </div>
-        </div>
-
-        {{if .Data}}
-            {{/* Hurricanes Section */}}
-            {{if .Data.Hurricanes}}
-            <div class="alert-section">
-                <div class="section-header">
-                    <span class="section-icon">🌀</span>
-                    <span class="section-title">Hurricanes & Tropical Storms</span>
-                    <span class="section-count">{{len .Data.Hurricanes}}</span>
+            <!-- Alert Summary -->
+            <div class="current-weather">
+                <div class="weather-icon">
+                    ⚠️
                 </div>
-                <div class="alerts-grid">
-                    {{range .Data.Hurricanes}}
-                    {{ $stormClass := "tropical-storm" }}
-                    {{ if ge .WindSpeed 157 }}
-                        {{ $stormClass = "category-5" }}
-                    {{ else if ge .WindSpeed 130 }}
-                        {{ $stormClass = "category-4" }}
-                    {{ else if ge .WindSpeed 111 }}
-                        {{ $stormClass = "category-3" }}
-                    {{ else if ge .WindSpeed 96 }}
-                        {{ $stormClass = "category-2" }}
-                    {{ else if ge .WindSpeed 74 }}
-                        {{ $stormClass = "category-1" }}
-                    {{ end }}
-                    <div class="storm-card {{$stormClass}}">
-                        <div class="storm-name">{{.Name}}</div>
-                        <div class="storm-category">{{.Intensity}}</div>
-                        <div class="storm-details">
-                            <div class="storm-detail">
-                                <span class="detail-label">Wind Speed:</span>
-                                <span class="detail-value">{{.WindSpeed}} mph</span>
+                <div class="weather-details">
+                    <div class="temperature">
+                        {{.TotalAlerts}} Active Alerts
+                    </div>
+                    <div class="description">
+                        {{.TotalStorms}} hurricanes tracked
+                    </div>
+                    <div class="weather-stats">
+                        <div class="stat">Filter: <span class="stat-value">{{if eq .TypeFilter "all"}}All Types{{else}}{{.TypeFilter}}{{end}}</span></div>
+                        <div class="stat">Distance: <span class="stat-value">{{if eq .DistanceFilter "0"}}All{{else}}{{.DistanceFilter}} mi{{end}}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            {{if .Data}}
+                {{/* Hurricanes Section */}}
+                {{if .Data.Hurricanes}}
+                <div class="alert-section">
+                    <div class="section-header">
+                        <span class="section-icon">🌀</span>
+                        <span class="section-title">Hurricanes & Tropical Storms</span>
+                        <span class="section-count">{{len .Data.Hurricanes}}</span>
+                    </div>
+                    <div class="alerts-grid">
+                        {{range .Data.Hurricanes}}
+                        {{ $stormClass := "tropical-storm" }}
+                        {{ if ge .WindSpeed 157 }}
+                            {{ $stormClass = "category-5" }}
+                        {{ else if ge .WindSpeed 130 }}
+                            {{ $stormClass = "category-4" }}
+                        {{ else if ge .WindSpeed 111 }}
+                            {{ $stormClass = "category-3" }}
+                        {{ else if ge .WindSpeed 96 }}
+                            {{ $stormClass = "category-2" }}
+                        {{ else if ge .WindSpeed 74 }}
+                            {{ $stormClass = "category-1" }}
+                        {{ end }}
+                        <div class="storm-card {{$stormClass}}">
+                            <div class="storm-name">{{.Name}}</div>
+                            <div class="storm-category">{{.Intensity}}</div>
+                            <div class="storm-details">
+                                <div class="storm-detail">
+                                    <span class="detail-label">Wind Speed:</span>
+                                    <span class="detail-value">{{.WindSpeed}} mph</span>
+                                </div>
+                                <div class="storm-detail">
+                                    <span class="detail-label">Pressure:</span>
+                                    <span class="detail-value">{{.Pressure}} mb</span>
+                                </div>
+                                <div class="storm-detail">
+                                    <span class="detail-label">Movement:</span>
+                                    <span class="detail-value">{{.Movement}}</span>
+                                </div>
+                                <div class="storm-detail">
+                                    <span class="detail-label">Position:</span>
+                                    <span class="detail-value">{{.Position}}</span>
+                                </div>
                             </div>
-                            <div class="storm-detail">
-                                <span class="detail-label">Pressure:</span>
-                                <span class="detail-value">{{.Pressure}} mb</span>
-                            </div>
-                            <div class="storm-detail">
-                                <span class="detail-label">Location:</span>
-                                {{if or (ne .Latitude 0) (ne .Longitude 0)}}
-                                <span class="detail-value">{{printf "%.2f" .Latitude}}, {{printf "%.2f" .Longitude}}</span>
-                                {{else}}
-                                <span class="detail-value">Unknown</span>
+                            {{if .LastUpdate}}
+                            <div class="storm-update">Last Update: {{.LastUpdate}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{/* Tornado Warnings */}}
+                {{if .Data.TornadoWarnings}}
+                <div class="alert-section">
+                    <div class="section-header">
+                        <span class="section-icon">🌪️</span>
+                        <span class="section-title">Tornado Warnings</span>
+                        <span class="section-count">{{len .Data.TornadoWarnings}}</span>
+                    </div>
+                    <div class="alerts-grid">
+                        {{range .Data.TornadoWarnings}}
+                        {{ $severityClass := "severity-minor" }}
+                        {{ if eq .Severity "Extreme" }}
+                            {{ $severityClass = "severity-extreme" }}
+                        {{ else if eq .Severity "Severe" }}
+                            {{ $severityClass = "severity-severe" }}
+                        {{ else if eq .Severity "Moderate" }}
+                            {{ $severityClass = "severity-moderate" }}
+                        {{ end }}
+                        <div class="alert-card {{$severityClass}}" onclick="toggleAlertDetails(this)">
+                            <div class="alert-header">
+                                <div class="alert-type">{{.Event}}</div>
+                                {{if .DistanceMiles}}
+                                <div class="alert-distance">📍 {{printf "%.0f" .DistanceMiles}} mi</div>
                                 {{end}}
                             </div>
-                            {{if gt .DistanceMiles 0}}
-                            <div class="storm-detail">
-                                <span class="detail-label">Distance:</span>
-                                <span class="detail-value">{{printf "%.0f" .DistanceMiles}} miles</span>
+                            <div class="alert-headline">{{.Headline}}</div>
+                            <div class="alert-meta">
+                                <span class="alert-severity">{{.Severity}}</span>
+                                <span class="alert-urgency">{{.Urgency}}</span>
+                                {{if .Country}}
+                                <span class="alert-country">{{.Country}}</span>
+                                {{end}}
                             </div>
-                            {{end}}
-                            {{if gt .MovementSpeed 0}}
-                            <div class="storm-detail storm-detail--full-width">
-                                <span class="detail-label">Movement:</span>
-                                <span class="detail-value">{{.MovementDir}} at {{.MovementSpeed}} mph</span>
+                            <div class="alert-area">{{.AreaDesc}}</div>
+                            {{if .Description}}
+                            <div class="alert-details display-none">
+                                <div class="alert-description">{{.Description}}</div>
+                                {{if .Instruction}}
+                                <div class="alert-instruction">
+                                    <strong>Instructions:</strong> {{.Instruction}}
+                                </div>
+                                {{end}}
                             </div>
-                            {{end}}
-                        </div>
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
-
-            {{/* Tornado Warnings */}}
-            {{if .Data.TornadoWarnings}}
-            <div class="alert-section">
-                <div class="section-header">
-                    <span class="section-icon">🌪️</span>
-                    <span class="section-title">Tornado Warnings</span>
-                    <span class="section-count">{{len .Data.TornadoWarnings}}</span>
-                </div>
-                <div class="alerts-grid">
-                    {{range .Data.TornadoWarnings}}
-                    <div class="alert-card {{.Severity | lower}}">
-                        {{if gt .DistanceMiles 0}}
-                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
-                        {{end}}
-                        <div class="alert-event">🌪️ {{.Event}}</div>
-                        <div class="alert-meta">
-                            <span>Severity: <strong>{{.Severity}}</strong></span>
-                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
-                        </div>
-                        <div class="alert-area">📍 {{.AreaDesc}}</div>
-                        {{if .Headline}}
-                        <div class="alert-headline">{{.Headline}}</div>
-                        {{end}}
-                        {{if .Description}}
-                        <div class="alert-details">
-                            <div class="alert-detail__title">Details:</div>
-                            <div class="alert-detail__content">{{.Description}}</div>
-                            {{if .Instruction}}
-                            <div class="alert-detail__instruction-title">Instructions:</div>
-                            <div class="alert-detail__content">{{.Instruction}}</div>
-                            {{end}}
-                            {{if .Expires}}
-                            <div class="alert-detail__expires">Expires: {{.Expires}}</div>
+                            <div class="alert-expand">▼ Click to expand</div>
                             {{end}}
                         </div>
                         {{end}}
                     </div>
-                    {{end}}
                 </div>
-            </div>
-            {{end}}
-
-            {{/* Severe Thunderstorms */}}
-            {{if .Data.SevereStorms}}
-            <div class="alert-section">
-                <div class="section-header">
-                    <span class="section-icon">⛈️</span>
-                    <span class="section-title">Severe Thunderstorm Warnings</span>
-                    <span class="section-count">{{len .Data.SevereStorms}}</span>
-                </div>
-                <div class="alerts-grid">
-                    {{range .Data.SevereStorms}}
-                    <div class="alert-card {{.Severity | lower}}">
-                        {{if gt .DistanceMiles 0}}
-                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
-                        {{end}}
-                        <div class="alert-event">⛈️ {{.Event}}</div>
-                        <div class="alert-meta">
-                            <span>Severity: <strong>{{.Severity}}</strong></span>
-                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
-                        </div>
-                        <div class="alert-area">📍 {{.AreaDesc}}</div>
-                        {{if .Headline}}
-                        <div class="alert-headline">{{.Headline}}</div>
-                        {{end}}
-                        {{if .Description}}
-                        <div class="alert-details">
-                            <div class="alert-detail__title">Details:</div>
-                            <div class="alert-detail__content">{{.Description}}</div>
-                            {{if .Instruction}}
-                            <div class="alert-detail__instruction-title">Instructions:</div>
-                            <div class="alert-detail__content">{{.Instruction}}</div>
-                            {{end}}
-                            {{if .Expires}}
-                            <div class="alert-detail__expires">Expires: {{.Expires}}</div>
-                            {{end}}
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
-
-            {{/* Winter Storms */}}
-            {{if .Data.WinterStorms}}
-            <div class="alert-section">
-                <div class="section-header">
-                    <span class="section-icon">❄️</span>
-                    <span class="section-title">Winter Storm Warnings</span>
-                    <span class="section-count">{{len .Data.WinterStorms}}</span>
-                </div>
-                <div class="alerts-grid">
-                    {{range .Data.WinterStorms}}
-                    <div class="alert-card {{.Severity | lower}}">
-                        {{if gt .DistanceMiles 0}}
-                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
-                        {{end}}
-                        <div class="alert-event">❄️ {{.Event}}</div>
-                        <div class="alert-meta">
-                            <span>Severity: <strong>{{.Severity}}</strong></span>
-                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
-                        </div>
-                        <div class="alert-area">📍 {{.AreaDesc}}</div>
-                        {{if .Headline}}
-                        <div class="alert-headline">{{.Headline}}</div>
-                        {{end}}
-                        {{if .Description}}
-                        <div class="alert-details">
-                            <div class="alert-detail__title">Details:</div>
-                            <div class="alert-detail__content">{{.Description}}</div>
-                            {{if .Instruction}}
-                            <div class="alert-detail__instruction-title">Instructions:</div>
-                            <div class="alert-detail__content">{{.Instruction}}</div>
-                            {{end}}
-                            {{if .Expires}}
-                            <div class="alert-detail__expires">Expires: {{.Expires}}</div>
-                            {{end}}
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
-
-            {{/* Flood Warnings */}}
-            {{if .Data.FloodWarnings}}
-            <div class="alert-section">
-                <div class="section-header">
-                    <span class="section-icon">🌊</span>
-                    <span class="section-title">Flood Warnings</span>
-                    <span class="section-count">{{len .Data.FloodWarnings}}</span>
-                </div>
-                <div class="alerts-grid">
-                    {{range .Data.FloodWarnings}}
-                    <div class="alert-card {{.Severity | lower}}">
-                        {{if gt .DistanceMiles 0}}
-                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
-                        {{end}}
-                        <div class="alert-event">🌊 {{.Event}}</div>
-                        <div class="alert-meta">
-                            <span>Severity: <strong>{{.Severity}}</strong></span>
-                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
-                        </div>
-                        <div class="alert-area">📍 {{.AreaDesc}}</div>
-                        {{if .Headline}}
-                        <div class="alert-headline">{{.Headline}}</div>
-                        {{end}}
-                        {{if .Description}}
-                        <div class="alert-details">
-                            <div class="alert-detail__title">Details:</div>
-                            <div class="alert-detail__content">{{.Description}}</div>
-                            {{if .Instruction}}
-                            <div class="alert-detail__instruction-title">Instructions:</div>
-                            <div class="alert-detail__content">{{.Instruction}}</div>
-                            {{end}}
-                            {{if .Expires}}
-                            <div class="alert-detail__expires">Expires: {{.Expires}}</div>
-                            {{end}}
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
-
-            {{/* Other Alerts */}}
-            {{if .Data.OtherAlerts}}
-            <div class="alert-section">
-                <div class="section-header">
-                    <span class="section-icon">⚠️</span>
-                    <span class="section-title">Other Weather Alerts</span>
-                    <span class="section-count">{{len .Data.OtherAlerts}}</span>
-                </div>
-                <div class="alerts-grid">
-                    {{range .Data.OtherAlerts}}
-                    <div class="alert-card {{.Severity | lower}}">
-                        {{if gt .DistanceMiles 0}}
-                        <div class="alert-distance">{{printf "%.0f" .DistanceMiles}} mi</div>
-                        {{end}}
-                        <div class="alert-event">⚠️ {{.Event}}</div>
-                        <div class="alert-meta">
-                            <span>Severity: <strong>{{.Severity}}</strong></span>
-                            <span>Urgency: <strong>{{.Urgency}}</strong></span>
-                        </div>
-                        <div class="alert-area">📍 {{.AreaDesc}}</div>
-                        {{if .Headline}}
-                        <div class="alert-headline">{{.Headline}}</div>
-                        {{end}}
-                        {{if .Description}}
-                        <div class="alert-details">
-                            <div class="alert-detail__title">Details:</div>
-                            <div class="alert-detail__content">{{.Description}}</div>
-                            {{if .Instruction}}
-                            <div class="alert-detail__instruction-title">Instructions:</div>
-                            <div class="alert-detail__content">{{.Instruction}}</div>
-                            {{end}}
-                            {{if .Expires}}
-                            <div class="alert-detail__expires">Expires: {{.Expires}}</div>
-                            {{end}}
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
-
-            {{/* No Alerts Message */}}
-            {{if and (not .Data.Hurricanes) (not .Data.TornadoWarnings) (not .Data.SevereStorms) (not .Data.WinterStorms) (not .Data.FloodWarnings) (not .Data.OtherAlerts)}}
-            <div class="no-alerts">
-                <div class="no-alerts-icon">🌤️</div>
-                <h2 class="all-clear__title">All Clear!</h2>
-                <p class="all-clear__message">No active severe weather alerts in your area.</p>
-                <p class="all-clear__note">Enjoying calm weather conditions 🌈</p>
-                {{if .HasLocation}}
-                <p class="all-clear__location-info">
-                    Monitoring within {{.Distance}} miles of {{.LocationName}}
-                </p>
                 {{end}}
-            </div>
+
+                {{/* Severe Storms */}}
+                {{if .Data.SevereStorms}}
+                <div class="alert-section">
+                    <div class="section-header">
+                        <span class="section-icon">⛈️</span>
+                        <span class="section-title">Severe Thunderstorms</span>
+                        <span class="section-count">{{len .Data.SevereStorms}}</span>
+                    </div>
+                    <div class="alerts-grid">
+                        {{range .Data.SevereStorms}}
+                        {{ $severityClass := "severity-minor" }}
+                        {{ if eq .Severity "Extreme" }}
+                            {{ $severityClass = "severity-extreme" }}
+                        {{ else if eq .Severity "Severe" }}
+                            {{ $severityClass = "severity-severe" }}
+                        {{ else if eq .Severity "Moderate" }}
+                            {{ $severityClass = "severity-moderate" }}
+                        {{ end }}
+                        <div class="alert-card {{$severityClass}}" onclick="toggleAlertDetails(this)">
+                            <div class="alert-header">
+                                <div class="alert-type">{{.Event}}</div>
+                                {{if .DistanceMiles}}
+                                <div class="alert-distance">📍 {{printf "%.0f" .DistanceMiles}} mi</div>
+                                {{end}}
+                            </div>
+                            <div class="alert-headline">{{.Headline}}</div>
+                            <div class="alert-meta">
+                                <span class="alert-severity">{{.Severity}}</span>
+                                <span class="alert-urgency">{{.Urgency}}</span>
+                                {{if .Country}}
+                                <span class="alert-country">{{.Country}}</span>
+                                {{end}}
+                            </div>
+                            <div class="alert-area">{{.AreaDesc}}</div>
+                            {{if .Description}}
+                            <div class="alert-details display-none">
+                                <div class="alert-description">{{.Description}}</div>
+                                {{if .Instruction}}
+                                <div class="alert-instruction">
+                                    <strong>Instructions:</strong> {{.Instruction}}
+                                </div>
+                                {{end}}
+                            </div>
+                            <div class="alert-expand">▼ Click to expand</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{/* Winter Storms */}}
+                {{if .Data.WinterStorms}}
+                <div class="alert-section">
+                    <div class="section-header">
+                        <span class="section-icon">❄️</span>
+                        <span class="section-title">Winter Weather</span>
+                        <span class="section-count">{{len .Data.WinterStorms}}</span>
+                    </div>
+                    <div class="alerts-grid">
+                        {{range .Data.WinterStorms}}
+                        {{ $severityClass := "severity-minor" }}
+                        {{ if eq .Severity "Extreme" }}
+                            {{ $severityClass = "severity-extreme" }}
+                        {{ else if eq .Severity "Severe" }}
+                            {{ $severityClass = "severity-severe" }}
+                        {{ else if eq .Severity "Moderate" }}
+                            {{ $severityClass = "severity-moderate" }}
+                        {{ end }}
+                        <div class="alert-card {{$severityClass}}" onclick="toggleAlertDetails(this)">
+                            <div class="alert-header">
+                                <div class="alert-type">{{.Event}}</div>
+                                {{if .DistanceMiles}}
+                                <div class="alert-distance">📍 {{printf "%.0f" .DistanceMiles}} mi</div>
+                                {{end}}
+                            </div>
+                            <div class="alert-headline">{{.Headline}}</div>
+                            <div class="alert-meta">
+                                <span class="alert-severity">{{.Severity}}</span>
+                                <span class="alert-urgency">{{.Urgency}}</span>
+                                {{if .Country}}
+                                <span class="alert-country">{{.Country}}</span>
+                                {{end}}
+                            </div>
+                            <div class="alert-area">{{.AreaDesc}}</div>
+                            {{if .Description}}
+                            <div class="alert-details display-none">
+                                <div class="alert-description">{{.Description}}</div>
+                                {{if .Instruction}}
+                                <div class="alert-instruction">
+                                    <strong>Instructions:</strong> {{.Instruction}}
+                                </div>
+                                {{end}}
+                            </div>
+                            <div class="alert-expand">▼ Click to expand</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{/* Flood Warnings */}}
+                {{if .Data.FloodWarnings}}
+                <div class="alert-section">
+                    <div class="section-header">
+                        <span class="section-icon">🌊</span>
+                        <span class="section-title">Flood Warnings</span>
+                        <span class="section-count">{{len .Data.FloodWarnings}}</span>
+                    </div>
+                    <div class="alerts-grid">
+                        {{range .Data.FloodWarnings}}
+                        {{ $severityClass := "severity-minor" }}
+                        {{ if eq .Severity "Extreme" }}
+                            {{ $severityClass = "severity-extreme" }}
+                        {{ else if eq .Severity "Severe" }}
+                            {{ $severityClass = "severity-severe" }}
+                        {{ else if eq .Severity "Moderate" }}
+                            {{ $severityClass = "severity-moderate" }}
+                        {{ end }}
+                        <div class="alert-card {{$severityClass}}" onclick="toggleAlertDetails(this)">
+                            <div class="alert-header">
+                                <div class="alert-type">{{.Event}}</div>
+                                {{if .DistanceMiles}}
+                                <div class="alert-distance">📍 {{printf "%.0f" .DistanceMiles}} mi</div>
+                                {{end}}
+                            </div>
+                            <div class="alert-headline">{{.Headline}}</div>
+                            <div class="alert-meta">
+                                <span class="alert-severity">{{.Severity}}</span>
+                                <span class="alert-urgency">{{.Urgency}}</span>
+                                {{if .Country}}
+                                <span class="alert-country">{{.Country}}</span>
+                                {{end}}
+                            </div>
+                            <div class="alert-area">{{.AreaDesc}}</div>
+                            {{if .Description}}
+                            <div class="alert-details display-none">
+                                <div class="alert-description">{{.Description}}</div>
+                                {{if .Instruction}}
+                                <div class="alert-instruction">
+                                    <strong>Instructions:</strong> {{.Instruction}}
+                                </div>
+                                {{end}}
+                            </div>
+                            <div class="alert-expand">▼ Click to expand</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{/* Other Alerts */}}
+                {{if .Data.OtherAlerts}}
+                <div class="alert-section">
+                    <div class="section-header">
+                        <span class="section-icon">⚠️</span>
+                        <span class="section-title">Other Alerts</span>
+                        <span class="section-count">{{len .Data.OtherAlerts}}</span>
+                    </div>
+                    <div class="alerts-grid">
+                        {{range .Data.OtherAlerts}}
+                        {{ $severityClass := "severity-minor" }}
+                        {{ if eq .Severity "Extreme" }}
+                            {{ $severityClass = "severity-extreme" }}
+                        {{ else if eq .Severity "Severe" }}
+                            {{ $severityClass = "severity-severe" }}
+                        {{ else if eq .Severity "Moderate" }}
+                            {{ $severityClass = "severity-moderate" }}
+                        {{ end }}
+                        <div class="alert-card {{$severityClass}}" onclick="toggleAlertDetails(this)">
+                            <div class="alert-header">
+                                <div class="alert-type">{{.Event}}</div>
+                                {{if .DistanceMiles}}
+                                <div class="alert-distance">📍 {{printf "%.0f" .DistanceMiles}} mi</div>
+                                {{end}}
+                            </div>
+                            <div class="alert-headline">{{.Headline}}</div>
+                            <div class="alert-meta">
+                                <span class="alert-severity">{{.Severity}}</span>
+                                <span class="alert-urgency">{{.Urgency}}</span>
+                                {{if .Country}}
+                                <span class="alert-country">{{.Country}}</span>
+                                {{end}}
+                            </div>
+                            <div class="alert-area">{{.AreaDesc}}</div>
+                            {{if .Description}}
+                            <div class="alert-details display-none">
+                                <div class="alert-description">{{.Description}}</div>
+                                {{if .Instruction}}
+                                <div class="alert-instruction">
+                                    <strong>Instructions:</strong> {{.Instruction}}
+                                </div>
+                                {{end}}
+                            </div>
+                            <div class="alert-expand">▼ Click to expand</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{/* No alerts message */}}
+                {{if not .Data.Hurricanes}}{{if not .Data.TornadoWarnings}}{{if not .Data.SevereStorms}}{{if not .Data.WinterStorms}}{{if not .Data.FloodWarnings}}{{if not .Data.OtherAlerts}}
+                <div class="welcome-section">
+                    <h2 class="welcome-section__title">✅ No Active Alerts</h2>
+                    <p>No severe weather alerts for your location at this time.</p>
+                </div>
+                {{end}}{{end}}{{end}}{{end}}{{end}}{{end}}
+            {{else}}
+                <div class="welcome-section">
+                    <h2 class="welcome-section__title">✅ No Active Alerts</h2>
+                    <p>No severe weather alerts for your location at this time.</p>
+                </div>
             {{end}}
 
+            <!-- Console Command Examples -->
+            <div class="console-section">
+                <h3 class="console-section__title">Console Access</h3>
+                <div class="console-commands">
+                    <div class="command-item">
+                        <strong class="console-section__label">Severe Weather:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/severe-weather/{{.LocationData.Location.NameEncoded}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/severe-weather/{{.LocationData.Location.NameEncoded}}')">Copy</button>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <strong class="console-section__label">JSON API:</strong>
+                        <div class="code-wrapper">
+                            <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/severe-weather?location={{.LocationData.Location.NameEncoded}}</code>
+                            <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSs {{.HostInfo.FullHost}}/api/v1/severe-weather?location={{.LocationData.Location.NameEncoded}}')">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         {{else}}
-            <div class="no-alerts">
-                <div class="no-alerts-icon">⚠️</div>
-                <h2>Unable to Load Weather Data</h2>
-                <p class="all-clear__message">Please try again later.</p>
+            <div class="welcome-section">
+                <h2 class="welcome-section__title">⚠️ Severe Weather Alerts</h2>
+                <p>Real-time warnings for hurricanes, tornadoes, severe storms, winter weather, and floods</p>
+                <div class="city-links-grid">
+                    <a href="?location=Miami" class="city-link">🌴 Miami</a>
+                    <a href="?location=Houston" class="city-link">🤠 Houston</a>
+                    <a href="?location=New Orleans" class="city-link">🎺 New Orleans</a>
+                    <a href="?location=Tampa" class="city-link">⚡ Tampa</a>
+                </div>
             </div>
         {{end}}
 
-        <div class="data-source-box">
-            <p class="data-source-box__primary">
-                Data provided by <strong>NOAA</strong> and the <strong>National Weather Service</strong>
-            </p>
-            <p class="data-source-box__meta">
-                Updates every 5 minutes • Last updated: {{.Data.LastUpdate}}
-            </p>
-        </div>
     </div>
 
     <script>
+        // Form handling for severe weather page
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('severe-weather-form');
+            const locationInput = document.getElementById('location-input');
+            const typeSelect = document.getElementById('type-select');
+            const distanceSelect = document.getElementById('distance-select');
+            const locationBtn = document.getElementById('location-btn');
+
+            // Handle form submission
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    updateLocation();
+                });
+            }
+
+            // Handle My Location button
+            if (locationBtn) {
+                locationBtn.addEventListener('click', async function() {
+                    const originalText = this.textContent;
+                    this.disabled = true;
+                    this.textContent = '📍 Getting location...';
+
+                    try {
+                        const position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                                timeout: 10000,
+                                enableHighAccuracy: true
+                            });
+                        });
+
+                        const lat = position.coords.latitude.toFixed(4);
+                        const lon = position.coords.longitude.toFixed(4);
+                        locationInput.value = `${lat},${lon}`;
+
+                        this.textContent = '📍 Found!';
+                        setTimeout(() => {
+                            updateLocation();
+                        }, 500);
+                    } catch (error) {
+                        // Fallback to IP detection
+                        fetch('/debug/ip')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.location && data.location.value) {
+                                    locationInput.value = data.location.value;
+                                    this.textContent = '📍 Found!';
+                                    setTimeout(() => {
+                                        updateLocation();
+                                    }, 500);
+                                } else {
+                                    throw new Error('No location');
+                                }
+                            })
+                            .catch(() => {
+                                this.textContent = originalText;
+                                this.disabled = false;
+                                showAlert('Unable to detect your location. Please enter it manually.');
+                            });
+                    }
+                });
+            }
+
+            // Autocomplete functionality
+            let autocompleteTimeout;
+            if (locationInput) {
+                locationInput.addEventListener('input', function(e) {
+                    clearTimeout(autocompleteTimeout);
+                    const query = e.target.value.trim();
+                    if (query.length < 2) {
+                        hideAutocomplete();
+                        return;
+                    }
+                    autocompleteTimeout = setTimeout(() => {
+                        searchLocations(query);
+                    }, 300);
+                });
+
+                // Hide autocomplete when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('#location-input') && !e.target.closest('#severe-autocomplete-dropdown')) {
+                        hideAutocomplete();
+                    }
+                });
+            }
+        });
+
         function updateLocation() {
             const location = document.getElementById('location-input').value.trim();
             const type = document.getElementById('type-select').value;
             const distance = document.getElementById('distance-select').value;
 
-            // Build URL based on type selection
-            let url;
-            if (type === 'all') {
-                // Use /severe-weather route
-                url = location ? `/severe-weather/${encodeURIComponent(location)}` : '/severe-weather';
-            } else {
-                // Use /severe/{type} route
-                url = location ? `/severe/${type}/${encodeURIComponent(location)}` : `/severe/${type}`;
+            if (!location) {
+                window.location.href = `${window.location.origin}/severe-weather`;
+                return;
             }
 
-            // Add distance parameter if not default (50)
-            if (distance && distance !== '50') {
-                url += `?distance=${distance}`;
-            }
+            const cleanLocation = location.replace(/ /g, '+');
+            const params = [];
+            if (type !== 'all') params.push(`type=${type}`);
+            if (distance !== '50') params.push(`distance=${distance}`);
+            const queryString = params.length > 0 ? '?' + params.join('&') : '';
 
-            window.location.href = url;
+            window.location.href = `${window.location.origin}/severe-weather/${cleanLocation}${queryString}`;
         }
 
-        // Allow Enter key to submit
-        document.getElementById('location-input')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                updateLocation();
-            }
-        });
-
-        // Set selected filters from URL
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const distanceParam = urlParams.get('distance');
-
-            // Set distance
-            if (distanceParam) {
-                const distanceSelect = document.getElementById('distance-select');
-                if (distanceSelect) {
-                    distanceSelect.value = distanceParam;
-                }
-            }
-
-            // Detect type from URL path
-            const path = window.location.pathname;
-            const typeMatch = path.match(/\/severe\/(\w+)/);
-            if (typeMatch) {
-                const typeSelect = document.getElementById('type-select');
-                if (typeSelect) {
-                    typeSelect.value = typeMatch[1];
-                }
-            }
-        });
-
-        // Make alert cards clickable to expand/collapse details
-        document.addEventListener('DOMContentLoaded', function() {
-            const alertCards = document.querySelectorAll('.alert-card');
-
-            alertCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const details = this.querySelector('.alert-details');
-                    if (details) {
-                        details.classList.toggle('show');
+        function searchLocations(query) {
+            fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        showAutocomplete(data.results);
+                    } else {
+                        hideAutocomplete();
                     }
+                })
+                .catch(err => {
+                    console.error('Autocomplete error:', err);
+                    hideAutocomplete();
                 });
+        }
+
+        function showAutocomplete(results) {
+            const dropdown = document.getElementById('severe-autocomplete-dropdown');
+            dropdown.innerHTML = '';
+
+            results.slice(0, 8).forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+
+                const locationName = result.admin1
+                    ? `${result.name}, ${result.admin1}, ${result.country_code}`
+                    : `${result.name}, ${result.country_code}`;
+
+                item.innerHTML = `
+                    <span class="autocomplete-item city-name">${result.name}</span>
+                    <span class="autocomplete-item location-details">${result.admin1 ? result.admin1 + ', ' : ''}${result.country_code}</span>
+                `;
+
+                item.addEventListener('click', function() {
+                    // Use coordinates for navigation (more accurate)
+                    const coords = `${result.latitude.toFixed(4)},${result.longitude.toFixed(4)}`;
+                    document.getElementById('location-input').value = coords;
+                    hideAutocomplete();
+                    updateLocation();
+                });
+
+                dropdown.appendChild(item);
             });
-        });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideAutocomplete() {
+            const dropdown = document.getElementById('severe-autocomplete-dropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+                dropdown.innerHTML = '';
+            }
+        }
+
+        function toggleAlertDetails(card) {
+            const details = card.querySelector('.alert-details');
+            const expand = card.querySelector('.alert-expand');
+            if (details && expand) {
+                if (details.classList.contains('display-none')) {
+                    details.classList.remove('display-none');
+                    expand.textContent = '▲ Click to collapse';
+                } else {
+                    details.classList.add('display-none');
+                    expand.textContent = '▼ Click to expand';
+                }
+            }
+        }
+
+        // Copy command to clipboard
+        function copyCommand(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = '✗ Failed';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Initialize notification polling
+        if (typeof Notifications !== 'undefined') {
+            Notifications.startPolling(30000);
+        }
     </script>
 
-    {{template "footer" .}}
+{{if not .HideFooter}}
+{{template "footer" .}}
+{{else}}
+</body>
+</html>
+{{end}}

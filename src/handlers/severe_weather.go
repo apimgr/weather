@@ -144,7 +144,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 
 		// Create Location object for uniform display
 		var locationData interface{}
-		if latitude != 0 && longitude != 0 {
+		if latitude != 0 || longitude != 0 {
 			coords := services.Coordinates{
 				Latitude:  latitude,
 				Longitude: longitude,
@@ -161,6 +161,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 				"Location": gin.H{
 					"Name":                enhanced.FullName,
 					"ShortName":           enhanced.ShortName,
+					"NameEncoded":         strings.ReplaceAll(enhanced.ShortName, " ", "+"),
 					"Country":             enhanced.Country,
 					"Latitude":            latitude,
 					"Longitude":           longitude,
@@ -171,18 +172,28 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 			}
 		}
 
+		// Get type and distance filters from query params
+		typeFilter := c.Query("type")
+		if typeFilter == "" {
+			typeFilter = "all"
+		}
+		distanceFilter := fmt.Sprintf("%.0f", distance)
+
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
-			"Title":            "Severe Weather Alerts",
-			"Data":             data,
-			"TotalAlerts":      totalAlerts,
-			"TotalStorms":      totalStorms,
-			"LocationName":     locationName,
-			"LocationData":     locationData,
-			"Latitude":         latitude,
-			"Longitude":        longitude,
-			"Distance":         distance,
-			"HasLocation":      latitude != 0 && longitude != 0,
-			"HostInfo":         hostInfo,
+			"Title":          "Severe Weather Alerts",
+			"page":           "severe-weather",
+			"Data":           data,
+			"TotalAlerts":    totalAlerts,
+			"TotalStorms":    totalStorms,
+			"LocationName":   locationName,
+			"LocationData":   locationData,
+			"Latitude":       latitude,
+			"Longitude":      longitude,
+			"Distance":       distance,
+			"DistanceFilter": distanceFilter,
+			"TypeFilter":     typeFilter,
+			"HasLocation":    latitude != 0 && longitude != 0,
+			"HostInfo":       hostInfo,
 		})
 	} else {
 		// Render console output
@@ -323,7 +334,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 
 		// Create Location object for uniform display
 		var locationData interface{}
-		if latitude != 0 && longitude != 0 {
+		if latitude != 0 || longitude != 0 {
 			coords := services.Coordinates{
 				Latitude:  latitude,
 				Longitude: longitude,
@@ -340,6 +351,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 				"Location": gin.H{
 					"Name":                enhanced.FullName,
 					"ShortName":           enhanced.ShortName,
+					"NameEncoded":         strings.ReplaceAll(enhanced.ShortName, " ", "+"),
 					"Country":             enhanced.Country,
 					"Latitude":            latitude,
 					"Longitude":           longitude,
@@ -350,18 +362,24 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 			}
 		}
 
+		// Get distance filter
+		distanceFilter := fmt.Sprintf("%.0f", distance)
+
 		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
-			"Title":            fmt.Sprintf("%s - Severe Weather Alerts", strings.Title(alertType)),
-			"Data":             filteredData,
-			"TotalAlerts":      totalAlerts,
-			"TotalStorms":      totalStorms,
-			"LocationName":     locationName,
-			"LocationData":     locationData,
-			"Latitude":         latitude,
-			"Longitude":        longitude,
-			"Distance":         distance,
-			"HasLocation":      latitude != 0 && longitude != 0,
-			"HostInfo":         hostInfo,
+			"Title":          fmt.Sprintf("%s - Severe Weather Alerts", strings.Title(alertType)),
+			"page":           "severe-weather",
+			"Data":           filteredData,
+			"TotalAlerts":    totalAlerts,
+			"TotalStorms":    totalStorms,
+			"LocationName":   locationName,
+			"LocationData":   locationData,
+			"Latitude":       latitude,
+			"Longitude":      longitude,
+			"Distance":       distance,
+			"DistanceFilter": distanceFilter,
+			"TypeFilter":     strings.ToLower(alertType),
+			"HasLocation":    latitude != 0 && longitude != 0,
+			"HostInfo":       hostInfo,
 		})
 	} else {
 		// Render console output

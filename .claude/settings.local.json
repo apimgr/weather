@@ -6,7 +6,8 @@
     "allow": [
       "Bash(src/templates/admin/panel.html)",
       "Bash(find /root/Projects/github/apimgr/weather/src/templates -name \"*.html\" -exec sed -i )",
-      "Bash({} ;)"
+      "Bash({} ;)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
