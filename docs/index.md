@@ -30,7 +30,7 @@ docker run -d -p 80:80 \
   ghcr.io/apimgr/weather:latest
 ```
 
-Visit http://localhost
+Visit https://wthr.top
 
 ### Docker Compose (Recommended)
 
@@ -146,10 +146,10 @@ Severe weather alerts can be filtered by distance:
 
 ```bash
 # Show alerts within 25 miles
-curl "http://localhost/api/severe?location=Brooklyn,NY&distance=25"
+curl -q -LSsf "https://wthr.top/api/severe?location=Brooklyn,NY&distance=25"
 
 # Show alerts within 100 miles
-curl "http://localhost/api/severe?location=Miami,FL&distance=100"
+curl -q -LSsf "https://wthr.top/api/severe?location=Miami,FL&distance=100"
 ```
 
 ### Type Filtering
@@ -165,7 +165,7 @@ Filter severe weather by type:
 ### Health Check
 
 ```bash
-curl http://localhost/api/health
+curl https://wthr.top/api/health
 ```
 
 Response:

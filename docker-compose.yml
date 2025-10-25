@@ -14,10 +14,8 @@ services:
       - ./rootfs/config/weather:/config
       - ./rootfs/logs/weather:/var/log/weather
     ports:
-      # Development: random port on localhost
-      - "127.0.0.1:64080:80"
-      # Production (uncomment and change port as needed):
-      # - "172.17.0.1:64080:80"
+      # Internal port 80, external random port 64xxx range
+      - "172.17.0.1:64347:80"
     networks:
       - weather
 

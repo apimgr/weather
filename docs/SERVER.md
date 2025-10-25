@@ -364,7 +364,7 @@ weather.example.com {
 Check service health:
 
 ```bash
-curl http://localhost/api/health
+curl https://wthr.top/api/health
 ```
 
 Expected response:

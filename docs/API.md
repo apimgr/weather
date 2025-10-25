@@ -5,7 +5,7 @@ Complete API documentation for the Weather service.
 ## Base URL
 
 ```
-http://localhost
+https://wthr.top
 https://your-domain.com
 ```
 
@@ -140,7 +140,7 @@ If no location specified, uses IP-based geolocation.
 **Example:**
 
 ```bash
-curl "http://localhost/api/weather?location=Brooklyn,NY"
+curl -q -LSsf "https://wthr.top/api/weather?location=Brooklyn,NY"
 ```
 
 ## Severe Weather Endpoints
@@ -217,13 +217,13 @@ GET /api/severe?location={location}&distance={miles}&type={type}
 
 ```bash
 # All alerts within 50 miles
-curl "http://localhost/api/severe?location=Miami,FL"
+curl -q -LSsf "https://wthr.top/api/severe?location=Miami,FL"
 
 # Tornado warnings within 25 miles
-curl "http://localhost/api/severe?location=Oklahoma City,OK&distance=25&type=tornadoes"
+curl -q -LSsf "https://wthr.top/api/severe?location=Oklahoma City,OK&distance=25&type=tornadoes"
 
 # Hurricane alerts within 100 miles
-curl "http://localhost/api/severe?location=New Orleans,LA&distance=100&type=hurricanes"
+curl -q -LSsf "https://wthr.top/api/severe?location=New Orleans,LA&distance=100&type=hurricanes"
 ```
 
 ## Moon Phase Endpoint
@@ -287,7 +287,7 @@ GET /api/moon?location={location}&date={date}
 **Example:**
 
 ```bash
-curl "http://localhost/api/moon?location=Brooklyn,NY&date=2025-10-16"
+curl -q -LSsf "https://wthr.top/api/moon?location=Brooklyn,NY&date=2025-10-16"
 ```
 
 ## Earthquake Endpoint
@@ -366,7 +366,7 @@ GET /api/earthquake?location={location}&radius={km}&days={days}
 **Example:**
 
 ```bash
-curl "http://localhost/api/earthquake?location=San Francisco,CA&radius=200&days=7"
+curl -q -LSsf "https://wthr.top/api/earthquake?location=San Francisco,CA&radius=200&days=7"
 ```
 
 ## Health Check Endpoint
@@ -394,7 +394,7 @@ GET /api/health
 **Example:**
 
 ```bash
-curl "http://localhost/api/health"
+curl -q -LSsf "https://wthr.top/api/health"
 ```
 
 ## Rate Limiting
@@ -469,14 +469,14 @@ Accept-Encoding: gzip
 import requests
 
 # Get weather
-response = requests.get('http://localhost/api/weather', params={
+response = requests.get('https://wthr.top/api/weather', params={
     'location': 'Brooklyn, NY'
 })
 data = response.json()
 print(f"Temperature: {data['current']['temperature']}°F")
 
 # Get severe weather alerts
-response = requests.get('http://localhost/api/severe', params={
+response = requests.get('https://wthr.top/api/severe', params={
     'location': 'Miami, FL',
     'distance': 50,
     'type': 'hurricanes'
@@ -490,14 +490,14 @@ for alert in alerts:
 
 ```javascript
 // Get weather
-fetch('http://localhost/api/weather?location=Brooklyn,NY')
+fetch('https://wthr.top/api/weather?location=Brooklyn,NY')
   .then(response => response.json())
   .then(data => {
     console.log(`Temperature: ${data.current.temperature}°F`);
   });
 
 // Get moon phase
-fetch('http://localhost/api/moon?location=Brooklyn,NY')
+fetch('https://wthr.top/api/moon?location=Brooklyn,NY')
   .then(response => response.json())
   .then(data => {
     console.log(`Moon Phase: ${data.phase} (${Math.round(data.illumination * 100)}%)`);
@@ -523,7 +523,7 @@ type WeatherResponse struct {
 }
 
 func main() {
-    resp, _ := http.Get("http://localhost/api/weather?location=Brooklyn,NY")
+    resp, _ := http.Get("https://wthr.top/api/weather?location=Brooklyn,NY")
     defer resp.Body.Close()
 
     var data WeatherResponse
@@ -537,14 +537,14 @@ func main() {
 
 ```bash
 # Get weather
-curl -s "http://localhost/api/weather?location=Brooklyn,NY" | jq .
+curl -q -LSsf "https://wthr.top/api/weather?location=Brooklyn,NY" | jq .
 
 # Get severe weather with pretty output
-curl -s "http://localhost/api/severe?location=Miami,FL&distance=50" | jq '.alerts[] | {type, severity, headline}'
+curl -q -LSsf "https://wthr.top/api/severe?location=Miami,FL&distance=50" | jq '.alerts[] | {type, severity, headline}'
 
 # Get earthquakes
-curl -s "http://localhost/api/earthquake?location=San Francisco,CA&radius=200" | jq '.earthquakes[] | {magnitude, place, time}'
+curl -q -LSsf "https://wthr.top/api/earthquake?location=San Francisco,CA&radius=200" | jq '.earthquakes[] | {magnitude, place, time}'
 
 # Health check
-curl -s "http://localhost/api/health"
+curl -q -LSsf "https://wthr.top/api/health"
 ```
