@@ -1,12 +1,12 @@
 /* Dracula Theme for MkDocs Material */
 
 :root {
-  /* Dracula color palette */
+  /* Dracula color palette - High Contrast Version for ReadTheDocs */
   --dracula-background: #282a36;
   --dracula-current-line: #44475a;
   --dracula-selection: #44475a;
   --dracula-foreground: #f8f8f2;
-  --dracula-comment: #6272a4;
+  --dracula-comment: #9ca3db; /* Lightened from #6272a4 for better contrast */
   --dracula-cyan: #8be9fd;
   --dracula-green: #50fa7b;
   --dracula-orange: #ffb86c;
@@ -130,8 +130,11 @@ blockquote {
   border-left: 4px solid var(--dracula-purple);
   padding-left: 1rem;
   margin: 1rem 0;
-  color: var(--dracula-comment);
+  color: var(--dracula-foreground);
   font-style: italic;
+  background-color: rgba(189, 147, 249, 0.1);
+  padding: 1rem;
+  border-radius: 4px;
 }
 
 /* Admonitions */
@@ -367,4 +370,131 @@ blockquote {
     background-color: #f5f5f5;
     color: black;
   }
+}
+
+/* ============================================
+   HIGH CONTRAST IMPROVEMENTS
+   ============================================ */
+
+/* Main content area - ensure high contrast */
+.md-content {
+  color: var(--dracula-foreground);
+}
+
+.md-content p {
+  color: var(--dracula-foreground);
+  line-height: 1.8;
+}
+
+/* Sidebar navigation - better contrast */
+.md-nav {
+  color: var(--dracula-foreground);
+}
+
+.md-nav__item {
+  color: var(--dracula-foreground);
+}
+
+.md-nav__link {
+  color: var(--dracula-foreground);
+}
+
+.md-nav__link:focus,
+.md-nav__link:hover {
+  color: var(--dracula-cyan);
+}
+
+/* Ensure all list items are readable */
+li {
+  color: var(--dracula-foreground);
+}
+
+/* Table improvements */
+td {
+  color: var(--dracula-foreground);
+}
+
+/* Make sure paragraphs inside lists are visible */
+li > p {
+  color: var(--dracula-foreground);
+}
+
+/* Code inline - higher contrast */
+.md-typeset code {
+  background-color: #383a59; /* Lighter than current-line for better contrast */
+  color: var(--dracula-pink);
+  border: 1px solid var(--dracula-purple);
+  padding: 0.1em 0.4em;
+  font-weight: 500;
+}
+
+/* Code blocks - better background */
+.md-typeset pre {
+  background-color: #383a59;
+  border: 1px solid var(--dracula-purple);
+}
+
+.md-typeset pre code {
+  background-color: transparent;
+  color: var(--dracula-foreground);
+  border: none;
+}
+
+/* Admonition titles */
+.md-typeset .admonition-title {
+  color: var(--dracula-foreground);
+  font-weight: 700;
+}
+
+/* Strong/Bold text - more emphasis */
+strong, b {
+  color: var(--dracula-yellow);
+  font-weight: 700;
+}
+
+/* Em/Italic text */
+em, i {
+  color: var(--dracula-cyan);
+}
+
+/* Ensure section headings are very visible */
+.md-typeset h1 {
+  color: var(--dracula-cyan);
+  font-weight: 700;
+}
+
+.md-typeset h2 {
+  color: var(--dracula-purple);
+  font-weight: 700;
+}
+
+.md-typeset h3 {
+  color: var(--dracula-pink);
+  font-weight: 600;
+}
+
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+  color: var(--dracula-green);
+  font-weight: 600;
+}
+
+/* Search results */
+.md-search-result__item {
+  color: var(--dracula-foreground);
+}
+
+.md-search-result__meta {
+  color: var(--dracula-comment);
+}
+
+/* Ensure TOC is readable */
+.md-nav--secondary .md-nav__link {
+  color: var(--dracula-foreground);
+}
+
+.md-nav--secondary .md-nav__link--active {
+  color: var(--dracula-cyan);
+  font-weight: 600;
 }
