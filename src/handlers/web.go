@@ -158,9 +158,6 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 		location = c.Query("location")
 	}
 
-	// Preserve original input for display in form field
-	originalInput := location
-
 	// Get units from query parameter (default to imperial)
 	units := c.Query("units")
 	if units == "" {

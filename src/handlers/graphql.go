@@ -132,6 +132,54 @@ func InitGraphQL() (*handler.Handler, error) {
 // GraphQLHandler wraps the GraphQL handler for Gin
 func GraphQLHandler(h *handler.Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// For GET requests, return GraphiQL UI
+		if c.Request.Method == "GET" {
+			c.Header("Content-Type", "text/html; charset=utf-8")
+			c.String(200, graphiQLHTML)
+			return
+		}
+		// For POST requests, use the handler
 		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
+
+const graphiQLHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <title>GraphiQL - Weather API</title>
+    <link rel="stylesheet" href="https://unpkg.com/graphiql@3.0.0/graphiql.min.css" />
+    <style>
+        body {
+            height: 100%;
+            margin: 0;
+            width: 100%;
+            overflow: hidden;
+            background: #282a36;
+        }
+        #graphiql {
+            height: 100vh;
+        }
+        .graphiql-container {
+            --color-primary: 40, 165, 255;
+            --color-secondary: 189, 147, 249;
+            background: #282a36;
+        }
+    </style>
+</head>
+<body>
+    <div id="graphiql">Loading...</div>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/graphiql@3.0.0/graphiql.min.js"></script>
+    <script>
+        const fetcher = GraphiQL.createFetcher({ url: '/graphql' });
+        const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+        root.render(
+            React.createElement(GraphiQL, {
+                fetcher: fetcher,
+                defaultQuery: '# Welcome to GraphQL API for Weather Service\n# Try this example query:\n\n{\n  health {\n    status\n    version\n    uptime\n  }\n  weather(location: "London") {\n    location {\n      name\n      latitude\n      longitude\n      country\n    }\n    temperature\n    humidity\n    wind_speed\n  }\n}'
+            })
+        );
+    </script>
+</body>
+</html>`

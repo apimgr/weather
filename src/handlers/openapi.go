@@ -211,8 +211,32 @@ func GetSwaggerUI(c *gin.Context) {
     <title>Weather API - Swagger UI</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
     <style>
-        body { margin: 0; padding: 0; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #282a36;
+        }
         .swagger-ui .topbar { display: none; }
+        /* Dracula theme for Swagger */
+        .swagger-ui { background: #282a36; }
+        .swagger-ui .info .title { color: #bd93f9; }
+        .swagger-ui .info .description { color: #f8f8f2; }
+        .swagger-ui .opblock-tag { color: #8be9fd; border-color: #44475a; background: #44475a; }
+        .swagger-ui .opblock { background: #44475a; border-color: #6272a4; }
+        .swagger-ui .opblock.opblock-get { border-color: #50fa7b; background: rgba(80, 250, 123, 0.1); }
+        .swagger-ui .opblock.opblock-post { border-color: #8be9fd; background: rgba(139, 233, 253, 0.1); }
+        .swagger-ui .opblock.opblock-put { border-color: #ffb86c; background: rgba(255, 184, 108, 0.1); }
+        .swagger-ui .opblock.opblock-delete { border-color: #ff5555; background: rgba(255, 85, 85, 0.1); }
+        .swagger-ui .opblock .opblock-summary-method { background: #bd93f9; color: #282a36; }
+        .swagger-ui .opblock .opblock-summary-path { color: #f8f8f2; }
+        .swagger-ui .opblock-description-wrapper, .swagger-ui .opblock-body { background: #282a36; color: #f8f8f2; }
+        .swagger-ui table thead tr td, .swagger-ui table thead tr th { border-color: #6272a4; color: #bd93f9; }
+        .swagger-ui .response-col_status { color: #50fa7b; }
+        .swagger-ui .parameter__name { color: #ff79c6; }
+        .swagger-ui .response-col_description { color: #f8f8f2; }
+        .swagger-ui input[type=text], .swagger-ui textarea, .swagger-ui select { background: #44475a; color: #f8f8f2; border-color: #6272a4; }
+        .swagger-ui .btn { background: #bd93f9; color: #282a36; }
+        .swagger-ui .btn.execute { background: #50fa7b; color: #282a36; }
     </style>
 </head>
 <body>
@@ -222,7 +246,7 @@ func GetSwaggerUI(c *gin.Context) {
     <script>
         window.onload = function() {
             SwaggerUIBundle({
-                url: "/openapi.json",
+                url: "/api/openapi.json",
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [

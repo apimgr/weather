@@ -8,157 +8,107 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
 </head>
 <body>
+    {{template "navbar" .}}
+
     <div class="weather-container">
-        <div class="weather-header">
-            📡 <a href="/" style="color: inherit; text-decoration: none;">Weather</a>
+        <div class="page-header">
+            <h1>📡 API Documentation</h1>
+            <p class="page-subtitle">Complete REST API, GraphQL, and OpenAPI documentation for Weather Service</p>
         </div>
 
-        <!-- Navigation Bar -->
-        <nav style="display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0; padding: 0.75rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-            <a href="/" style="color: var(--dracula-cyan); text-decoration: none; font-weight: 500;">🏠 Home</a>
-            <a href="/moon" style="color: var(--dracula-purple); text-decoration: none; font-weight: 500;">🌙 Moon</a>
-            <a href="/docs" style="color: var(--dracula-pink); text-decoration: none; font-weight: 500;">📚 Docs</a>
-        </nav>
+        <!-- Interactive API Tools -->
+        <div class="grid-auto-fit-300">
+            <a href="/api/swagger" class="info-box" style="text-decoration: none;">
+                <h3 class="info-box__title info-box__title--swagger">📘 Swagger UI</h3>
+                <div class="info-box__content">
+                    <p>Interactive OpenAPI documentation with live API testing</p>
+                    <div class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">Launch Swagger UI →</div>
+                </div>
+            </a>
 
-        <!-- API Overview -->
-        <div style="margin: 2rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-            <h2 style="color: var(--dracula-cyan); margin-top: 0;">Weather API</h2>
-            <p style="color: var(--dracula-foreground); line-height: 1.6;">
-                Free weather API with no API key required. Provides global weather data, location search,
-                and moon phase information with both JSON responses and console-friendly formats.
-            </p>
+            <a href="/graphql" class="info-box" style="text-decoration: none;">
+                <h3 class="info-box__title info-box__title--graphql">🔷 GraphQL Playground</h3>
+                <div class="info-box__content">
+                    <p>Interactive GraphQL API explorer with schema documentation</p>
+                    <div class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">Launch GraphiQL →</div>
+                </div>
+            </a>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
-                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
-                    <strong style="color: var(--dracula-green);">Base URL:</strong><br>
-                    <code style="color: var(--dracula-cyan);">{{.HostInfo.FullHost}}</code>
+            <a href="/api" class="info-box" style="text-decoration: none;">
+                <h3 class="info-box__title info-box__title--api">🔗 REST API</h3>
+                <div class="info-box__content">
+                    <p>JSON endpoints for weather, moon, earthquakes, and severe weather</p>
+                    <div class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">View Endpoints →</div>
                 </div>
-                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
-                    <strong style="color: var(--dracula-green);">Data Source:</strong><br>
-                    <span style="color: var(--dracula-yellow);">Open-Meteo.com</span>
-                </div>
-                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
-                    <strong style="color: var(--dracula-green);">Rate Limits:</strong><br>
-                    <span style="color: var(--dracula-orange);">No API key needed</span>
-                </div>
-                <div style="background-color: var(--dracula-current-line); padding: 1rem; border-radius: 0.375rem;">
-                    <strong style="color: var(--dracula-green);">JSON Docs:</strong><br>
-                    <a href="/api/v1/docs" style="color: var(--dracula-pink); text-decoration: none;">/api/v1/docs</a>
-                </div>
-            </div>
+            </a>
         </div>
 
-        <!-- Endpoints -->
-        <div style="margin: 2rem 0;">
-            <h2 style="color: var(--dracula-purple);">API Endpoints</h2>
-
-            <!-- Current Weather -->
-            <div class="api-endpoint" style="margin: 1.5rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border-left: 4px solid var(--dracula-green);">
-                <h3 style="color: var(--dracula-green); margin-top: 0;">GET /api/v1/weather</h3>
-                <p class="text-comment">Get current weather with today's forecast</p>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Example:</strong><br>
-                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow); overflow-x: auto; white-space: nowrap;">
-                        curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=London,GB
-                    </code>
-                </div>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Parameters:</strong>
-                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
-                        <li><code style="color: var(--dracula-pink);">location</code> - City name or coordinates (optional)</li>
-                        <li><code style="color: var(--dracula-pink);">lat, lon</code> - Latitude and longitude (optional)</li>
-                        <li><code style="color: var(--dracula-pink);">units</code> - imperial or metric (auto-detected)</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Forecast -->
-            <div class="api-endpoint" style="margin: 1.5rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border-left: 4px solid var(--dracula-cyan);">
-                <h3 style="color: var(--dracula-cyan); margin-top: 0;">GET /api/v1/forecast</h3>
-                <p class="text-comment">Get multi-day weather forecast (up to 16 days)</p>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Example:</strong><br>
-                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow); overflow-x: auto; white-space: nowrap;">
-                        curl -q -LSs {{.HostInfo.FullHost}}/api/v1/forecast?location=Tokyo,JP&days=7
-                    </code>
-                </div>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Parameters:</strong>
-                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
-                        <li><code style="color: var(--dracula-pink);">location</code> - City name or coordinates (optional)</li>
-                        <li><code style="color: var(--dracula-pink);">days</code> - Number of forecast days (1-16, default: 7)</li>
-                        <li><code style="color: var(--dracula-pink);">units</code> - imperial or metric (auto-detected)</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Search -->
-            <div class="api-endpoint" style="margin: 1.5rem 0; padding: 1.5rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border-left: 4px solid var(--dracula-purple);">
-                <h3 style="color: var(--dracula-purple); margin-top: 0;">GET /api/v1/search</h3>
-                <p class="text-comment">Search for locations (used by autocomplete)</p>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Example:</strong><br>
-                    <code style="background: var(--dracula-current-line); padding: 0.5rem; border-radius: 0.25rem; display: block; margin: 0.5rem 0; color: var(--dracula-yellow); overflow-x: auto; white-space: nowrap;">
-                        curl -q -LSs {{.HostInfo.FullHost}}/api/v1/search?q=alb
-                    </code>
-                </div>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Parameters:</strong>
-                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
-                        <li><code style="color: var(--dracula-pink);">q</code> - Search query (required, 3+ characters)</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Console Interface -->
-        <div style="margin: 2rem 0;">
-            <h2 style="color: var(--dracula-purple);">Console Interface</h2>
-
-            <div style="background-color: var(--dracula-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
-                <h3 style="color: var(--dracula-orange); margin-top: 0;">wttr.in Compatible Formats</h3>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Format Examples:</strong><br>
-                    <div style="font-family: monospace; margin: 0.5rem 0; overflow-x: auto;">
-                        <code style="color: var(--dracula-yellow); white-space: nowrap;">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=1</code><br>
-                        <span class="text-comment">→ ☁️  +12⁰C</span>
-                    </div>
-                    <div style="font-family: monospace; margin: 0.5rem 0; overflow-x: auto;">
-                        <code style="color: var(--dracula-yellow); white-space: nowrap;">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=3</code><br>
-                        <span class="text-comment">→ London, GB: ☁️  +12⁰C</span>
+        <!-- Quick Start -->
+        <div class="console-section">
+            <h3 class="console-section__title">Quick Start Examples</h3>
+            <div class="console-commands">
+                <div class="command-item">
+                    <strong class="console-section__label">Weather API:</strong>
+                    <div class="code-wrapper">
+                        <code class="mobile-code">curl -q -LSsf {{.HostInfo.FullHost}}/api/v1/weather?location=London</code>
+                        <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSsf {{.HostInfo.FullHost}}/api/v1/weather?location=London')">Copy</button>
                     </div>
                 </div>
-
-                <div style="margin: 1rem 0;">
-                    <strong style="color: var(--dracula-cyan);">Available Formats:</strong>
-                    <ul style="color: var(--dracula-foreground); margin: 0.5rem 0;">
-                        <li><strong style="color: var(--dracula-pink);">format=1:</strong> Icon + temperature</li>
-                        <li><strong style="color: var(--dracula-pink);">format=2:</strong> Icon + temperature + wind</li>
-                        <li><strong style="color: var(--dracula-pink);">format=3:</strong> Location + icon + temperature</li>
-                        <li><strong style="color: var(--dracula-pink);">format=4:</strong> Location + icon + temperature + wind</li>
-                    </ul>
+                <div class="command-item">
+                    <strong class="console-section__label">GraphQL Query:</strong>
+                    <div class="code-wrapper">
+                        <code class="mobile-code">curl -q -LSsf {{.HostInfo.FullHost}}/graphql -d '{query}'</code>
+                        <button class="copy-btn" onclick="copyCommand(this, 'curl -q -LSsf {{.HostInfo.FullHost}}/graphql')">Copy</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{if not .HideFooter}}
-        <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
-            <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
-                <span style="color: var(--dracula-cyan);">Weather</span>
-                <span style="color: var(--dracula-pink);">•</span>
-                <span>Made with <span class="text-error">❤️</span></span>
-                <span style="color: var(--dracula-pink);">•</span>
-                <span style="color: var(--dracula-orange);">v2.0.0</span>
-            </p>
+        <!-- API Features -->
+        <div class="grid-auto-fit-200">
+            <div class="stat-card">
+                <h4>🌍 Global Coverage</h4>
+                <p>Weather data for any location worldwide</p>
+            </div>
+            <div class="stat-card">
+                <h4>🔓 No API Key</h4>
+                <p>Free access without registration</p>
+            </div>
+            <div class="stat-card">
+                <h4>📊 Multiple Formats</h4>
+                <p>JSON, GraphQL, and console output</p>
+            </div>
+            <div class="stat-card">
+                <h4>⚡ Real-time Data</h4>
+                <p>Live weather updates every 15 minutes</p>
+            </div>
         </div>
-        {{end}}
+
+        <!-- Documentation Links -->
+        <div class="console-section">
+            <h3 class="console-section__title">Documentation Resources</h3>
+            <div class="grid-auto-fit-300">
+                <a href="https://apimgr-weather.readthedocs.io" target="_blank" class="btn btn-secondary btn-block">📚 ReadTheDocs</a>
+                <a href="https://github.com/apimgr/weather" target="_blank" class="btn btn-secondary btn-block">💻 GitHub Repository</a>
+                <a href="/api/openapi.json" class="btn btn-secondary btn-block">📄 OpenAPI Spec (JSON)</a>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+
+    <script>
+        function copyCommand(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+    </script>
+
+{{template "footer" .}}

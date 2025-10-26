@@ -1076,16 +1076,20 @@ func main() {
 			},
 			"current_version": "v1",
 			"documentation":   "http://" + c.Request.Host + "/docs",
-			"openapi":         "http://" + c.Request.Host + "/openapi",
-			"swagger":         "http://" + c.Request.Host + "/swagger",
+			"openapi": "http://" + c.Request.Host + "/api/openapi.json",
+			"swagger": "http://" + c.Request.Host + "/api/swagger",
 			"graphql":         "http://" + c.Request.Host + "/graphql",
 		})
 	})
 
-	// OpenAPI/Swagger documentation
-	r.GET("/openapi.json", handlers.GetOpenAPISpec)
-	r.GET("/openapi", handlers.GetOpenAPISpec)
-	r.GET("/swagger", handlers.GetSwaggerUI)
+	// OpenAPI/Swagger documentation (moved to /api/)
+	r.GET("/api/openapi.json", handlers.GetOpenAPISpec)
+	r.GET("/api/openapi", handlers.GetOpenAPISpec)
+	r.GET("/api/swagger", handlers.GetSwaggerUI)
+	// Legacy redirects
+	r.GET("/openapi.json", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi.json") })
+	r.GET("/openapi", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi") })
+	r.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/swagger") })
 
 	// GraphQL API
 	graphqlHandler, err := handlers.InitGraphQL()

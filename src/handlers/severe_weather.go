@@ -37,9 +37,6 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		locationParam = c.Query("location")
 	}
 
-	// Preserve original input for display in form field
-	originalInput := locationParam
-
 	// Get distance filter from query parameter (default 50 miles)
 	distanceParam := c.Query("distance")
 	distance := 50.0 // default
@@ -151,6 +148,8 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 			coords := services.Coordinates{
 				Latitude:  latitude,
 				Longitude: longitude,
+				Name:      locationName,
+				ShortName: locationName,
 			}
 			enhanced := h.locationEnhancer.EnhanceLocation(&coords)
 
@@ -212,9 +211,6 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	alertType := c.Param("type")
 	locationParam := c.Param("location")
-
-	// Preserve original input for display in form field
-	originalInput := locationParam
 
 	// Get distance filter from query parameter (default 50 miles)
 	distanceParam := c.Query("distance")
@@ -347,6 +343,8 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 			coords := services.Coordinates{
 				Latitude:  latitude,
 				Longitude: longitude,
+				Name:      locationName,
+				ShortName: locationName,
 			}
 			enhanced := h.locationEnhancer.EnhanceLocation(&coords)
 

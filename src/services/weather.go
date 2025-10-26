@@ -485,6 +485,7 @@ func (ws *WeatherService) SearchLocations(query string, limit int) ([]Coordinate
 			Name:        result.Name,
 			Country:     result.Country,
 			CountryCode: strings.ToUpper(result.CountryCode),
+			Timezone:    result.Timezone,
 			Admin1:      result.Admin1,
 			Admin2:      result.Admin2,
 			Population:  result.Population,
@@ -796,12 +797,13 @@ func (ws *WeatherService) tryMultipleGeocodingApproaches(searchName string, loca
 	}
 
 	approaches := []approach{
-		{name: searchName, count: 5},
+		{name: searchName, count: 10},
 	}
 
-	// Try just the city name if we have multiple parts
-	if locationParts.HasStateOrCountry {
-		approaches = append(approaches, approach{name: locationParts.City, count: 10})
+	// Also search by city name alone to get more results for matching
+	// The selectBestLocationMatch will filter by state if provided
+	if locationParts.HasStateOrCountry && locationParts.City != "" {
+		approaches = append(approaches, approach{name: locationParts.City, count: 20})
 	}
 
 	for _, app := range approaches {
