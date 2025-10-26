@@ -3865,3 +3865,97 @@ a:hover {
   padding: 0.75rem;
   color: var(--dracula-comment);
 }
+
+/* ============================================
+   ADMIN SETTINGS - MOBILE FIRST
+   ============================================ */
+
+.settings-category {
+  background: var(--dracula-current-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.settings-category-title {
+  margin: 0 0 var(--space-md) 0;
+  color: var(--dracula-purple);
+  font-size: 1.1rem;
+}
+
+.settings-grid {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.setting-item {
+  background: var(--dracula-bg);
+  border: 1px solid var(--dracula-comment);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.setting-name {
+  font-weight: 600;
+  color: var(--dracula-foreground);
+}
+
+.setting-key {
+  font-size: 0.85rem;
+  color: var(--dracula-cyan);
+  font-family: var(--font-mono);
+}
+
+.setting-description {
+  font-size: 0.85rem;
+  color: var(--dracula-comment);
+  margin-top: 0.25rem;
+}
+
+.setting-value {
+  margin-top: var(--space-sm);
+}
+
+/* Desktop: side-by-side layout */
+@media (min-width: 768px) {
+  .setting-item {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .setting-value {
+    margin-top: 0;
+    min-width: 200px;
+  }
+}
+
+/* Admin tables - mobile responsive */
+.admin-table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 720px) {
+  .table-full,
+  .table-small {
+    font-size: 0.85rem;
+  }
+
+  .table-cell,
+  .table-cell-sm {
+    padding: 0.5rem;
+  }
+
+  .table-cell-mono,
+  .table-cell-mono-plain {
+    font-size: 0.75rem;
+  }
+}

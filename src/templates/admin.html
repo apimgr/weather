@@ -348,9 +348,10 @@
             <div class="admin-section">
                 <div class="section-header">
                     <h2>Server Settings</h2>
+                    <button class="btn btn-success" onclick="applyAllSettings()" id="apply-settings-btn">✓ Apply All & Reload</button>
                 </div>
                 <div id="settings-list" class="overflow-auto">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading settings...</p>
+                    <p class="loading-text">Loading settings...</p>
                 </div>
             </div>
         </div>
@@ -544,7 +545,7 @@
             }
         }
 
-        // Settings Management
+        // Settings Management with inline editing
         async function loadSettings() {
             try {
                 const response = await fetch('/api/v1/admin/settings');
@@ -560,38 +561,59 @@
 
                 // Category display names
                 const categoryNames = {
-                    'server': '🌐 Server Configuration',
-                    'security': '🔒 Security Settings',
-                    'features': '✨ Feature Toggles',
-                    'backup': '💾 Backup Settings',
-                    'logging': '📝 Logging Settings',
-                    'smtp': '📧 Email (SMTP) Settings'
+                    'server': '🌐 Server',
+                    'security': '🔒 Security',
+                    'features': '✨ Features',
+                    'backup': '💾 Backup',
+                    'logging': '📝 Logging',
+                    'smtp': '📧 Email',
+                    'alerts': '⚠️ Alerts',
+                    'audit': '📋 Audit',
+                    'auth': '🔐 Auth'
                 };
 
                 let html = '';
                 for (const [category, categorySettings] of Object.entries(grouped)) {
                     const displayName = categoryNames[category] || category;
                     html += `
-                        <div style="background: var(--dracula-current-line); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                            <h3 style="margin: 0 0 1rem 0; color: var(--dracula-purple); font-size: 1.1rem;">${displayName}</h3>
-                            <div style="display: grid; gap: 1rem;">
+                        <div class="settings-category">
+                            <h3 class="settings-category-title">${displayName}</h3>
+                            <div class="settings-grid">
                                 ${categorySettings.map(setting => {
-                                    const name = setting.key.split('.')[1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                                    const isBoolean = setting.type === 'boolean';
-                                    const value = isBoolean ? (setting.value === 'true' ? 'Enabled' : 'Disabled') : setting.value;
-                                    const valueColor = isBoolean ? (setting.value === 'true' ? 'var(--dracula-green)' : 'var(--dracula-red)') : 'var(--dracula-foreground)';
+                                    const name = setting.key.split('.').pop().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                    const isBool = setting.value === 'true' || setting.value === 'false';
+                                    const isNumber = !isNaN(setting.value) && setting.value !== '';
+
+                                    let inputHtml = '';
+                                    if (isBool) {
+                                        inputHtml = `
+                                            <select class="form-input" data-key="${setting.key}" onchange="markSettingChanged('${setting.key}')">
+                                                <option value="true" ${setting.value === 'true' ? 'selected' : ''}>✓ Enabled</option>
+                                                <option value="false" ${setting.value === 'false' ? 'selected' : ''}>✗ Disabled</option>
+                                            </select>
+                                        `;
+                                    } else if (isNumber) {
+                                        inputHtml = `
+                                            <input type="number" class="form-input" data-key="${setting.key}"
+                                                   value="${setting.value}" onchange="markSettingChanged('${setting.key}')">
+                                        `;
+                                    } else {
+                                        inputHtml = `
+                                            <input type="text" class="form-input" data-key="${setting.key}"
+                                                   value="${setting.value}" onchange="markSettingChanged('${setting.key}')">
+                                        `;
+                                    }
 
                                     return `
-                                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--dracula-background); border-radius: 6px; border: 1px solid var(--dracula-comment);">
-                                            <div style="flex: 1;">
-                                                <div style="font-weight: 600; margin-bottom: 0.25rem;">${name}</div>
-                                                <div style="font-size: 0.85rem; color: var(--dracula-comment);">${setting.description || setting.key}</div>
-                                                <div style="margin-top: 0.5rem; font-family: monospace; font-size: 0.9rem; color: ${valueColor};">${value}</div>
+                                        <div class="setting-item">
+                                            <div class="setting-info">
+                                                <div class="setting-name">${name}</div>
+                                                <div class="setting-key">${setting.key}</div>
+                                                ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ''}
                                             </div>
-                                            <button onclick="editSetting('${setting.key}', '${setting.value.replace(/'/g, "\\'")}', '${setting.type}', '${(setting.description || '').replace(/'/g, "\\'")}', '${name}')"
-                                                style="background: var(--dracula-purple); color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 1rem;">
-                                                Edit
-                                            </button>
+                                            <div class="setting-value">
+                                                ${inputHtml}
+                                            </div>
                                         </div>
                                     `;
                                 }).join('')}
@@ -603,110 +625,79 @@
                 document.getElementById('settings-list').innerHTML = html;
             } catch (error) {
                 console.error('Error loading settings:', error);
-                document.getElementById('settings-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading settings: ' + error.message + '</p>';
+                document.getElementById('settings-list').innerHTML = '<p class="text-error text-center">Error loading settings: ' + error.message + '</p>';
             }
         }
 
-        async function editSetting(key, currentValue, type, description, name) {
-            // Generate a unique modal ID first
-            const modalId = 'edit-setting-modal-' + Date.now();
+        const changedSettings = new Set();
 
-            // Build appropriate input based on type
-            let inputHtml = '';
-            if (type === 'boolean') {
-                const isTrue = currentValue === 'true';
-                inputHtml = `
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="settingValue" ${isTrue ? 'checked' : ''} style="width: 20px; height: 20px; margin-right: 0.75rem;">
-                            <span>Enable ${name}</span>
-                        </label>
-                    </div>
-                `;
-            } else if (type === 'number') {
-                inputHtml = `
-                    <div class="form-group">
-                        <label for="settingValue">Value</label>
-                        <input type="number" id="settingValue" class="form-input" value="${currentValue}" required>
-                    </div>
-                `;
-            } else if (key.includes('description') || key.includes('tagline')) {
-                inputHtml = `
-                    <div class="form-group">
-                        <label for="settingValue">Value</label>
-                        <textarea id="settingValue" class="form-input" rows="3" required>${currentValue}</textarea>
-                    </div>
-                `;
-            } else {
-                inputHtml = `
-                    <div class="form-group">
-                        <label for="settingValue">Value</label>
-                        <input type="text" id="settingValue" class="form-input" value="${currentValue}" required>
-                    </div>
-                `;
+        function markSettingChanged(key) {
+            changedSettings.add(key);
+            const applyBtn = document.getElementById('apply-settings-btn');
+            if (changedSettings.size > 0) {
+                applyBtn.textContent = `✓ Apply ${changedSettings.size} Change(s) & Reload`;
+                applyBtn.classList.add('btn-warning');
             }
-
-            Modal.create({
-                id: modalId,
-                title: `Edit: ${name}`,
-                body: `
-                    <form id="editSettingForm">
-                        ${description ? `<p style="color: var(--dracula-comment); margin-bottom: 1rem; font-size: 0.9rem;">${description}</p>` : ''}
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label style="font-size: 0.85rem; color: var(--dracula-comment);">Setting Key</label>
-                            <div style="font-family: monospace; font-size: 0.9rem; color: var(--dracula-cyan); padding: 0.5rem; background: var(--dracula-current-line); border-radius: 4px;">${key}</div>
-                        </div>
-                        ${inputHtml}
-                    </form>
-                `,
-                footer: `
-                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
-                    <button class="btn btn-primary" onclick="updateSettingFromModal('${modalId}', '${key}', '${currentValue}', '${type}')">Save</button>
-                `,
-                size: 'md'
-            });
         }
 
-        async function updateSettingFromModal(modalId, key, currentValue, type) {
-            const element = document.getElementById('settingValue');
-            let newValue;
-
-            if (type === 'boolean') {
-                newValue = element.checked ? 'true' : 'false';
-            } else if (element.tagName === 'TEXTAREA') {
-                newValue = element.value;
-            } else {
-                newValue = element.value;
-            }
-
-            if (newValue === currentValue) {
-                Modal.close(modalId);
+        async function applyAllSettings() {
+            if (changedSettings.size === 0) {
+                await showAlert('No changes to apply', 'Info');
                 return;
             }
 
+            const confirmApply = await showConfirm(
+                `Apply ${changedSettings.size} setting(s) and reload server configuration?`,
+                'Apply Settings'
+            );
+            if (!confirmApply) return;
+
+            const applyBtn = document.getElementById('apply-settings-btn');
+            applyBtn.disabled = true;
+            applyBtn.textContent = '⏳ Applying...';
+
             try {
-                const response = await fetch(`/api/v1/admin/settings/${key}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ value: newValue })
+                const updates = {};
+                const inputs = document.querySelectorAll('[data-key]');
+                inputs.forEach(input => {
+                    if (changedSettings.has(input.dataset.key)) {
+                        updates[input.dataset.key] = input.value;
+                    }
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to update setting');
-                }
+                await fetch('/api/v1/admin/settings/bulk', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings: updates })
+                });
 
-                Modal.close(modalId);
-                Toast.success('Setting updated successfully');
-                loadSettings();
+                await fetch('/api/v1/admin/reload', { method: 'POST' });
+
+                Modal.create({
+                    title: '✅ Settings Applied',
+                    body: `<p class="modal-body-text-center">
+                        ${changedSettings.size} setting(s) applied successfully.<br>
+                        Server configuration reloaded.
+                    </p>`,
+                    size: 'sm',
+                    autoClose: 3,
+                    closeable: true
+                });
+
+                changedSettings.clear();
+                applyBtn.textContent = '✓ Apply All & Reload';
+                applyBtn.classList.remove('btn-warning');
+                applyBtn.disabled = false;
+
+                setTimeout(() => loadSettings(), 500);
+
             } catch (error) {
-                Toast.error('Failed to update setting: ' + error.message);
+                applyBtn.disabled = false;
+                applyBtn.textContent = '✓ Apply All & Reload';
+                await showAlert('Failed to apply settings: ' + error.message, 'Error');
             }
         }
 
-        // Token Management
-        async function loadTokens() {
-            try {
-                const response = await fetch('/api/v1/admin/tokens');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
