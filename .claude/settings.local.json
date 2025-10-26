@@ -16,7 +16,8 @@
       "Bash(wget:*)",
       "Bash(find:*)",
       "Bash(python3 -m mkdocs:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

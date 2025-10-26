@@ -9,10 +9,10 @@
 
         <!-- Desktop Navigation Menu -->
         <div class="navbar-menu">
-            <a href="/" class="navbar-link {{if eq .page "weather"}}active{{end}}">Weather</a>
+            <a href="/" class="navbar-link {{if eq .page "weather"}}active{{end}}">Home</a>
             <a href="/moon" class="navbar-link {{if eq .page "moon"}}active{{end}}">Moon</a>
-            <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}">Earthquakes</a>
             <a href="/severe-weather" class="navbar-link {{if eq .page "severe-weather"}}active{{end}}">Severe Weather</a>
+            <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}">Earthquakes</a>
             <a href="/user/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}">Dashboard</a>
             {{if eq .user.Role "admin"}}
             <a href="/admin" class="navbar-link {{if eq .page "admin"}}active{{end}}">Admin</a>
@@ -59,10 +59,10 @@
 
     <!-- Mobile Navigation Menu -->
     <div class="mobile-menu" id="mobile-menu">
-        <a href="/" class="mobile-menu-item">Weather</a>
+        <a href="/" class="mobile-menu-item">Home</a>
         <a href="/moon" class="mobile-menu-item">Moon</a>
-        <a href="/earthquake" class="mobile-menu-item">Earthquakes</a>
         <a href="/severe-weather" class="mobile-menu-item">Severe Weather</a>
+        <a href="/earthquake" class="mobile-menu-item">Earthquakes</a>
         <a href="/user/dashboard" class="mobile-menu-item">Dashboard</a>
         {{if eq .user.Role "admin"}}
         <a href="/admin" class="mobile-menu-item">Admin</a>
