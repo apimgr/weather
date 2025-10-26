@@ -1078,7 +1078,7 @@ func main() {
 			"documentation":   "http://" + c.Request.Host + "/docs",
 			"openapi": "http://" + c.Request.Host + "/api/openapi.json",
 			"swagger": "http://" + c.Request.Host + "/api/swagger",
-			"graphql":         "http://" + c.Request.Host + "/graphql",
+			"graphql": "http://" + c.Request.Host + "/api/graphql",
 		})
 	})
 
@@ -1091,14 +1091,17 @@ func main() {
 	r.GET("/openapi", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi") })
 	r.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/swagger") })
 
-	// GraphQL API
+	// GraphQL API (moved to /api/)
 	graphqlHandler, err := handlers.InitGraphQL()
 	if err != nil {
 		log.Printf("⚠️  Failed to initialize GraphQL: %v", err)
 	} else {
-		r.POST("/graphql", handlers.GraphQLHandler(graphqlHandler))
-		r.GET("/graphql", handlers.GraphQLHandler(graphqlHandler)) // GET for GraphiQL
-		appLogger.Printf("✅ GraphQL API enabled at /graphql")
+		r.POST("/api/graphql", handlers.GraphQLHandler(graphqlHandler))
+		r.GET("/api/graphql", handlers.GraphQLHandler(graphqlHandler)) // GET for GraphiQL
+		// Legacy redirects
+		r.GET("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/graphql") })
+		r.POST("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/graphql") })
+		appLogger.Printf("✅ GraphQL API enabled at /api/graphql")
 	}
 
 	// HTML documentation page at /docs
