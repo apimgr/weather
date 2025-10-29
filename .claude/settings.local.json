@@ -1,42 +1,20 @@
 {
-  "env": {
-    "MAX_THINKING_TOKENS": "1000"
-  },
   "permissions": {
     "allow": [
-      "Bash(src/templates/admin/panel.html)",
-      "Bash(find /root/Projects/github/apimgr/weather/src/templates -name \"*.html\" -exec sed -i )",
-      "Bash({} ;)",
-      "Bash(curl:*)",
-      "Read(//tmp/**)",
-      "Bash(make build:*)",
-      "Bash(make:*)",
-      "Bash(docker compose:*)",
-      "WebFetch(domain:wthr.top)",
-      "Bash(wget:*)",
-      "Bash(find:*)",
-      "Bash(python3 -m mkdocs:*)",
-      "Bash(docker run:*)",
-      "Bash(git checkout:*)"
+      "Bash(make build:*)"
     ],
     "deny": [],
     "ask": []
   },
   "model": "sonnet[1m]",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write(**)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if grep -qi 'anthropic\\|claude' \"$file\" 2>/dev/null; then echo 'Error: File contains vendor names (Anthropic/Claude)' >&2; exit 1; fi"
-          }
-        ]
-      }
-    ]
-  },
   "preferences": {
     "auto_commit": false
-  }
+  },
+  "rules": [
+    "NEVER add 'Claude', 'Anthropic', 'AI-generated', or similar attribution to ANY source code, comments, commit messages, or documentation",
+    "NEVER add co-author tags like 'Co-Authored-By: Claude' to commits",
+    "Git operations (commit, push, tag, releases) require explicit user approval - do not attempt them",
+    "All code should appear as if written by a human developer",
+    "Keep existing code style and conventions - do not add AI/Claude signatures"
+  ]
 }

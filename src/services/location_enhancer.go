@@ -145,7 +145,7 @@ func (le *LocationEnhancer) loadData() {
 
 // loadCountriesData loads country data from external source
 func (le *LocationEnhancer) loadCountriesData() error {
-	url := "https://github.com/apimgr/countries/raw/refs/heads/main/countries.json"
+	url := "https://raw.githubusercontent.com/apimgr/countries/refs/heads/main/countries.json"
 
 	resp, err := le.client.Get(url)
 	if err != nil {
@@ -361,33 +361,53 @@ func (le *LocationEnhancer) buildFullName(location *EnhancedLocation) string {
 func (le *LocationEnhancer) buildShortName(location *EnhancedLocation) string {
 	city := location.Name
 	countryCode := location.CountryCode
-	if countryCode == "" {
-		countryCode = "XX"
-	}
 
 	// For US locations, use state abbreviation if available
 	if countryCode == "US" && location.Admin1 != "" {
 		// Check if Admin1 is already a 2-letter state code
 		if len(location.Admin1) == 2 && strings.ToUpper(location.Admin1) == location.Admin1 {
-			return fmt.Sprintf("%s, %s", city, location.Admin1)
+			return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
 		}
 		// Otherwise, try to get abbreviation from full state name
 		stateAbbrev := le.getStateAbbreviation(location.Admin1)
 		if stateAbbrev != "" {
-			return fmt.Sprintf("%s, %s", city, stateAbbrev)
+			return fmt.Sprintf("%s, %s, %s", city, stateAbbrev, countryCode)
 		}
+		// If we have state but no abbreviation, use full state name
+		return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
 	}
 
 	// For Canadian locations, use province abbreviation if available
 	if countryCode == "CA" && location.Admin1 != "" {
 		// Check if Admin1 is already a 2-letter province code
 		if len(location.Admin1) == 2 && strings.ToUpper(location.Admin1) == location.Admin1 {
-			return fmt.Sprintf("%s, %s", city, location.Admin1)
+			return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
 		}
 		provinceAbbrev := le.getProvinceAbbreviation(location.Admin1)
 		if provinceAbbrev != "" {
-			return fmt.Sprintf("%s, %s", city, provinceAbbrev)
+			return fmt.Sprintf("%s, %s, %s", city, provinceAbbrev, countryCode)
 		}
+		// If we have province but no abbreviation, use full province name
+		return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
+	}
+
+	// If countryCode is empty, try to infer from Admin1 or default
+	if countryCode == "" {
+		// Check if Admin1 looks like a US state
+		if location.Admin1 != "" {
+			stateAbbrev := le.getStateAbbreviation(location.Admin1)
+			if stateAbbrev != "" {
+				// It's a US state
+				return fmt.Sprintf("%s, %s, US", city, stateAbbrev)
+			}
+			// Check if it's a Canadian province
+			provAbbrev := le.getProvinceAbbreviation(location.Admin1)
+			if provAbbrev != "" {
+				return fmt.Sprintf("%s, %s, CA", city, provAbbrev)
+			}
+		}
+		// Fallback: use just city name if we truly have no country info
+		return city
 	}
 
 	// For all other locations, use country code

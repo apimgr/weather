@@ -167,7 +167,35 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 		return
 	}
 
-	// Enhance location data
+	// Check if this is a zipcode - if so, don't do double-pass enhancement
+	// Zipcode lookups are already precise and don't need re-resolution
+	isZipcode := len(locationInput) == 5 && locationInput[0] >= '0' && locationInput[0] <= '9'
+
+	if !isZipcode {
+		// First enhancement to get ShortName (like HandleRoot does)
+		tempEnhanced := h.locationEnhancer.EnhanceLocation(coords)
+
+		// Re-parse with the enhanced ShortName to get better results
+		coords, err = h.weatherService.ParseAndResolveLocation(tempEnhanced.ShortName, clientIP)
+		if err != nil {
+			// Fall back to original coords if re-parsing fails
+			coords = &services.Coordinates{
+				Latitude:    tempEnhanced.Latitude,
+				Longitude:   tempEnhanced.Longitude,
+				Name:        tempEnhanced.Name,
+				Country:     tempEnhanced.Country,
+				CountryCode: tempEnhanced.CountryCode,
+				Timezone:    tempEnhanced.Timezone,
+				Admin1:      tempEnhanced.Admin1,
+				Admin2:      tempEnhanced.Admin2,
+				Population:  tempEnhanced.Population,
+				FullName:    tempEnhanced.FullName,
+				ShortName:   tempEnhanced.ShortName,
+			}
+		}
+	}
+
+	// Final enhancement with the resolved location
 	enhanced := h.locationEnhancer.EnhanceLocation(coords)
 
 	// Determine units

@@ -8,6 +8,22 @@ import (
 
 // GetOpenAPISpec returns the OpenAPI 3.0 specification
 func GetOpenAPISpec(c *gin.Context) {
+	// Dynamically detect server URL from request
+	protocol := c.GetHeader("X-Forwarded-Proto")
+	if protocol == "" {
+		if c.Request.TLS != nil {
+			protocol = "https"
+		} else {
+			protocol = "http"
+		}
+	}
+
+	// Get hostname from request
+	hostname := c.Request.Host
+
+	// Build server URL
+	serverURL := protocol + "://" + hostname
+
 	spec := map[string]interface{}{
 		"openapi": "3.0.0",
 		"info": map[string]interface{}{
@@ -25,12 +41,8 @@ func GetOpenAPISpec(c *gin.Context) {
 		},
 		"servers": []map[string]string{
 			{
-				"url":         "http://localhost",
-				"description": "Local development server",
-			},
-			{
-				"url":         "https://weather.example.com",
-				"description": "Production server",
+				"url":         serverURL,
+				"description": "Current server",
 			},
 		},
 		"paths": map[string]interface{}{

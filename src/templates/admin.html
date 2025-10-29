@@ -698,6 +698,10 @@
             }
         }
 
+        // Token Management
+        async function loadTokens() {
+            try {
+                const response = await fetch('/api/v1/admin/tokens');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -1008,76 +1012,6 @@
             } catch (error) {
                 console.error('Error loading scheduled tasks:', error);
                 document.getElementById('tasks-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading scheduled tasks: ' + error.message + '</p>';
-            }
-        }
-
-        // Settings change tracking
-        const changedSettings = new Set();
-
-        function markSettingChanged(key) {
-            changedSettings.add(key);
-            const applyBtn = document.getElementById('apply-settings-btn');
-            if (applyBtn && changedSettings.size > 0) {
-                applyBtn.textContent = `✓ Apply ${changedSettings.size} Change(s) & Reload`;
-                applyBtn.classList.add('btn-warning');
-            }
-        }
-
-        async function applyAllSettings() {
-            if (changedSettings.size === 0) {
-                await showAlert('No changes to apply', 'Info');
-                return;
-            }
-
-            const confirmApply = await showConfirm(
-                `Apply ${changedSettings.size} setting(s) and reload server configuration?`,
-                'Apply Settings'
-            );
-            if (!confirmApply) return;
-
-            const applyBtn = document.getElementById('apply-settings-btn');
-            applyBtn.disabled = true;
-            applyBtn.textContent = '⏳ Applying...';
-
-            try {
-                const updates = {};
-                const inputs = document.querySelectorAll('[data-key]');
-                inputs.forEach(input => {
-                    if (changedSettings.has(input.dataset.key)) {
-                        updates[input.dataset.key] = input.value;
-                    }
-                });
-
-                await fetch('/api/v1/admin/settings/bulk', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ settings: updates })
-                });
-
-                await fetch('/api/v1/admin/reload', { method: 'POST' });
-
-                Modal.create({
-                    title: '✅ Settings Applied',
-                    body: `<p class="modal-body-text-center">
-                        ${changedSettings.size} setting(s) applied successfully.<br>
-                        Server configuration reloaded.
-                    </p>`,
-                    size: 'sm',
-                    autoClose: 3,
-                    closeable: true
-                });
-
-                changedSettings.clear();
-                applyBtn.textContent = '✓ Apply All & Reload';
-                applyBtn.classList.remove('btn-warning');
-                applyBtn.disabled = false;
-
-                setTimeout(() => loadSettings(), 500);
-
-            } catch (error) {
-                applyBtn.disabled = false;
-                applyBtn.textContent = '✓ Apply All & Reload';
-                await showAlert('Failed to apply settings: ' + error.message, 'Error');
             }
         }
 
