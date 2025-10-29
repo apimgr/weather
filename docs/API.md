@@ -159,7 +159,7 @@ GET /severe/{type}/{location}
 
 **API Endpoint:**
 ```
-GET /api/severe?location={location}&distance={miles}&type={type}
+GET /api/v1/severe-weather?location={location}&distance={miles}&type={type}
 ```
 
 **Parameters:**
@@ -217,13 +217,13 @@ GET /api/severe?location={location}&distance={miles}&type={type}
 
 ```bash
 # All alerts within 50 miles
-curl -q -LSsf "https://wthr.top/api/severe?location=Miami,FL"
+curl -q -LSsf "https://wthr.top/api/v1/severe-weather?location=Miami,FL"
 
 # Tornado warnings within 25 miles
-curl -q -LSsf "https://wthr.top/api/severe?location=Oklahoma City,OK&distance=25&type=tornadoes"
+curl -q -LSsf "https://wthr.top/api/v1/severe-weather?location=Oklahoma+City,OK&distance=25&type=tornadoes"
 
 # Hurricane alerts within 100 miles
-curl -q -LSsf "https://wthr.top/api/severe?location=New Orleans,LA&distance=100&type=hurricanes"
+curl -q -LSsf "https://wthr.top/api/v1/severe-weather?location=New+Orleans,LA&distance=100&type=hurricanes"
 ```
 
 ## Moon Phase Endpoint
@@ -304,7 +304,7 @@ GET /earthquake/{location}
 
 **API Endpoint:**
 ```
-GET /api/earthquake?location={location}&radius={km}&days={days}
+GET /api/v1/earthquakes?location={location}&radius={km}&days={days}
 ```
 
 **Parameters:**
@@ -366,7 +366,7 @@ GET /api/earthquake?location={location}&radius={km}&days={days}
 **Example:**
 
 ```bash
-curl -q -LSsf "https://wthr.top/api/earthquake?location=San Francisco,CA&radius=200&days=7"
+curl -q -LSsf "https://wthr.top/api/v1/earthquakes?location=San+Francisco,CA&radius=200&days=7"
 ```
 
 ## Health Check Endpoint
@@ -476,7 +476,7 @@ data = response.json()
 print(f"Temperature: {data['current']['temperature']}°F")
 
 # Get severe weather alerts
-response = requests.get('https://wthr.top/api/severe', params={
+response = requests.get('https://wthr.top/api/v1/severe-weather', params={
     'location': 'Miami, FL',
     'distance': 50,
     'type': 'hurricanes'
@@ -540,10 +540,10 @@ func main() {
 curl -q -LSsf "https://wthr.top/api/weather?location=Brooklyn,NY" | jq .
 
 # Get severe weather with pretty output
-curl -q -LSsf "https://wthr.top/api/severe?location=Miami,FL&distance=50" | jq '.alerts[] | {type, severity, headline}'
+curl -q -LSsf "https://wthr.top/api/v1/severe-weather?location=Miami,FL&distance=50" | jq '.alerts[] | {type, severity, headline}'
 
 # Get earthquakes
-curl -q -LSsf "https://wthr.top/api/earthquake?location=San Francisco,CA&radius=200" | jq '.earthquakes[] | {magnitude, place, time}'
+curl -q -LSsf "https://wthr.top/api/v1/earthquakes?location=San+Francisco,CA&radius=200" | jq '.earthquakes[] | {magnitude, place, time}'
 
 # Health check
 curl -q -LSsf "https://wthr.top/api/health"

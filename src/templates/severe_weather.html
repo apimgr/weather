@@ -431,7 +431,7 @@
                 <div class="city-links-grid">
                     <a href="?location=Miami" class="city-link">🌴 Miami</a>
                     <a href="?location=Houston" class="city-link">🤠 Houston</a>
-                    <a href="?location=New Orleans" class="city-link">🎺 New Orleans</a>
+                    <a href="?location=New+Orleans" class="city-link">🎺 New Orleans</a>
                     <a href="?location=Tampa" class="city-link">⚡ Tampa</a>
                 </div>
             </div>
@@ -452,6 +452,19 @@
             if (form) {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
+                    updateLocation();
+                });
+            }
+
+            // Auto-reload when distance or type changes
+            if (typeSelect) {
+                typeSelect.addEventListener('change', function() {
+                    updateLocation();
+                });
+            }
+
+            if (distanceSelect) {
+                distanceSelect.addEventListener('change', function() {
                     updateLocation();
                 });
             }

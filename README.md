@@ -481,9 +481,9 @@ curl http://localhost/moon
 curl http://localhost/earthquake
 
 # API endpoints (JSON)
-curl http://localhost/api/weather?location=London
-curl http://localhost/api/severe?location=Miami,FL&distance=50
-curl http://localhost/api/moon?location=Tokyo
+curl http://localhost/api/v1/weather?location=London
+curl http://localhost/api/v1/severe-weather?location=Miami,FL&distance=50
+curl http://localhost/api/v1/moon?location=Tokyo
 ```
 
 ### API Endpoints
@@ -505,7 +505,7 @@ curl http://localhost/api/moon?location=Tokyo
 | `GET /severe-weather/{location}` | GET | Alerts for specific location |
 | `GET /severe/{type}` | GET | Filter by type (hurricanes, tornadoes, storms, winter, floods) |
 | `GET /severe/{type}/{location}` | GET | Filtered alerts for location |
-| `GET /api/severe?location={loc}&distance={mi}&type={t}` | GET | JSON alerts |
+| `GET /api/v1/severe-weather?location={loc}&distance={mi}&type={t}` | GET | JSON alerts |
 
 #### Other Data
 
@@ -516,7 +516,7 @@ curl http://localhost/api/moon?location=Tokyo
 | `GET /api/moon?location={loc}` | GET | JSON moon data |
 | `GET /earthquake` | GET | Recent earthquakes near you |
 | `GET /earthquake/{location}` | GET | Earthquakes near location |
-| `GET /api/earthquake?location={loc}&radius={km}` | GET | JSON earthquake data |
+| `GET /api/v1/earthquakes?location={loc}&radius={km}` | GET | JSON earthquake data |
 | `GET /api/health` | GET | Health check |
 
 ### Location Formats

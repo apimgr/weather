@@ -123,6 +123,15 @@
 
       // Close on overlay click (if closeable)
       const overlay = document.getElementById(modalId);
+
+      // Prevent clicks on modal content from closing the modal
+      const modalContent = overlay.querySelector('.modal');
+      if (modalContent) {
+        modalContent.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      }
+
       if (closeable) {
         overlay.addEventListener('click', function(e) {
           if (e.target === overlay) {

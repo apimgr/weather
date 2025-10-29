@@ -88,10 +88,10 @@ chmod +x weather-darwin-arm64
 - `GET /hurricane` - Active hurricane tracking (redirects to /severe-weather)
 
 ### API Endpoints (JSON)
-- `GET /api/weather?location={location}` - JSON weather data
-- `GET /api/moon?location={location}` - JSON moon data
-- `GET /api/earthquake?location={location}` - JSON earthquake data
-- `GET /api/severe?location={location}&distance={miles}&type={type}` - JSON severe weather data
+- `GET /api/v1/weather?location={location}` - JSON weather data
+- `GET /api/v1/moon?location={location}` - JSON moon data
+- `GET /api/v1/earthquakes?location={location}` - JSON earthquake data
+- `GET /api/v1/severe-weather?location={location}&distance={miles}&type={type}` - JSON severe weather data
 
 ## Location Formats
 
@@ -146,10 +146,10 @@ Severe weather alerts can be filtered by distance:
 
 ```bash
 # Show alerts within 25 miles
-curl -q -LSsf "https://wthr.top/api/severe?location=Brooklyn,NY&distance=25"
+curl -q -LSsf "https://wthr.top/api/v1/severe-weather?location=Brooklyn,NY&distance=25"
 
 # Show alerts within 100 miles
-curl -q -LSsf "https://wthr.top/api/severe?location=Miami,FL&distance=100"
+curl -q -LSsf "https://wthr.top/api/v1/severe-weather?location=Miami,FL&distance=100"
 ```
 
 ### Type Filtering
