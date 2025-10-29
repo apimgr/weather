@@ -72,10 +72,8 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 				}
 			}
 		}
-	}
-
-	// If no location specified, try to get from cookie
-	if latitude == 0 && longitude == 0 {
+	} else if latitude == 0 && longitude == 0 {
+		// Only check cookies if NO location was explicitly provided in URL
 		if latStr, err := c.Cookie("user_lat"); err == nil {
 			if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
 				latitude = lat
@@ -266,10 +264,8 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 				}
 			}
 		}
-	}
-
-	// If no location, try cookies
-	if latitude == 0 && longitude == 0 {
+	} else if latitude == 0 && longitude == 0 {
+		// Only check cookies if NO location was explicitly provided in URL
 		if latStr, err := c.Cookie("user_lat"); err == nil {
 			if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
 				latitude = lat

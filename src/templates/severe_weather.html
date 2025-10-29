@@ -64,16 +64,25 @@
             {{template "location_details" .LocationData}}
 
             <!-- Alert Summary -->
+            {{/* Calculate actual visible alert count */}}
+            {{ $visibleCount := 0 }}
+            {{ if .Data.Hurricanes }}{{ $visibleCount = add $visibleCount (len .Data.Hurricanes) }}{{ end }}
+            {{ if .Data.TornadoWarnings }}{{ $visibleCount = add $visibleCount (len .Data.TornadoWarnings) }}{{ end }}
+            {{ if .Data.SevereStorms }}{{ $visibleCount = add $visibleCount (len .Data.SevereStorms) }}{{ end }}
+            {{ if .Data.WinterStorms }}{{ $visibleCount = add $visibleCount (len .Data.WinterStorms) }}{{ end }}
+            {{ if .Data.FloodWarnings }}{{ $visibleCount = add $visibleCount (len .Data.FloodWarnings) }}{{ end }}
+            {{ if .Data.OtherAlerts }}{{ $visibleCount = add $visibleCount (len .Data.OtherAlerts) }}{{ end }}
+
             <div class="current-weather">
                 <div class="weather-icon">
                     ⚠️
                 </div>
                 <div class="weather-details">
                     <div class="temperature">
-                        {{.TotalAlerts}} Active Alerts
+                        {{$visibleCount}} Active Alert{{if ne $visibleCount 1}}s{{end}}
                     </div>
                     <div class="description">
-                        {{.TotalStorms}} hurricanes tracked
+                        {{if .Data.Hurricanes}}{{len .Data.Hurricanes}}{{else}}0{{end}} hurricane{{if ne (len .Data.Hurricanes) 1}}s{{end}} tracked
                     </div>
                     <div class="weather-stats">
                         <div class="stat">Filter: <span class="stat-value">{{if eq .TypeFilter "all"}}All Types{{else}}{{.TypeFilter}}{{end}}</span></div>
