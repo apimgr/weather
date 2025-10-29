@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(make build:*)"
+      "Bash(make build:*)",
+      "Bash(for:*)",
+      "Bash(do head -20 \"$file\")"
     ],
     "deny": [],
     "ask": []

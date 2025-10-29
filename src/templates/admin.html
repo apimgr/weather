@@ -1,76 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .title }}</title>
-    <link rel="stylesheet" href="/static/css/dracula.css">
-    <script src="/static/js/app.js" defer></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--dracula-bg);
-            color: var(--dracula-foreground);
-            min-height: 100vh;
-        }
-
-        .navbar {
-            background: var(--dracula-current-line);
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--dracula-purple);
-        }
-
-        .navbar-nav {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: var(--dracula-foreground);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--dracula-cyan);
-        }
-
-        .notification-badge {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .notification-count {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: var(--dracula-red);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+{{template "head" .}}
+<style>
         .container {
             max-width: 1400px;
             margin: 2rem auto;
@@ -226,80 +155,10 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Unified Navigation Bar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <!-- Brand Logo -->
-            <a href="/" class="navbar-brand">
-                🌤️ Weather Service
-            </a>
 
-            <!-- Desktop Navigation Menu -->
-            <div class="navbar-menu">
-                <a href="/" class="navbar-link">Weather</a>
-                <a href="/moon" class="navbar-link">Moon</a>
-                <a href="/earthquake" class="navbar-link">Earthquakes</a>
-                <a href="/hurricane" class="navbar-link">Hurricanes</a>
-                <a href="/user/dashboard" class="navbar-link">Dashboard</a>
-                {{ if eq .user.Role "admin" }}
-                <a href="/admin" class="navbar-link active">Admin</a>
-                {{ end }}
-            </div>
+{{template "navbar" .}}
 
-            <!-- Right Side Actions -->
-            <div class="navbar-actions">
-                <!-- Notification Bell -->
-                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
-                    🔔
-                    <span class="notification-badge" id="notification-badge" class="display-none">0</span>
-                </button>
-
-                <!-- Profile Avatar with Dropdown -->
-                <div class="profile-avatar">
-                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
-                        {{ if .user.Email }}
-                            {{ index .user.Email 0 | printf "%c" | upper }}
-                        {{ else }}
-                            U
-                        {{ end }}
-                    </div>
-                    <div class="profile-dropdown" id="profile-dropdown">
-                        <div class="profile-dropdown-header">
-                            <div>{{ .user.Email }}</div>
-                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
-                        </div>
-                        <nav class="profile-dropdown-menu">
-                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
-                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
-                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
-                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
-                        </nav>
-                    </div>
-                </div>
-
-                <!-- Mobile Menu Toggle -->
-                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
-                    ☰
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Navigation Menu -->
-        <div class="navbar-menu-mobile">
-            <a href="/" class="navbar-link">Weather</a>
-            <a href="/moon" class="navbar-link">Moon</a>
-            <a href="/earthquake" class="navbar-link">Earthquakes</a>
-            <a href="/hurricane" class="navbar-link">Hurricanes</a>
-            <a href="/user/dashboard" class="navbar-link">Dashboard</a>
-            {{ if eq .user.Role "admin" }}
-            <a href="/admin" class="navbar-link active">Admin</a>
-            {{ end }}
-        </div>
-    </nav>
-
-    <div class="container">
+<div class="container">
         <div class="admin-header">
             <h1>Admin Panel</h1>
             <p class="text-comment">Manage users, settings, and system configuration</p>
@@ -438,17 +297,25 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${users.map(user => `
+                            ${users.map(user => {
+                                // Protect first admin (ID 1) from deletion
+                                const isFirstAdmin = user.id === 1;
+                                const actionButtons = isFirstAdmin
+                                    ? `<button onclick="editAdminUser(${user.id}, '${user.email}')" class="btn-edit">Edit</button>`
+                                    : `<button onclick="deleteUser(${user.id})" class="btn-delete">Delete</button>`;
+
+                                return `
                                 <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem;">${user.id}</td>
+                                    <td style="padding: 1rem;">${user.id}${isFirstAdmin ? ' <span style="color: var(--dracula-cyan); font-size: 0.8rem;">(Primary)</span>' : ''}</td>
                                     <td style="padding: 1rem;">${user.email}</td>
-                                    <td style="padding: 1rem;"><span style="background: ${user.role === 'admin' ? 'var(--dracula-red)' : 'var(--dracula-purple)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">${user.role}</span></td>
+                                    <td style="padding: 1rem;"><span style="background: ${user.role === 'admin' ? 'var(--dracula-red)' : 'var(--dracula-purple)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">${user.role}</span></td>
                                     <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 1rem; text-align: right;">
-                                        <button onclick="deleteUser(${user.id})" style="background: var(--dracula-red); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Delete</button>
+                                        ${actionButtons}
                                     </td>
                                 </tr>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 `;
@@ -468,6 +335,100 @@
                 loadUsers();
             } catch (error) {
                 Toast.error('Failed to delete user');
+            }
+        }
+
+        async function editAdminUser(userId, currentEmail) {
+            const modalId = 'edit-admin-modal-' + Date.now();
+
+            Modal.create({
+                id: modalId,
+                title: 'Edit Primary Admin Account',
+                body: `
+                    <form id="editAdminForm">
+                        <div class="form-group">
+                            <label for="editAdminEmail">Email Address</label>
+                            <input type="email" id="editAdminEmail" class="form-input" required value="${currentEmail}" placeholder="admin@example.com">
+                            <small class="text-comment">Update the email address for this account</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="editAdminPassword">New Password (optional)</label>
+                            <input type="password" id="editAdminPassword" class="form-input" minlength="8" placeholder="Leave blank to keep current password">
+                            <small class="text-comment">Minimum 8 characters (leave blank to keep current password)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="editAdminPasswordConfirm">Confirm New Password</label>
+                            <input type="password" id="editAdminPasswordConfirm" class="form-input" minlength="8" placeholder="Re-enter new password">
+                            <small class="text-comment">Must match the new password above</small>
+                        </div>
+                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-cyan); margin-top: 1rem;">
+                            <p style="color: var(--dracula-cyan); margin: 0; font-size: 0.9rem;">
+                                ℹ️ <strong>Note:</strong> This is the primary admin account and cannot be deleted. You can update the email and/or password.
+                            </p>
+                        </div>
+                    </form>
+                `,
+                footer: `
+                    <button class="btn btn-secondary" onclick="Modal.close('${modalId}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="updateAdminUser(${userId}, '${modalId}')">Update Account</button>
+                `,
+                size: 'md'
+            });
+        }
+
+        async function updateAdminUser(userId, modalId) {
+            const email = document.getElementById('editAdminEmail').value;
+            const password = document.getElementById('editAdminPassword').value;
+            const passwordConfirm = document.getElementById('editAdminPasswordConfirm').value;
+
+            if (!email) {
+                Toast.error('Please enter an email address');
+                return;
+            }
+
+            // Validate password if provided
+            if (password || passwordConfirm) {
+                if (password !== passwordConfirm) {
+                    Toast.error('Passwords do not match');
+                    return;
+                }
+                if (password.length < 8) {
+                    Toast.error('Password must be at least 8 characters');
+                    return;
+                }
+            }
+
+            try {
+                // Update email if changed
+                const updateData = { email: email };
+                const response = await fetch(`/api/v1/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update user');
+                }
+
+                // Update password if provided
+                if (password) {
+                    const pwResponse = await fetch(`/api/v1/admin/users/${userId}/password`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: password })
+                    });
+
+                    if (!pwResponse.ok) {
+                        throw new Error('Failed to update password');
+                    }
+                }
+
+                Modal.close(modalId);
+                Toast.success('Admin account updated successfully');
+                loadUsers();
+            } catch (error) {
+                Toast.error('Failed to update admin account: ' + error.message);
             }
         }
 
@@ -562,15 +523,57 @@
                 // Category display names
                 const categoryNames = {
                     'server': '🌐 Server',
-                    'security': '🔒 Security',
-                    'features': '✨ Features',
-                    'backup': '💾 Backup',
-                    'logging': '📝 Logging',
-                    'smtp': '📧 Email',
+                    'auth': '🔐 Authentication',
+                    'rate_limit': '⏱️ Rate Limiting',
+                    'smtp': '📧 Email (SMTP)',
+                    'notifications': '🔔 Notifications',
+                    'weather': '🌤️ Weather',
                     'alerts': '⚠️ Alerts',
+                    'backup': '💾 Backup',
+                    'log': '📝 Logging',
                     'audit': '📋 Audit',
-                    'auth': '🔐 Auth'
+                    'security': '🔒 Security',
+                    'features': '✨ Features'
                 };
+
+                // Format setting key into readable label
+                function formatSettingLabel(key) {
+                    const labelMap = {
+                        'smtp.test_recipient': 'Test Email Recipient',
+                        'smtp.from_address': 'From Email Address',
+                        'smtp.from_name': 'From Name',
+                        'smtp.use_tls': 'Use TLS/SSL',
+                        'smtp.password': 'SMTP Password',
+                        'auth.session_timeout': 'Session Timeout (seconds)',
+                        'rate_limit.anonymous': 'Anonymous Rate Limit',
+                        'rate_limit.window': 'Rate Limit Window (seconds)',
+                        'log.format': 'Log Format',
+                        'log.level': 'Log Level',
+                        'backup.enabled': 'Enable Backups',
+                        'backup.interval': 'Backup Interval (seconds)',
+                        'alerts.enabled': 'Enable Weather Alerts',
+                        'alerts.check_interval': 'Alert Check Interval (seconds)',
+                        'weather.refresh_interval': 'Weather Cache Refresh (seconds)',
+                        'notifications.enabled': 'Enable Notifications',
+                        'notifications.retry_max': 'Max Retry Attempts',
+                        'notifications.queue_workers': 'Queue Workers',
+                        'notifications.retry_backoff': 'Retry Backoff Strategy'
+                    };
+
+                    // Check if we have a custom label
+                    if (labelMap[key]) {
+                        return labelMap[key];
+                    }
+
+                    // Otherwise, transform the key
+                    const parts = key.split('.');
+                    const lastPart = parts[parts.length - 1];
+                    return lastPart
+                        .replace(/_/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                }
 
                 let html = '';
                 for (const [category, categorySettings] of Object.entries(grouped)) {
@@ -580,24 +583,55 @@
                             <h3 class="settings-category-title">${displayName}</h3>
                             <div class="settings-grid">
                                 ${categorySettings.map(setting => {
-                                    const name = setting.key.split('.').pop().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                    const name = formatSettingLabel(setting.key);
                                     const isBool = setting.value === 'true' || setting.value === 'false';
-                                    const isNumber = !isNaN(setting.value) && setting.value !== '';
+                                    const isNumber = !isNaN(setting.value) && setting.value !== '' && setting.value !== null;
+                                    const isPassword = setting.key.includes('password');
+
+                                    // Enum fields with specific values
+                                    const enumFields = {
+                                        'log.level': ['info', 'debug', 'warn', 'error'],
+                                        'log.format': ['apache', 'json'],
+                                        'notifications.retry_backoff': ['linear', 'exponential']
+                                    };
 
                                     let inputHtml = '';
+
                                     if (isBool) {
+                                        // Use custom checkbox for boolean fields
+                                        const checked = setting.value === 'true' ? 'checked' : '';
+                                        inputHtml = `
+                                            <label class="custom-checkbox">
+                                                <input type="checkbox" data-key="${setting.key}" ${checked}
+                                                       onchange="markSettingChanged('${setting.key}')">
+                                                <span class="checkbox-checkmark"></span>
+                                                <span class="checkbox-label">${checked ? 'Enabled' : 'Disabled'}</span>
+                                            </label>
+                                        `;
+                                    } else if (enumFields[setting.key]) {
+                                        // Use dropdown for enum fields
+                                        const options = enumFields[setting.key].map(opt =>
+                                            `<option value="${opt}" ${setting.value === opt ? 'selected' : ''}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`
+                                        ).join('');
                                         inputHtml = `
                                             <select class="form-input" data-key="${setting.key}" onchange="markSettingChanged('${setting.key}')">
-                                                <option value="true" ${setting.value === 'true' ? 'selected' : ''}>✓ Enabled</option>
-                                                <option value="false" ${setting.value === 'false' ? 'selected' : ''}>✗ Disabled</option>
+                                                ${options}
                                             </select>
                                         `;
+                                    } else if (isPassword) {
+                                        // Use password input for password fields
+                                        inputHtml = `
+                                            <input type="password" class="form-input" data-key="${setting.key}"
+                                                   value="${setting.value}" placeholder="••••••••" onchange="markSettingChanged('${setting.key}')">
+                                        `;
                                     } else if (isNumber) {
+                                        // Use number input for numeric fields
                                         inputHtml = `
                                             <input type="number" class="form-input" data-key="${setting.key}"
-                                                   value="${setting.value}" onchange="markSettingChanged('${setting.key}')">
+                                                   value="${setting.value}" min="0" onchange="markSettingChanged('${setting.key}')">
                                         `;
                                     } else {
+                                        // Default to text input
                                         inputHtml = `
                                             <input type="text" class="form-input" data-key="${setting.key}"
                                                    value="${setting.value}" onchange="markSettingChanged('${setting.key}')">
@@ -966,6 +1000,40 @@
             }
         }
 
+        // Helper function to format relative time (for next_run)
+        function formatRelativeTime(dateStr) {
+            if (!dateStr) return 'N/A';
+            const now = new Date();
+            const target = new Date(dateStr);
+            const diff = target - now;
+
+            if (diff < 0) return 'Overdue';
+
+            const mins = Math.floor(diff / 60000);
+            const hours = Math.floor(mins / 60);
+            const days = Math.floor(hours / 24);
+
+            if (days > 0) return `in ${days}d ${hours % 24}h`;
+            if (hours > 0) return `in ${hours}h ${mins % 60}m`;
+            return `in ${mins}m`;
+        }
+
+        // Helper function to format interval seconds to readable format
+        function formatInterval(seconds) {
+            if (!seconds || seconds === 0) return 'N/A';
+
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            const weeks = Math.floor(days / 7);
+
+            if (weeks > 0) return `${weeks} week${weeks > 1 ? 's' : ''}`;
+            if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+            if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+            if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+            return `${seconds} second${seconds > 1 ? 's' : ''}`;
+        }
+
         // Scheduled Tasks Management
         async function loadScheduledTasks() {
             try {
@@ -992,19 +1060,29 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${tasks.map(task => `
+                            ${tasks.map(task => {
+                                const lastRun = task.last_run ? new Date(task.last_run).toLocaleString() : 'Never';
+                                const nextRun = task.next_run ? new Date(task.next_run).toLocaleString() : 'N/A';
+                                const countdown = task.next_run ? formatRelativeTime(task.next_run) : 'N/A';
+                                const intervalDisplay = task.interval_seconds ? formatInterval(task.interval_seconds) : (task.interval || 'N/A');
+
+                                return `
                                 <tr style="border-bottom: 1px solid var(--dracula-comment);">
                                     <td style="padding: 1rem; font-family: monospace; color: var(--dracula-cyan);">${task.name}</td>
-                                    <td style="padding: 1rem;">${task.interval || 'N/A'}</td>
+                                    <td style="padding: 1rem;">${intervalDisplay}</td>
                                     <td style="padding: 1rem;">
                                         <span style="background: ${task.running ? 'var(--dracula-green)' : 'var(--dracula-comment)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">
                                             ${task.running ? 'Running' : 'Idle'}
                                         </span>
                                     </td>
-                                    <td style="padding: 1rem; font-size: 0.9rem;">${task.last_run ? new Date(task.last_run).toLocaleString() : 'Never'}</td>
-                                    <td style="padding: 1rem; font-size: 0.9rem;">${task.next_run ? new Date(task.next_run).toLocaleString() : 'N/A'}</td>
+                                    <td style="padding: 1rem; font-size: 0.9rem;">${lastRun}</td>
+                                    <td style="padding: 1rem;">
+                                        <div style="font-size: 0.9rem;">${nextRun}</div>
+                                        ${countdown !== 'N/A' ? `<div style="font-size: 0.8rem; color: var(--dracula-cyan); margin-top: 0.25rem;">${countdown}</div>` : ''}
+                                    </td>
                                 </tr>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 `;
@@ -1020,5 +1098,8 @@
             Notifications.startPolling(30000); // Poll every 30 seconds
         }
     </script>
+    </div>
+
+    {{template "footer" .}}
 </body>
 </html>

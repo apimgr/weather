@@ -16,9 +16,9 @@ type AdminSettingsHandler struct {
 // GetAllSettings returns all settings
 func (h *AdminSettingsHandler) GetAllSettings(c *gin.Context) {
 	rows, err := h.DB.Query(`
-		SELECT key, value, type, category, description
+		SELECT key, value, type, COALESCE(description, '') as description
 		FROM settings
-		ORDER BY category, key
+		ORDER BY key
 	`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -32,9 +32,20 @@ func (h *AdminSettingsHandler) GetAllSettings(c *gin.Context) {
 	categories := make(map[string][]gin.H)
 
 	for rows.Next() {
-		var key, value, typ, category, description string
-		if err := rows.Scan(&key, &value, &typ, &category, &description); err != nil {
+		var key, value, typ, description string
+		if err := rows.Scan(&key, &value, &typ, &description); err != nil {
 			continue
+		}
+
+		// Extract category from key prefix (e.g., "smtp.host" → "smtp")
+		category := "other"
+		if idx := len(key); idx > 0 {
+			for i, ch := range key {
+				if ch == '.' {
+					category = key[:i]
+					break
+				}
+			}
 		}
 
 		// Parse value based on type

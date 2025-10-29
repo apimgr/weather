@@ -88,6 +88,12 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		}
 		if locName, err := c.Cookie("user_location_name"); err == nil {
 			locationName = locName
+			// Re-resolve the location to get full data
+			clientIP := utils.GetClientIP(c)
+			coords, err := h.weatherService.ParseAndResolveLocation(locationName, clientIP)
+			if err == nil {
+				locationCoords = coords
+			}
 		}
 	}
 
@@ -276,6 +282,12 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		}
 		if locName, err := c.Cookie("user_location_name"); err == nil {
 			locationName = locName
+			// Re-resolve the location to get full data
+			clientIP := utils.GetClientIP(c)
+			coords, err := h.weatherService.ParseAndResolveLocation(locationName, clientIP)
+			if err == nil {
+				locationCoords = coords
+			}
 		}
 	}
 

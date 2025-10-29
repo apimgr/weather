@@ -1,27 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.title}} - {{.server.Title}}</title>
-    <link rel="stylesheet" href="/static/css/dracula.css">
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-left">
-            <a href="/" class="nav-brand">🌤️ {{.server.Title}}</a>
-            <a href="/user/dashboard" class="nav-link">Dashboard</a>
-            <a href="/admin" class="nav-link">Admin</a>
-        </div>
-        <div class="nav-right">
-            <button class="icon-button" onclick="Notifications.fetch()">
-                <span class="notification-bell">🔔</span>
-                <span class="notification-badge" id="notificationBadge" class="display-none">0</span>
-            </button>
-            <div class="profile-avatar">{{ index .user.Email 0 | printf "%c" | upper }}</div>
-        </div>
-    </nav>
+{{template "head" .}}
+
+{{template "navbar" .}}
 
     <!-- Main Content -->
     <main class="container">
@@ -346,5 +325,5 @@
             Notifications.startPolling(60000); // Poll every minute
         });
     </script>
-</body>
-</html>
+
+{{template "footer" .}}

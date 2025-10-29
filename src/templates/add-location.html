@@ -1,12 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .title }}</title>
-    <link rel="stylesheet" href="/static/css/dracula.css">
-    <script src="/static/js/app.js" defer></script>
-    <style>
+{{template "head" .}}
+<style>
         .container {
             max-width: 800px;
             margin: 2rem auto;
@@ -114,66 +107,8 @@
             margin-bottom: var(--space-lg);
         }
     </style>
-</head>
-<body>
-    <!-- Unified Navigation Bar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="navbar-brand">
-                🌤️ Weather Service
-            </a>
-            <div class="navbar-menu">
-                <a href="/" class="navbar-link">Weather</a>
-                <a href="/moon" class="navbar-link">Moon</a>
-                <a href="/earthquake" class="navbar-link">Earthquakes</a>
-                <a href="/hurricane" class="navbar-link">Hurricanes</a>
-                <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
-                {{ if eq .user.Role "admin" }}
-                <a href="/admin" class="navbar-link">Admin</a>
-                {{ end }}
-            </div>
-            <div class="navbar-actions">
-                <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
-                    🔔
-                    <span class="notification-badge" id="notification-badge" class="display-none">0</span>
-                </button>
-                <div class="profile-avatar">
-                    <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
-                        {{ if .user.Email }}
-                            {{ index .user.Email 0 | printf "%c" | upper }}
-                        {{ else }}
-                            U
-                        {{ end }}
-                    </div>
-                    <div class="profile-dropdown" id="profile-dropdown">
-                        <div class="profile-dropdown-header">
-                            <div>{{ .user.Email }}</div>
-                            <div class="profile-dropdown-role">{{ .user.Role }}</div>
-                        </div>
-                        <nav class="profile-dropdown-menu">
-                            <a href="/user/preferences" class="profile-dropdown-item">⚙️ Preferences</a>
-                            <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
-                            <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
-                            <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
-                        </nav>
-                    </div>
-                </div>
-                <button class="navbar-toggle" onclick="MobileMenu.toggle()" aria-label="Menu">
-                    ☰
-                </button>
-            </div>
-        </div>
-        <div class="navbar-menu-mobile">
-            <a href="/" class="navbar-link">Weather</a>
-            <a href="/moon" class="navbar-link">Moon</a>
-            <a href="/earthquake" class="navbar-link">Earthquakes</a>
-            <a href="/hurricane" class="navbar-link">Hurricanes</a>
-            <a href="/user/dashboard" class="navbar-link active">Dashboard</a>
-            {{ if eq .user.Role "admin" }}
-            <a href="/admin" class="navbar-link">Admin</a>
-            {{ end }}
-        </div>
-    </nav>
+
+{{template "navbar" .}}
 
     <div class="container">
         <div style="margin-bottom: 2rem;">
@@ -512,5 +447,5 @@
             Notifications.startPolling(30000);
         }
     </script>
-</body>
-</html>
+
+{{template "footer" .}}
