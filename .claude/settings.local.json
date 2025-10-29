@@ -3,7 +3,8 @@
     "allow": [
       "Bash(make build:*)",
       "Bash(for:*)",
-      "Bash(do head -20 \"$file\")"
+      "Bash(do head -20 \"$file\")",
+      "Bash(make docker-dev:*)"
     ],
     "deny": [],
     "ask": []

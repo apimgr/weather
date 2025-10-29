@@ -135,6 +135,18 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 	}
 
 	locationInput := strings.TrimPrefix(c.Request.URL.Path, "/")
+	// URL decode: convert + to space (standard URL encoding)
+	locationInput = strings.ReplaceAll(locationInput, "+", " ")
+
+	// Remove common country suffixes from URLs (e.g., ", US", ", United States")
+	// This handles cases where users include country in the URL
+	countrySuffixes := []string{", US", ", United States", ", UK", ", United Kingdom", ", CA", ", Canada"}
+	for _, suffix := range countrySuffixes {
+		if strings.HasSuffix(locationInput, suffix) {
+			locationInput = strings.TrimSuffix(locationInput, suffix)
+			break
+		}
+	}
 
 	// Handle special endpoints
 	if h.handleSpecialEndpoints(c, locationInput) {

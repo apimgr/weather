@@ -366,29 +366,29 @@ func (le *LocationEnhancer) buildShortName(location *EnhancedLocation) string {
 	if countryCode == "US" && location.Admin1 != "" {
 		// Check if Admin1 is already a 2-letter state code
 		if len(location.Admin1) == 2 && strings.ToUpper(location.Admin1) == location.Admin1 {
-			return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
+			return fmt.Sprintf("%s, %s", city, location.Admin1)
 		}
 		// Otherwise, try to get abbreviation from full state name
 		stateAbbrev := le.getStateAbbreviation(location.Admin1)
 		if stateAbbrev != "" {
-			return fmt.Sprintf("%s, %s, %s", city, stateAbbrev, countryCode)
+			return fmt.Sprintf("%s, %s", city, stateAbbrev)
 		}
 		// If we have state but no abbreviation, use full state name
-		return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
+		return fmt.Sprintf("%s, %s", city, location.Admin1)
 	}
 
 	// For Canadian locations, use province abbreviation if available
 	if countryCode == "CA" && location.Admin1 != "" {
 		// Check if Admin1 is already a 2-letter province code
 		if len(location.Admin1) == 2 && strings.ToUpper(location.Admin1) == location.Admin1 {
-			return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
+			return fmt.Sprintf("%s, %s", city, location.Admin1)
 		}
 		provinceAbbrev := le.getProvinceAbbreviation(location.Admin1)
 		if provinceAbbrev != "" {
-			return fmt.Sprintf("%s, %s, %s", city, provinceAbbrev, countryCode)
+			return fmt.Sprintf("%s, %s", city, provinceAbbrev)
 		}
 		// If we have province but no abbreviation, use full province name
-		return fmt.Sprintf("%s, %s, %s", city, location.Admin1, countryCode)
+		return fmt.Sprintf("%s, %s", city, location.Admin1)
 	}
 
 	// If countryCode is empty, try to infer from Admin1 or default
