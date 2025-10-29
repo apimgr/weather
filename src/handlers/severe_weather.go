@@ -49,6 +49,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 	// Parse coordinates from location or get from persistent storage
 	var latitude, longitude float64
 	var locationName string
+	var locationCoords *services.Coordinates
 
 	if locationParam != "" {
 		// Try to parse as coordinates first
@@ -58,14 +59,17 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 			longitude = lon
 			locationName = fmt.Sprintf("%.4f, %.4f", latitude, longitude)
 		} else {
-			// Try to geocode the location - create a basic Coordinates struct
-			coords := &services.Coordinates{Name: locationParam}
-			location := h.locationEnhancer.EnhanceLocation(coords)
-			latitude = location.Latitude
-			longitude = location.Longitude
-			locationName = location.ShortName
-			if locationName == "" {
-				locationName = location.Name
+			// Geocode the location using weather service (proper resolution)
+			clientIP := utils.GetClientIP(c)
+			coords, err := h.weatherService.ParseAndResolveLocation(locationParam, clientIP)
+			if err == nil {
+				locationCoords = coords
+				latitude = coords.Latitude
+				longitude = coords.Longitude
+				locationName = coords.ShortName
+				if locationName == "" {
+					locationName = coords.Name
+				}
 			}
 		}
 	}
@@ -92,6 +96,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		clientIP := utils.GetClientIP(c)
 		coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
 		if err == nil {
+			locationCoords = coords
 			enhanced := h.locationEnhancer.EnhanceLocation(coords)
 			latitude = enhanced.Latitude
 			longitude = enhanced.Longitude
@@ -145,13 +150,20 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		// Create Location object for uniform display
 		var locationData interface{}
 		if latitude != 0 || longitude != 0 {
-			coords := services.Coordinates{
-				Latitude:  latitude,
-				Longitude: longitude,
-				Name:      locationName,
-				ShortName: locationName,
+			// Use the full locationCoords if available, otherwise create minimal coords
+			var enhanced *services.Coordinates
+			if locationCoords != nil {
+				enhanced = locationCoords
+			} else {
+				// Create minimal coords and enhance
+				coords := &services.Coordinates{
+					Latitude:  latitude,
+					Longitude: longitude,
+					Name:      locationName,
+					ShortName: locationName,
+				}
+				enhanced = h.locationEnhancer.EnhanceLocation(coords)
 			}
-			enhanced := h.locationEnhancer.EnhanceLocation(&coords)
 
 			// Format population with commas
 			popFormatted := ""
@@ -165,6 +177,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 					"ShortName":           enhanced.ShortName,
 					"NameEncoded":         strings.ReplaceAll(enhanced.ShortName, " ", "+"),
 					"Country":             enhanced.Country,
+					"CountryCode":         enhanced.CountryCode,
 					"Latitude":            latitude,
 					"Longitude":           longitude,
 					"Timezone":            enhanced.Timezone,
@@ -224,6 +237,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	// Parse location if provided
 	var latitude, longitude float64
 	var locationName string
+	var locationCoords *services.Coordinates
 
 	if locationParam != "" {
 		// Try to parse as coordinates first
@@ -233,14 +247,17 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 			longitude = lon
 			locationName = fmt.Sprintf("%.4f, %.4f", latitude, longitude)
 		} else {
-			// Try to geocode the location
-			coords := &services.Coordinates{Name: locationParam}
-			location := h.locationEnhancer.EnhanceLocation(coords)
-			latitude = location.Latitude
-			longitude = location.Longitude
-			locationName = location.ShortName
-			if locationName == "" {
-				locationName = location.Name
+			// Geocode the location using weather service (proper resolution)
+			clientIP := utils.GetClientIP(c)
+			coords, err := h.weatherService.ParseAndResolveLocation(locationParam, clientIP)
+			if err == nil {
+				locationCoords = coords
+				latitude = coords.Latitude
+				longitude = coords.Longitude
+				locationName = coords.ShortName
+				if locationName == "" {
+					locationName = coords.Name
+				}
 			}
 		}
 	}
@@ -267,6 +284,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		clientIP := utils.GetClientIP(c)
 		coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
 		if err == nil {
+			locationCoords = coords
 			enhanced := h.locationEnhancer.EnhanceLocation(coords)
 			latitude = enhanced.Latitude
 			longitude = enhanced.Longitude
@@ -340,13 +358,20 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		// Create Location object for uniform display
 		var locationData interface{}
 		if latitude != 0 || longitude != 0 {
-			coords := services.Coordinates{
-				Latitude:  latitude,
-				Longitude: longitude,
-				Name:      locationName,
-				ShortName: locationName,
+			// Use the full locationCoords if available, otherwise create minimal coords
+			var enhanced *services.Coordinates
+			if locationCoords != nil {
+				enhanced = locationCoords
+			} else {
+				// Create minimal coords and enhance
+				coords := &services.Coordinates{
+					Latitude:  latitude,
+					Longitude: longitude,
+					Name:      locationName,
+					ShortName: locationName,
+				}
+				enhanced = h.locationEnhancer.EnhanceLocation(coords)
 			}
-			enhanced := h.locationEnhancer.EnhanceLocation(&coords)
 
 			// Format population with commas
 			popFormatted := ""
@@ -360,6 +385,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 					"ShortName":           enhanced.ShortName,
 					"NameEncoded":         strings.ReplaceAll(enhanced.ShortName, " ", "+"),
 					"Country":             enhanced.Country,
+					"CountryCode":         enhanced.CountryCode,
 					"Latitude":            latitude,
 					"Longitude":           longitude,
 					"Timezone":            enhanced.Timezone,
@@ -411,11 +437,13 @@ func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 			latitude = lat
 			longitude = lon
 		} else {
-			// Try to geocode
-			coords := &services.Coordinates{Name: locationParam}
-			location := h.locationEnhancer.EnhanceLocation(coords)
-			latitude = location.Latitude
-			longitude = location.Longitude
+			// Geocode using proper resolution
+			clientIP := utils.GetClientIP(c)
+			coords, err := h.weatherService.ParseAndResolveLocation(locationParam, clientIP)
+			if err == nil {
+				latitude = coords.Latitude
+				longitude = coords.Longitude
+			}
 		}
 	}
 
