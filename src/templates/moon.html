@@ -296,7 +296,7 @@
             const dropdown = document.getElementById('moon-autocomplete-dropdown');
             dropdown.innerHTML = '';
 
-            results.slice(0, 15).forEach(result => {
+            results.forEach(result => { // Show all results (scrollable dropdown)
                 const item = document.createElement('div');
                 item.className = 'autocomplete-item';
 

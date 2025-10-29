@@ -565,8 +565,19 @@ func (h *APIHandler) SearchLocations(c *gin.Context) {
 		return
 	}
 
+	// Get limit from query parameter (default 50, max 100)
+	limit := 50
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			if l > 100 {
+				l = 100 // Cap at 100
+			}
+			limit = l
+		}
+	}
+
 	// Search for locations
-	results, err := h.weatherService.SearchLocations(query, 10)
+	results, err := h.weatherService.SearchLocations(query, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": gin.H{
