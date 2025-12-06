@@ -410,6 +410,9 @@ func main() {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"upper": strings.ToUpper,
 		"lower": strings.ToLower,
+		"add": func(a, b int) int {
+			return a + b
+		},
 	}).ParseFS(templatesSubFS, templatePaths...))
 
 	// Debug: Print registered template names
@@ -430,6 +433,9 @@ func main() {
 				t := template.New("").Funcs(template.FuncMap{
 					"upper": strings.ToUpper,
 					"lower": strings.ToLower,
+					"add": func(a, b int) int {
+						return a + b
+					},
 				})
 				// Load all templates including subdirectories
 				// Note: This loads from filesystem, so paths are relative to templates/

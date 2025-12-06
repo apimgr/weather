@@ -43,7 +43,7 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 
 	clientIP := utils.GetClientIP(c)
 	isBrowser := utils.IsBrowser(c)
-	params := utils.ParseWttrParams(c)
+	params := utils.ParseQueryParams(c)
 
 	// Check for location query parameter
 	locationQuery := c.Query("location")
@@ -170,7 +170,7 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 
 	clientIP := utils.GetClientIP(c)
 	isBrowser := utils.IsBrowser(c)
-	params := utils.ParseWttrParams(c)
+	params := utils.ParseQueryParams(c)
 
 	// Parse location
 	coords, err := h.weatherService.ParseAndResolveLocation(locationInput, clientIP)

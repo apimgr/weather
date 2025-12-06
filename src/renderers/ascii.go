@@ -9,7 +9,7 @@ import (
 	"weather-go/src/utils"
 )
 
-// ASCIIRenderer handles full wttr.in-style ASCII art weather display
+// ASCIIRenderer handles ASCII art weather display with terminal formatting
 type ASCIIRenderer struct {
 	width    int
 	noColors bool
@@ -22,7 +22,7 @@ func NewASCIIRenderer() *ASCIIRenderer {
 	}
 }
 
-// RenderFull renders the full wttr.in style weather display
+// RenderFull renders the full weather display with ASCII art
 func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.RenderParams) string {
 	// Set noColors flag for this render
 	r.noColors = params.NoColors
@@ -43,9 +43,11 @@ func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.Rend
 		lines = append(lines, "")
 		lines = append(lines, "") // Extra spacing before forecast table
 
-		// Render forecast table with specified number of days
+		// If Width is specified, let renderForecastTable handle adaptive sizing
+		// Otherwise, respect params.Days
 		forecastDays := weather.Forecast
-		if len(forecastDays) > params.Days {
+		if params.Width == 0 && len(forecastDays) > params.Days {
+			// Only limit by params.Days if width is not specified
 			forecastDays = forecastDays[:params.Days]
 		}
 		lines = append(lines, r.renderForecastTable(forecastDays, params)...)
@@ -115,7 +117,7 @@ func (r *ASCIIRenderer) getFullLocationName(location utils.LocationData) string 
 		baseName = fmt.Sprintf("%s, %s", location.Name, location.Country)
 	}
 
-	// Append coordinates like wttr.in does
+	// Append coordinates for reference
 	return fmt.Sprintf("%s [%.7f,%.7f]", baseName, location.Latitude, location.Longitude)
 }
 
@@ -148,80 +150,133 @@ func (r *ASCIIRenderer) renderCurrentWeatherArt(current utils.CurrentData, param
 	return lines
 }
 
-// renderForecastTable renders the forecast table
+// renderForecastTable renders the forecast table with adaptive columns
 func (r *ASCIIRenderer) renderForecastTable(forecast []utils.ForecastData, params utils.RenderParams) []string {
 	var lines []string
 
-	days := forecast
-	if len(days) > 3 {
-		days = days[:3]
-	}
-
-	if len(days) == 0 {
+	if len(forecast) == 0 {
 		return []string{"No forecast data available"}
 	}
 
-	// Get first day for header
-	firstDate, _ := time.Parse("2006-01-02", days[0].Date)
-	dayHeader := firstDate.Format("Mon 2 Jan")
-
-	// Calculate dynamic spacing based on date length for perfect alignment
-	_ = 123                // baseTableWidth: Base table without day header
-	dayBoxPadding := (120 - 13) / 2
-
-	// Top day header box - mathematically centered
-	lines = append(lines, strings.Repeat(" ", dayBoxPadding)+r.colorize("┌─────────────┐", "#bd93f9", false)+strings.Repeat(" ", 120-dayBoxPadding-13))
-
-	// Date header row with box drawing
-	// Simplified: just center the day header without complex spacing
-	lines = append(lines,
-		r.colorize("┌──────────────────────────────┬───────────────────────┤", "#bd93f9", false)+
-			" "+r.colorize(dayHeader, "#ff79c6", false)+" "+
-			r.colorize("├───────────────────────┬──────────────────────────────┐", "#bd93f9", false))
-
-	// Time period headers
-	lines = append(lines,
-		r.colorize("│", "#bd93f9", false)+r.colorize("            Morning           ", "#ffb86c", false)+
-			r.colorize("│", "#bd93f9", false)+r.colorize("             Noon      ", "#ffb86c", false)+
-			r.colorize("└──────┬──────┘", "#bd93f9", false)+r.colorize("     Evening           ", "#ffb86c", false)+
-			r.colorize("│", "#bd93f9", false)+r.colorize("             Night            ", "#ffb86c", false)+
-			r.colorize("│", "#bd93f9", false))
-
-	// Data separator
-	lines = append(lines, r.colorize("├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤", "#bd93f9", false))
-
-	// Add each day's forecast
-	for i, day := range days {
-		periods := r.generateDayPeriods(day, params)
-
-		// Each period gets 5 lines of ASCII art + data with colors
-		for lineIndex := 0; lineIndex < 5; lineIndex++ {
-			mornLine := padToWidth(periods.morning[lineIndex], 30)
-			noonLine := padToWidth(periods.noon[lineIndex], 30)
-			evenLine := padToWidth(periods.evening[lineIndex], 30)
-			nightLine := padToWidth(periods.night[lineIndex], 30)
-
-			line := r.colorize("│", "#bd93f9", false) + mornLine +
-				r.colorize("│", "#bd93f9", false) + noonLine +
-				r.colorize("│", "#bd93f9", false) + evenLine +
-				r.colorize("│", "#bd93f9", false) + nightLine +
-				r.colorize("│", "#bd93f9", false)
-			lines = append(lines, line)
-		}
-
-		// Add separator between days (except last)
-		if i < len(days)-1 {
-			lines = append(lines, r.colorize("├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤", "#bd93f9", false))
-			lines = append(lines, "") // Add blank line between days for better readability
-		}
+	// Adaptive day count based on terminal width
+	// Also respect params.Days as an upper bound
+	numDays := r.calculateDaysToShow(params.Width, len(forecast))
+	if params.Days > 0 && params.Days < numDays {
+		numDays = params.Days // User explicitly limited days
+	}
+	days := forecast
+	if len(days) > numDays {
+		days = days[:numDays]
 	}
 
-	lines = append(lines, r.colorize("└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘", "#bd93f9", false))
+	// Column width per time period (Morning, Noon, Evening, Night)
+	// For 120 cols: 4 periods × 30 cols = 120 total
+	colWidth := 30
+	periodsPerDay := 4
+
+	// Render each day as a separate table
+	for dayIndex, day := range days {
+		// Parse date for header
+		date, _ := time.Parse("2006-01-02", day.Date)
+		dayHeader := date.Format("Mon 2 Jan")
+
+		// Day header (centered)
+		headerWidth := periodsPerDay*colWidth + periodsPerDay + 1
+		padding := (headerWidth - len(dayHeader) - 4) / 2
+		lines = append(lines, strings.Repeat(" ", padding)+r.colorize("┌─"+dayHeader+"─┐", "#bd93f9", false))
+
+		// Top border
+		border := r.colorize("┌", "#bd93f9", false)
+		for p := 0; p < periodsPerDay; p++ {
+			border += r.colorize(strings.Repeat("─", colWidth), "#bd93f9", false)
+			if p < periodsPerDay-1 {
+				border += r.colorize("┬", "#bd93f9", false)
+			}
+		}
+		border += r.colorize("┐", "#bd93f9", false)
+		lines = append(lines, border)
+
+		// Time period headers
+		periodNames := []string{"Morning", "Noon", "Evening", "Night"}
+		headerLine := r.colorize("│", "#bd93f9", false)
+		for _, name := range periodNames {
+			headerLine += centerInWidth(r.colorize(name, "#ffb86c", false), colWidth)
+			headerLine += r.colorize("│", "#bd93f9", false)
+		}
+		lines = append(lines, headerLine)
+
+		// Header separator
+		sep := r.colorize("├", "#bd93f9", false)
+		for p := 0; p < periodsPerDay; p++ {
+			sep += r.colorize(strings.Repeat("─", colWidth), "#bd93f9", false)
+			if p < periodsPerDay-1 {
+				sep += r.colorize("┼", "#bd93f9", false)
+			}
+		}
+		sep += r.colorize("┤", "#bd93f9", false)
+		lines = append(lines, sep)
+
+		// Generate period data
+		periods := r.generateDayPeriods(day, params)
+		allPeriods := [][]string{periods.morning, periods.noon, periods.evening, periods.night}
+
+		// Render data rows (all periods have same height)
+		numLines := len(periods.morning)
+		for lineIdx := 0; lineIdx < numLines; lineIdx++ {
+			dataLine := r.colorize("│", "#bd93f9", false)
+			for _, period := range allPeriods {
+				dataLine += padToWidth(period[lineIdx], colWidth)
+				dataLine += r.colorize("│", "#bd93f9", false)
+			}
+			lines = append(lines, dataLine)
+		}
+
+		// Bottom border
+		bottom := r.colorize("└", "#bd93f9", false)
+		for p := 0; p < periodsPerDay; p++ {
+			bottom += r.colorize(strings.Repeat("─", colWidth), "#bd93f9", false)
+			if p < periodsPerDay-1 {
+				bottom += r.colorize("┴", "#bd93f9", false)
+			}
+		}
+		bottom += r.colorize("┘", "#bd93f9", false)
+		lines = append(lines, bottom)
+
+		// Add blank line between days (except last)
+		if dayIndex < len(days)-1 {
+			lines = append(lines, "")
+		}
+	}
 
 	return lines
 }
 
+// calculateDaysToShow determines how many days to show based on terminal width
+func (r *ASCIIRenderer) calculateDaysToShow(termWidth, availableDays int) int {
+	// Default to 3 days if width is not specified or sufficient
+	// Each day needs: 4 periods × 30 cols + 5 borders = 125 cols
+	if termWidth == 0 || termWidth >= 125 {
+		// Wide enough for default 3 days
+		if availableDays >= 3 {
+			return 3
+		}
+		return availableDays
+	}
+
+	// Narrow terminals: show fewer days
+	if termWidth < 80 {
+		return 1 // Very narrow: 1 day only
+	}
+
+	// Medium width: 2 days
+	if availableDays >= 2 {
+		return 2
+	}
+	return availableDays
+}
+
 // generateDayPeriods generates forecast data for different periods of the day
+// IMPORTANT: All periods MUST return exactly the same number of lines for proper alignment
 func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.RenderParams) struct {
 	morning []string
 	noon    []string
@@ -246,20 +301,22 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 	precipProb := 0 // Default if not available
 
 	description := day.Condition
-	// Don't truncate - let centerInWidth handle it
 
-	// Create properly aligned content - each line exactly fits the column
+	// Create properly aligned content - EXACTLY 7 lines per period for perfect alignment
 	createPeriodLines := func(temp, feels int, windMod float64) []string {
 		tempLine := fmt.Sprintf("+%d(%d) %s", temp, feels, tempUnit)
 		windLine := fmt.Sprintf("%s %d %s", windDir, int(math.Max(1, float64(windSpeed)*windMod)), speedUnit)
 		precipLine := fmt.Sprintf("%s %s | %d%%", precipitation, precipUnit, precipProb)
 
+		// EXACTLY 7 lines - NEVER change this count or alignment will break!
 		return []string{
-			centerInWidth(r.colorize(description, "#8be9fd", false), 30),
-			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),
-			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),
-			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),
-			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),
+			centerInWidth("", 30),                                                   // Line 1: blank for spacing
+			centerInWidth(r.colorize(description, "#8be9fd", false), 30),            // Line 2: condition
+			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),               // Line 3: temperature
+			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),               // Line 4: wind
+			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),                 // Line 5: visibility
+			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),             // Line 6: precipitation
+			centerInWidth("", 30),                                                   // Line 7: blank for spacing
 		}
 	}
 

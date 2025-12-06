@@ -72,6 +72,7 @@ type RenderParams struct {
 	NoColors  bool   `json:"noColors"`  // T: no terminal colors
 	Narrow    bool   `json:"narrow"`    // n: narrow output
 	ForceANSI bool   `json:"forceANSI"` // A: force ANSI/terminal
+	Width     int    `json:"width"`     // Terminal width in columns (for adaptive layout)
 }
 
 // Country represents country data

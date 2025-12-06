@@ -1,14 +1,49 @@
+# Weather Service - AI Working Notes
+
+> **Foundation**: This project follows all rules defined in `../TEMPLATE.md` (Non-Negotiable)
+> **Architecture**: TEMPLATE.md provides the base architecture; weather adds domain-specific features
+> **Last Updated**: 2025-12-06
+
+---
+
+## Core Principles (from TEMPLATE.md)
+
+- **TEMPLATE.md is the foundation** - Weather builds on it, doesn't extend it
+- **Docker-first development** - All build/test/debug via Docker
+- **No AI attribution** - Code appears human-written
+- **Production-first** - Default mode is production (optimized, secure)
+- **See TODO.AI.md** for active task tracking (when >2 tasks)
+
+---
+
+## Recent Changes
+
+### 2025-12-06
+
+**Query Parameter Updates:**
+- ✅ Changed days parameter format: `?0`, `?1`, `?2`, `?3` → `?days=N`
+- ✅ Added max capping: `days > 16` automatically caps to 16 (MaxForecastDays)
+- ✅ Negative value handling: `days < 0` becomes 0 (current weather only)
+- ✅ New constant: `MaxForecastDays = 16` in `src/utils/params.go`
+
+**Code Cleanup:**
+- ✅ Removed wttr.in code references (renamed `ParseWttrParams` → `ParseQueryParams`)
+- ✅ Verified metric/imperial support across all templates and renderers
+- ✅ Migrated CLAUDE.md → AI.md per TEMPLATE.md rules
+- ✅ Created TODO.AI.md for task tracking
+
+---
+
 # Weather Service - Technical Specification
 
 **Project Name:** weather
 **Organization:** apimgr
 **Version:** 1.0.0
-**Last Updated:** 2025-10-18
-**SPEC Compliance:** TRUE 100% ✅ (Based on /root/Projects/github/apimgr/SPEC.md v2.0)
+**TEMPLATE.md Compliance:** TRUE 100% ✅
 
 ## Project Overview
 
-Weather Service is a production-grade Go API server providing global weather forecasts, severe weather alerts, earthquake tracking, moon phase information, and hurricane monitoring. Built to the complete specifications defined in SPEC.md with additional weather-specific features.
+Weather Service is a production-grade Go API server providing global weather forecasts, severe weather alerts, earthquake tracking, moon phase information, and hurricane monitoring. Built on TEMPLATE.md foundation with weather-specific features.
 
 ### Operating Modes
 
@@ -61,9 +96,9 @@ Weather Service is a production-grade Go API server providing global weather for
 
 ---
 
-## SPEC.md Compliance (100%)
+## TEMPLATE.md Compliance (100%)
 
-This project implements **all** requirements from `/root/Projects/github/apimgr/SPEC.md` (9,599 lines, Version 2.0):
+This project implements **all** requirements from `/root/Projects/github/apimgr/TEMPLATE.md` (9,599 lines, Version 2.0):
 
 ### ✅ Core Infrastructure
 
@@ -354,6 +389,40 @@ The service accepts multiple location formats:
 - **Coordinates**: `40.7128,-74.0060` (latitude,longitude)
 - **Airport Code**: `JFK` or `LAX`
 - **IP Address**: Automatic detection if no location specified
+
+### Query Parameters
+
+The service supports various query parameters for customizing output:
+
+**Days & Forecast:**
+- `?days=N` - Number of forecast days (0-16, default: 3)
+  - `days=0` - Current weather only
+  - `days=3` - Current + 3 days forecast
+  - `days=20` - Automatically capped to 16 (max available)
+  - Negative values default to 0
+
+**Units:**
+- `?units=metric` or `?m` - Celsius, km/h, mm
+- `?units=imperial` or `?u` - Fahrenheit, mph, inches
+- `?units=auto` - Auto-detect from country (US=imperial, rest=metric)
+
+**Format:**
+- `?format=0` - Full ASCII art with forecast table (default)
+- `?format=1` - Icon + temperature only
+- `?format=2` - Icon + temperature + wind
+- `?format=3` - Location + icon + temperature
+- `?format=4` - Location + icon + temperature + wind
+
+**Display Options:**
+- `?F` - No footer
+- `?n` - Narrow output
+- `?q` - Quiet mode
+- `?Q` - Super quiet mode
+- `?T` - No terminal colors
+- `?A` - Force ANSI output
+
+**Combined Flags:**
+- Combine multiple single-letter flags: `?TFm` = no colors + no footer + metric
 
 ### Severe Weather Features
 
@@ -1248,7 +1317,7 @@ curl -I http://localhost/api/v1/weather?location=London
 ### Current: 1.0.0
 
 **Infrastructure:**
-- Complete SPEC.md compliance (TRUE 100%)
+- Complete TEMPLATE.md compliance (TRUE 100%)
 - Docker images with pre-downloaded GeoIP databases
 - Jenkinsfile for jenkins.casjay.cc
 - GitHub Actions (release.yml + docker.yml)
@@ -1444,7 +1513,7 @@ make clean
 
 **Weather Service - Production-Grade Weather API**
 **Built with ❤️ by apimgr**
-**SPEC.md v2.0 - TRUE 100% Compliant ✅**
+**TEMPLATE.md v2.0 - TRUE 100% Compliant ✅**
 
 **Complete Feature Set:**
 - REST API + OpenAPI/Swagger + GraphQL
