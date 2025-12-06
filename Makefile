@@ -119,16 +119,6 @@ docker:
 	@echo "   $(REGISTRY)/$(PROJECT_NAME):$(VERSION)"
 	@echo "   $(REGISTRY)/$(PROJECT_NAME):latest"
 
-# Build development Docker image (local only)
-docker-dev:
-	@echo "🐳 Building development Docker image..."
-	@docker build \
-		--build-arg VERSION=dev \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
-		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
-		--tag $(PROJECT_NAME):dev .
-	@echo "✅ Development image built: $(PROJECT_NAME):dev"
-
 # Run tests
 test:
 	@echo "🧪 Running tests..."
@@ -154,7 +144,6 @@ help:
 	@echo "  build       - Build for all platforms (binaries/)"
 	@echo "  release     - Create GitHub release (releases/)"
 	@echo "  docker      - Build multi-platform Docker image (amd64,arm64)"
-	@echo "  docker-dev  - Build local development image"
 	@echo "  test        - Run all tests with coverage"
 	@echo "  clean       - Remove build artifacts"
 	@echo "  help        - Show this help"

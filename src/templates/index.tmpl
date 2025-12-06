@@ -10,36 +10,34 @@
     </div>
 
         <!-- Location Search Form - Mobile First -->
-        <form id="weather-form" style="margin: 1rem 0; width: 100%;">
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+        <form id="weather-form" class="weather-form">
+            <div class="weather-form__wrapper">
                 <!-- First row: Location input and units -->
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <div style="position: relative; flex: 1;">
+                <div class="weather-form__row">
+                    <div class="weather-form__input-wrapper">
                         <input
                             type="text"
                             id="location-input"
                             name="location"
-                            class="location-input"
+                            class="location-input weather-form__input"
                             placeholder="Enter city or coordinates"
                             value="{{.Location}}"
-                            style="flex: 1; min-width: 0; width: 100%;"
                             autocomplete="off"
                         >
                         <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
                     </div>
-                    <select name="units" id="units-select" class="location-input" style="flex-shrink: 0; width: 5rem;">
+                    <select name="units" id="units-select" class="location-input weather-form__units">
                         <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
                         <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
                     </select>
                 </div>
 
                 <!-- Second row: Buttons -->
-                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                    <button type="submit" class="search-button" style="flex: 1;">
+                <div class="weather-form__button-row">
+                    <button type="submit" class="search-button weather-form__button">
                         🌤️ Get Weather
                     </button>
-                    <button type="button" id="location-btn" class="search-button"
-                            style="flex: 1; background-color: var(--dracula-cyan);">
+                    <button type="button" id="location-btn" class="search-button weather-form__button--location">
                         📍 My Location
                     </button>
                 </div>
@@ -48,25 +46,25 @@
 
         {{if .WeatherData}}
             <!-- Location Details Section -->
-            <div class="location-details-section" style="margin: 1.5rem 0; padding: 1rem; background-color: var(--dracula-bg); border-radius: 0.5rem; border: 1px solid var(--dracula-current-line);">
+            <div class="location-details-section">
                 <div class="location-info">
                     <!-- Always show location name -->
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
+                    <div class="location-detail">
                         📍 <strong class="text-cyan">Location:</strong>
-                        <span style="color: var(--dracula-yellow);">{{if .WeatherData.Location.ShortName}}{{.WeatherData.Location.ShortName}}{{else}}{{.WeatherData.Location.Name}}, {{.WeatherData.Location.Country}}{{end}}</span>
+                        <span class="location-detail-value--yellow">{{if .WeatherData.Location.ShortName}}{{.WeatherData.Location.ShortName}}{{else}}{{.WeatherData.Location.Name}}, {{.WeatherData.Location.Country}}{{end}}</span>
                     </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
+                    <div class="location-detail">
                         🌍 <strong class="text-cyan">Country:</strong>
-                        <span style="color: var(--dracula-green);">{{.WeatherData.Location.Country}}</span>
+                        <span class="location-detail-value--green">{{.WeatherData.Location.Country}}</span>
                     </div>
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
+                    <div class="location-detail">
                         🗺️ <strong class="text-cyan">Coordinates:</strong>
                         <span class="text-pink">{{.WeatherData.Location.Latitude}}, {{.WeatherData.Location.Longitude}}</span>
                     </div>
                     {{if .WeatherData.Location.Population}}
-                    <div class="location-detail" style="margin: 0.5rem 0; font-size: 0.875rem;">
+                    <div class="location-detail">
                         👥 <strong class="text-cyan">Population:</strong>
-                        <span style="color: var(--dracula-orange);">{{.WeatherData.Location.PopulationFormatted}}</span>
+                        <span class="location-detail-value--orange">{{.WeatherData.Location.PopulationFormatted}}</span>
                     </div>
                     {{end}}
                 </div>
@@ -74,7 +72,7 @@
         {{end}}
 
         {{if .Error}}
-            <div style="background-color: var(--dracula-red); color: var(--dracula-bg); padding: 10px; border-radius: 6px; margin: 20px 0;">
+            <div class="error-message-box">
                 <strong>Error:</strong> {{.Error}}
             </div>
         {{end}}
@@ -124,13 +122,13 @@
                                 {{$day.Icon}} {{$day.Description}}
                             </td>
                             <td class="forecast-temp">
-                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
-                                <span class="text-cyan">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                <span class="forecast-temp-high">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                <span class="forecast-temp-low">↓{{printf "%.0f" $day.TempMin}}°</span>
                                 {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                             </td>
-                            <td style="color: var(--dracula-comment); font-size: 0.875rem;">
-                                <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
-                                <span class="text-cyan">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
+                            <td class="forecast-feels-like">
+                                <span class="forecast-temp-high">↑{{printf "%.0f" $day.FeelsLikeMax}}°</span>
+                                <span class="forecast-temp-low">↓{{printf "%.0f" $day.FeelsLikeMin}}°</span>
                             </td>
                             <td class="wind-info">{{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</td>
                             <td class="precipitation">{{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</td>
@@ -152,12 +150,12 @@
                                 <div class="forecast-main">
                                     <span class="forecast-icon">{{$day.Icon}}</span>
                                     <span class="forecast-temp">
-                                        <span style="color: var(--dracula-orange);">↑{{printf "%.0f" $day.TempMax}}°</span>
-                                        <span class="text-cyan">↓{{printf "%.0f" $day.TempMin}}°</span>
+                                        <span class="forecast-temp-high">↑{{printf "%.0f" $day.TempMax}}°</span>
+                                        <span class="forecast-temp-low">↓{{printf "%.0f" $day.TempMin}}°</span>
                                         {{if eq $.Units "imperial"}}F{{else}}C{{end}}
                                     </span>
                                 </div>
-                                <div class="forecast-details" style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                                <div class="forecast-details-mobile">
                                     <div>{{$day.Description}}</div>
                                     <div class="wind-info">💨 {{printf "%.0f" $day.WindSpeedMax}} {{if eq $.Units "imperial"}}mph{{else}}km/h{{end}}</div>
                                     <div class="precipitation">☔ {{printf "%.1f" $day.Precipitation}} {{if eq $.Units "imperial"}}in{{else}}mm{{end}} ({{$day.PrecipitationProbability}}%)</div>
@@ -173,44 +171,44 @@
             </div>
 
             <!-- Console Command Examples -->
-            <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-bg); border-radius: 6px;">
-                <h3 style="color: var(--dracula-purple); text-align: center; margin-top: 0;">Console Access</h3>
+            <div class="console-container">
+                <h3 class="console-title">Console Access</h3>
                 <div class="console-commands">
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Weather:</strong>
+                        <strong class="console-label">Weather:</strong>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}</code>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">One-Line:</strong>
+                        <strong class="console-label">One-Line:</strong>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/{{.LocationFormatted}}?format=3</code>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Moon:</strong>
+                        <strong class="console-label">Moon:</strong>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon</code>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">Moon Location:</strong>
+                        <strong class="console-label">Moon Location:</strong>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/moon/{{.LocationFormatted}}</code>
                     </div>
                     <div class="command-item">
-                        <strong style="color: var(--dracula-green);">JSON API:</strong>
+                        <strong class="console-label">JSON API:</strong>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location={{.LocationFormatted}}</code>
                     </div>
                 </div>
             </div>
         {{else}}
-            <div style="text-align: center; color: var(--dracula-comment); margin: 30px 0;">
-                <h2 style="color: var(--dracula-cyan); font-size: 18px; margin-bottom: 15px;">Welcome to Weather</h2>
-                <p style="font-size: 14px; margin-bottom: 20px;">Your location has been detected and pre-filled above. Try these examples:</p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
+            <div class="welcome-container">
+                <h2 class="welcome-title">Welcome to Weather</h2>
+                <p class="welcome-text">Your location has been detected and pre-filled above. Try these examples:</p>
+                <div class="city-grid">
                     <a href="?location=London" class="city-link">🇬🇧 London</a>
                     <a href="?location=Tokyo" class="city-link">🇯🇵 Tokyo</a>
                     <a href="?location=Paris" class="city-link">🇫🇷 Paris</a>
                     <a href="?location=Sydney" class="city-link">🇦🇺 Sydney</a>
                 </div>
 
-                <div style="margin-top: 30px; padding: 20px; background-color: var(--dracula-current-line); border-radius: 6px;">
-                    <h4 style="color: var(--dracula-green);">Console Access:</h4>
+                <div class="city-grid-container">
+                    <h4 class="city-grid-title">Console Access:</h4>
                     <div class="console-commands">
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/London</code>
                         <code class="mobile-code">curl -q -LSs {{.HostInfo.FullHost}}/api/v1/weather?location=Paris</code>
@@ -220,13 +218,13 @@
         {{end}}
 
         {{if not .HideFooter}}
-        <div class="footer" style="text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 1px solid var(--dracula-current-line); color: var(--dracula-comment);">
-            <p style="margin: 0; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
-                <a href="https://github.com/apimgr/weather" target="_blank" style="color: var(--dracula-cyan); text-decoration: none;">Weather</a>
-                <span class="text-pink">•</span>
-                <span>Made with <span class="text-error">❤️</span></span>
-                <span class="text-pink">•</span>
-                <a href="/docs" style="color: var(--dracula-green); text-decoration: none;">v2.0.0</a>
+        <div class="page-footer-main">
+            <p class="page-footer-text">
+                <a href="https://github.com/apimgr/weather" target="_blank" class="page-footer-link">Weather</a>
+                <span class="page-footer-divider">•</span>
+                <span>Made with <span class="page-footer-heart">❤️</span></span>
+                <span class="page-footer-divider">•</span>
+                <a href="/docs" class="page-footer-link--green">v2.0.0</a>
             </p>
         </div>
         {{end}}
@@ -373,7 +371,7 @@
 
                 // Show error in a more user-friendly way
                 const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = 'background: #ff5555; color: #282a36; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: center;';
+                errorDiv.className = 'js-error-display-red';
                 errorDiv.textContent = userMessage + '. Please enter a location manually.';
 
                 const form = document.querySelector('form');
@@ -426,7 +424,7 @@
                     // Show helpful message about already detected location
                     const currentLocation = document.querySelector('input[name="location"]').value || 'your approximate location';
                     const errorDiv = document.createElement('div');
-                    errorDiv.style.cssText = 'background: #ffb86c; color: #282a36; padding: 0.75rem; border-radius: 0.375rem; margin: 0.5rem 0; text-align: center; font-size: 0.875rem;';
+                    errorDiv.className = 'js-error-display-orange';
                     errorDiv.innerHTML = `📍 Location detection not available on this device.<br>The form above is pre-filled with: <strong>${currentLocation}</strong>`;
 
                     const form = document.querySelector('form');

@@ -11,10 +11,14 @@ import (
 
 // Logger handles application logging to both stdout and files
 type Logger struct {
-	accessLog *log.Logger
-	errorLog  *log.Logger
-	auditLog  *log.Logger
-	logDir    string
+	accessLog   *log.Logger
+	serverLog   *log.Logger
+	errorLog    *log.Logger
+	auditLog    *log.Logger
+	securityLog *log.Logger
+	debugLog    *log.Logger
+	logDir      string
+	isDebug     bool
 }
 
 // NewLogger creates a new logger instance
@@ -24,8 +28,12 @@ func NewLogger(logDir string) (*Logger, error) {
 		return nil, fmt.Errorf("failed to create log directory: %w", err)
 	}
 
+	// Check if debug mode
+	isDebug := os.Getenv("MODE") == "development" || os.Getenv("DEBUG") == "1"
+
 	l := &Logger{
-		logDir: logDir,
+		logDir:  logDir,
+		isDebug: isDebug,
 	}
 
 	// Open log files
@@ -38,6 +46,16 @@ func NewLogger(logDir string) (*Logger, error) {
 		return nil, fmt.Errorf("failed to open access.log: %w", err)
 	}
 
+	serverFile, err := os.OpenFile(
+		filepath.Join(logDir, "server.log"),
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+	if err != nil {
+		accessFile.Close()
+		return nil, fmt.Errorf("failed to open server.log: %w", err)
+	}
+
 	errorFile, err := os.OpenFile(
 		filepath.Join(logDir, "error.log"),
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
@@ -45,6 +63,7 @@ func NewLogger(logDir string) (*Logger, error) {
 	)
 	if err != nil {
 		accessFile.Close()
+		serverFile.Close()
 		return nil, fmt.Errorf("failed to open error.log: %w", err)
 	}
 
@@ -55,13 +74,33 @@ func NewLogger(logDir string) (*Logger, error) {
 	)
 	if err != nil {
 		accessFile.Close()
+		serverFile.Close()
 		errorFile.Close()
 		return nil, fmt.Errorf("failed to open audit.log: %w", err)
+	}
+
+	securityFile, err := os.OpenFile(
+		filepath.Join(logDir, "security.log"),
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+	if err != nil {
+		accessFile.Close()
+		serverFile.Close()
+		errorFile.Close()
+		auditFile.Close()
+		return nil, fmt.Errorf("failed to open security.log: %w", err)
 	}
 
 	// Create loggers that write to both file and stdout
 	l.accessLog = log.New(
 		io.MultiWriter(accessFile, os.Stdout),
+		"",
+		0,
+	)
+
+	l.serverLog = log.New(
+		io.MultiWriter(serverFile, os.Stdout),
 		"",
 		0,
 	)
@@ -77,6 +116,28 @@ func NewLogger(logDir string) (*Logger, error) {
 		"",
 		0,
 	)
+
+	l.securityLog = log.New(
+		securityFile, // Security only to file, not stdout
+		"",
+		0,
+	)
+
+	// Debug log only in debug mode
+	if isDebug {
+		debugFile, err := os.OpenFile(
+			filepath.Join(logDir, "debug.log"),
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+			0644,
+		)
+		if err == nil {
+			l.debugLog = log.New(
+				io.MultiWriter(debugFile, os.Stdout),
+				"",
+				0,
+			)
+		}
+	}
 
 	return l, nil
 }
@@ -119,6 +180,28 @@ func (l *Logger) Access(ip, user, method, path, protocol string, status int, siz
 		ip, user, timestamp, method, path, protocol, status, size, referer, userAgent,
 	)
 	l.accessLog.Println(entry)
+}
+
+// Server logs a server event
+func (l *Logger) Server(format string, v ...interface{}) {
+	msg := fmt.Sprintf(format, v...)
+	l.serverLog.Printf("[%s] [SERVER] %s", time.Now().Format("2006-01-02 15:04:05"), msg)
+}
+
+// Security logs a security event (fail2ban format)
+func (l *Logger) Security(ip, event, details string) {
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	// fail2ban compatible format
+	entry := fmt.Sprintf("[%s] %s from %s: %s", timestamp, event, ip, details)
+	l.securityLog.Println(entry)
+}
+
+// Debug logs a debug message (only in development mode)
+func (l *Logger) Debug(format string, v ...interface{}) {
+	if l.isDebug && l.debugLog != nil {
+		msg := fmt.Sprintf(format, v...)
+		l.debugLog.Printf("[%s] [DEBUG] %s", time.Now().Format("2006-01-02 15:04:05"), msg)
+	}
 }
 
 // Audit logs an audit entry (JSON format)

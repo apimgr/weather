@@ -39,7 +39,7 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "login.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "login.tmpl", utils.TemplateData(c, gin.H{
 		"title": "Login",
 	}))
 }
@@ -56,7 +56,7 @@ func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 	userModel := &models.UserModel{DB: h.DB}
 	count, err := userModel.Count()
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "error.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusInternalServerError, "error.tmpl", utils.TemplateData(c, gin.H{
 			"error": "Database error",
 		}))
 		return
@@ -64,7 +64,7 @@ func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 
 	isSetup := count == 0
 
-	c.HTML(http.StatusOK, "register.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "register.tmpl", utils.TemplateData(c, gin.H{
 		"title":   "Register",
 		"isSetup": isSetup,
 	}))
@@ -357,18 +357,18 @@ func respondWithError(c *gin.Context, statusCode int, message string) {
 		path := c.Request.URL.Path
 
 		if strings.Contains(path, "login") {
-			c.HTML(statusCode, "login.html", utils.TemplateData(c, gin.H{
+			c.HTML(statusCode, "login.tmpl", utils.TemplateData(c, gin.H{
 				"title": "Login",
 				"error": message,
 			}))
 		} else if strings.Contains(path, "register") {
-			c.HTML(statusCode, "register.html", utils.TemplateData(c, gin.H{
+			c.HTML(statusCode, "register.tmpl", utils.TemplateData(c, gin.H{
 				"title": "Register",
 				"error": message,
 			}))
 		} else {
 			// Fallback to error page for other cases
-			c.HTML(statusCode, "error.html", gin.H{
+			c.HTML(statusCode, "error.tmpl", gin.H{
 				"error": message,
 			})
 		}

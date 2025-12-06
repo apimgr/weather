@@ -1,0 +1,6 @@
+#!/bin/sh
+# runit run script for weather service
+# Installed to /etc/sv/weather/run
+
+exec 2>&1
+exec chpst -u weather:weather /usr/local/bin/weather

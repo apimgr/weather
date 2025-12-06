@@ -196,7 +196,7 @@ func (h *NotificationHandler) CreateNotification(userID int, notifType, title, m
 func (h *NotificationHandler) ShowNotificationsPage(c *gin.Context) {
 	userRole := c.GetString("user_role")
 
-	c.HTML(http.StatusOK, "notifications.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "notifications.tmpl", utils.TemplateData(c, gin.H{
 		"IsAdmin": userRole == "admin",
 		"title":   "Notifications",
 		"page":    "notifications",

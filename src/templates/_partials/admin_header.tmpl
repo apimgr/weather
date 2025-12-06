@@ -1,0 +1,22 @@
+{{define "admin_header"}}
+<div class="admin-header">
+    <div class="admin-header-content">
+        <div class="admin-breadcrumbs">
+            <a href="/admin" class="breadcrumb-link">Admin</a>
+            {{if .breadcrumb}}
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">{{.breadcrumb}}</span>
+            {{end}}
+        </div>
+        <h1 class="admin-page-title">{{.title}}</h1>
+        {{if .description}}
+        <p class="admin-page-description">{{.description}}</p>
+        {{end}}
+    </div>
+    {{if .headerActions}}
+    <div class="admin-header-actions">
+        {{.headerActions}}
+    </div>
+    {{end}}
+</div>
+{{end}}

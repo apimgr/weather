@@ -37,7 +37,7 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 		unreadCount = 0
 	}
 
-	c.HTML(http.StatusOK, "dashboard.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "dashboard.tmpl", utils.TemplateData(c, gin.H{
 		"title":         "Dashboard - Weather Service",
 		"user":          user,
 		"locations":     locations,
@@ -65,7 +65,7 @@ func (h *DashboardHandler) ShowAdminPanel(c *gin.Context) {
 	var totalLocations int
 	h.DB.QueryRow("SELECT COUNT(*) FROM saved_locations").Scan(&totalLocations)
 
-	c.HTML(http.StatusOK, "admin.html", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "admin.tmpl", utils.TemplateData(c, gin.H{
 		"title":          "Admin Panel - Weather Service",
 		"user":           user,
 		"totalUsers":     totalUsers,

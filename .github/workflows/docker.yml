@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
-      - develop
+      - master
+      - beta
     tags:
       - 'v*'
+      - '[0-9]*'
   workflow_dispatch:
 
 env:
@@ -47,21 +49,26 @@ jobs:
           BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GIT_COMMIT=$(git rev-parse --short HEAD)
 
-          # Determine tags based on push type
+          # Determine tags based on push type (TEMPLATE.md compliant)
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Push is a tag: :latest, :{tag}, :YYMM
+            # Tag push: version (strip v), latest, GIT_COMMIT, YYMM
             TAG_VERSION=${GITHUB_REF#refs/tags/}
             TAG_VERSION=${TAG_VERSION#v}  # Remove 'v' prefix if present
-            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG_VERSION}"
+            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG_VERSION}"
+            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GIT_COMMIT}"
             TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${DATE_TAG}"
             echo "version=${TAG_VERSION}" >> $GITHUB_OUTPUT
             echo "is_tag=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/heads/beta ]]; then
+            # Beta branch push: beta tag only
+            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:beta"
+            echo "version=beta" >> $GITHUB_OUTPUT
+            echo "is_tag=false" >> $GITHUB_OUTPUT
           else
-            # Regular push (not a tag): :latest, :YYMM
-            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${DATE_TAG}"
-            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            # Regular push (main/master): dev tag only
+            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
+            echo "version=dev" >> $GITHUB_OUTPUT
             echo "is_tag=false" >> $GITHUB_OUTPUT
           fi
 

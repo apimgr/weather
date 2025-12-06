@@ -1,164 +1,8 @@
 {{template "head" .}}
-<style>
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .admin-header {
-            margin-bottom: 2rem;
-        }
-
-        .admin-header h1 {
-            color: var(--dracula-red);
-            margin-bottom: 0.5rem;
-        }
-
-        .admin-badge {
-            display: inline-block;
-            background: var(--dracula-red);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-left: 1rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--dracula-current-line);
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .stat-card h3 {
-            color: var(--dracula-comment);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--dracula-purple);
-        }
-
-        .admin-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--dracula-current-line);
-        }
-
-        .tab {
-            padding: 1rem 2rem;
-            background: none;
-            border: none;
-            color: var(--dracula-comment);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-bottom: 2px solid transparent;
-        }
-
-        .tab:hover {
-            color: var(--dracula-foreground);
-        }
-
-        .tab.active {
-            color: var(--dracula-purple);
-            border-bottom-color: var(--dracula-purple);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .admin-section {
-            background: var(--dracula-current-line);
-            padding: 2rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-header h2 {
-            color: var(--dracula-cyan);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: var(--dracula-purple);
-            color: var(--dracula-bg);
-        }
-
-        .btn-primary:hover {
-            background: var(--dracula-pink);
-        }
-
-        .btn-danger {
-            background: var(--dracula-red);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #cc0000;
-        }
-
-        .placeholder-text {
-            color: var(--dracula-comment);
-            text-align: center;
-            padding: 3rem;
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .navbar-nav {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .admin-tabs {
-                overflow-x: auto;
-            }
-        }
-    </style>
 
 {{template "navbar" .}}
 
-<div class="container">
+<div class="admin-container">
         <div class="admin-header">
             <h1>Admin Panel</h1>
             <p class="text-comment">Manage users, settings, and system configuration</p>
@@ -179,13 +23,18 @@
             </div>
             <div class="stat-card">
                 <h3>System Status</h3>
-                <div class="stat-value" style="font-size: 1.5rem; color: var(--dracula-green);">✓ Online</div>
+                <div class="stat-value admin-stat-value-online">✓ Online</div>
             </div>
         </div>
 
         <div class="admin-tabs">
             <button class="tab active" data-tab="users">Users</button>
             <button class="tab" data-tab="settings">Settings</button>
+            <button class="tab" data-tab="web">Web</button>
+            <button class="tab" data-tab="security">Security</button>
+            <button class="tab" data-tab="database">Database</button>
+            <button class="tab" data-tab="ssl">SSL/TLS</button>
+            <button class="tab" data-tab="backup">Backup</button>
             <button class="tab" data-tab="tokens">API Tokens</button>
             <button class="tab" data-tab="logs">Audit Logs</button>
             <button class="tab" data-tab="tasks">Scheduled Tasks</button>
@@ -198,7 +47,7 @@
                     <button class="btn btn-primary" onclick="showAddUserModal()">+ Add User</button>
                 </div>
                 <div id="users-list" class="overflow-auto">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading users...</p>
+                    <p class="admin-loading-text">Loading users...</p>
                 </div>
             </div>
         </div>
@@ -215,6 +64,356 @@
             </div>
         </div>
 
+        <div id="web" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Web Settings</h2>
+                    <button class="btn btn-success" onclick="saveWebSettings()">💾 Save Changes</button>
+                </div>
+
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label class="form-label">Site Title</label>
+                        <input type="text" id="web-title" class="form-input" value="Weather Service">
+                        <small class="text-comment">Shown in browser tab and navbar</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Site Tagline</label>
+                        <input type="text" id="web-tagline" class="form-input" value="Production-grade weather API">
+                        <small class="text-comment">Short description of your service</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Footer Text</label>
+                        <textarea id="web-footer" class="form-input" rows="2">Production-grade forecasts, alerts, and you data</textarea>
+                        <small class="text-comment">Text shown in page footer</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Theme</label>
+                        <select id="web-theme" class="form-input">
+                            <option value="dracula" selected>Dracula (Dark)</option>
+                            <option value="light">Light</option>
+                            <option value="auto">Auto (System)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Items Per Page</label>
+                        <input type="number" id="web-page-size" class="form-input" value="50" min="10" max="500">
+                        <small class="text-comment">Number of items shown in lists</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="web-analytics" checked>
+                            Enable Analytics
+                        </label>
+                        <small class="text-comment">Track page views and usage (privacy-focused)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="security" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Security Settings</h2>
+                    <button class="btn btn-success" onclick="saveSecuritySettings()">💾 Save Changes</button>
+                </div>
+
+                <div class="settings-form">
+                    <h3 class="admin-section-title">Rate Limiting</h3>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="sec-ratelimit-enabled" checked>
+                            Enable Rate Limiting
+                        </label>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Global Rate Limit</label>
+                            <input type="number" id="sec-global-limit" class="form-input" value="100">
+                            <small class="text-comment">Requests per second (all users)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">API Rate Limit</label>
+                            <input type="number" id="sec-api-limit" class="form-input" value="100">
+                            <small class="text-comment">Requests per 15 minutes (per IP)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Admin Rate Limit</label>
+                            <input type="number" id="sec-admin-limit" class="form-input" value="30">
+                            <small class="text-comment">Requests per 15 minutes (per IP)</small>
+                        </div>
+                    </div>
+
+                    <hr class="admin-hr">
+
+                    <h3 class="admin-section-title">Security Headers</h3>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="sec-hsts" checked>
+                            Enable HSTS (HTTP Strict Transport Security)
+                        </label>
+                        <small class="text-comment">Force HTTPS connections</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Content Security Policy</label>
+                        <textarea id="sec-csp" class="form-input" rows="3">default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Blocked IP Addresses</label>
+                        <textarea id="sec-blocked-ips" class="form-input" rows="4" placeholder="One IP per line&#10;192.168.1.100&#10;10.0.0.50"></textarea>
+                        <small class="text-comment">IPs blocked from accessing the service</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="sec-require-https" checked>
+                            Require HTTPS (Redirect HTTP → HTTPS)
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="database" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Database & Cache</h2>
+                    <button class="btn btn-primary" onclick="testDatabaseConnection()">🔌 Test Connection</button>
+                </div>
+
+                <div class="stats-grid margin-bottom-2">
+                    <div class="stat-card">
+                        <h3>Database Type</h3>
+                        <div class="stat-value admin-stat-value-medium">SQLite</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Database Size</h3>
+                        <div class="stat-value admin-stat-value-medium">2.4 MB</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Records</h3>
+                        <div class="stat-value admin-stat-value-medium">1,247</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Cache Hit Rate</h3>
+                        <div class="stat-value admin-stat-value-medium-success">94%</div>
+                    </div>
+                </div>
+
+                <div class="settings-form">
+                    <h3 class="admin-section-title">Cache Settings</h3>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="db-cache-enabled" checked>
+                            Enable In-Memory Cache
+                        </label>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Weather Cache TTL</label>
+                            <input type="number" id="db-weather-ttl" class="form-input" value="1800">
+                            <small class="text-comment">Seconds (30 minutes = 1800)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">GeoIP Cache TTL</label>
+                            <input type="number" id="db-geoip-ttl" class="form-input" value="86400">
+                            <small class="text-comment">Seconds (24 hours = 86400)</small>
+                        </div>
+                    </div>
+
+                    <hr class="admin-hr">
+
+                    <h3 class="admin-section-title">Database Maintenance</h3>
+
+                    <div class="form-group">
+                        <button class="btn btn-warning" onclick="optimizeDatabase()">⚡ Optimize Database</button>
+                        <button class="btn btn-warning" onclick="clearCache()">🗑️ Clear All Cache</button>
+                        <button class="btn btn-danger" onclick="vacuumDatabase()">🧹 Vacuum Database</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Auto-Cleanup</label>
+                        <div class="checkbox-label">
+                            <input type="checkbox" id="db-auto-cleanup" checked>
+                            Automatically cleanup old logs and sessions
+                        </div>
+                        <small class="text-comment">Runs daily at 3am UTC</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ssl" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>SSL/TLS Management</h2>
+                    <button class="btn btn-primary" onclick="testSSLCertificate()">🔍 Verify Certificate</button>
+                </div>
+
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="ssl-enabled">
+                            Enable SSL/TLS
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Certificate File Path</label>
+                        <input type="text" id="ssl-cert" class="form-input" placeholder="/etc/apimgr/weather/ssl/certs/cert.pem">
+                        <small class="text-comment">Path to SSL certificate (.pem or .crt)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Private Key File Path</label>
+                        <input type="text" id="ssl-key" class="form-input" placeholder="/etc/apimgr/weather/ssl/certs/key.pem">
+                        <small class="text-comment">Path to private key file</small>
+                    </div>
+
+                    <hr class="admin-hr">
+
+                    <h3 class="admin-section-title">Let's Encrypt (ACME)</h3>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="ssl-acme-enabled">
+                            Enable Automatic SSL (Let's Encrypt)
+                        </label>
+                        <small class="text-comment">Automatically obtain and renew SSL certificates</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Domain Name</label>
+                        <input type="text" id="ssl-domain" class="form-input" placeholder="weather.example.com">
+                        <small class="text-comment">Your fully qualified domain name</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Contact Email</label>
+                        <input type="email" id="ssl-email" class="form-input" placeholder="admin@example.com">
+                        <small class="text-comment">For renewal notifications</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">ACME Provider</label>
+                        <select id="ssl-provider" class="form-input">
+                            <option value="letsencrypt">Let's Encrypt</option>
+                            <option value="zerossl">ZeroSSL</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn btn-success" onclick="obtainCertificate()">🔐 Obtain Certificate</button>
+                        <button class="btn btn-primary" onclick="renewCertificate()">🔄 Renew Certificate</button>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>Note:</strong> Automatic SSL requires your domain to point to this server and port 80/443 to be accessible.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="backup" class="tab-content">
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>Backup & Restore</h2>
+                    <button class="btn btn-primary" onclick="createBackup()">💾 Create Backup Now</button>
+                </div>
+
+                <div class="stats-grid margin-bottom-2">
+                    <div class="stat-card">
+                        <h3>Last Backup</h3>
+                        <div class="stat-value admin-stat-value-medium">2 hours ago</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Backup Size</h3>
+                        <div class="stat-value admin-stat-value-medium">3.2 MB</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Backups</h3>
+                        <div class="stat-value admin-stat-value-medium">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Auto-Backup</h3>
+                        <div class="stat-value admin-stat-value-medium-success">✓ Enabled</div>
+                    </div>
+                </div>
+
+                <div class="settings-form">
+                    <h3 class="admin-section-title">Auto-Backup Settings</h3>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="backup-enabled" checked>
+                            Enable Automatic Backups
+                        </label>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Backup Interval</label>
+                            <select id="backup-interval" class="form-input">
+                                <option value="3600">Hourly</option>
+                                <option value="21600" selected>Every 6 hours</option>
+                                <option value="43200">Every 12 hours</option>
+                                <option value="86400">Daily</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Retention Count</label>
+                            <input type="number" id="backup-retention" class="form-input" value="7" min="1" max="30">
+                            <small class="text-comment">Keep last N backups</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Backup Directory</label>
+                        <input type="text" id="backup-path" class="form-input" value="/mnt/Backups/apimgr/weather">
+                        <small class="text-comment">Where backups are stored</small>
+                    </div>
+
+                    <hr class="admin-hr">
+
+                    <h3 class="admin-section-title">Available Backups</h3>
+
+                    <div id="backup-list">
+                        <p class="text-comment">Loading backups...</p>
+                    </div>
+
+                    <hr class="admin-hr">
+
+                    <h3 class="admin-section-title">Restore from Backup</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Upload Backup File</label>
+                        <input type="file" id="backup-upload" class="form-input" accept=".tar.gz,.tgz">
+                        <button class="btn btn-warning margin-top-05" onclick="restoreBackup()">📦 Restore Backup</button>
+                    </div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Warning:</strong> Restoring a backup will replace all current data. The server will restart after restore.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="tokens" class="tab-content">
             <div class="admin-section">
                 <div class="section-header">
@@ -222,7 +421,7 @@
                     <button class="btn btn-primary" onclick="showGenerateTokenModal()">+ Generate Token</button>
                 </div>
                 <div id="tokens-list" class="overflow-auto">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading tokens...</p>
+                    <p class="admin-loading-text">Loading tokens...</p>
                 </div>
             </div>
         </div>
@@ -234,7 +433,7 @@
                     <button class="btn btn-danger" onclick="clearAuditLogs()">Clear Old Logs</button>
                 </div>
                 <div id="logs-list" class="overflow-auto">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading logs...</p>
+                    <p class="admin-loading-text">Loading logs...</p>
                 </div>
             </div>
         </div>
@@ -245,7 +444,7 @@
                     <h2>Scheduled Tasks</h2>
                 </div>
                 <div id="tasks-list" class="overflow-auto">
-                    <p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">Loading scheduled tasks...</p>
+                    <p class="admin-loading-text">Loading scheduled tasks...</p>
                 </div>
             </div>
         </div>
@@ -286,14 +485,14 @@
                 const users = await response.json();
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table class="admin-table-full">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 1rem;">ID</th>
-                                <th style="text-align: left; padding: 1rem;">Email</th>
-                                <th style="text-align: left; padding: 1rem;">Role</th>
-                                <th style="text-align: left; padding: 1rem;">Created</th>
-                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            <tr class="admin-table-head-row">
+                                <th class="admin-table-head-cell">ID</th>
+                                <th class="admin-table-head-cell">Email</th>
+                                <th class="admin-table-head-cell">Role</th>
+                                <th class="admin-table-head-cell">Created</th>
+                                <th class="admin-table-head-cell-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -305,12 +504,12 @@
                                     : `<button onclick="deleteUser(${user.id})" class="btn-delete">Delete</button>`;
 
                                 return `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem;">${user.id}${isFirstAdmin ? ' <span style="color: var(--dracula-cyan); font-size: 0.8rem;">(Primary)</span>' : ''}</td>
-                                    <td style="padding: 1rem;">${user.email}</td>
-                                    <td style="padding: 1rem;"><span style="background: ${user.role === 'admin' ? 'var(--dracula-red)' : 'var(--dracula-purple)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">${user.role}</span></td>
-                                    <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
-                                    <td style="padding: 1rem; text-align: right;">
+                                <tr class="admin-table-body-row">
+                                    <td class="admin-table-body-cell">${user.id}${isFirstAdmin ? ' <span class="admin-user-primary">(Primary)</span>' : ''}</td>
+                                    <td class="admin-table-body-cell">${user.email}</td>
+                                    <td class="admin-table-body-cell"><span class="${user.role === 'admin' ? 'admin-role-badge-admin' : 'admin-role-badge'}">${user.role}</span></td>
+                                    <td class="admin-table-body-cell">${new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td class="admin-table-body-cell-right">
                                         ${actionButtons}
                                     </td>
                                 </tr>
@@ -321,7 +520,7 @@
                 `;
                 document.getElementById('users-list').innerHTML = html;
             } catch (error) {
-                document.getElementById('users-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading users</p>';
+                document.getElementById('users-list').innerHTML = '<p class="admin-error-text">Error loading users</p>';
             }
         }
 
@@ -361,8 +560,8 @@
                             <input type="password" id="editAdminPasswordConfirm" class="form-input" minlength="8" placeholder="Re-enter new password">
                             <small class="text-comment">Must match the new password above</small>
                         </div>
-                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-cyan); margin-top: 1rem;">
-                            <p style="color: var(--dracula-cyan); margin: 0; font-size: 0.9rem;">
+                        <div class="admin-settings-note">
+                            <p class="admin-settings-note-text">
                                 ℹ️ <strong>Note:</strong> This is the primary admin account and cannot be deleted. You can update the email and/or password.
                             </p>
                         </div>
@@ -743,32 +942,32 @@
 
                 // Handle empty array
                 if (!Array.isArray(tokens) || tokens.length === 0) {
-                    document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-comment); text-align: center; padding: 2rem;">No API tokens found. Generate one to get started.</p>';
+                    document.getElementById('tokens-list').innerHTML = '<p class="admin-no-data-text">No API tokens found. Generate one to get started.</p>';
                     return;
                 }
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table class="admin-table-full">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 1rem;">ID</th>
-                                <th style="text-align: left; padding: 1rem;">User</th>
-                                <th style="text-align: left; padding: 1rem;">Name</th>
-                                <th style="text-align: left; padding: 1rem;">Created</th>
-                                <th style="text-align: left; padding: 1rem;">Last Used</th>
-                                <th style="text-align: right; padding: 1rem;">Actions</th>
+                            <tr class="admin-table-head-row">
+                                <th class="admin-table-head-cell">ID</th>
+                                <th class="admin-table-head-cell">User</th>
+                                <th class="admin-table-head-cell">Name</th>
+                                <th class="admin-table-head-cell">Created</th>
+                                <th class="admin-table-head-cell">Last Used</th>
+                                <th class="admin-table-head-cell-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${tokens.map(token => `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem;">${token.id}</td>
-                                    <td style="padding: 1rem;">${token.user_email || 'N/A'}</td>
-                                    <td style="padding: 1rem;">${token.name}</td>
-                                    <td style="padding: 1rem;">${new Date(token.created_at).toLocaleDateString()}</td>
-                                    <td style="padding: 1rem;">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : 'Never'}</td>
-                                    <td style="padding: 1rem; text-align: right;">
-                                        <button onclick="revokeToken(${token.id})" style="background: var(--dracula-red); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Revoke</button>
+                                <tr class="admin-table-body-row">
+                                    <td class="admin-table-body-cell">${token.id}</td>
+                                    <td class="admin-table-body-cell">${token.user_email || 'N/A'}</td>
+                                    <td class="admin-table-body-cell">${token.name}</td>
+                                    <td class="admin-table-body-cell">${new Date(token.created_at).toLocaleDateString()}</td>
+                                    <td class="admin-table-body-cell">${token.last_used_at ? new Date(token.last_used_at).toLocaleDateString() : 'Never'}</td>
+                                    <td class="admin-table-body-cell-right">
+                                        <button onclick="revokeToken(${token.id})" class="admin-token-button">Revoke</button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -778,7 +977,7 @@
                 document.getElementById('tokens-list').innerHTML = html;
             } catch (error) {
                 console.error('Error loading tokens:', error);
-                document.getElementById('tokens-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading tokens: ' + error.message + '</p>';
+                document.getElementById('tokens-list').innerHTML = '<p class="admin-error-text">Error loading tokens: ' + error.message + '</p>';
             }
         }
 
@@ -871,12 +1070,12 @@
                 id: modalId,
                 title: '✅ Token Generated Successfully',
                 body: `
-                    <div style="margin-bottom: 1rem;">
-                        <p style="color: var(--dracula-orange); margin-bottom: 1rem;">
+                    <div class="margin-bottom-1">
+                        <p class="text-orange margin-bottom-1">
                             ⚠️ <strong>Important:</strong> Copy this token now. For security reasons, it will not be shown again!
                         </p>
-                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-green);">
-                            <code style="font-family: monospace; word-break: break-all; color: var(--dracula-green); font-size: 0.9rem;">${token}</code>
+                        <div class="admin-settings-note">
+                            <code class="font-monospace word-break-all text-green font-size-09">${token}</code>
                         </div>
                     </div>
                 `,
@@ -914,29 +1113,29 @@
                 const logs = await response.json();
 
                 if (!Array.isArray(logs) || logs.length === 0) {
-                    document.getElementById('logs-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No audit logs found</p>';
+                    document.getElementById('logs-list').innerHTML = '<p class="admin-loading-text">No audit logs found</p>';
                     return;
                 }
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <table class="admin-logs-table">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 0.75rem;">Time</th>
-                                <th style="text-align: left; padding: 0.75rem;">User</th>
-                                <th style="text-align: left; padding: 0.75rem;">Action</th>
-                                <th style="text-align: left; padding: 0.75rem;">Resource</th>
-                                <th style="text-align: left; padding: 0.75rem;">IP</th>
+                            <tr class="admin-table-head-row">
+                                <th class="admin-table-head-cell">Time</th>
+                                <th class="admin-table-head-cell">User</th>
+                                <th class="admin-table-head-cell">Action</th>
+                                <th class="admin-table-head-cell">Resource</th>
+                                <th class="admin-table-head-cell">IP</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${logs.map(log => `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;">${new Date(log.created_at).toLocaleString()}</td>
-                                    <td style="padding: 0.75rem;">${log.user_email || 'Anonymous'}</td>
-                                    <td style="padding: 0.75rem; color: var(--dracula-cyan);">${log.action}</td>
-                                    <td style="padding: 0.75rem; color: var(--dracula-comment);">${log.resource || '-'}</td>
-                                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;">${log.ip_address || '-'}</td>
+                                <tr class="admin-table-body-row">
+                                    <td class="admin-logs-cell-mono">${new Date(log.created_at).toLocaleString()}</td>
+                                    <td class="admin-logs-cell">${log.user_email || 'Anonymous'}</td>
+                                    <td class="admin-logs-cell-cyan">${log.action}</td>
+                                    <td class="admin-logs-cell-comment">${log.resource || '-'}</td>
+                                    <td class="admin-logs-cell-mono">${log.ip_address || '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -945,7 +1144,7 @@
                 document.getElementById('logs-list').innerHTML = html;
             } catch (error) {
                 console.error('Error loading logs:', error);
-                document.getElementById('logs-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading logs: ' + error.message + '</p>';
+                document.getElementById('logs-list').innerHTML = '<p class="admin-error-text">Error loading logs: ' + error.message + '</p>';
             }
         }
 
@@ -962,8 +1161,8 @@
                             <input type="number" id="logDays" class="form-input" value="30" min="1" required>
                             <small class="text-comment">Logs older than this many days will be permanently deleted</small>
                         </div>
-                        <div style="background: var(--dracula-current-line); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--dracula-orange); margin-top: 1rem;">
-                            <p style="color: var(--dracula-orange); margin: 0;">
+                        <div class="admin-warning-box">
+                            <p class="text-orange margin-0">
                                 ⚠️ <strong>Warning:</strong> This action cannot be undone. Deleted logs cannot be recovered.
                             </p>
                         </div>
@@ -1044,19 +1243,19 @@
                 const tasks = await response.json();
 
                 if (!Array.isArray(tasks) || tasks.length === 0) {
-                    document.getElementById('tasks-list').innerHTML = '<p style="text-align: center; color: var(--dracula-comment); padding: 2rem;">No scheduled tasks found</p>';
+                    document.getElementById('tasks-list').innerHTML = '<p class="admin-loading-text">No scheduled tasks found</p>';
                     return;
                 }
 
                 const html = `
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table class="admin-table-full">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--dracula-comment);">
-                                <th style="text-align: left; padding: 1rem;">Task Name</th>
-                                <th style="text-align: left; padding: 1rem;">Interval</th>
-                                <th style="text-align: left; padding: 1rem;">Status</th>
-                                <th style="text-align: left; padding: 1rem;">Last Run</th>
-                                <th style="text-align: left; padding: 1rem;">Next Run</th>
+                            <tr class="admin-table-head-row">
+                                <th class="admin-table-head-cell">Task Name</th>
+                                <th class="admin-table-head-cell">Interval</th>
+                                <th class="admin-table-head-cell">Status</th>
+                                <th class="admin-table-head-cell">Last Run</th>
+                                <th class="admin-table-head-cell">Next Run</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1067,18 +1266,18 @@
                                 const intervalDisplay = task.interval_seconds ? formatInterval(task.interval_seconds) : (task.interval || 'N/A');
 
                                 return `
-                                <tr style="border-bottom: 1px solid var(--dracula-comment);">
-                                    <td style="padding: 1rem; font-family: monospace; color: var(--dracula-cyan);">${task.name}</td>
-                                    <td style="padding: 1rem;">${intervalDisplay}</td>
-                                    <td style="padding: 1rem;">
-                                        <span style="background: ${task.running ? 'var(--dracula-green)' : 'var(--dracula-comment)'}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; color: white;">
+                                <tr class="admin-table-body-row">
+                                    <td class="admin-task-name">${task.name}</td>
+                                    <td class="admin-table-body-cell">${intervalDisplay}</td>
+                                    <td class="admin-table-body-cell">
+                                        <span class="${task.running ? 'admin-task-status-running' : 'admin-task-status-idle'}">
                                             ${task.running ? 'Running' : 'Idle'}
                                         </span>
                                     </td>
-                                    <td style="padding: 1rem; font-size: 0.9rem;">${lastRun}</td>
-                                    <td style="padding: 1rem;">
-                                        <div style="font-size: 0.9rem;">${nextRun}</div>
-                                        ${countdown !== 'N/A' ? `<div style="font-size: 0.8rem; color: var(--dracula-cyan); margin-top: 0.25rem;">${countdown}</div>` : ''}
+                                    <td class="admin-table-body-cell admin-task-next-run">${lastRun}</td>
+                                    <td class="admin-table-body-cell">
+                                        <div class="admin-task-next-run">${nextRun}</div>
+                                        ${countdown !== 'N/A' ? `<div class="admin-task-countdown">${countdown}</div>` : ''}
                                     </td>
                                 </tr>
                                 `;
@@ -1089,8 +1288,312 @@
                 document.getElementById('tasks-list').innerHTML = html;
             } catch (error) {
                 console.error('Error loading scheduled tasks:', error);
-                document.getElementById('tasks-list').innerHTML = '<p style="color: var(--dracula-red); text-align: center;">Error loading scheduled tasks: ' + error.message + '</p>';
+                document.getElementById('tasks-list').innerHTML = '<p class="admin-error-text">Error loading scheduled tasks: ' + error.message + '</p>';
             }
+        }
+
+        // Web Settings Handlers
+        async function saveWebSettings() {
+            const settings = {
+                title: document.getElementById('web-title').value,
+                tagline: document.getElementById('web-tagline').value,
+                footer: document.getElementById('web-footer').value,
+                theme: document.getElementById('web-theme').value,
+                page_size: parseInt(document.getElementById('web-page-size').value),
+                analytics: document.getElementById('web-analytics').checked
+            };
+
+            try {
+                const response = await fetch('/api/v1/admin/settings/web', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                if (response.ok) {
+                    Toast.success('Web settings saved successfully!');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                Toast.error('Error saving web settings: ' + error.message);
+            }
+        }
+
+        // Security Settings Handlers
+        async function saveSecuritySettings() {
+            const settings = {
+                rate_limit_enabled: document.getElementById('sec-ratelimit-enabled').checked,
+                global_limit: parseInt(document.getElementById('sec-global-limit').value),
+                api_limit: parseInt(document.getElementById('sec-api-limit').value),
+                admin_limit: parseInt(document.getElementById('sec-admin-limit').value),
+                hsts_enabled: document.getElementById('sec-hsts').checked,
+                csp: document.getElementById('sec-csp').value,
+                blocked_ips: document.getElementById('sec-blocked-ips').value.split('\n').filter(ip => ip.trim()),
+                require_https: document.getElementById('sec-require-https').checked
+            };
+
+            try {
+                const response = await fetch('/api/v1/admin/settings/security', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                if (response.ok) {
+                    Toast.success('Security settings saved successfully!');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                Toast.error('Error saving security settings: ' + error.message);
+            }
+        }
+
+        // Database Handlers
+        async function testDatabaseConnection() {
+            try {
+                const response = await fetch('/api/v1/admin/database/test');
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Database connection successful!');
+                } else {
+                    Toast.error('Database connection failed: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error testing database: ' + error.message);
+            }
+        }
+
+        async function optimizeDatabase() {
+            if (!confirm('Optimize database? This may take a few moments.')) return;
+
+            try {
+                const response = await fetch('/api/v1/admin/database/optimize', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Database optimized successfully!');
+                } else {
+                    Toast.error('Optimization failed: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error optimizing database: ' + error.message);
+            }
+        }
+
+        async function clearCache() {
+            if (!confirm('Clear all cache? This will temporarily slow down requests.')) return;
+
+            try {
+                const response = await fetch('/api/v1/admin/cache/clear', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Cache cleared successfully!');
+                } else {
+                    Toast.error('Failed to clear cache: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error clearing cache: ' + error.message);
+            }
+        }
+
+        async function vacuumDatabase() {
+            if (!confirm('Vacuum database? This will compact the database file and may take several minutes.')) return;
+
+            try {
+                const response = await fetch('/api/v1/admin/database/vacuum', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Database vacuumed successfully!');
+                } else {
+                    Toast.error('Vacuum failed: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error vacuuming database: ' + error.message);
+            }
+        }
+
+        // SSL/TLS Handlers
+        async function testSSLCertificate() {
+            try {
+                const response = await fetch('/api/v1/admin/ssl/verify');
+                const result = await response.json();
+
+                if (result.valid) {
+                    Toast.success(`Certificate valid! Expires: ${new Date(result.expires).toLocaleDateString()}`);
+                } else {
+                    Toast.error('Certificate invalid or expired');
+                }
+            } catch (error) {
+                Toast.error('Error verifying certificate: ' + error.message);
+            }
+        }
+
+        async function obtainCertificate() {
+            const domain = document.getElementById('ssl-domain').value;
+            const email = document.getElementById('ssl-email').value;
+
+            if (!domain || !email) {
+                Toast.error('Please enter domain and email');
+                return;
+            }
+
+            if (!confirm(`Obtain SSL certificate for ${domain}? This requires port 80/443 to be accessible.`)) return;
+
+            try {
+                const response = await fetch('/api/v1/admin/ssl/obtain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain, email, provider: document.getElementById('ssl-provider').value })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Certificate obtained successfully!');
+                } else {
+                    Toast.error('Failed to obtain certificate: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error obtaining certificate: ' + error.message);
+            }
+        }
+
+        async function renewCertificate() {
+            if (!confirm('Renew SSL certificate?')) return;
+
+            try {
+                const response = await fetch('/api/v1/admin/ssl/renew', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Certificate renewed successfully!');
+                } else {
+                    Toast.error('Renewal failed: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error renewing certificate: ' + error.message);
+            }
+        }
+
+        // Backup Handlers
+        async function createBackup() {
+            if (!confirm('Create backup now? This may take a few moments.')) return;
+
+            try {
+                const response = await fetch('/api/v1/admin/backup/create', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success(`Backup created: ${result.filename}`);
+                    loadBackupList(); // Refresh backup list
+                } else {
+                    Toast.error('Backup failed: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error creating backup: ' + error.message);
+            }
+        }
+
+        async function restoreBackup() {
+            const fileInput = document.getElementById('backup-upload');
+
+            if (!fileInput.files.length) {
+                Toast.error('Please select a backup file');
+                return;
+            }
+
+            if (!confirm('⚠️ WARNING: This will replace all current data and restart the server. Continue?')) return;
+
+            const formData = new FormData();
+            formData.append('backup', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/v1/admin/backup/restore', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Backup restored! Server restarting...');
+                    setTimeout(() => window.location.reload(), 3000);
+                } else {
+                    Toast.error('Restore failed: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error restoring backup: ' + error.message);
+            }
+        }
+
+        async function loadBackupList() {
+            try {
+                const response = await fetch('/api/v1/admin/backup/list');
+                const backups = await response.json();
+
+                const html = backups.length ? `
+                    <table class="admin-table-full">
+                        <thead>
+                            <tr class="admin-table-head-row">
+                                <th class="admin-table-head-cell">Filename</th>
+                                <th class="admin-table-head-cell">Size</th>
+                                <th class="admin-table-head-cell">Date</th>
+                                <th class="admin-table-head-cell-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${backups.map(backup => `
+                                <tr class="admin-table-body-row">
+                                    <td class="admin-table-body-cell admin-logs-cell-mono">${backup.filename}</td>
+                                    <td class="admin-table-body-cell">${formatBytes(backup.size)}</td>
+                                    <td class="admin-table-body-cell">${new Date(backup.created).toLocaleString()}</td>
+                                    <td class="admin-table-body-cell-right">
+                                        <a href="/api/v1/admin/backup/download/${backup.filename}" class="btn btn-sm btn-primary">Download</a>
+                                        <button onclick="deleteBackup('${backup.filename}')" class="btn btn-sm btn-danger">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                ` : '<p class="text-comment admin-loading-text">No backups available</p>';
+
+                document.getElementById('backup-list').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading backups:', error);
+                document.getElementById('backup-list').innerHTML = '<p class="admin-error-text">Error loading backups</p>';
+            }
+        }
+
+        async function deleteBackup(filename) {
+            if (!confirm(`Delete backup ${filename}?`)) return;
+
+            try {
+                const response = await fetch(`/api/v1/admin/backup/delete/${filename}`, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (result.success) {
+                    Toast.success('Backup deleted');
+                    loadBackupList();
+                } else {
+                    Toast.error('Failed to delete backup: ' + result.error);
+                }
+            } catch (error) {
+                Toast.error('Error deleting backup: ' + error.message);
+            }
+        }
+
+        // Utility function for formatting bytes
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
         // Initialize notification polling

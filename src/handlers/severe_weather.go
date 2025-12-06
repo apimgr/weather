@@ -201,7 +201,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		// Always use full detected location for clarity
 		displayLocation := locationName
 
-		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
+		c.HTML(http.StatusOK, "severe_weather.tmpl", gin.H{
 			"Title":          "Severe Weather Alerts",
 			"page":           "severe-weather",
 			"Data":           data,
@@ -409,7 +409,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		// Always use full detected location for clarity
 		displayLocation := locationName
 
-		c.HTML(http.StatusOK, "severe_weather.html", gin.H{
+		c.HTML(http.StatusOK, "severe_weather.tmpl", gin.H{
 			"Title":          fmt.Sprintf("%s - Severe Weather Alerts", strings.Title(alertType)),
 			"page":           "severe-weather",
 			"Data":           filteredData,

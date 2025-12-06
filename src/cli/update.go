@@ -1,0 +1,334 @@
+package cli
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"time"
+)
+
+// GitHubRelease represents a GitHub release
+type GitHubRelease struct {
+	TagName     string    `json:"tag_name"`
+	Name        string    `json:"name"`
+	Body        string    `json:"body"`
+	PublishedAt time.Time `json:"published_at"`
+	Prerelease  bool      `json:"prerelease"`
+	Assets      []struct {
+		Name               string `json:"name"`
+		BrowserDownloadURL string `json:"browser_download_url"`
+		Size               int64  `json:"size"`
+	} `json:"assets"`
+}
+
+const (
+	githubAPI     = "https://api.github.com/repos/apimgr/weather/releases"
+	githubStable  = githubAPI + "/latest"
+	githubBeta    = githubAPI + "/tags/beta"
+	githubDaily   = githubAPI + "/tags/daily"
+)
+
+// UpdateCommand handles update operations
+func UpdateCommand(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("no update command specified. Use: check, yes, or branch {stable|beta|daily}")
+	}
+
+	cmd := args[0]
+
+	switch cmd {
+	case "check":
+		return checkForUpdates()
+
+	case "yes":
+		return performUpdate("stable")
+
+	case "branch":
+		if len(args) < 2 {
+			return fmt.Errorf("branch requires a value: stable, beta, or daily")
+		}
+		return performUpdate(args[1])
+
+	default:
+		return fmt.Errorf("unknown update command: %s", cmd)
+	}
+}
+
+// checkForUpdates checks for available updates
+func checkForUpdates() error {
+	fmt.Println("Checking for updates...")
+
+	// Check stable
+	stable, err := fetchRelease(githubStable)
+	if err != nil {
+		return fmt.Errorf("failed to check stable release: %w", err)
+	}
+
+	// Check beta
+	beta, err := fetchRelease(githubBeta)
+	if err != nil {
+		fmt.Printf("Warning: Could not check beta release: %v\n", err)
+	}
+
+	// Check daily
+	daily, err := fetchRelease(githubDaily)
+	if err != nil {
+		fmt.Printf("Warning: Could not check daily release: %v\n", err)
+	}
+
+	// Display current version
+	fmt.Printf("\nCurrent version: %s\n", Version)
+	fmt.Println()
+
+	// Display available versions
+	if stable != nil {
+		fmt.Printf("Stable:  %s (released %s)\n", stable.TagName, stable.PublishedAt.Format("2006-01-02"))
+		if isNewer(stable.TagName, Version) {
+			fmt.Println("         ✨ Update available!")
+		}
+	}
+
+	if beta != nil {
+		fmt.Printf("Beta:    %s (released %s)\n", beta.TagName, beta.PublishedAt.Format("2006-01-02"))
+		if isNewer(beta.TagName, Version) {
+			fmt.Println("         ✨ Update available!")
+		}
+	}
+
+	if daily != nil {
+		fmt.Printf("Daily:   %s (released %s)\n", daily.TagName, daily.PublishedAt.Format("2006-01-02"))
+	}
+
+	fmt.Println()
+	fmt.Println("To update:")
+	fmt.Println("  weather --update yes                  # Update to latest stable")
+	fmt.Println("  weather --update branch stable        # Update to stable branch")
+	fmt.Println("  weather --update branch beta          # Update to beta branch")
+	fmt.Println("  weather --update branch daily         # Update to daily build")
+
+	return nil
+}
+
+// performUpdate performs the actual update
+func performUpdate(branch string) error {
+	fmt.Printf("Updating to %s branch...\n", branch)
+
+	// Get release URL based on branch
+	var releaseURL string
+	switch branch {
+	case "stable":
+		releaseURL = githubStable
+	case "beta":
+		releaseURL = githubBeta
+	case "daily":
+		releaseURL = githubDaily
+	default:
+		return fmt.Errorf("invalid branch: %s (use stable, beta, or daily)", branch)
+	}
+
+	// Fetch release info
+	release, err := fetchRelease(releaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch release: %w", err)
+	}
+
+	fmt.Printf("Found version: %s\n", release.TagName)
+
+	// Check if already up to date
+	if !isNewer(release.TagName, Version) && branch == "stable" {
+		fmt.Println("✓ Already up to date!")
+		return nil
+	}
+
+	// Find asset for current platform
+	assetName := fmt.Sprintf("weather-%s-%s", runtime.GOOS, runtime.GOARCH)
+	var downloadURL string
+	var assetSize int64
+
+	for _, asset := range release.Assets {
+		if asset.Name == assetName {
+			downloadURL = asset.BrowserDownloadURL
+			assetSize = asset.Size
+			break
+		}
+	}
+
+	if downloadURL == "" {
+		return fmt.Errorf("no binary found for %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+
+	fmt.Printf("Downloading: %s (%.2f MB)\n", assetName, float64(assetSize)/(1024*1024))
+
+	// Download binary
+	tmpFile := "/tmp/weather-update"
+	if err := downloadFile(tmpFile, downloadURL); err != nil {
+		return fmt.Errorf("failed to download: %w", err)
+	}
+
+	// Make executable
+	if err := os.Chmod(tmpFile, 0755); err != nil {
+		return fmt.Errorf("failed to make executable: %w", err)
+	}
+
+	// Get current binary path
+	currentBinary, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get current binary path: %w", err)
+	}
+
+	// Backup current binary
+	backupPath := currentBinary + ".backup"
+	if err := copyFile(currentBinary, backupPath); err != nil {
+		return fmt.Errorf("failed to backup current binary: %w", err)
+	}
+
+	fmt.Println("Backed up current binary")
+
+	// Replace binary
+	if err := os.Rename(tmpFile, currentBinary); err != nil {
+		// Try copy if rename fails (cross-device link)
+		if err := copyFile(tmpFile, currentBinary); err != nil {
+			return fmt.Errorf("failed to replace binary: %w", err)
+		}
+		os.Remove(tmpFile)
+	}
+
+	// Verify new binary
+	cmd := exec.Command(currentBinary, "--version")
+	output, err := cmd.Output()
+	if err != nil {
+		// Restore backup
+		os.Rename(backupPath, currentBinary)
+		return fmt.Errorf("new binary verification failed, restored backup: %w", err)
+	}
+
+	fmt.Printf("\n✓ Update successful!\n")
+	fmt.Printf("New version: %s\n", release.TagName)
+	fmt.Println(string(output))
+	fmt.Println("\nBackup saved at:", backupPath)
+	fmt.Println("Please restart the service for changes to take effect")
+
+	return nil
+}
+
+// fetchRelease fetches release information from GitHub
+func fetchRelease(url string) (*GitHubRelease, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	}
+
+	var release GitHubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, err
+	}
+
+	return &release, nil
+}
+
+// downloadFile downloads a file from URL to local path
+func downloadFile(filepath string, url string) error {
+	client := &http.Client{Timeout: 5 * time.Minute}
+	resp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download failed with status %d", resp.StatusCode)
+	}
+
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Create progress indicator
+	size := resp.ContentLength
+	downloaded := int64(0)
+	buf := make([]byte, 32*1024)
+
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			_, writeErr := out.Write(buf[:n])
+			if writeErr != nil {
+				return writeErr
+			}
+			downloaded += int64(n)
+
+			// Show progress
+			if size > 0 {
+				percent := float64(downloaded) / float64(size) * 100
+				fmt.Printf("\r  Progress: %.1f%%", percent)
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println() // New line after progress
+	return nil
+}
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	if _, err := io.Copy(destFile, sourceFile); err != nil {
+		return err
+	}
+
+	// Copy permissions
+	sourceInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(dst, sourceInfo.Mode())
+}
+
+// isNewer checks if version a is newer than version b
+func isNewer(a, b string) bool {
+	// Strip 'v' prefix if present
+	a = strings.TrimPrefix(a, "v")
+	b = strings.TrimPrefix(b, "v")
+
+	// Simple string comparison for now
+	// Could be enhanced with proper semantic versioning
+	return a > b
+}

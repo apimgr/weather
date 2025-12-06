@@ -5,53 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather - Initializing</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="stylesheet" href="/static/css/template-overrides.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
-    <style>
-        .coffee-spinner {
-            font-size: 4rem;
-            animation: steam 2s ease-in-out infinite;
-            text-align: center;
-            margin: 2rem 0;
-        }
-
-        @keyframes steam {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 1; }
-            25% { transform: translateY(-5px) rotate(1deg); opacity: 0.9; }
-            50% { transform: translateY(-10px) rotate(0deg); opacity: 0.8; }
-            75% { transform: translateY(-5px) rotate(-1deg); opacity: 0.9; }
-        }
-
-        .loading-dots {
-            display: inline-block;
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
-
-        .loading-dots::after {
-            content: '';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        .status-info {
-            background-color: var(--dracula-current-line);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin: 1rem 0;
-            text-align: center;
-        }
-
-        .retry-countdown {
-            color: var(--dracula-orange);
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-    </style>
 </head>
 <body>
     <div class="weather-container">
@@ -59,54 +14,54 @@
             ☕ Weather
         </div>
 
-        <div style="text-align: center; margin: 3rem 0;">
+        <div class="loading-page-container">
             <div class="coffee-spinner">☕</div>
 
-            <h2 style="color: var(--dracula-cyan); margin: 1rem 0;">
+            <h2 class="loading-page-title">
                 Warming up the weather service<span class="loading-dots"></span>
             </h2>
 
             <div class="status-info">
-                <div style="color: var(--dracula-yellow); margin: 0.5rem 0;">
+                <div class="loading-page-status-item--yellow">
                     🌍 Loading global location database...
                 </div>
-                <div style="color: var(--dracula-green); margin: 0.5rem 0;">
+                <div class="loading-page-status-item--green">
                     🌤️ Connecting to weather services...
                 </div>
-                <div style="color: var(--dracula-purple); margin: 0.5rem 0;">
+                <div class="loading-page-status-item--purple">
                     🎨 Preparing beautiful interfaces...
                 </div>
             </div>
 
-            <div style="margin: 2rem 0;">
+            <div class="margin-y-2">
                 <p class="text-comment">
                     The service is initializing. This usually takes a few moments while we load
                     weather data and location databases.
                 </p>
 
-                <div style="margin: 1.5rem 0;">
-                    <span style="color: var(--dracula-cyan);">Next check in:</span>
+                <div class="margin-y-15">
+                    <span class="loading-page-countdown-label">Next check in:</span>
                     <span id="countdown" class="retry-countdown">30</span>
-                    <span style="color: var(--dracula-cyan);">seconds</span>
-                    <div style="color: var(--dracula-comment); font-size: 0.875rem; margin-top: 0.5rem;">
+                    <span class="loading-page-countdown-label">seconds</span>
+                    <div class="loading-page-countdown-note">
                         (Auto-checking every 15 seconds)
                     </div>
                 </div>
 
-                <button id="retry-btn" class="search-button" style="margin: 1rem 0;">
+                <button id="retry-btn" class="search-button loading-page-retry-button">
                     🔄 Try Again Now
                 </button>
             </div>
 
-            <div style="margin: 2rem 0; padding: 1rem; background-color: var(--dracula-bg); border-radius: 0.375rem;">
-                <h4 style="color: var(--dracula-orange); margin-top: 0;">While You Wait...</h4>
-                <p style="color: var(--dracula-foreground); font-size: 0.875rem; line-height: 1.6;">
+            <div class="loading-page-while-wait-box">
+                <h4 class="loading-page-while-wait-title">While You Wait...</h4>
+                <p class="loading-page-while-wait-text">
                     This service provides beautiful ASCII weather art for terminals and responsive web interfaces.
                     Try these console commands once it's ready:
                 </p>
-                <div style="font-family: monospace; background: var(--dracula-current-line); padding: 0.75rem; border-radius: 0.25rem; margin: 0.75rem 0; overflow-x: auto;">
-                    <div style="color: var(--dracula-cyan); white-space: nowrap;">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=3</div>
-                    <div style="color: var(--dracula-pink); white-space: nowrap;">curl -q -LSs {{.HostInfo.FullHost}}/moon/Tokyo,JP</div>
+                <div class="loading-page-code-box">
+                    <div class="loading-page-code-line loading-page-code-line--cyan">curl -q -LSs {{.HostInfo.FullHost}}/London,GB?format=3</div>
+                    <div class="loading-page-code-line loading-page-code-line--pink">curl -q -LSs {{.HostInfo.FullHost}}/moon/Tokyo,JP</div>
                 </div>
             </div>
         </div>

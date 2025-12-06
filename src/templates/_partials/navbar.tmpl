@@ -38,8 +38,30 @@
                 </div>
                 <div class="profile-dropdown" id="profile-dropdown">
                     <div class="profile-dropdown-header">
-                        <div>{{.user.Email}}</div>
-                        <div class="profile-dropdown-role">{{.user.Role}}</div>
+                        <div>
+                            {{if .user.Email}}
+                                {{if .user.DisplayName}}
+                                    {{.user.DisplayName}}
+                                {{else if .user.Username}}
+                                    {{.user.Username}}
+                                {{else}}
+                                    {{.user.Email}}
+                                {{end}}
+                            {{else}}
+                                Guest
+                            {{end}}
+                        </div>
+                        <div class="profile-dropdown-role">
+                            {{if .user.Role}}
+                                {{if ne .user.Role "guest"}}
+                                    {{.user.Role}}
+                                {{else}}
+                                    Not logged in
+                                {{end}}
+                            {{else}}
+                                Not logged in
+                            {{end}}
+                        </div>
                     </div>
                     <nav class="profile-dropdown-menu">
                         <a href="/profile" class="profile-dropdown-item">👤 Profile</a>

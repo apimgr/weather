@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v3"
 )
 
 // GetOpenAPISpec returns the OpenAPI 3.0 specification
@@ -274,4 +278,114 @@ func GetSwaggerUI(c *gin.Context) {
 
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.String(http.StatusOK, html)
+}
+// GetOpenAPISpecYAML returns the OpenAPI 3.0 specification in YAML format
+func GetOpenAPISpecYAML(c *gin.Context) {
+	// Dynamically detect server URL from request
+	protocol := c.GetHeader("X-Forwarded-Proto")
+	if protocol == "" {
+		if c.Request.TLS != nil {
+			protocol = "https"
+		} else {
+			protocol = "http"
+		}
+	}
+
+	hostname := c.Request.Host
+	serverURL := protocol + "://" + hostname
+
+	spec := map[string]interface{}{
+		"openapi": "3.0.0",
+		"info": map[string]interface{}{
+			"title":       "Weather API",
+			"description": "Production-grade weather API with global forecasts, severe weather alerts, earthquake tracking, and moon phase information",
+			"version":     "1.0.0",
+			"contact": map[string]string{
+				"name": "Weather API Support",
+				"url":  "https://github.com/apimgr/weather",
+			},
+			"license": map[string]string{
+				"name": "MIT",
+				"url":  "https://github.com/apimgr/weather/blob/main/LICENSE.md",
+			},
+		},
+		"servers": []map[string]string{
+			{
+				"url":         serverURL,
+				"description": "Current server",
+			},
+		},
+		"paths": map[string]interface{}{
+			"/api/v1/weather": map[string]interface{}{
+				"get": map[string]interface{}{
+					"summary":     "Get weather forecast",
+					"description": "Retrieve weather forecast for a location",
+					"tags":        []string{"Weather"},
+					"responses": map[string]interface{}{
+						"200": map[string]interface{}{
+							"description": "Successful response",
+						},
+					},
+				},
+			},
+			"/healthz": map[string]interface{}{
+				"get": map[string]interface{}{
+					"summary":     "Health check",
+					"description": "Check service health status",
+					"tags":        []string{"System"},
+					"responses": map[string]interface{}{
+						"200": map[string]interface{}{
+							"description": "Service is healthy",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	yamlData, err := yaml.Marshal(spec)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate YAML"})
+		return
+	}
+
+	c.Header("Content-Type", "application/x-yaml")
+	c.String(http.StatusOK, string(yamlData))
+}
+
+var startTime = time.Now()
+
+// PrometheusMetrics returns Prometheus-compatible metrics
+func PrometheusMetrics() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+
+		uptime := time.Since(startTime).Seconds()
+
+		// Prometheus text format
+		metrics := fmt.Sprintf(`# HELP weather_uptime_seconds Server uptime in seconds
+# TYPE weather_uptime_seconds gauge
+weather_uptime_seconds %.0f
+
+# HELP weather_memory_alloc_bytes Current allocated memory in bytes
+# TYPE weather_memory_alloc_bytes gauge
+weather_memory_alloc_bytes %.0f
+
+# HELP weather_memory_sys_bytes Total memory obtained from OS in bytes
+# TYPE weather_memory_sys_bytes gauge
+weather_memory_sys_bytes %.0f
+
+# HELP weather_goroutines_total Number of goroutines
+# TYPE weather_goroutines_total gauge
+weather_goroutines_total %.0f
+
+# HELP weather_gc_runs_total Total number of GC runs
+# TYPE weather_gc_runs_total counter
+weather_gc_runs_total %.0f
+`, uptime, float64(m.Alloc), float64(m.Sys), float64(runtime.NumGoroutine()), float64(m.NumGC))
+
+		c.Header("Content-Type", "text/plain; version=0.0.4")
+		c.String(http.StatusOK, metrics)
+	}
 }

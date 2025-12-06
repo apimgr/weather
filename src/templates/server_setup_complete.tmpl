@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <div class="setup-icon">✅</div>
+            <h1 class="setup-title">Setup Complete!</h1>
+            <div class="setup-description">
+                <p>Congratulations! Your Weather Service is now fully configured and ready to use.</p>
+            </div>
+
+            <div class="info-box">
+                <h3>What's Next?</h3>
+                <ul>
+                    <li>Manage users and permissions from the Admin Dashboard</li>
+                    <li>Create API tokens for programmatic access</li>
+                    <li>Configure weather alerts and notifications</li>
+                    <li>Explore the full weather forecast features</li>
+                    <li>Set up your saved locations</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/admin" class="setup-complete-link">Admin Dashboard</a></li>
+                    <li><a href="/user/dashboard" class="setup-complete-link">User Dashboard</a></li>
+                    <li><a href="/docs" class="setup-complete-link">API Documentation</a></li>
+                    <li><a href="/admin/settings" class="setup-complete-link">Server Settings</a></li>
+                </ul>
+            </div>
+
+            <button class="setup-button" onclick="window.location.href='/admin'">
+                Go to Admin Dashboard
+            </button>
+        </div>
+    </div>
+</body>
+</html>

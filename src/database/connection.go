@@ -14,7 +14,7 @@ import (
 
 // DatabaseConfig holds database connection configuration
 type DatabaseConfig struct {
-	Type     string // sqlite, postgres, mysql, mssql
+	Type     string // sqlite, postgres, mysql, mssql, mongodb
 	Host     string
 	Port     int
 	Database string
@@ -56,8 +56,11 @@ func InitDBWithConfig(config *DatabaseConfig) (*DB, error) {
 		dsn = fmt.Sprintf("server=%s;port=%d;database=%s;user id=%s;password=%s;encrypt=disable",
 			config.Host, config.Port, config.Database, config.Username, config.Password)
 
+	case "mongodb", "mongo":
+		return nil, fmt.Errorf("MongoDB is not supported: weather service requires SQL database for relational queries. Supported databases: SQLite (default), PostgreSQL, MySQL/MariaDB, MSSQL")
+
 	default:
-		return nil, fmt.Errorf("unsupported database type: %s", config.Type)
+		return nil, fmt.Errorf("unsupported database type: %s. Supported: sqlite, postgres, mysql, mariadb, mssql", config.Type)
 	}
 
 	// Open database connection
@@ -154,6 +157,10 @@ func ParseConnectionString(connString string) (*DatabaseConfig, error) {
 	if strings.HasPrefix(connString, "sqlserver://") || strings.HasPrefix(connString, "mssql://") {
 		config.Type = "mssql"
 		return nil, fmt.Errorf("MSSQL connection string parsing not yet implemented - use DB_TYPE, DB_HOST, etc.")
+	}
+
+	if strings.HasPrefix(connString, "mongodb://") || strings.HasPrefix(connString, "mongo://") {
+		return nil, fmt.Errorf("MongoDB is not supported: weather service requires SQL database for relational queries")
 	}
 
 	// Assume raw SQLite path

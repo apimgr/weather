@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"flag"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -19,6 +18,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"weather-go/src/cli"
 	"weather-go/src/database"
 	"weather-go/src/handlers"
 	"weather-go/src/middleware"
@@ -55,6 +55,57 @@ func getDefaultListenAddress() string {
 }
 
 func main() {
+	// Initialize CLI
+	cliInstance := cli.New()
+
+	// Set version information
+	cli.Version = Version
+	cli.BuildDate = BuildDate
+	cli.GitCommit = GitCommit
+
+	// Register CLI commands
+	cliInstance.RegisterCommand(&cli.Command{
+		Name:        "service",
+		Description: "Service management operations",
+		Privileged:  true,
+		Handler:     cli.ServiceCommand,
+	})
+
+	cliInstance.RegisterCommand(&cli.Command{
+		Name:        "maintenance",
+		Description: "Maintenance operations",
+		Privileged:  false,
+		Handler:     cli.MaintenanceCommand,
+	})
+
+	cliInstance.RegisterCommand(&cli.Command{
+		Name:        "update",
+		Description: "Update operations",
+		Privileged:  false,
+		Handler:     cli.UpdateCommand,
+	})
+
+	// Parse CLI arguments
+	if err := cliInstance.Parse(os.Args[1:]); err != nil {
+		log.Fatalf("Failed to parse CLI: %v", err)
+	}
+
+	// Check if this is a command that exits (handled by CLI package)
+	// Commands like --help, --version are handled internally
+
+	// Handle healthcheck flag (for Docker HEALTHCHECK)
+	if os.Getenv("CLI_HEALTHCHECK_FLAG") == "1" {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "80"
+		}
+		resp, err := http.Get(fmt.Sprintf("http://localhost:%s/healthz", port))
+		if err != nil || resp.StatusCode != http.StatusOK {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	// Check for DEBUG environment variable
 	debugEnv := strings.ToLower(os.Getenv("DEBUG"))
 	debugMode := debugEnv != "" && debugEnv != "0" && debugEnv != "false" && debugEnv != "no"
@@ -64,96 +115,55 @@ func main() {
 		log.Println("⚠️  This mode should NEVER be used in production!")
 	}
 
-	// CLI flags
-	var (
-		showStatus  = flag.Bool("status", false, "Show server status and configuration")
-		showVersion = flag.Bool("version", false, "Show version information")
-		healthcheck = flag.Bool("healthcheck", false, "Run healthcheck and exit (for Docker)")
-		configPort  = flag.String("port", "", "Override PORT environment variable")
-		dataDir     = flag.String("data", "", "Data directory (will store weather.db)")
-		configDir   = flag.String("config", "", "Configuration directory")
-		configAddr  = flag.String("address", "", "Override server listen address (default: 0.0.0.0)")
-	)
-	flag.Parse()
-
-	// Handle version flag
-	if *showVersion {
-		fmt.Printf("Weather Service v%s\n", Version)
-		fmt.Printf("Build Date: %s\n", BuildDate)
-		fmt.Printf("Git Commit: %s\n", GitCommit)
-		fmt.Printf("Go Version: %s\n", strings.TrimPrefix(os.Getenv("GOVERSION"), "go"))
-		os.Exit(0)
-	}
-
-	// Handle healthcheck flag (for Docker HEALTHCHECK)
-	if *healthcheck {
-		port := os.Getenv("PORT")
-		if port == "" {
-			port = "3000"
-		}
-		resp, err := http.Get(fmt.Sprintf("http://localhost:%s/healthz", port))
-		if err != nil || resp.StatusCode != http.StatusOK {
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
-
 	// Get OS-appropriate directory paths
 	dirPaths, err := utils.GetDirectoryPaths()
 	if err != nil {
 		log.Fatalf("Failed to determine directory paths: %v", err)
 	}
 
-	// Apply environment variable overrides
-	if envDataDir := os.Getenv("DATA_DIR"); envDataDir != "" && *dataDir == "" {
-		*dataDir = envDataDir
-	}
-	if envConfigDir := os.Getenv("CONFIG_DIR"); envConfigDir != "" && *configDir == "" {
-		*configDir = envConfigDir
-	}
-	if envLogDir := os.Getenv("LOG_DIR"); envLogDir != "" {
-		dirPaths.Log = envLogDir
+	// Apply environment variable overrides (set by CLI or directly)
+	if envDataDir := os.Getenv("DATA_DIR"); envDataDir != "" {
+		// CLI override for data directory
+		if info, err := os.Stat(envDataDir); err == nil {
+			if !info.IsDir() {
+				if err := os.Remove(envDataDir); err != nil {
+					log.Fatalf("Failed to remove file at %s: %v", envDataDir, err)
+				}
+			}
+		}
+		if err := os.MkdirAll(envDataDir, 0755); err != nil {
+			log.Fatalf("Failed to create data directory %s: %v", envDataDir, err)
+		}
+		dirPaths.Data = envDataDir
 	}
 
-	// Apply CLI overrides (CLI takes precedence over env vars)
-	if *configPort != "" {
-		os.Setenv("PORT", *configPort)
-	}
-	if *dataDir != "" {
-		// CLI override for data directory
-		if info, err := os.Stat(*dataDir); err == nil {
-			if !info.IsDir() {
-				if err := os.Remove(*dataDir); err != nil {
-					log.Fatalf("Failed to remove file at %s: %v", *dataDir, err)
-				}
-			}
-		}
-		if err := os.MkdirAll(*dataDir, 0755); err != nil {
-			log.Fatalf("Failed to create data directory %s: %v", *dataDir, err)
-		}
-		dirPaths.Data = *dataDir
-	}
-	if *configDir != "" {
+	if envConfigDir := os.Getenv("CONFIG_DIR"); envConfigDir != "" {
 		// CLI override for config directory
-		if info, err := os.Stat(*configDir); err == nil {
+		if info, err := os.Stat(envConfigDir); err == nil {
 			if !info.IsDir() {
-				if err := os.Remove(*configDir); err != nil {
-					log.Fatalf("Failed to remove file at %s: %v", *configDir, err)
+				if err := os.Remove(envConfigDir); err != nil {
+					log.Fatalf("Failed to remove file at %s: %v", envConfigDir, err)
 				}
 			}
 		}
-		if err := os.MkdirAll(*configDir, 0755); err != nil {
-			log.Fatalf("Failed to create config directory %s: %v", *configDir, err)
+		if err := os.MkdirAll(envConfigDir, 0755); err != nil {
+			log.Fatalf("Failed to create config directory %s: %v", envConfigDir, err)
 		}
-		dirPaths.Config = *configDir
+		dirPaths.Config = envConfigDir
 	}
-	if *configAddr != "" {
-		os.Setenv("SERVER_LISTEN", *configAddr)
+
+	if envLogDir := os.Getenv("LOG_DIR"); envLogDir != "" {
+		dirPaths.Log = envLogDir
 	}
 
 	// Create all required directories
 	if err := utils.CreateDirectories(dirPaths); err != nil {
 		log.Fatalf("Failed to create directories: %v", err)
+	}
+
+	// Generate server.yml if it doesn't exist (runtime generation per TEMPLATE.md)
+	if err := cli.GenerateServerYML(dirPaths.Config); err != nil {
+		log.Printf("Warning: Failed to generate server.yml: %v", err)
 	}
 
 	// Initialize logger
@@ -299,7 +309,7 @@ func main() {
 	}
 
 	// Handle status flag
-	if *showStatus {
+	if os.Getenv("CLI_STATUS_FLAG") == "1" {
 		showServerStatus(db, dbPath, isFirstRun)
 		os.Exit(0)
 	}
@@ -386,13 +396,13 @@ func main() {
 		log.Fatalf("Failed to get templates subdirectory: %v", err)
 	}
 
-	// Walk the filesystem and collect all .html files
+	// Walk the filesystem and collect all .tmpl files
 	var templatePaths []string
 	fs.WalkDir(templatesSubFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && strings.HasSuffix(path, ".html") {
+		if !d.IsDir() && strings.HasSuffix(path, ".tmpl") {
 			templatePaths = append(templatePaths, path)
 		}
 		return nil
@@ -440,9 +450,9 @@ func main() {
 				// Load all templates including subdirectories
 				// Note: This loads from filesystem, so paths are relative to templates/
 				patterns := []string{
-					"templates/*.html",
-					"templates/*/*.html",
-					"templates/*/*/*.html",
+					"templates/*.tmpl",
+					"templates/*/*.tmpl",
+					"templates/*/*/*.tmpl",
 				}
 				for _, pattern := range patterns {
 					t, _ = t.ParseGlob(pattern)
@@ -679,6 +689,9 @@ func main() {
 	r.GET("/livez", handlers.LivenessCheck)
 	r.GET("/healthz/setup", setupHandler.GetSetupStatus)
 
+	// Prometheus metrics endpoint (TEMPLATE.md required - optional auth)
+	r.GET("/metrics", handlers.PrometheusMetrics())
+
 	// Debug endpoints (only enabled when DEBUG environment variable is set)
 	if debugMode {
 		debugHandlers := handlers.NewDebugHandlers(db.DB, r)
@@ -792,7 +805,7 @@ func main() {
 
 		// Admin management pages
 		adminRoutes.GET("/users", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/users.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "admin/users.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "User Management - Admin",
 				"page":        "users",
 				"breadcrumb": "Users",
@@ -802,7 +815,7 @@ func main() {
 		adminRoutes.GET("/settings", adminHandler.ShowSettingsPage)
 
 		adminRoutes.GET("/tokens", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/tokens.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "admin/tokens.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "API Tokens - Admin",
 				"page":        "tokens",
 				"breadcrumb": "API Tokens",
@@ -810,7 +823,7 @@ func main() {
 		})
 
 		adminRoutes.GET("/logs", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/logs.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "admin/logs.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "Audit Logs - Admin",
 				"page":        "logs",
 				"breadcrumb": "Audit Logs",
@@ -818,7 +831,7 @@ func main() {
 		})
 
 		adminRoutes.GET("/tasks", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/tasks.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "admin/tasks.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "Scheduled Tasks - Admin",
 				"page":        "tasks",
 				"breadcrumb": "Scheduled Tasks",
@@ -826,7 +839,7 @@ func main() {
 		})
 
 		adminRoutes.GET("/backup", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/backup.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "admin/backup.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "Backup Management - Admin",
 				"page":        "backup",
 				"breadcrumb": "Backup",
@@ -834,7 +847,7 @@ func main() {
 		})
 
 		adminRoutes.GET("/channels", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin_channels.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "admin_channels.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "Notification Channels - Admin",
 				"page":        "channels",
 				"breadcrumb": "Channels",
@@ -842,7 +855,7 @@ func main() {
 		})
 
 		adminRoutes.GET("/templates", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "template_editor.html", utils.TemplateData(c, gin.H{
+			c.HTML(http.StatusOK, "template_editor.tmpl", utils.TemplateData(c, gin.H{
 				"title":       "Template Editor - Admin",
 				"page":        "templates",
 				"breadcrumb": "Templates",
@@ -853,13 +866,13 @@ func main() {
 
 	// User profile page
 	r.GET("/profile", middleware.RequireAuth(db.DB), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user/profile.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "user/profile.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))
 	})
 	r.GET("/user/profile", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user/profile.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "user/profile.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))
@@ -867,13 +880,13 @@ func main() {
 
 	// User notification preferences page
 	r.GET("/preferences", middleware.RequireAuth(db.DB), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user_preferences.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "user_preferences.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Preferences",
 			"page":  "preferences",
 		}))
 	})
 	r.GET("/user/preferences", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user_preferences.html", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "user_preferences.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Preferences",
 			"page":  "preferences",
 		}))
@@ -887,6 +900,17 @@ func main() {
 
 	// API v1 routes - all API endpoints under /api/v1
 	apiV1 := r.Group("/api/v1")
+
+	// Health check endpoint (JSON)
+	apiV1.GET("/healthz", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":    "healthy",
+			"version":   Version,
+			"mode":      os.Getenv("MODE"),
+			"uptime":    time.Since(startTime).String(),
+			"timestamp": time.Now().Unix(),
+		})
+	})
 
 	// Weather API routes (optional auth + API rate limiting)
 	weatherAPI := apiV1.Group("")
@@ -1036,6 +1060,29 @@ func main() {
 		adminAPI.GET("/smtp/providers", channelHandler.ListSMTPProviders)
 		adminAPI.POST("/smtp/autodetect", channelHandler.AutoDetectSMTP)
 
+		// Admin panel settings endpoints
+		adminAPI.PUT("/settings/web", handlers.SaveWebSettings)
+		adminAPI.PUT("/settings/security", handlers.SaveSecuritySettings)
+		adminAPI.PUT("/settings/database", handlers.SaveDatabaseSettings)
+
+		// Database management endpoints
+		adminAPI.POST("/database/test", handlers.TestDatabaseConnection)
+		adminAPI.POST("/database/optimize", handlers.OptimizeDatabase)
+		adminAPI.POST("/database/vacuum", handlers.VacuumDatabase)
+		adminAPI.POST("/cache/clear", handlers.ClearCache)
+
+		// SSL/TLS management endpoints
+		adminAPI.POST("/ssl/verify", handlers.VerifySSLCertificate)
+		adminAPI.POST("/ssl/obtain", handlers.ObtainSSLCertificate)
+		adminAPI.POST("/ssl/renew", handlers.RenewSSLCertificate)
+
+		// Backup management endpoints
+		adminAPI.POST("/backup/create", handlers.CreateBackup)
+		adminAPI.POST("/backup/restore", handlers.RestoreBackup)
+		adminAPI.GET("/backup/list", handlers.ListBackups)
+		adminAPI.GET("/backup/download/:filename", handlers.DownloadBackup)
+		adminAPI.DELETE("/backup/delete/:filename", handlers.DeleteBackup)
+
 		// Template management (admin only)
 		adminAPI.GET("/templates", templateHandler.ListTemplates)
 		adminAPI.GET("/templates/variables", templateHandler.GetTemplateVariables)
@@ -1090,10 +1137,12 @@ func main() {
 
 	// OpenAPI/Swagger documentation (moved to /api/)
 	r.GET("/api/openapi.json", handlers.GetOpenAPISpec)
+	r.GET("/api/openapi.yaml", handlers.GetOpenAPISpecYAML)
 	r.GET("/api/openapi", handlers.GetOpenAPISpec)
 	r.GET("/api/swagger", handlers.GetSwaggerUI)
-	// Legacy redirects
+	// Root-level endpoints (TEMPLATE.md required)
 	r.GET("/openapi.json", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi.json") })
+	r.GET("/openapi.yaml", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi.yaml") })
 	r.GET("/openapi", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi") })
 	r.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/swagger") })
 
@@ -1391,6 +1440,7 @@ func securityHeadersMiddleware() gin.HandlerFunc {
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("X-XSS-Protection", "1; mode=block")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 
 		c.Next()
 	}

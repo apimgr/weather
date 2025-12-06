@@ -1,0 +1,133 @@
+name: Beta Release
+
+on:
+  push:
+    branches:
+      - beta
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Beta Binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: amd64
+          - os: darwin
+            arch: arm64
+          - os: windows
+            arch: amd64
+            ext: .exe
+          - os: windows
+            arch: arm64
+            ext: .exe
+          - os: freebsd
+            arch: amd64
+          - os: freebsd
+            arch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Generate version
+        id: version
+        run: |
+          VERSION=$(date -u '+%Y%m%d%H%M')-beta
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Beta version: $VERSION"
+
+      - name: Build binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          BINARY_NAME=weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
+          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildDate=$(date -u '+%Y-%m-%d %H:%M:%S') -X main.GitCommit=${{ github.sha }}" -o $BINARY_NAME ./src
+          ls -lh $BINARY_NAME
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-${{ matrix.os }}-${{ matrix.arch }}
+          path: weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
+          retention-days: 7
+
+  release:
+    name: Create Beta Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate version
+        id: version
+        run: |
+          VERSION=$(date -u '+%Y%m%d%H%M')-beta
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+
+      - name: Prepare binaries
+        run: |
+          mkdir -p releases
+          find binaries -type f -exec mv {} releases/ \;
+          ls -lh releases/
+
+      - name: Create source archive
+        run: |
+          tar --exclude='.git' --exclude='.github' --exclude='binaries' --exclude='releases' \
+              -czf releases/weather-source-${{ steps.version.outputs.VERSION }}.tar.gz .
+
+      - name: Delete existing beta release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete beta --yes || true
+          git push origin :refs/tags/beta || true
+
+      - name: Create beta release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create beta \
+            --title "Beta Build - ${{ steps.version.outputs.VERSION }}" \
+            --notes "**Automated beta build from beta branch**
+
+            Build: ${{ steps.version.outputs.VERSION }}
+            Commit: ${{ github.sha }}
+            Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+            This is a beta pre-release build. Use at your own risk.
+
+            **Installation:**
+            \`\`\`bash
+            # Download for your platform
+            wget https://github.com/apimgr/weather/releases/download/beta/weather-linux-amd64
+            chmod +x weather-linux-amd64
+            sudo mv weather-linux-amd64 /usr/local/bin/weather
+
+            # Or use the update command
+            weather --update branch beta
+            \`\`\`" \
+            --prerelease \
+            releases/*

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="stylesheet" href="/static/css/template-overrides.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🌤️ Weather Service</h1>
+            <p>Sign in to your account</p>
+        </div>
+
+        {{ if .error }}
+        <div class="error-message">{{ .error }}</div>
+        {{ end }}
+
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label for="identifier">Username, Email, or Phone</label>
+                <input type="text" id="identifier" name="identifier" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-primary">Sign In</button>
+        </form>
+
+        <div class="form-footer">
+            <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+
+        <div class="back-link">
+            <a href="/">← Back to Weather</a>
+        </div>
+    </div>
+
+    <script>
+        // Auto-focus identifier field
+        document.getElementById('identifier').focus();
+
+        // Handle form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const identifier = document.getElementById('identifier').value;
+            const password = document.getElementById('password').value;
+
+            if (!identifier || !password) {
+                e.preventDefault();
+                alert('Please fill in all fields');
+            }
+        });
+    </script>
+</body>
+</html>

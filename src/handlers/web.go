@@ -132,7 +132,7 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 	// Format location for URLs (replace spaces with +, keep commas)
 	locationFormatted := strings.ReplaceAll(location, " ", "+")
 
-	c.HTML(http.StatusOK, "weather.html", gin.H{
+	c.HTML(http.StatusOK, "weather.tmpl", gin.H{
 		"Title":             "Weather",
 		"WeatherData":       weatherData,
 		"HostInfo":          hostInfo,
@@ -196,7 +196,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 
 	// If still no location, show empty moon page
 	if location == "" {
-		c.HTML(http.StatusOK, "moon.html", gin.H{
+		c.HTML(http.StatusOK, "moon.tmpl", gin.H{
 			"Title":      "Moon Phase - Weather",
 			"HostInfo":   utils.GetHostInfo(c),
 			"Location":   "",
@@ -212,7 +212,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
 
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "moon.html", gin.H{
+		c.HTML(http.StatusInternalServerError, "moon.tmpl", gin.H{
 			"Title":      "Moon Phase - Weather",
 			"Error":      err.Error(),
 			"HostInfo":   utils.GetHostInfo(c),
@@ -267,7 +267,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	// This shows "Albany, NY" instead of just "Albany"
 	displayLocation := enhanced.ShortName
 
-	c.HTML(http.StatusOK, "moon.html", gin.H{
+	c.HTML(http.StatusOK, "moon.tmpl", gin.H{
 		"Title":             "Moon Phase - " + enhanced.ShortName,
 		"MoonData":          moonData,
 		"HostInfo":          utils.GetHostInfo(c),
@@ -282,7 +282,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 func (h *WebHandler) ServeExamplesPage(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
-	c.HTML(http.StatusOK, "examples.html", gin.H{
+	c.HTML(http.StatusOK, "examples.tmpl", gin.H{
 		"title":    "Examples - Weather",
 		"hostInfo": hostInfo,
 	})

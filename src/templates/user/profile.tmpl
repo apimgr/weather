@@ -1,0 +1,207 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="profile-page-header-title">👤 Profile</h1>
+        <p class="text-comment">Manage your account information and preferences</p>
+    </div>
+
+    <!-- Profile Information Card -->
+    <div class="card profile-card">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Account Information</h2>
+        </div>
+        <div class="card-body">
+            <form id="profileForm">
+                <div class="form-grid">
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" class="form-input" value="{{.user.Username}}" readonly>
+                        <small class="text-comment">Username cannot be changed</small>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" id="email" class="form-input" value="{{.user.Email}}" required>
+                        <small class="text-comment">Used for notifications and account recovery</small>
+                    </div>
+
+                    <!-- Display Name -->
+                    <div class="form-group">
+                        <label for="displayName" class="form-label">Display Name</label>
+                        <input type="text" id="displayName" class="form-input" value="{{.user.DisplayName}}" placeholder="{{.user.Username}}">
+                        <small class="text-comment">Shown in the navigation bar (optional)</small>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" id="phone" class="form-input" value="{{.user.Phone}}" placeholder="+1 (555) 123-4567">
+                        <small class="text-comment">For SMS notifications (optional)</small>
+                    </div>
+                </div>
+
+                <div class="profile-form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">↻ Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Card -->
+    <div class="card profile-card">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Change Password</h2>
+        </div>
+        <div class="card-body">
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword" class="form-label">Current Password</label>
+                    <input type="password" id="currentPassword" class="form-input" required minlength="8">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" id="newPassword" class="form-input" required minlength="8">
+                        <small class="text-comment">Minimum 8 characters</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" class="form-input" required minlength="8">
+                        <small class="text-comment">Must match new password</small>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary profile-password-button">🔒 Change Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Information (Read-only) -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Account Details</h2>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">User ID</div>
+                    <div class="info-value">{{.user.ID}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Role</div>
+                    <div class="info-value">
+                        <span class="badge {{if eq .user.Role "admin"}}badge-admin{{else}}badge-user{{end}}">
+                            {{.user.Role}}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Account Created</div>
+                    <div class="info-value">{{.user.CreatedAt.Format "January 2, 2006 at 3:04 PM"}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value">{{.user.UpdatedAt.Format "January 2, 2006 at 3:04 PM"}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Save profile changes
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = {
+        email: document.getElementById('email').value,
+        display_name: document.getElementById('displayName').value,
+        phone: document.getElementById('phone').value
+    };
+
+    try {
+        const response = await fetch('/api/v1/user/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update profile');
+        }
+
+        Toast.success('Profile updated successfully!');
+
+        // Reload page to show updated info in navbar
+        setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+        Toast.error('Failed to update profile: ' + error.message);
+    }
+});
+
+// Change password
+document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (newPassword !== confirmPassword) {
+        Toast.error('Passwords do not match');
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        Toast.error('Password must be at least 8 characters');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/user/password', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to change password');
+        }
+
+        Toast.success('Password changed successfully!');
+
+        // Clear password fields
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    } catch (error) {
+        Toast.error('Failed to change password: ' + error.message);
+    }
+});
+
+// Reset form to original values
+function resetForm() {
+    document.getElementById('profileForm').reset();
+}
+</script>
+
+{{template "footer" .}}
+</body>
+</html>

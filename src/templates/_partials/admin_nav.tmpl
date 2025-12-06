@@ -1,0 +1,58 @@
+{{define "admin_nav"}}
+<nav class="admin-nav">
+    <div class="admin-nav-container">
+        <div class="admin-nav-brand">
+            <span class="admin-icon">⚡</span>
+            <span class="admin-title">Admin Panel</span>
+        </div>
+        <div class="admin-nav-menu">
+            <a href="/admin" class="admin-nav-link {{if eq .page "dashboard"}}active{{end}}">
+                <span class="nav-icon">📊</span>
+                Dashboard
+            </a>
+            <a href="/admin/users" class="admin-nav-link {{if eq .page "users"}}active{{end}}">
+                <span class="nav-icon">👥</span>
+                Users
+            </a>
+            <a href="/admin/settings" class="admin-nav-link {{if eq .page "settings"}}active{{end}}">
+                <span class="nav-icon">⚙️</span>
+                Settings
+            </a>
+            <a href="/admin/tokens" class="admin-nav-link {{if eq .page "tokens"}}active{{end}}">
+                <span class="nav-icon">🔑</span>
+                API Tokens
+            </a>
+            <a href="/admin/logs" class="admin-nav-link {{if eq .page "logs"}}active{{end}}">
+                <span class="nav-icon">📋</span>
+                Logs
+            </a>
+            <a href="/admin/tasks" class="admin-nav-link {{if eq .page "tasks"}}active{{end}}">
+                <span class="nav-icon">⏱️</span>
+                Tasks
+            </a>
+            <a href="/admin/backup" class="admin-nav-link {{if eq .page "backup"}}active{{end}}">
+                <span class="nav-icon">💾</span>
+                Backup
+            </a>
+            <a href="/admin/channels" class="admin-nav-link {{if eq .page "channels"}}active{{end}}">
+                <span class="nav-icon">📢</span>
+                Channels
+            </a>
+            <a href="/admin/templates" class="admin-nav-link {{if eq .page "templates"}}active{{end}}">
+                <span class="nav-icon">📝</span>
+                Templates
+            </a>
+        </div>
+        <div class="admin-nav-user">
+            <div class="user-info">
+                <span class="user-avatar">{{if .user.Email}}{{index .user.Email 0 | printf "%c" | upper}}{{else}}A{{end}}</span>
+                <span class="user-name">{{.user.Email}}</span>
+            </div>
+            <a href="/logout" class="admin-nav-link logout">
+                <span class="nav-icon">🚪</span>
+                Logout
+            </a>
+        </div>
+    </div>
+</nav>
+{{end}}

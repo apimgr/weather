@@ -6,128 +6,6 @@
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
-    <style>
-        .setup-container {
-            min-height: 100vh;
-            padding: 2rem;
-        }
-        .setup-card {
-            max-width: 800px;
-            margin: 0 auto;
-            background: var(--dracula-current-line);
-            border-radius: 1rem;
-            padding: 3rem;
-        }
-        .setup-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .setup-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        .setup-title {
-            font-size: 2rem;
-            color: var(--dracula-purple);
-            margin-bottom: 0.5rem;
-        }
-        .setup-subtitle {
-            color: var(--dracula-comment);
-        }
-        .form-section {
-            margin-bottom: 2rem;
-        }
-        .section-title {
-            font-size: 1.25rem;
-            color: var(--dracula-cyan);
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--dracula-selection);
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-group label {
-            display: block;
-            color: var(--dracula-foreground);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            background: var(--dracula-bg);
-            border: 1px solid var(--dracula-selection);
-            border-radius: 0.5rem;
-            color: var(--dracula-foreground);
-            font-family: inherit;
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        .form-group small {
-            display: block;
-            color: var(--dracula-comment);
-            margin-top: 0.25rem;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-        }
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-        }
-        .btn-primary {
-            background: var(--dracula-purple);
-            color: var(--dracula-bg);
-        }
-        .btn-primary:hover {
-            background: #bd93f9;
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background: var(--dracula-selection);
-            color: var(--dracula-foreground);
-        }
-        .btn-secondary:hover {
-            background: var(--dracula-comment);
-        }
-        .error-message {
-            background: var(--dracula-red);
-            color: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .success-message {
-            background: var(--dracula-green);
-            color: var(--dracula-bg);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-    </style>
 </head>
 <body>
     <div class="setup-container">
@@ -263,18 +141,21 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    document.getElementById('successMessage').textContent = 'Settings saved successfully!';
-                    document.getElementById('successMessage').style.display = 'block';
+                    const successMsg = document.getElementById('successMessage');
+                    successMsg.textContent = 'Settings saved successfully!';
+                    successMsg.classList.add('edit-error-message');
                     setTimeout(() => {
                         window.location.href = data.redirect || '/setup/complete';
                     }, 1000);
                 } else {
-                    document.getElementById('errorMessage').textContent = data.error || 'Failed to save settings';
-                    document.getElementById('errorMessage').style.display = 'block';
+                    const errorMsg = document.getElementById('errorMessage');
+                    errorMsg.textContent = data.error || 'Failed to save settings';
+                    errorMsg.classList.add('edit-error-message');
                 }
             } catch (error) {
-                document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
-                document.getElementById('errorMessage').style.display = 'block';
+                const errorMsg = document.getElementById('errorMessage');
+                errorMsg.textContent = 'Network error: ' + error.message;
+                errorMsg.classList.add('edit-error-message');
             }
         });
     </script>
