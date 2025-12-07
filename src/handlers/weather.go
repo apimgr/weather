@@ -243,7 +243,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	// Get current weather and forecast
 	current, err := h.weatherService.GetCurrentWeather(location.Latitude, location.Longitude, units)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "weather.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusInternalServerError, "pages/weather.tmpl", utils.TemplateData(c, gin.H{
 			"Error":    err.Error(),
 			"HostInfo": utils.GetHostInfo(c),
 			"page":     "weather",
@@ -331,7 +331,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	// This shows "Albany, NY" instead of just "Albany"
 	displayLocation := location.ShortName
 
-	c.HTML(http.StatusOK, "weather.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "pages/weather.tmpl", utils.TemplateData(c, gin.H{
 		"Title": location.ShortName + " Weather",
 		"WeatherData": gin.H{
 			"Location": locationData,
@@ -601,7 +601,7 @@ func (h *WeatherHandler) handleMoonRequest(c *gin.Context, locationInput string)
 		units := c.DefaultQuery("units", "imperial")
 
 		// Serve moon HTML page
-		c.HTML(http.StatusOK, "moon.tmpl", gin.H{
+		c.HTML(http.StatusOK, "pages/moon.tmpl", gin.H{
 			"Title":    "Moon Phase",
 			"Location": location,
 			"Units":    units,
@@ -678,7 +678,7 @@ func (h *WeatherHandler) handleError(c *gin.Context, err error, location string,
 	errMsg := err.Error()
 
 	if isBrowser {
-		c.HTML(http.StatusInternalServerError, "weather.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusInternalServerError, "pages/weather.tmpl", utils.TemplateData(c, gin.H{
 			"error":    errMsg,
 			"hostInfo": hostInfo,
 			"page":     "weather",

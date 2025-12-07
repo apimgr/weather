@@ -246,7 +246,7 @@ func (h *LocationHandler) ShowAddLocationPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "add-location.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "pages/add-location.tmpl", utils.TemplateData(c, gin.H{
 		"title": "Add Location - Weather Service",
 		"user":  user,
 		"page":  "locations",
@@ -263,23 +263,23 @@ func (h *LocationHandler) ShowEditLocationPage(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"error": "Invalid location ID"})
+		c.HTML(http.StatusBadRequest, "pages/error.tmpl", gin.H{"error": "Invalid location ID"})
 		return
 	}
 
 	locationModel := &models.LocationModel{DB: h.DB}
 	location, err := locationModel.GetByID(id)
 	if err != nil {
-		c.HTML(http.StatusNotFound, "error.tmpl", gin.H{"error": "Location not found"})
+		c.HTML(http.StatusNotFound, "pages/error.tmpl", gin.H{"error": "Location not found"})
 		return
 	}
 
 	if location.UserID != user.ID {
-		c.HTML(http.StatusForbidden, "error.tmpl", gin.H{"error": "Access denied"})
+		c.HTML(http.StatusForbidden, "pages/error.tmpl", gin.H{"error": "Access denied"})
 		return
 	}
 
-	c.HTML(http.StatusOK, "edit-location.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "pages/edit-location.tmpl", utils.TemplateData(c, gin.H{
 		"title":    "Edit Location - Weather Service",
 		"user":     user,
 		"location": location,

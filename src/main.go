@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -24,15 +23,10 @@ import (
 	"weather-go/src/middleware"
 	"weather-go/src/models"
 	"weather-go/src/scheduler"
+	"weather-go/src/server"
 	"weather-go/src/services"
 	"weather-go/src/utils"
 )
-
-//go:embed all:templates
-var templatesFS embed.FS
-
-//go:embed static
-var staticFS embed.FS
 
 // Version information (set via ldflags during build)
 var (
@@ -382,14 +376,16 @@ func main() {
 		c.Next()
 	})
 
-	// Serve embedded static files
-	staticSubFS, err := fs.Sub(staticFS, "static")
+	// Serve embedded static files from server package
+	staticSubFS, err := server.GetStaticSubFS()
 	if err != nil {
 		log.Fatalf("Failed to get static subdirectory: %v", err)
 	}
 	r.StaticFS("/static", http.FS(staticSubFS))
 
-	// Load embedded templates with custom functions
+	// Load embedded templates with custom functions from server package
+	// Get embedded templates filesystem
+	templatesFS := server.GetTemplatesFS()
 	// Create sub-filesystem starting at "templates/" so template names don't include "templates/" prefix
 	templatesSubFS, err := fs.Sub(templatesFS, "templates")
 	if err != nil {
@@ -437,7 +433,7 @@ func main() {
 
 	// Live reload templates in debug mode (loads from filesystem if available)
 	if gin.Mode() == gin.DebugMode {
-		if _, err := os.Stat("templates"); err == nil {
+		if _, err := os.Stat("src/server/templates"); err == nil {
 			r.Use(func(c *gin.Context) {
 				// Try to reload from filesystem in debug mode
 				t := template.New("").Funcs(template.FuncMap{
@@ -448,16 +444,16 @@ func main() {
 					},
 				})
 				// Load all templates including subdirectories
-				// Note: This loads from filesystem, so paths are relative to templates/
+				// Note: This loads from filesystem, so paths are relative to src/server/templates/
 				patterns := []string{
-					"templates/*.tmpl",
-					"templates/*/*.tmpl",
-					"templates/*/*/*.tmpl",
+					"src/server/templates/*.tmpl",
+					"src/server/templates/*/*.tmpl",
+					"src/server/templates/*/*/*.tmpl",
 				}
 				for _, pattern := range patterns {
 					t, _ = t.ParseGlob(pattern)
 				}
-				// Need to rename templates to remove "templates/" prefix for consistency
+				// Need to rename templates to remove "src/server/templates/" prefix for consistency
 				// This is a bit hacky but necessary for live reload
 				r.SetHTMLTemplate(t)
 				c.Next()
@@ -866,13 +862,13 @@ func main() {
 
 	// User profile page
 	r.GET("/profile", middleware.RequireAuth(db.DB), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user/profile.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "pages/user/profile.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))
 	})
 	r.GET("/user/profile", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user/profile.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "pages/user/profile.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))

@@ -1,0 +1,1581 @@
+/* ============================================
+   TEMPLATE OVERRIDES - Inline CSS Extraction
+   All inline styles moved to reusable CSS classes
+   ============================================ */
+
+/* ==================== WEATHER FORM (index.html) ==================== */
+.weather-form {
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.weather-form__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.weather-form__row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.weather-form__input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.weather-form__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.weather-form__units {
+  flex-shrink: 0;
+  width: 5rem;
+}
+
+.weather-form__button-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.weather-form__button {
+  flex: 1;
+}
+
+.weather-form__button--location {
+  flex: 1;
+  background-color: var(--dracula-cyan);
+}
+
+/* Location Details */
+.location-detail-row {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.location-detail-value--yellow {
+  color: var(--dracula-yellow);
+}
+
+.location-detail-value--green {
+  color: var(--dracula-green);
+}
+
+.location-detail-value--orange {
+  color: var(--dracula-orange);
+}
+
+/* Forecast Table Colors */
+.forecast-temp-high {
+  color: var(--dracula-orange);
+}
+
+.forecast-temp-low {
+  color: var(--dracula-cyan);
+}
+
+.forecast-feels-like {
+  color: var(--dracula-comment);
+  font-size: 0.875rem;
+}
+
+/* Forecast Cards (Mobile) */
+.forecast-details-mobile {
+  font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Console Section */
+.console-container {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: var(--dracula-bg);
+  border-radius: 6px;
+}
+
+.console-title {
+  color: var(--dracula-purple);
+  text-align: center;
+  margin-top: 0;
+}
+
+.console-label {
+  color: var(--dracula-green);
+}
+
+/* Welcome Section */
+.welcome-container {
+  text-align: center;
+  color: var(--dracula-comment);
+  margin: 30px 0;
+}
+
+.welcome-title {
+  color: var(--dracula-cyan);
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.welcome-text {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.city-grid-container {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: var(--dracula-current-line);
+  border-radius: 6px;
+}
+
+.city-grid-title {
+  color: var(--dracula-green);
+}
+
+/* Footer */
+.page-footer-main {
+  text-align: center;
+  margin-top: 3rem;
+  padding: 2rem 1rem;
+  border-top: 1px solid var(--dracula-current-line);
+  color: var(--dracula-comment);
+}
+
+.page-footer-text {
+  margin: 0;
+  font-size: 0.875rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.page-footer-link {
+  color: var(--dracula-cyan);
+  text-decoration: none;
+}
+
+.page-footer-link--green {
+  color: var(--dracula-green);
+  text-decoration: none;
+}
+
+.page-footer-divider {
+  color: var(--dracula-pink);
+}
+
+.page-footer-heart {
+  color: var(--dracula-red);
+}
+
+/* ==================== ADMIN (admin.html) ==================== */
+.admin-stat-value--online {
+  font-size: 1.5rem;
+  color: var(--dracula-green);
+}
+
+.admin-loading-text {
+  text-align: center;
+  color: var(--dracula-comment);
+  padding: 2rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table-header {
+  border-bottom: 2px solid var(--dracula-comment);
+}
+
+.admin-table-header-cell {
+  text-align: left;
+  padding: 1rem;
+}
+
+.admin-table-row {
+  border-bottom: 1px solid var(--dracula-comment);
+}
+
+.admin-table-cell {
+  padding: 1rem;
+}
+
+.admin-table-cell--right {
+  padding: 1rem;
+  text-align: right;
+}
+
+.admin-user-badge {
+  background: var(--dracula-purple);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: white;
+}
+
+.admin-user-badge--admin {
+  background: var(--dracula-red);
+}
+
+.admin-user-primary-indicator {
+  color: var(--dracula-cyan);
+  font-size: 0.8rem;
+}
+
+.admin-db-stat-value {
+  font-size: 1.2rem;
+}
+
+.admin-db-stat-value--success {
+  font-size: 1.2rem;
+  color: var(--dracula-green);
+}
+
+.admin-section-title {
+  color: var(--dracula-purple);
+  margin-bottom: 1rem;
+}
+
+.admin-hr {
+  margin: 2rem 0;
+  border-color: var(--dracula-comment);
+}
+
+.admin-info-box {
+  background: rgba(189, 147, 249, 0.1);
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.admin-warning-box {
+  background: rgba(255, 85, 85, 0.1);
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--dracula-red);
+  margin-top: 1rem;
+}
+
+.admin-settings-note {
+  background: var(--dracula-current-line);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--dracula-cyan);
+  margin-top: 1rem;
+}
+
+.admin-settings-note-text {
+  color: var(--dracula-cyan);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.admin-settings-note-text strong {
+  font-weight: bold;
+}
+
+/* ==================== API DOCS (api-docs.html) ==================== */
+.api-docs-link-box {
+  text-decoration: none;
+}
+
+.api-docs-button-inline {
+  margin-top: 1rem;
+  display: inline-block;
+}
+
+/* ==================== PROFILE (user/profile.html) ==================== */
+.profile-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+.profile-page-header-title {
+  color: var(--dracula-cyan);
+  margin-bottom: 0.5rem;
+}
+
+.profile-card {
+  margin-bottom: 2rem;
+}
+
+.profile-card-header-title {
+  color: var(--dracula-purple);
+  margin: 0;
+}
+
+.profile-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.profile-password-button {
+  margin-top: 1rem;
+}
+
+/* ==================== EDIT LOCATION (edit-location.html) ==================== */
+.edit-location-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+.edit-error-message {
+  display: block;
+}
+
+/* ==================== LOADING PAGE (loading.html) ==================== */
+.loading-page-container {
+  text-align: center;
+  margin: 3rem 0;
+}
+
+.loading-page-title {
+  color: var(--dracula-cyan);
+  margin: 1rem 0;
+}
+
+.loading-page-status-box {
+  background-color: var(--dracula-current-line);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.loading-page-status-item {
+  color: var(--dracula-yellow);
+  margin: 0.5rem 0;
+}
+
+.loading-page-status-item--green {
+  color: var(--dracula-green);
+  margin: 0.5rem 0;
+}
+
+.loading-page-status-item--purple {
+  color: var(--dracula-purple);
+  margin: 0.5rem 0;
+}
+
+.loading-page-countdown-label {
+  color: var(--dracula-cyan);
+}
+
+.loading-page-countdown-note {
+  color: var(--dracula-comment);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.loading-page-retry-container {
+  margin: 1rem 0;
+}
+
+.loading-page-retry-button {
+  margin: 1rem 0;
+}
+
+.loading-page-while-wait-box {
+  margin: 2rem 0;
+  padding: 1rem;
+  background-color: var(--dracula-bg);
+  border-radius: 0.375rem;
+}
+
+.loading-page-while-wait-title {
+  color: var(--dracula-orange);
+  margin-top: 0;
+}
+
+.loading-page-while-wait-text {
+  color: var(--dracula-foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.loading-page-code-box {
+  font-family: monospace;
+  background: var(--dracula-current-line);
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+}
+
+.loading-page-code-line {
+  white-space: nowrap;
+}
+
+.loading-page-code-line--cyan {
+  color: var(--dracula-cyan);
+}
+
+.loading-page-code-line--pink {
+  color: var(--dracula-pink);
+}
+
+.loading-page-footer-text {
+  margin: 0;
+}
+
+/* ==================== REGISTER PAGE (register.html) ==================== */
+.register-password-mismatch {
+  border-color: var(--dracula-red);
+}
+
+.register-password-match {
+  border-color: var(--dracula-comment);
+}
+
+/* JavaScript inline styles - converted to classes */
+.js-error-display {
+  background: #ff5555;
+  color: #282a36;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+  text-align: center;
+}
+
+.js-error-fallback {
+  background: #ffb86c;
+  color: #282a36;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+/* ==================== SETUP PAGES ==================== */
+.setup-admin-form-hint {
+  color: var(--dracula-comment);
+  font-size: 0.8125rem;
+}
+
+.setup-complete-link {
+  color: var(--dracula-cyan);
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+.inline-flex {
+  display: inline-flex;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.min-width-0 {
+  min-width: 0;
+}
+
+.width-full {
+  width: 100%;
+}
+
+.width-5rem {
+  width: 5rem;
+}
+
+.margin-y-05 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.margin-y-1 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.margin-y-15 {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.margin-y-2 {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.margin-y-3 {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+}
+
+.margin-top-05 {
+  margin-top: 0.5rem;
+}
+
+.margin-top-1 {
+  margin-top: 1rem;
+}
+
+.margin-top-15 {
+  margin-top: 1.5rem;
+}
+
+.margin-top-2 {
+  margin-top: 2rem;
+}
+
+.margin-top-3 {
+  margin-top: 3rem;
+}
+
+.margin-bottom-05 {
+  margin-bottom: 0.5rem;
+}
+
+.margin-bottom-1 {
+  margin-bottom: 1rem;
+}
+
+.margin-bottom-15 {
+  margin-bottom: 1.5rem;
+}
+
+.margin-bottom-2 {
+  margin-bottom: 2rem;
+}
+
+.padding-1 {
+  padding: 1rem;
+}
+
+.padding-15 {
+  padding: 1.5rem;
+}
+
+.padding-2 {
+  padding: 2rem;
+}
+
+.padding-3 {
+  padding: 3rem;
+}
+
+.gap-025 {
+  gap: 0.25rem;
+}
+
+.gap-05 {
+  gap: 0.5rem;
+}
+
+.gap-075 {
+  gap: 0.75rem;
+}
+
+.gap-1 {
+  gap: 1rem;
+}
+
+.gap-15 {
+  gap: 1.5rem;
+}
+
+.bg-dracula-bg {
+  background-color: var(--dracula-bg);
+}
+
+.bg-dracula-current-line {
+  background-color: var(--dracula-current-line);
+}
+
+.border-dracula-current-line {
+  border-color: var(--dracula-current-line);
+}
+
+.border-1 {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.border-radius-05 {
+  border-radius: 0.5rem;
+}
+
+.border-radius-0375 {
+  border-radius: 0.375rem;
+}
+
+.border-radius-06 {
+  border-radius: 6px;
+}
+
+.border-radius-08 {
+  border-radius: 8px;
+}
+
+.border-top-1 {
+  border-top: 1px solid;
+}
+
+.border-bottom-1 {
+  border-bottom: 1px solid;
+}
+
+.border-bottom-2 {
+  border-bottom: 2px solid;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.font-size-0875 {
+  font-size: 0.875rem;
+}
+
+.font-size-09 {
+  font-size: 0.9rem;
+}
+
+.font-size-08125 {
+  font-size: 0.8125rem;
+}
+
+.line-height-16 {
+  line-height: 1.6;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.opacity-06 {
+  opacity: 0.6;
+}
+
+/* ==================== ADMIN PAGE - EXTRACTED FROM admin.html ==================== */
+.admin-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    color: var(--dracula-red);
+    margin-bottom: 0.5rem;
+}
+
+.admin-badge {
+    display: inline-block;
+    background: var(--dracula-red);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 1rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--dracula-current-line);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card h3 {
+    color: var(--dracula-comment);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dracula-purple);
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--dracula-current-line);
+}
+
+.tab {
+    padding: 1rem 2rem;
+    background: none;
+    border: none;
+    color: var(--dracula-comment);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+    color: var(--dracula-foreground);
+}
+
+.tab.active {
+    color: var(--dracula-purple);
+    border-bottom-color: var(--dracula-purple);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.admin-section {
+    background: var(--dracula-current-line);
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    color: var(--dracula-cyan);
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: var(--dracula-purple);
+    color: var(--dracula-bg);
+}
+
+.btn-primary:hover {
+    background: var(--dracula-pink);
+}
+
+.btn-danger {
+    background: var(--dracula-red);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #cc0000;
+}
+
+.placeholder-text {
+    color: var(--dracula-comment);
+    text-align: center;
+    padding: 3rem;
+}
+
+.settings-form {
+    max-width: 800px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    color: var(--dracula-cyan);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-input,
+.form-input:focus {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--dracula-bg);
+    border: 1px solid var(--dracula-comment);
+    border-radius: 4px;
+    color: var(--dracula-foreground);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--dracula-purple);
+    box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.1);
+}
+
+.form-input::placeholder {
+    color: var(--dracula-comment);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    color: var(--dracula-foreground);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    accent-color: var(--dracula-purple);
+}
+
+textarea.form-input {
+    resize: vertical;
+    min-height: 100px;
+    font-family: monospace;
+}
+
+select.form-input {
+    cursor: pointer;
+}
+
+.info-box, .warning-box {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.info-box {
+    background: rgba(189, 147, 249, 0.1);
+    border-left: 3px solid var(--dracula-purple);
+}
+
+.warning-box {
+    background: rgba(255, 85, 85, 0.1);
+    border-left: 3px solid var(--dracula-red);
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .navbar-nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .admin-tabs {
+        overflow-x: auto;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Additional admin classes for inline styles */
+.admin-stat-value-online {
+    font-size: 1.5rem;
+    color: var(--dracula-green);
+}
+
+.admin-stat-value-medium {
+    font-size: 1.2rem;
+}
+
+.admin-stat-value-medium-success {
+    font-size: 1.2rem;
+    color: var(--dracula-green);
+}
+
+.admin-table-full {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table-head-row {
+    border-bottom: 2px solid var(--dracula-comment);
+}
+
+.admin-table-head-cell {
+    text-align: left;
+    padding: 1rem;
+}
+
+.admin-table-head-cell-right {
+    text-align: right;
+    padding: 1rem;
+}
+
+.admin-table-body-row {
+    border-bottom: 1px solid var(--dracula-comment);
+}
+
+.admin-table-body-cell {
+    padding: 1rem;
+}
+
+.admin-table-body-cell-right {
+    padding: 1rem;
+    text-align: right;
+}
+
+.admin-role-badge {
+    background: var(--dracula-purple);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.admin-role-badge-admin {
+    background: var(--dracula-red);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.admin-user-primary {
+    color: var(--dracula-cyan);
+    font-size: 0.8rem;
+}
+
+.admin-token-button {
+    background: var(--dracula-red);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin-logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-logs-cell {
+    padding: 0.75rem;
+}
+
+.admin-logs-cell-mono {
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.admin-logs-cell-cyan {
+    padding: 0.75rem;
+    color: var(--dracula-cyan);
+}
+
+.admin-logs-cell-comment {
+    padding: 0.75rem;
+    color: var(--dracula-comment);
+}
+
+.admin-task-name {
+    padding: 1rem;
+    font-family: monospace;
+    color: var(--dracula-cyan);
+}
+
+.admin-task-status-running {
+    background: var(--dracula-green);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.admin-task-status-idle {
+    background: var(--dracula-comment);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.admin-task-next-run {
+    font-size: 0.9rem;
+}
+
+.admin-task-countdown {
+    font-size: 0.8rem;
+    color: var(--dracula-cyan);
+    margin-top: 0.25rem;
+}
+
+.admin-error-text {
+    color: var(--dracula-red);
+    text-align: center;
+}
+
+.admin-no-data-text {
+    color: var(--dracula-comment);
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Additional utility classes */
+.font-monospace {
+    font-family: monospace;
+}
+
+.word-break-all {
+    word-break: break-all;
+}
+
+.text-orange {
+    color: var(--dracula-orange);
+}
+
+.text-green {
+    color: var(--dracula-green);
+}
+
+.text-pink {
+    color: var(--dracula-pink);
+}
+
+.text-red {
+    color: var(--dracula-red);
+}
+
+.text-cyan {
+    color: var(--dracula-cyan);
+}
+
+.text-purple {
+    color: var(--dracula-purple);
+}
+
+.text-yellow {
+    color: var(--dracula-yellow);
+}
+
+.text-comment {
+    color: var(--dracula-comment);
+}
+
+.text-error {
+    color: var(--dracula-red);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.margin-0 {
+    margin: 0;
+}
+
+.margin-bottom-1 {
+    margin-bottom: 1rem;
+}
+
+.margin-bottom-2 {
+    margin-bottom: 2rem;
+}
+
+/* Location details section for index.html */
+.location-details-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background-color: var(--dracula-bg);
+    border-radius: 0.5rem;
+    border: 1px solid var(--dracula-current-line);
+}
+
+.location-detail {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+/* JavaScript error display */
+.js-error-display-red {
+    background: #ff5555;
+    color: #282a36;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin: 0.5rem 0;
+    text-align: center;
+}
+
+.js-error-display-orange {
+    background: #ffb86c;
+    color: #282a36;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin: 0.5rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.error-message-box {
+    background-color: var(--dracula-red);
+    color: var(--dracula-bg);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+
+/* ==================== LOADING PAGE - EXTRACTED FROM loading.html ==================== */
+.coffee-spinner {
+    font-size: 4rem;
+    animation: steam 2s ease-in-out infinite;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+@keyframes steam {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 1; }
+    25% { transform: translateY(-5px) rotate(1deg); opacity: 0.9; }
+    50% { transform: translateY(-10px) rotate(0deg); opacity: 0.8; }
+    75% { transform: translateY(-5px) rotate(-1deg); opacity: 0.9; }
+}
+
+.loading-dots {
+    display: inline-block;
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+.status-info {
+    background-color: var(--dracula-current-line);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.retry-countdown {
+    color: var(--dracula-orange);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* ==================== ERROR PAGE - EXTRACTED FROM error.html ==================== */
+.error-container {
+    max-width: 600px;
+    margin: 100px auto;
+    padding: 2rem;
+    text-align: center;
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.error-title {
+    color: var(--dracula-red);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    color: var(--dracula-foreground);
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--dracula-current-line);
+    border-radius: 8px;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--dracula-purple);
+    color: var(--dracula-bg);
+}
+
+.btn-primary:hover {
+    background: var(--dracula-pink);
+}
+
+.btn-secondary {
+    background: var(--dracula-current-line);
+    color: var(--dracula-foreground);
+}
+
+.btn-secondary:hover {
+    background: var(--dracula-comment);
+}
+
+/* ==================== REGISTER PAGE - EXTRACTED FROM register.html ==================== */
+.register-container {
+    max-width: 450px;
+    margin: 80px auto;
+    padding: 2rem;
+    background: var(--dracula-current-line);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.register-header h1 {
+    color: var(--dracula-purple);
+    margin-bottom: 0.5rem;
+}
+
+.register-header p {
+    color: var(--dracula-comment);
+}
+
+.setup-badge {
+    display: inline-block;
+    background: var(--dracula-green);
+    color: var(--dracula-bg);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--dracula-foreground);
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--dracula-bg);
+    border: 1px solid var(--dracula-comment);
+    border-radius: 4px;
+    color: var(--dracula-foreground);
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--dracula-purple);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--dracula-comment);
+    font-size: 0.85rem;
+}
+
+.btn-primary.setup {
+    background: var(--dracula-green);
+}
+
+.btn-primary.setup:hover {
+    background: var(--dracula-cyan);
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--dracula-comment);
+}
+
+.form-footer a {
+    color: var(--dracula-cyan);
+    text-decoration: none;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    background: rgba(255, 85, 85, 0.1);
+    border: 1px solid var(--dracula-red);
+    color: var(--dracula-red);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.password-strength {
+    margin-top: 0.5rem;
+    height: 4px;
+    background: var(--dracula-comment);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.password-strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: all 0.3s ease;
+}
+
+.password-strength-bar.weak {
+    width: 33%;
+    background: var(--dracula-red);
+}
+
+.password-strength-bar.medium {
+    width: 66%;
+    background: var(--dracula-yellow);
+}
+
+.password-strength-bar.strong {
+    width: 100%;
+    background: var(--dracula-green);
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.back-link a {
+    color: var(--dracula-comment);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.back-link a:hover {
+    color: var(--dracula-cyan);
+}
+
+/* ==================== LOGIN PAGE - EXTRACTED FROM login.html ==================== */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 2rem;
+    background: var(--dracula-current-line);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-header h1 {
+    color: var(--dracula-purple);
+    margin-bottom: 0.5rem;
+}
+
+.login-header p {
+    color: var(--dracula-comment);
+}
+
+/* ==================== ADD LOCATION PAGE - EXTRACTED FROM add-location.html ==================== */
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 var(--space-md);
+}
+
+.tabs {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    border-bottom: 2px solid var(--dracula-current-line);
+}
+
+.tab {
+    padding: var(--space-md) var(--space-lg);
+    background: transparent;
+    border: none;
+    color: var(--dracula-comment);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    color: var(--dracula-foreground);
+}
+
+.tab.active {
+    color: var(--dracula-purple);
+    border-bottom-color: var(--dracula-purple);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.search-results {
+    position: relative;
+    margin-top: var(--space-sm);
+}
+
+.results-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--dracula-current-line);
+    border: 1px solid var(--dracula-purple);
+    border-radius: var(--radius-md);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: var(--z-dropdown);
+    box-shadow: var(--shadow-lg);
+}
+
+.results-dropdown.active {
+    display: block;
+}
+
+.result-item {
+    padding: var(--space-md);
+    cursor: pointer;
+    border-bottom: 1px solid var(--dracula-bg);
+    transition: all 0.2s ease;
+}
+
+.result-item:hover {
+    background: var(--dracula-purple);
+    color: var(--dracula-bg);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-city {
+    font-weight: 700;
+    color: var(--dracula-cyan);
+}
+
+.result-item:hover .result-city {
+    color: var(--dracula-bg);
+}
+
+.result-details {
+    font-size: 0.875rem;
+    color: var(--dracula-comment);
+    margin-top: var(--space-xs);
+}
+
+.result-item:hover .result-details {
+    color: var(--dracula-bg);
+    opacity: 0.8;
+}
+
+.gps-button {
+    width: 100%;
+    margin-bottom: var(--space-lg);
+}
+
+.add-location-header {
+    margin-bottom: 2rem;
+}
+
+.add-location-back-link {
+    color: var(--dracula-cyan);
+}
+
+.add-location-form-hidden {
+    display: none;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--dracula-current-line);
+}
+
+.add-location-form-title {
+    margin-bottom: 1rem;
+}
+
+.add-location-form-actions {
+    margin-top: 2rem;
+}
+
+.add-location-result-opacity {
+    opacity: 0.6;
+}

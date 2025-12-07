@@ -6,7 +6,11 @@
       "Bash(do head -20 \"$file\")",
       "Bash(make docker-dev:*)",
       "Bash(docker compose:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(CGO_ENABLED=0 go build:*)",
+      "Bash(gh:*)",
+      "Bash(CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build:*)"
     ],
     "deny": [],
     "ask": []

@@ -634,7 +634,7 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	settings["logging_audit_log"] = settingsModel.GetBool("logging.audit_log", true)
 	settings["logging_rotation_days"] = settingsModel.GetInt("logging.rotation_days", 30)
 
-	c.HTML(http.StatusOK, "admin-settings.tmpl", gin.H{
+	c.HTML(http.StatusOK, "admin/admin-settings.tmpl", gin.H{
 		"title":    "Server Settings",
 		"user":     user,
 		"settings": settings,

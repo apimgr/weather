@@ -706,7 +706,7 @@ func (h *APIHandler) GetDocsJSON(c *gin.Context) {
 func (h *APIHandler) GetDocsHTML(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
-	c.HTML(http.StatusOK, "api-docs.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/api-docs.tmpl", gin.H{
 		"Title":      "API Documentation - Weather",
 		"HostInfo":   hostInfo,
 		"HideFooter": false,

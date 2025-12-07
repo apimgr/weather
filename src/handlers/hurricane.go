@@ -51,7 +51,7 @@ func (h *HurricaneHandler) HandleHurricaneRequest(c *gin.Context) {
 	if isBrowser {
 		// Render HTML template
 		hostInfo := utils.GetHostInfo(c)
-		c.HTML(http.StatusOK, "hurricane.tmpl", gin.H{
+		c.HTML(http.StatusOK, "pages/hurricane.tmpl", gin.H{
 			"Title":    "Active Hurricanes & Tropical Storms",
 			"Storms":   data.ActiveStorms,
 			"Count":    len(data.ActiveStorms),

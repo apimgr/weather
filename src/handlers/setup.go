@@ -20,14 +20,14 @@ type SetupHandler struct {
 
 // ShowWelcome shows the welcome screen (step 1)
 func (h *SetupHandler) ShowWelcome(c *gin.Context) {
-	c.HTML(http.StatusOK, "setup_welcome.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/setup_welcome.tmpl", gin.H{
 		"Title": "Welcome - Weather Setup",
 	})
 }
 
 // ShowUserRegister shows the user registration form (step 2)
 func (h *SetupHandler) ShowUserRegister(c *gin.Context) {
-	c.HTML(http.StatusOK, "setup_user.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/setup_user.tmpl", gin.H{
 		"Title": "Create Your Account - Weather Setup",
 	})
 }
@@ -86,7 +86,7 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 
 // ShowAdminSetup shows the admin creation form (step 4)
 func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
-	c.HTML(http.StatusOK, "setup_admin.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/setup_admin.tmpl", gin.H{
 		"Title": "Create Administrator Account - Weather Setup",
 	})
 }
@@ -294,14 +294,14 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 
 // ShowServerSetupWelcome shows the server setup welcome page
 func (h *SetupHandler) ShowServerSetupWelcome(c *gin.Context) {
-	c.HTML(http.StatusOK, "server_setup_welcome.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/server_setup_welcome.tmpl", gin.H{
 		"Title": "Server Setup - Weather",
 	})
 }
 
 // ShowServerSetupSettings shows the server settings configuration page
 func (h *SetupHandler) ShowServerSetupSettings(c *gin.Context) {
-	c.HTML(http.StatusOK, "server_setup_settings.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/server_setup_settings.tmpl", gin.H{
 		"Title": "Server Settings - Weather",
 	})
 }
@@ -375,7 +375,7 @@ func (h *SetupHandler) ShowServerSetupComplete(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "server_setup_complete.tmpl", gin.H{
+	c.HTML(http.StatusOK, "pages/server_setup_complete.tmpl", gin.H{
 		"Title": "Setup Complete - Weather",
 	})
 }
