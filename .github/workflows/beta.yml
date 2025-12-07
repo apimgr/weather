@@ -57,7 +57,8 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           BINARY_NAME=weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
-          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildDate=$(date -u '+%Y-%m-%d %H:%M:%S') -X main.GitCommit=${{ github.sha }}" -o $BINARY_NAME ./src
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${{ github.sha }}" -o $BINARY_NAME ./src
           ls -lh $BINARY_NAME
 
       - name: Upload binary
