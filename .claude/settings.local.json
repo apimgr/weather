@@ -11,7 +11,13 @@
       "Bash(CGO_ENABLED=0 go build:*)",
       "Bash(gh:*)",
       "Bash(CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build:*)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(cat:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(CGO_ENABLED=0 GOOS=freebsd GOARCH=arm64 go build:*)",
+      "Bash(go version:*)",
+      "Bash(grep:*)",
+      "Bash(__NEW_LINE__ sed -i \"s/go-version: ''1.24''/go-version: ''stable''/g\" .github/workflows/*.yml)"
     ],
     "deny": [],
     "ask": []
