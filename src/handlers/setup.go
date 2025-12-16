@@ -268,7 +268,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	// Check if user is logged in
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
@@ -276,7 +276,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	var role string
 	err := h.DB.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
@@ -329,17 +329,17 @@ func (h *SetupHandler) SaveServerSettings(c *gin.Context) {
 
 	// Save all settings to database
 	settings := map[string]string{
-		"server.name":               input.ServerName,
-		"server.description":        input.ServerDescription,
-		"units.temperature":         input.TemperatureUnit,
-		"units.wind_speed":          input.WindSpeedUnit,
-		"units.precipitation":       input.PrecipitationUnit,
-		"rate_limit.anonymous":      fmt.Sprintf("%d", input.RateLimitAnon),
-		"rate_limit.authenticated":  fmt.Sprintf("%d", input.RateLimitAuth),
-		"features.registration":     boolToString(input.EnableRegistration),
-		"features.alerts":           boolToString(input.EnableAlerts),
-		"features.notifications":    boolToString(input.EnableNotifications),
-		"features.audit_log":        boolToString(input.EnableAuditLog),
+		"server.name":              input.ServerName,
+		"server.description":       input.ServerDescription,
+		"units.temperature":        input.TemperatureUnit,
+		"units.wind_speed":         input.WindSpeedUnit,
+		"units.precipitation":      input.PrecipitationUnit,
+		"rate_limit.anonymous":     fmt.Sprintf("%d", input.RateLimitAnon),
+		"rate_limit.authenticated": fmt.Sprintf("%d", input.RateLimitAuth),
+		"features.registration":    boolToString(input.EnableRegistration),
+		"features.alerts":          boolToString(input.EnableAlerts),
+		"features.notifications":   boolToString(input.EnableNotifications),
+		"features.audit_log":       boolToString(input.EnableAuditLog),
 	}
 
 	for key, value := range settings {
@@ -356,7 +356,7 @@ func (h *SetupHandler) SaveServerSettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"success":  true,
 		"redirect": "/setup/complete",
 	})
 }
@@ -396,13 +396,13 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 	// No users = setup not started
 	if userCount == 0 {
 		c.JSON(http.StatusOK, gin.H{
-			"status":       "not_started",
-			"step":         0,
-			"total_steps":  3,
-			"message":      "Setup not started",
-			"next_action":  "Create first user account",
-			"next_route":   "/register",
-			"is_complete":  false,
+			"status":      "not_started",
+			"step":        0,
+			"total_steps": 3,
+			"message":     "Setup not started",
+			"next_action": "Create first user account",
+			"next_route":  "/auth/register",
+			"is_complete": false,
 		})
 		return
 	}
@@ -421,13 +421,13 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 	// First user created but no admin = step 1 complete
 	if adminCount == 0 {
 		c.JSON(http.StatusOK, gin.H{
-			"status":       "user_created",
-			"step":         1,
-			"total_steps":  3,
-			"message":      "First user created, admin account needed",
-			"next_action":  "Create admin account",
-			"next_route":   "/setup/admin/welcome",
-			"is_complete":  false,
+			"status":      "user_created",
+			"step":        1,
+			"total_steps": 3,
+			"message":     "First user created, admin account needed",
+			"next_action": "Create admin account",
+			"next_route":  "/setup/admin/welcome",
+			"is_complete": false,
 		})
 		return
 	}
@@ -439,26 +439,26 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 	// If setup.completed doesn't exist or is not "true", server settings needed
 	if err != nil || setupComplete != "true" {
 		c.JSON(http.StatusOK, gin.H{
-			"status":       "admin_created",
-			"step":         2,
-			"total_steps":  3,
-			"message":      "Admin account created, server configuration needed",
-			"next_action":  "Configure server settings",
-			"next_route":   "/setup/server/welcome",
-			"is_complete":  false,
+			"status":      "admin_created",
+			"step":        2,
+			"total_steps": 3,
+			"message":     "Admin account created, server configuration needed",
+			"next_action": "Configure server settings",
+			"next_route":  "/setup/server/welcome",
+			"is_complete": false,
 		})
 		return
 	}
 
 	// Setup is complete
 	c.JSON(http.StatusOK, gin.H{
-		"status":       "completed",
-		"step":         3,
-		"total_steps":  3,
-		"message":      "Setup completed successfully",
-		"next_action":  "Access admin dashboard",
-		"next_route":   "/admin",
-		"is_complete":  true,
+		"status":      "completed",
+		"step":        3,
+		"total_steps": 3,
+		"message":     "Setup completed successfully",
+		"next_action": "Access admin dashboard",
+		"next_route":  "/admin",
+		"is_complete": true,
 	})
 }
 

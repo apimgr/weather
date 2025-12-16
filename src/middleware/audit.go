@@ -58,7 +58,7 @@ func AuditLogger(db *sql.DB) gin.HandlerFunc {
 // isAdminRoute checks if the path is an admin route
 func isAdminRoute(path string) bool {
 	return len(path) >= 6 && path[:6] == "/admin" ||
-		   len(path) >= 13 && path[:13] == "/api/v1/admin"
+		len(path) >= 13 && path[:13] == "/api/v1/admin"
 }
 
 // getActionFromRequest determines the action type from method and path

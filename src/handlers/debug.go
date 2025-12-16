@@ -175,7 +175,7 @@ func (h *DebugHandlers) TriggerGC(c *gin.Context) {
 	runtime.ReadMemStats(&after)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":        "Garbage collection triggered",
+		"message":         "Garbage collection triggered",
 		"before_alloc_mb": before.Alloc / 1024 / 1024,
 		"after_alloc_mb":  after.Alloc / 1024 / 1024,
 		"freed_mb":        (before.Alloc - after.Alloc) / 1024 / 1024,

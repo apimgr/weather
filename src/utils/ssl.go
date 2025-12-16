@@ -19,15 +19,15 @@ import (
 
 // SSLManager handles SSL certificate management
 type SSLManager struct {
-	db            *sql.DB
-	dataDir       string
-	certPath      string
-	keyPath       string
-	domain        string
-	httpsPort     int
-	httpsEnabled  bool
-	certExpiry    time.Time
-	certIssuer    string
+	db           *sql.DB
+	dataDir      string
+	certPath     string
+	keyPath      string
+	domain       string
+	httpsPort    int
+	httpsEnabled bool
+	certExpiry   time.Time
+	certIssuer   string
 }
 
 // NewSSLManager creates a new SSL manager

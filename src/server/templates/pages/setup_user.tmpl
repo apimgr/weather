@@ -16,26 +16,53 @@
                 <p class="setup-subtitle">Step 1 of 2: Owner Account</p>
             </div>
 
-            <div id="error-message" class="setup-error"></div>
+            <div id="error-message" class="setup-error" role="alert" aria-live="polite"></div>
 
-            <form id="setup-form">
+            <form id="setup-form" role="form" aria-label="User account setup form - Step 1 of 2">
                 <div class="setup-form-group">
                     <label class="setup-form-label" for="username">Username</label>
-                    <input type="text" id="username" name="username" class="setup-form-input" required>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="setup-form-input"
+                           required
+                           aria-label="Username for owner account"
+                           aria-required="true"
+                           title="Choose a username for the server owner account">
                 </div>
 
                 <div class="setup-form-group">
                     <label class="setup-form-label" for="email">Email</label>
-                    <input type="email" id="email" name="email" class="setup-form-input" required>
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           class="setup-form-input"
+                           required
+                           aria-label="Email address for owner account"
+                           aria-required="true"
+                           title="Enter email address for server owner account">
                 </div>
 
                 <div class="setup-form-group">
                     <label class="setup-form-label" for="password">Password</label>
-                    <input type="password" id="password" name="password" class="setup-form-input" required minlength="8">
-                    <small class="form-hint">Minimum 8 characters</small>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           class="setup-form-input"
+                           required
+                           minlength="8"
+                           aria-label="Password for owner account"
+                           aria-required="true"
+                           aria-describedby="password-hint"
+                           title="Create a secure password for the server owner account">
+                    <small class="form-hint" id="password-hint">Minimum 8 characters</small>
                 </div>
 
-                <button type="submit" id="submit-btn" class="setup-submit">Create Account</button>
+                <button type="submit"
+                        id="submit-btn"
+                        class="setup-submit"
+                        aria-label="Create owner account and proceed to admin setup"
+                        title="Create account and continue to step 2">Create Account</button>
             </form>
         </div>
     </div>
@@ -49,7 +76,7 @@
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Creating...';
-            errorMsg.style.display = 'none';
+            errorMsg.classList.remove('setup-error-visible');
 
             const data = {
                 username: document.getElementById('username').value,
@@ -70,13 +97,13 @@
                     window.location.href = '/user/setup/admin';
                 } else {
                     errorMsg.textContent = result.error || 'Failed to create account';
-                    errorMsg.style.display = 'block';
+                    errorMsg.classList.add('setup-error-visible');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Create Account';
                 }
             } catch (error) {
                 errorMsg.textContent = 'Network error. Please try again.';
-                errorMsg.style.display = 'block';
+                errorMsg.classList.add('setup-error-visible');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
             }

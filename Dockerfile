@@ -85,8 +85,9 @@ COPY --from=builder /tmp/geoip /config/geoip
 WORKDIR /config
 
 # Environment variables with defaults
+# MODE=development allows localhost, .local, .test TLDs per TEMPLATE.md lines 1508-1509
 ENV PORT=80 \
-    ENV=production \
+    MODE=development \
     TZ=America/New_York \
     DATA_DIR=/data \
     CONFIG_DIR=/config \

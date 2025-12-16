@@ -54,25 +54,25 @@ type ForecastData struct {
 
 // MoonData represents moon phase information
 type MoonData struct {
-	Phase       string  `json:"phase"`
+	Phase        string  `json:"phase"`
 	Illumination float64 `json:"illumination"`
-	Icon        string  `json:"icon"`
-	Age         float64 `json:"age"`
+	Icon         string  `json:"icon"`
+	Age          float64 `json:"age"`
 }
 
 // RenderParams represents rendering parameters for weather output
 type RenderParams struct {
-	Format    int    `json:"format"`    // 0-4: different output formats
-	Units     string `json:"units"`     // metric, imperial, M (m/s)
-	Language  string `json:"language"`  // en, es, fr, etc.
-	Days      int    `json:"days"`      // 0, 1, 2 (number of forecast days)
-	NoFooter  bool   `json:"noFooter"`  // F: hide footer
-	Quiet     bool   `json:"quiet"`     // q: quiet mode
-	SuperQuiet bool  `json:"superQuiet"` // Q: super quiet
-	NoColors  bool   `json:"noColors"`  // T: no terminal colors
-	Narrow    bool   `json:"narrow"`    // n: narrow output
-	ForceANSI bool   `json:"forceANSI"` // A: force ANSI/terminal
-	Width     int    `json:"width"`     // Terminal width in columns (for adaptive layout)
+	Format     int    `json:"format"`     // 0-4: different output formats
+	Units      string `json:"units"`      // metric, imperial, M (m/s)
+	Language   string `json:"language"`   // en, es, fr, etc.
+	Days       int    `json:"days"`       // 0, 1, 2 (number of forecast days)
+	NoFooter   bool   `json:"noFooter"`   // F: hide footer
+	Quiet      bool   `json:"quiet"`      // q: quiet mode
+	SuperQuiet bool   `json:"superQuiet"` // Q: super quiet
+	NoColors   bool   `json:"noColors"`   // T: no terminal colors
+	Narrow     bool   `json:"narrow"`     // n: narrow output
+	ForceANSI  bool   `json:"forceANSI"`  // A: force ANSI/terminal
+	Width      int    `json:"width"`      // Terminal width in columns (for adaptive layout)
 }
 
 // Country represents country data

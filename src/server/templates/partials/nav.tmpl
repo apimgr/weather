@@ -1,42 +1,42 @@
 {{define "navbar"}}
-<nav class="navbar">
+<nav class="navbar" role="navigation" aria-label="Main navigation">
     <div class="navbar-container">
         <!-- Brand Logo -->
-        <a href="/" class="navbar-brand">
-            <span class="navbar-brand-icon">🌤️</span>
+        <a href="/" class="navbar-brand" aria-label="{{.server.Title}} home page" title="Go to home page">
+            <span class="navbar-brand-icon" aria-hidden="true">🌤️</span>
             <span class="navbar-brand-text">{{.server.Title}}</span>
         </a>
 
         <!-- Desktop Navigation Menu -->
-        <div class="navbar-menu">
-            <a href="/" class="navbar-link {{if eq .page "weather"}}active{{end}}">Home</a>
-            <a href="/moon" class="navbar-link {{if eq .page "moon"}}active{{end}}">Moon</a>
-            <a href="/severe-weather" class="navbar-link {{if eq .page "severe-weather"}}active{{end}}">Severe Weather</a>
-            <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}">Earthquakes</a>
-            <a href="/user/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}">Dashboard</a>
+        <div class="navbar-menu" role="menubar">
+            <a href="/" class="navbar-link {{if eq .page "weather"}}active{{end}}" role="menuitem" aria-label="Home page - Current weather" title="View current weather conditions">Home</a>
+            <a href="/moon" class="navbar-link {{if eq .page "moon"}}active{{end}}" role="menuitem" aria-label="Moon phases" title="View moon phases and lunar information">Moon</a>
+            <a href="/severe-weather" class="navbar-link {{if eq .page "severe-weather"}}active{{end}}" role="menuitem" aria-label="Severe weather alerts" title="View severe weather alerts and warnings">Severe Weather</a>
+            <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}" role="menuitem" aria-label="Recent earthquakes" title="View recent earthquake activity">Earthquakes</a>
+            <a href="/user/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}" role="menuitem" aria-label="User dashboard" title="View your saved locations and preferences">Dashboard</a>
             {{if eq .user.Role "admin"}}
-            <a href="/admin" class="navbar-link {{if eq .page "admin"}}active{{end}}">Admin</a>
+            <a href="/admin" class="navbar-link {{if eq .page "admin"}}active{{end}}" role="menuitem" aria-label="Admin panel" title="Access administration settings">Admin</a>
             {{end}}
         </div>
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
             <!-- Notification Bell -->
-            <button class="notification-bell" onclick="window.location.href='/notifications'" title="Notifications">
+            <button class="notification-bell" onclick="window.location.href='/notifications'" title="View notifications - Check weather alerts and updates" aria-label="Notifications" aria-describedby="notification-badge">
                 🔔
-                <span class="notification-badge" id="notification-badge" class="display-none">0</span>
+                <span class="notification-badge" id="notification-badge" class="display-none" aria-live="polite" role="status">0</span>
             </button>
 
             <!-- Profile Avatar with Dropdown -->
             <div class="profile-avatar">
-                <div class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar">
+                <button class="avatar" onclick="Dropdown.toggle('profile-dropdown', 'profile-avatar')" id="profile-avatar" aria-label="User menu" aria-haspopup="true" aria-expanded="false" title="Open user menu - Access profile, notifications, and logout" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){Dropdown.toggle('profile-dropdown','profile-avatar');event.preventDefault();}">
                     {{if .user.Email}}
                         {{ index .user.Email 0 | printf "%c" | upper }}
                     {{else}}
                         U
                     {{end}}
-                </div>
-                <div class="profile-dropdown" id="profile-dropdown">
+                </button>
+                <div class="profile-dropdown" id="profile-dropdown" role="menu" aria-labelledby="profile-avatar">
                     <div class="profile-dropdown-header">
                         <div>
                             {{if .user.Email}}
@@ -64,30 +64,30 @@
                         </div>
                     </div>
                     <nav class="profile-dropdown-menu">
-                        <a href="/profile" class="profile-dropdown-item">👤 Profile</a>
-                        <a href="/notifications" class="profile-dropdown-item">🔔 Notifications</a>
-                        <a href="/docs" class="profile-dropdown-item">📚 API Docs</a>
-                        <a href="/logout" class="profile-dropdown-item">🚪 Logout</a>
+                        <a href="/profile" class="profile-dropdown-item" role="menuitem" title="View and edit your profile settings">👤 Profile</a>
+                        <a href="/notifications" class="profile-dropdown-item" role="menuitem" title="View all notifications and alerts">🔔 Notifications</a>
+                        <a href="/docs" class="profile-dropdown-item" role="menuitem" title="API documentation and developer guides">📚 API Docs</a>
+                        <a href="/auth/logout" class="profile-dropdown-item" role="menuitem" title="Sign out of your account">🚪 Logout</a>
                     </nav>
                 </div>
             </div>
 
             <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" onclick="Dropdown.toggle('mobile-menu', 'mobile-menu-toggle')" id="mobile-menu-toggle">
+            <button class="mobile-menu-toggle" onclick="Dropdown.toggle('mobile-menu', 'mobile-menu-toggle')" id="mobile-menu-toggle" aria-label="Toggle mobile navigation menu" aria-expanded="false" aria-controls="mobile-menu" title="Open mobile navigation menu" onkeydown="if(event.key==='Enter'||event.key===' '){Dropdown.toggle('mobile-menu','mobile-menu-toggle');event.preventDefault();}">
                 ☰
             </button>
         </div>
     </div>
 
     <!-- Mobile Navigation Menu -->
-    <div class="mobile-menu" id="mobile-menu">
-        <a href="/" class="mobile-menu-item">Home</a>
-        <a href="/moon" class="mobile-menu-item">Moon</a>
-        <a href="/severe-weather" class="mobile-menu-item">Severe Weather</a>
-        <a href="/earthquake" class="mobile-menu-item">Earthquakes</a>
-        <a href="/user/dashboard" class="mobile-menu-item">Dashboard</a>
+    <div class="mobile-menu" id="mobile-menu" role="menu" aria-label="Mobile navigation">
+        <a href="/" class="mobile-menu-item" role="menuitem" title="View current weather">Home</a>
+        <a href="/moon" class="mobile-menu-item" role="menuitem" title="View moon phases">Moon</a>
+        <a href="/severe-weather" class="mobile-menu-item" role="menuitem" title="View severe weather alerts">Severe Weather</a>
+        <a href="/earthquake" class="mobile-menu-item" role="menuitem" title="View earthquakes">Earthquakes</a>
+        <a href="/user/dashboard" class="mobile-menu-item" role="menuitem" title="View your dashboard">Dashboard</a>
         {{if eq .user.Role "admin"}}
-        <a href="/admin" class="mobile-menu-item">Admin</a>
+        <a href="/admin" class="mobile-menu-item" role="menuitem" title="Access admin panel">Admin</a>
         {{end}}
     </div>
 </nav>

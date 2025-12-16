@@ -21,36 +21,36 @@ type SevereWeatherService struct {
 
 // SevereWeatherData represents all severe weather information
 type SevereWeatherData struct {
-	Hurricanes        []Storm  `json:"hurricanes"`
-	TornadoWarnings   []Alert  `json:"tornadoWarnings"`
-	SevereStorms      []Alert  `json:"severeStorms"`
-	WinterStorms      []Alert  `json:"winterStorms"`
-	FloodWarnings     []Alert  `json:"floodWarnings"`
-	OtherAlerts       []Alert  `json:"otherAlerts"`
-	LastUpdate        string   `json:"lastUpdate"`
+	Hurricanes      []Storm `json:"hurricanes"`
+	TornadoWarnings []Alert `json:"tornadoWarnings"`
+	SevereStorms    []Alert `json:"severeStorms"`
+	WinterStorms    []Alert `json:"winterStorms"`
+	FloodWarnings   []Alert `json:"floodWarnings"`
+	OtherAlerts     []Alert `json:"otherAlerts"`
+	LastUpdate      string  `json:"lastUpdate"`
 }
 
 // Alert represents a severe weather alert
 type Alert struct {
-	ID          string   `json:"id"`
-	Event       string   `json:"event"`
-	Headline    string   `json:"headline"`
-	Description string   `json:"description"`
-	Severity    string   `json:"severity"`    // Extreme, Severe, Moderate, Minor
-	Urgency     string   `json:"urgency"`     // Immediate, Expected, Future
-	Status      string   `json:"status"`      // Actual, Exercise, Test
-	MessageType string   `json:"messageType"` // Alert, Update, Cancel
-	Category    string   `json:"category"`    // Met (Meteorological)
-	AreaDesc    string   `json:"areaDesc"`
-	Sent        string   `json:"sent"`
-	Effective   string   `json:"effective"`
-	Expires     string   `json:"expires"`
-	SenderName  string   `json:"senderName"`
-	Instruction string   `json:"instruction"`
-	Response    string   `json:"response"`
-	Parameters  map[string]interface{} `json:"parameters"`
-	Geometry    interface{} `json:"geometry,omitempty"`
-	DistanceMiles float64  `json:"distanceMiles,omitempty"`
+	ID            string                 `json:"id"`
+	Event         string                 `json:"event"`
+	Headline      string                 `json:"headline"`
+	Description   string                 `json:"description"`
+	Severity      string                 `json:"severity"`    // Extreme, Severe, Moderate, Minor
+	Urgency       string                 `json:"urgency"`     // Immediate, Expected, Future
+	Status        string                 `json:"status"`      // Actual, Exercise, Test
+	MessageType   string                 `json:"messageType"` // Alert, Update, Cancel
+	Category      string                 `json:"category"`    // Met (Meteorological)
+	AreaDesc      string                 `json:"areaDesc"`
+	Sent          string                 `json:"sent"`
+	Effective     string                 `json:"effective"`
+	Expires       string                 `json:"expires"`
+	SenderName    string                 `json:"senderName"`
+	Instruction   string                 `json:"instruction"`
+	Response      string                 `json:"response"`
+	Parameters    map[string]interface{} `json:"parameters"`
+	Geometry      interface{}            `json:"geometry,omitempty"`
+	DistanceMiles float64                `json:"distanceMiles,omitempty"`
 }
 
 // NewSevereWeatherService creates a new severe weather service
@@ -1098,27 +1098,27 @@ func (s *SevereWeatherService) fetchJapanAlerts() ([]Alert, error) {
 // mapJapaneseWarningType converts JMA warning types to English
 func mapJapaneseWarningType(warningType string) string {
 	mappings := map[string]string{
-		"大雨":   "Heavy Rain Warning",
-		"洪水":   "Flood Warning",
-		"暴風":   "Storm Warning",
-		"暴風雪":  "Blizzard Warning",
-		"大雪":   "Heavy Snow Warning",
-		"波浪":   "High Wave Warning",
-		"高潮":   "Storm Surge Warning",
-		"津波":   "Tsunami Warning",
-		"地震":   "Earthquake Warning",
-		"火山":   "Volcanic Warning",
-		"雷":    "Thunderstorm Warning",
-		"竜巻":   "Tornado Warning",
-		"濃霧":   "Dense Fog Warning",
-		"乾燥":   "Dry Weather Warning",
-		"なだれ":  "Avalanche Warning",
-		"着氷":   "Ice Accretion Warning",
-		"着雪":   "Snow Accretion Warning",
-		"融雪":   "Snowmelt Warning",
-		"低温":   "Low Temperature Warning",
-		"霜":    "Frost Warning",
-		"台風":   "Typhoon Warning",
+		"大雨":  "Heavy Rain Warning",
+		"洪水":  "Flood Warning",
+		"暴風":  "Storm Warning",
+		"暴風雪": "Blizzard Warning",
+		"大雪":  "Heavy Snow Warning",
+		"波浪":  "High Wave Warning",
+		"高潮":  "Storm Surge Warning",
+		"津波":  "Tsunami Warning",
+		"地震":  "Earthquake Warning",
+		"火山":  "Volcanic Warning",
+		"雷":   "Thunderstorm Warning",
+		"竜巻":  "Tornado Warning",
+		"濃霧":  "Dense Fog Warning",
+		"乾燥":  "Dry Weather Warning",
+		"なだれ": "Avalanche Warning",
+		"着氷":  "Ice Accretion Warning",
+		"着雪":  "Snow Accretion Warning",
+		"融雪":  "Snowmelt Warning",
+		"低温":  "Low Temperature Warning",
+		"霜":   "Frost Warning",
+		"台風":  "Typhoon Warning",
 	}
 
 	if english, ok := mappings[warningType]; ok {
@@ -1257,24 +1257,24 @@ func (s *SevereWeatherService) fetchMexicoAlerts() ([]Alert, error) {
 // mapSpanishEventType converts Spanish event types to English
 func mapSpanishEventType(tipo string) string {
 	mappings := map[string]string{
-		"lluvia":           "Heavy Rain Warning",
-		"tormenta":         "Thunderstorm Warning",
-		"viento":           "High Wind Warning",
-		"ciclón":           "Cyclone Warning",
-		"huracán":          "Hurricane Warning",
+		"lluvia":            "Heavy Rain Warning",
+		"tormenta":          "Thunderstorm Warning",
+		"viento":            "High Wind Warning",
+		"ciclón":            "Cyclone Warning",
+		"huracán":           "Hurricane Warning",
 		"tormenta tropical": "Tropical Storm Warning",
-		"inundación":       "Flood Warning",
-		"sequía":           "Drought Warning",
-		"calor":            "Heat Warning",
-		"frío":             "Cold Weather Warning",
-		"helada":           "Freeze Warning",
-		"nevada":           "Snow Warning",
-		"granizada":        "Hail Warning",
-		"niebla":           "Fog Warning",
-		"oleaje":           "High Surf Warning",
-		"marejada":         "Storm Surge Warning",
-		"tornado":          "Tornado Warning",
-		"incendio":         "Fire Weather Warning",
+		"inundación":        "Flood Warning",
+		"sequía":            "Drought Warning",
+		"calor":             "Heat Warning",
+		"frío":              "Cold Weather Warning",
+		"helada":            "Freeze Warning",
+		"nevada":            "Snow Warning",
+		"granizada":         "Hail Warning",
+		"niebla":            "Fog Warning",
+		"oleaje":            "High Surf Warning",
+		"marejada":          "Storm Surge Warning",
+		"tornado":           "Tornado Warning",
+		"incendio":          "Fire Weather Warning",
 	}
 
 	tipoLower := strings.ToLower(tipo)

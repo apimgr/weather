@@ -26,23 +26,23 @@ type ChannelManager struct {
 
 // ChannelDefinition defines a notification channel
 type ChannelDefinition struct {
-	Type        string
-	Name        string
-	Description string
-	Category    string
-	Enabled     bool
+	Type         string
+	Name         string
+	Description  string
+	Category     string
+	Enabled      bool
 	ConfigFields []ConfigField
 }
 
 // ConfigField defines a configuration field
 type ConfigField struct {
-	Key          string `json:"key"`
-	Label        string `json:"label"`
-	Type         string `json:"type"` // text, password, number, boolean, select
-	Required     bool   `json:"required"`
-	DefaultValue string `json:"default_value"`
-	Placeholder  string `json:"placeholder"`
-	HelpText     string `json:"help_text"`
+	Key          string   `json:"key"`
+	Label        string   `json:"label"`
+	Type         string   `json:"type"` // text, password, number, boolean, select
+	Required     bool     `json:"required"`
+	DefaultValue string   `json:"default_value"`
+	Placeholder  string   `json:"placeholder"`
+	HelpText     string   `json:"help_text"`
 	Options      []string `json:"options,omitempty"` // For select type
 }
 
@@ -334,12 +334,12 @@ func (cm *ChannelManager) GetChannelStats(channelType string) (map[string]interf
 	}
 
 	stats := map[string]interface{}{
-		"enabled":        enabled,
-		"state":          state.String,
-		"failure_count":  failureCount,
-		"last_test_at":   nil,
+		"enabled":         enabled,
+		"state":           state.String,
+		"failure_count":   failureCount,
+		"last_test_at":    nil,
 		"last_success_at": nil,
-		"last_error":     nil,
+		"last_error":      nil,
 	}
 
 	if lastTestAt.Valid {

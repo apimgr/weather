@@ -1,0 +1,773 @@
+{{define "admin/admin-metrics.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .breadcrumb {
+            color: #95a5a6;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .nav-link:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .metric-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .metric-line {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .metric-line:last-child {
+            border-bottom: none;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .metric-item {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .metric-info h3 {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-info p {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #27ae60;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Metrics Configuration</h1>
+        <div class="breadcrumb">
+            <a href="/admin">Admin</a> /
+            <span>Metrics</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav-links">
+            <a href="/admin" class="nav-link">← Dashboard</a>
+            <a href="/admin/system" class="nav-link">System Info</a>
+        </div>
+
+        <div class="alert alert-success" id="successAlert" role="alert"></div>
+        <div class="alert alert-error" id="errorAlert" role="alert"></div>
+
+        <!-- Metrics Statistics -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2>📈 Current Metrics</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalMetrics">0</div>
+                    <div class="stat-label">Total Metrics</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="enabledMetrics">0</div>
+                    <div class="stat-label">Enabled</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="customMetrics">0</div>
+                    <div class="stat-label">Custom</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="exportFormats">3</div>
+                    <div class="stat-label">Export Formats</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="prometheus">Prometheus</button>
+            <button class="tab" data-tab="builtin">Built-in Metrics</button>
+            <button class="tab" data-tab="custom">Custom Metrics</button>
+            <button class="tab" data-tab="export">Export</button>
+        </div>
+
+        <!-- Prometheus Tab -->
+        <div class="tab-content active" id="prometheus">
+            <div class="grid">
+                <div class="card">
+                    <h2>⚙️ Prometheus Configuration</h2>
+                    <form id="prometheusForm">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="prometheusEnabled" checked>
+                                Enable Prometheus metrics endpoint
+                            </label>
+                            <small>Exposes metrics at /metrics</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="metricsPath">Metrics Path</label>
+                            <input type="text" id="metricsPath" value="/metrics">
+                            <small>URL path for metrics endpoint</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="namespace">Namespace</label>
+                            <input type="text" id="namespace" value="weather" placeholder="weather">
+                            <small>Metric name prefix (e.g., weather_http_requests_total)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subsystem">Subsystem</label>
+                            <input type="text" id="subsystem" placeholder="api">
+                            <small>Optional subsystem name</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="includeGoMetrics" checked>
+                                Include Go runtime metrics
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="includeProcessMetrics" checked>
+                                Include process metrics
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>🔗 Integration</h2>
+                    <div class="form-group">
+                        <label>Metrics Endpoint</label>
+                        <div class="code-block" style="margin-top: 0.5rem;">http://localhost:3000/metrics</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prometheus Configuration</label>
+                        <div class="code-block">scrape_configs:
+  - job_name: 'weather'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s</div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="testPrometheusBtn">🧪 Test Endpoint</button>
+                        <button class="btn btn-secondary" id="downloadConfigBtn">📥 Download Config</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Built-in Metrics Tab -->
+        <div class="tab-content" id="builtin">
+            <div class="card">
+                <h2>📊 Built-in Metrics</h2>
+                <div id="builtinMetrics">
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>HTTP Request Count</h3>
+                            <p>Total number of HTTP requests by method and path</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="http_requests">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>HTTP Request Duration</h3>
+                            <p>Request processing time histogram</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="http_duration">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>API Response Status</h3>
+                            <p>Count of responses by status code</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="api_status">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>Database Queries</h3>
+                            <p>Number and duration of database queries</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="db_queries">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>Cache Hit Rate</h3>
+                            <p>Redis/Valkey cache hit/miss ratio</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="cache_hits">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>Active Connections</h3>
+                            <p>Current number of active connections</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="connections">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>Task Execution</h3>
+                            <p>Scheduled task execution count and duration</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="tasks">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-info">
+                            <h3>Email Notifications</h3>
+                            <p>Email send success/failure count</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked data-metric="emails">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Metrics Tab -->
+        <div class="tab-content" id="custom">
+            <div class="card">
+                <h2>➕ Add Custom Metric</h2>
+                <form id="customMetricForm">
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="metricName">Metric Name</label>
+                            <input type="text" id="metricName" placeholder="weather_custom_metric" required>
+                            <small>Use lowercase with underscores</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="metricType">Type</label>
+                            <select id="metricType">
+                                <option value="counter">Counter (increases only)</option>
+                                <option value="gauge">Gauge (can increase/decrease)</option>
+                                <option value="histogram">Histogram (observations)</option>
+                                <option value="summary">Summary (quantiles)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="metricHelp">Description</label>
+                        <input type="text" id="metricHelp" placeholder="Description of what this metric measures" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="metricLabels">Labels (comma-separated)</label>
+                        <input type="text" id="metricLabels" placeholder="method,path,status">
+                        <small>Optional labels for grouping</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">➕ Add Metric</button>
+                </form>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Custom Metrics List</h3>
+                <div id="customMetricsList">
+                    <p style="text-align: center; color: #666; padding: 2rem;">No custom metrics defined</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Tab -->
+        <div class="tab-content" id="export">
+            <div class="grid">
+                <div class="card">
+                    <h2>📤 Export Formats</h2>
+                    <div class="btn-group" style="flex-direction: column; align-items: stretch;">
+                        <button class="btn btn-primary" id="exportPrometheusBtn">
+                            📊 Export Prometheus Format
+                        </button>
+                        <button class="btn btn-primary" id="exportJsonBtn">
+                            📋 Export JSON
+                        </button>
+                        <button class="btn btn-primary" id="exportOpenMetricsBtn">
+                            📈 Export OpenMetrics
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>👁️ Preview</h2>
+                    <div class="metric-preview" id="exportPreview">
+                        <p style="text-align: center; color: #666;">Click an export button to see preview</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h2>🔗 External Links</h2>
+                <div class="form-group">
+                    <label for="grafanaUrl">Grafana Dashboard URL</label>
+                    <input type="text" id="grafanaUrl" placeholder="http://grafana.example.com/dashboard/weather">
+                    <small>Link to your Grafana dashboard (optional)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="prometheusUrl">Prometheus Server URL</label>
+                    <input type="text" id="prometheusUrl" placeholder="http://prometheus.example.com:9090">
+                    <small>Link to your Prometheus server (optional)</small>
+                </div>
+
+                <button class="btn btn-primary" id="saveLinksBtn">💾 Save Links</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Load metrics stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/v1/admin/metrics/stats');
+                const data = await response.json();
+
+                document.getElementById('totalMetrics').textContent = data.total || 0;
+                document.getElementById('enabledMetrics').textContent = data.enabled || 0;
+                document.getElementById('customMetrics').textContent = data.custom || 0;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Save Prometheus configuration
+        document.getElementById('prometheusForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const config = {
+                enabled: document.getElementById('prometheusEnabled').checked,
+                path: document.getElementById('metricsPath').value,
+                namespace: document.getElementById('namespace').value,
+                subsystem: document.getElementById('subsystem').value,
+                includeGoMetrics: document.getElementById('includeGoMetrics').checked,
+                includeProcessMetrics: document.getElementById('includeProcessMetrics').checked
+            };
+
+            try {
+                const response = await fetch('/api/v1/admin/metrics/config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) throw new Error('Failed to save configuration');
+
+                showSuccess('Prometheus configuration saved successfully!');
+            } catch (error) {
+                showError('Failed to save configuration: ' + error.message);
+            }
+        });
+
+        // Test Prometheus endpoint
+        document.getElementById('testPrometheusBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/metrics');
+                const text = await response.text();
+
+                if (response.ok) {
+                    showSuccess('Prometheus endpoint is working! Check browser console for output.');
+                    console.log('Metrics output:', text);
+                } else {
+                    showError('Endpoint returned error: ' + response.status);
+                }
+            } catch (error) {
+                showError('Failed to test endpoint: ' + error.message);
+            }
+        });
+
+        // Export formats
+        document.getElementById('exportPrometheusBtn').addEventListener('click', async () => {
+            const response = await fetch('/metrics');
+            const text = await response.text();
+            document.getElementById('exportPreview').textContent = text;
+        });
+
+        document.getElementById('exportJsonBtn').addEventListener('click', async () => {
+            const response = await fetch('/api/v1/admin/metrics/export?format=json');
+            const data = await response.json();
+            document.getElementById('exportPreview').textContent = JSON.stringify(data, null, 2);
+        });
+
+        // Show messages
+        function showSuccess(msg) {
+            const alert = document.getElementById('successAlert');
+            alert.textContent = msg;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function showError(msg) {
+            const alert = document.getElementById('errorAlert');
+            alert.textContent = msg;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        // Initial load
+        loadStats();
+    </script>
+</body>
+</html>
+{{end}}

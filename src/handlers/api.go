@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -607,8 +608,8 @@ func (h *APIHandler) GetIP(c *gin.Context) {
 		"ip":        clientIP,
 		"timestamp": utils.Now(),
 		"headers": gin.H{
-			"x-forwarded-for": c.GetHeader("X-Forwarded-For"),
-			"x-real-ip":       c.GetHeader("X-Real-IP"),
+			"x-forwarded-for":  c.GetHeader("X-Forwarded-For"),
+			"x-real-ip":        c.GetHeader("X-Real-IP"),
 			"cf-connecting-ip": c.GetHeader("CF-Connecting-IP"),
 		},
 	})
@@ -700,6 +701,146 @@ func (h *APIHandler) GetDocsJSON(c *gin.Context) {
 			hostInfo.FullHost + "/api/v1/ip",
 		},
 	})
+}
+
+// GetHistoricalWeather returns historical weather data for a specific day across multiple years (GET /api/v1/history)
+func (h *APIHandler) GetHistoricalWeather(c *gin.Context) {
+	location := c.Query("location")
+	lat := c.Query("lat")
+	lon := c.Query("lon")
+	dateStr := c.Query("date")
+	yearsStr := c.Query("years")
+
+	// Parse coordinates
+	var coords *services.Coordinates
+	var err error
+
+	if lat != "" && lon != "" {
+		// Use provided coordinates
+		latitude, err1 := strconv.ParseFloat(lat, 64)
+		longitude, err2 := strconv.ParseFloat(lon, 64)
+
+		if err1 != nil || err2 != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "INVALID_COORDINATES",
+					"message": "Invalid latitude or longitude",
+				},
+			})
+			return
+		}
+
+		coords = &services.Coordinates{
+			Latitude:  latitude,
+			Longitude: longitude,
+		}
+	} else if location != "" {
+		// Geocode location
+		coords, err = h.weatherService.GetCoordinates(location, "")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "LOCATION_NOT_FOUND",
+					"message": fmt.Sprintf("Could not find location: %s", location),
+				},
+			})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{
+				"code":    "MISSING_LOCATION",
+				"message": "Please provide either 'location' or 'lat' and 'lon' parameters",
+			},
+		})
+		return
+	}
+
+	// Parse date
+	month, day, startYear, err := parseHistoricalDateAPI(dateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{
+				"code":    "INVALID_DATE",
+				"message": fmt.Sprintf("Invalid date format: %v", err),
+			},
+		})
+		return
+	}
+
+	// Parse number of years (default: 10)
+	numberOfYears := 10
+	if yearsStr != "" {
+		years, err := strconv.Atoi(yearsStr)
+		if err != nil || years < 1 || years > 100 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": gin.H{
+					"code":    "INVALID_YEARS",
+					"message": "Number of years must be between 1 and 100",
+				},
+			})
+			return
+		}
+		numberOfYears = years
+	}
+
+	// Fetch historical weather data
+	historical, err := h.weatherService.GetHistoricalWeather(
+		coords.Latitude,
+		coords.Longitude,
+		month,
+		day,
+		startYear,
+		numberOfYears,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": gin.H{
+				"code":    "FETCH_ERROR",
+				"message": fmt.Sprintf("Error fetching historical weather: %v", err),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"historical": historical,
+		"location": gin.H{
+			"latitude":  coords.Latitude,
+			"longitude": coords.Longitude,
+		},
+	})
+}
+
+// parseHistoricalDateAPI parses a date string for the API
+// Supported formats: MM/DD, MM/DD/YYYY, YYYY-MM-DD
+func parseHistoricalDateAPI(dateStr string) (month, day, year int, err error) {
+	if dateStr == "" {
+		// Default to today
+		now := time.Now()
+		return int(now.Month()), now.Day(), now.Year(), nil
+	}
+
+	// Try ISO format: YYYY-MM-DD
+	parsedDate, err := time.Parse("2006-01-02", dateStr)
+	if err == nil {
+		return int(parsedDate.Month()), parsedDate.Day(), parsedDate.Year(), nil
+	}
+
+	// Try MM/DD/YYYY
+	parsedDate, err = time.Parse("01/02/2006", dateStr)
+	if err == nil {
+		return int(parsedDate.Month()), parsedDate.Day(), parsedDate.Year(), nil
+	}
+
+	// Try MM/DD (no year - use current year)
+	parsedDate, err = time.Parse("01/02", dateStr)
+	if err == nil {
+		currentYear := time.Now().Year()
+		return int(parsedDate.Month()), parsedDate.Day(), currentYear, nil
+	}
+
+	return 0, 0, 0, fmt.Errorf("unsupported date format: %s (use MM/DD, MM/DD/YYYY, or YYYY-MM-DD)", dateStr)
 }
 
 // GetDocsHTML returns API documentation as HTML page (GET /docs)

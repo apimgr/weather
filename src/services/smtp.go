@@ -14,14 +14,14 @@ import (
 
 // SMTPConfig represents SMTP configuration
 type SMTPConfig struct {
-	Host         string `json:"host"`
-	Port         string `json:"port"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	FromAddress  string `json:"from_address"`
-	FromName     string `json:"from_name"`
-	UseTLS       bool   `json:"use_tls"`
-	AutoEnable   bool   `json:"auto_enable"`
+	Host          string `json:"host"`
+	Port          string `json:"port"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	FromAddress   string `json:"from_address"`
+	FromName      string `json:"from_name"`
+	UseTLS        bool   `json:"use_tls"`
+	AutoEnable    bool   `json:"auto_enable"`
 	TestRecipient string `json:"test_recipient"`
 }
 
@@ -179,10 +179,10 @@ func (s *SMTPService) AutoDetect() (bool, error) {
 	}{
 		{"localhost", "25"},
 		{"127.0.0.1", "25"},
-		{"172.17.0.1", "25"},   // Docker bridge
+		{"172.17.0.1", "25"},           // Docker bridge
 		{"host.docker.internal", "25"}, // Docker Desktop
 		{"localhost", "587"},
-		{"localhost", "1025"},  // Mailhog/MailDev
+		{"localhost", "1025"}, // Mailhog/MailDev
 	}
 
 	for _, candidate := range candidates {

@@ -1,0 +1,166 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="weather-container">
+    <h1 class="text-purple">Contact Us</h1>
+
+    <div class="card margin-y-lg">
+        <div id="contact-message" role="alert" aria-live="polite"></div>
+
+        <form id="contact-form" role="form" aria-label="Contact form" onsubmit="submitContactForm(event)">
+            <div class="form-group">
+                <label for="contact-name" class="form-label">Name</label>
+                <input type="text"
+                       id="contact-name"
+                       name="name"
+                       class="form-input"
+                       required
+                       aria-label="Your name"
+                       aria-required="true"
+                       aria-describedby="contact-name-help"
+                       title="Enter your full name"
+                       placeholder="John Doe">
+                <small id="contact-name-help" class="form-help">Your full name</small>
+            </div>
+
+            <div class="form-group">
+                <label for="contact-email" class="form-label">Email</label>
+                <input type="email"
+                       id="contact-email"
+                       name="email"
+                       class="form-input"
+                       required
+                       aria-label="Your email address"
+                       aria-required="true"
+                       aria-describedby="contact-email-help"
+                       title="Enter your email address for us to reply"
+                       placeholder="john@example.com">
+                <small id="contact-email-help" class="form-help">We'll use this to reply to you</small>
+            </div>
+
+            <div class="form-group">
+                <label for="contact-subject" class="form-label">Subject</label>
+                <select id="contact-subject"
+                        name="subject"
+                        class="form-input"
+                        required
+                        aria-label="Message subject"
+                        aria-required="true"
+                        aria-describedby="contact-subject-help"
+                        title="Choose the subject that best describes your message">
+                    <option value="">Select a subject...</option>
+                    <option value="general">General Inquiry</option>
+                    <option value="support">Technical Support</option>
+                    <option value="bug">Report a Bug</option>
+                    <option value="feature">Feature Request</option>
+                    <option value="privacy">Privacy Concern</option>
+                    <option value="account">Account Issue</option>
+                    <option value="other">Other</option>
+                </select>
+                <small id="contact-subject-help" class="form-help">What is your message about?</small>
+            </div>
+
+            <div class="form-group">
+                <label for="contact-message-text" class="form-label">Message</label>
+                <textarea id="contact-message-text"
+                          name="message"
+                          class="form-input"
+                          rows="8"
+                          required
+                          aria-label="Your message"
+                          aria-required="true"
+                          aria-describedby="contact-message-help"
+                          title="Enter your detailed message"
+                          placeholder="Please describe your question or concern in detail..."></textarea>
+                <small id="contact-message-help" class="form-help">Be as detailed as possible</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit"
+                        class="btn btn-primary"
+                        id="contact-submit"
+                        aria-label="Send message"
+                        title="Submit your contact form">
+                    📧 Send Message
+                </button>
+                <button type="reset"
+                        class="btn btn-secondary"
+                        aria-label="Clear form"
+                        title="Clear all fields and start over">
+                    🔄 Clear Form
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Alternative Contact Methods</h2>
+        <div class="margin-y-md">
+            <p><strong>GitHub Issues:</strong> <a href="https://github.com/{{.server.GitOrg}}/{{.server.GitRepo}}/issues" target="_blank" class="text-cyan">Report bugs or request features</a></p>
+            <p><strong>Documentation:</strong> <a href="/docs" class="text-cyan">API documentation and guides</a></p>
+            <p><strong>Help:</strong> <a href="/server/help" class="text-cyan">Frequently asked questions</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function submitContactForm(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const submitBtn = document.getElementById('contact-submit');
+    const messageDiv = document.getElementById('contact-message');
+
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = '📤 Sending...';
+
+    const formData = {
+        name: form.name.value,
+        email: form.email.value,
+        subject: form.subject.value,
+        message: form.message.value
+    };
+
+    try {
+        const response = await fetch('/api/v1/server/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            Alert.create('Message sent successfully! We\'ll get back to you soon.', {
+                type: 'success',
+                container: '#contact-message'
+            });
+            form.reset();
+            Toast.success('Message sent!');
+        } else {
+            const error = await response.json();
+            Alert.create(error.error || 'Failed to send message. Please try again.', {
+                type: 'error',
+                container: '#contact-message'
+            });
+        }
+    } catch (error) {
+        Alert.create('Network error. Please check your connection and try again.', {
+            type: 'error',
+            container: '#contact-message'
+        });
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '📧 Send Message';
+    }
+}
+
+// Initialize notification polling
+if (typeof Notifications !== 'undefined') {
+    Notifications.startPolling(30000);
+}
+</script>
+
+{{template "footer" .}}

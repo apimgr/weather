@@ -310,13 +310,13 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 
 		// EXACTLY 7 lines - NEVER change this count or alignment will break!
 		return []string{
-			centerInWidth("", 30),                                                   // Line 1: blank for spacing
-			centerInWidth(r.colorize(description, "#8be9fd", false), 30),            // Line 2: condition
-			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),               // Line 3: temperature
-			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),               // Line 4: wind
-			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),                 // Line 5: visibility
-			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),             // Line 6: precipitation
-			centerInWidth("", 30),                                                   // Line 7: blank for spacing
+			centerInWidth("", 30), // Line 1: blank for spacing
+			centerInWidth(r.colorize(description, "#8be9fd", false), 30), // Line 2: condition
+			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),    // Line 3: temperature
+			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),    // Line 4: wind
+			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),      // Line 5: visibility
+			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),  // Line 6: precipitation
+			centerInWidth("", 30), // Line 7: blank for spacing
 		}
 	}
 

@@ -9,44 +9,96 @@
         </div>
 
         <div class="form-card">
-            <div id="message"></div>
+            <div id="message" role="alert" aria-live="polite"></div>
 
-            <form id="locationForm">
+            <form id="locationForm" role="form" aria-label="Edit location details">
                 <div class="form-group">
                     <label for="name">Location Name</label>
-                    <input type="text" id="name" name="name" value="{{ .location.Name }}" required>
-                    <small>Give this location a memorable name</small>
+                    <input type="text"
+                           id="name"
+                           name="name"
+                           value="{{ .location.Name }}"
+                           required
+                           aria-label="Location name"
+                           aria-required="true"
+                           aria-describedby="name-hint"
+                           title="Give this location a memorable name (e.g., Home, Office, Vacation Spot)">
+                    <small id="name-hint">Give this location a memorable name</small>
                 </div>
 
                 <div class="form-group">
                     <label for="latitude">Latitude</label>
-                    <input type="number" id="latitude" name="latitude" step="0.000001" min="-90" max="90" value="{{ .location.Latitude }}" required>
-                    <small>Between -90 and 90</small>
+                    <input type="number"
+                           id="latitude"
+                           name="latitude"
+                           step="0.000001"
+                           min="-90"
+                           max="90"
+                           value="{{ .location.Latitude }}"
+                           required
+                           aria-label="Latitude coordinate"
+                           aria-required="true"
+                           aria-describedby="latitude-hint"
+                           title="Latitude coordinate for this location (between -90 and 90 degrees)">
+                    <small id="latitude-hint">Between -90 and 90</small>
                 </div>
 
                 <div class="form-group">
                     <label for="longitude">Longitude</label>
-                    <input type="number" id="longitude" name="longitude" step="0.000001" min="-180" max="180" value="{{ .location.Longitude }}" required>
-                    <small>Between -180 and 180</small>
+                    <input type="number"
+                           id="longitude"
+                           name="longitude"
+                           step="0.000001"
+                           min="-180"
+                           max="180"
+                           value="{{ .location.Longitude }}"
+                           required
+                           aria-label="Longitude coordinate"
+                           aria-required="true"
+                           aria-describedby="longitude-hint"
+                           title="Longitude coordinate for this location (between -180 and 180 degrees)">
+                    <small id="longitude-hint">Between -180 and 180</small>
                 </div>
 
                 <div class="form-group">
                     <label for="timezone">Timezone</label>
-                    <input type="text" id="timezone" name="timezone" value="{{ .location.Timezone }}">
-                    <small>IANA timezone identifier</small>
+                    <input type="text"
+                           id="timezone"
+                           name="timezone"
+                           value="{{ .location.Timezone }}"
+                           aria-label="Timezone identifier"
+                           aria-describedby="timezone-hint"
+                           title="IANA timezone identifier (e.g., America/New_York, Europe/London) - leave empty to auto-detect">
+                    <small id="timezone-hint">IANA timezone identifier</small>
                 </div>
 
                 <div class="form-group">
                     <div class="checkbox-group">
-                        <input type="checkbox" id="alerts_enabled" name="alerts_enabled" {{ if .location.AlertsEnabled }}checked{{ end }}>
+                        <input type="checkbox"
+                               id="alerts_enabled"
+                               name="alerts_enabled"
+                               {{ if .location.AlertsEnabled }}checked{{ end }}
+                               aria-label="Enable weather alerts for this location"
+                               title="Enable severe weather alerts and notifications for this location">
                         <label for="alerts_enabled">Enable weather alerts for this location</label>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Update Location</button>
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/user/dashboard'">Cancel</button>
-                    <button type="button" class="btn btn-danger" onclick="deleteLocation()">Delete</button>
+                    <button type="submit"
+                            class="btn btn-primary"
+                            aria-label="Update location"
+                            title="Save changes to this location">Update Location</button>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            onclick="window.location.href='/user/dashboard'"
+                            aria-label="Cancel editing"
+                            title="Cancel and return to dashboard without saving changes">Cancel</button>
+                    <button type="button"
+                            class="btn btn-danger"
+                            onclick="deleteLocation()"
+                            aria-label="Delete location"
+                            title="Permanently delete this location - this action cannot be undone">Delete</button>
                 </div>
             </form>
         </div>
@@ -116,6 +168,8 @@
         function showMessage(text, type) {
             messageDiv.className = type === 'error' ? 'error-message edit-error-message' : 'success-message edit-error-message';
             messageDiv.textContent = text;
+            messageDiv.setAttribute('role', 'alert');
+            messageDiv.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
         }
 
         // Initialize notification polling

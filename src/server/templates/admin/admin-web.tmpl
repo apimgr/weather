@@ -1,0 +1,458 @@
+{{define "admin/admin-web.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="/static/css/template-overrides.css">
+</head>
+<body>
+    {{template "components/admin-header.tmpl" .}}
+
+    <div class="admin-container">
+        {{template "components/admin-sidebar.tmpl" .}}
+
+        <main class="admin-content" role="main">
+            <div class="content-header">
+                <h1>🌐 Web Frontend Settings</h1>
+                <p class="subtitle">Configure branding, SEO, robots.txt, and security.txt</p>
+            </div>
+
+            <div class="alert alert-info" role="status">
+                <strong>Note:</strong> Changes to these settings take effect immediately. The robots.txt and security.txt files are dynamically generated.
+            </div>
+
+            <!-- Branding Section -->
+            <section class="admin-card" aria-labelledby="branding-heading">
+                <div class="card-header">
+                    <h2 id="branding-heading">Branding & Identity</h2>
+                    <p class="card-description">Configure your application's name and visual identity</p>
+                </div>
+                <div class="card-body">
+                    <form id="branding-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="app_name">
+                                Application Name
+                                <span class="required" aria-label="required">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="app_name"
+                                name="app.name"
+                                class="form-control"
+                                placeholder="My Weather App"
+                                required
+                                aria-required="true"
+                                aria-describedby="app_name_help"
+                            >
+                            <small id="app_name_help" class="form-text">
+                                This name appears in the header, page titles, and email notifications
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="app_tagline">Application Tagline</label>
+                            <input
+                                type="text"
+                                id="app_tagline"
+                                name="app.tagline"
+                                class="form-control"
+                                placeholder="Your personal weather companion"
+                                aria-describedby="app_tagline_help"
+                            >
+                            <small id="app_tagline_help" class="form-text">
+                                Optional subtitle shown on the homepage
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="app_description">Application Description</label>
+                            <textarea
+                                id="app_description"
+                                name="app.description"
+                                class="form-control"
+                                rows="3"
+                                placeholder="A self-hosted weather application with alerts and forecasts"
+                                aria-describedby="app_description_help"
+                            ></textarea>
+                            <small id="app_description_help" class="form-text">
+                                Used in meta tags for SEO and social media sharing
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" aria-label="Save branding settings">
+                            💾 Save Branding
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SEO Settings Section -->
+            <section class="admin-card" aria-labelledby="seo-heading">
+                <div class="card-header">
+                    <h2 id="seo-heading">SEO Settings</h2>
+                    <p class="card-description">Optimize your site for search engines</p>
+                </div>
+                <div class="card-body">
+                    <form id="seo-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="seo_keywords">Meta Keywords</label>
+                            <input
+                                type="text"
+                                id="seo_keywords"
+                                name="seo.keywords"
+                                class="form-control"
+                                placeholder="weather, forecast, alerts, temperature"
+                                aria-describedby="seo_keywords_help"
+                            >
+                            <small id="seo_keywords_help" class="form-text">
+                                Comma-separated keywords for search engines
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="seo_author">Author</label>
+                            <input
+                                type="text"
+                                id="seo_author"
+                                name="seo.author"
+                                class="form-control"
+                                placeholder="Your Name"
+                                aria-describedby="seo_author_help"
+                            >
+                            <small id="seo_author_help" class="form-text">
+                                Website author or organization name
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="seo_og_image">Social Media Preview Image (URL)</label>
+                            <input
+                                type="url"
+                                id="seo_og_image"
+                                name="seo.og_image"
+                                class="form-control"
+                                placeholder="https://example.com/preview.png"
+                                aria-describedby="seo_og_image_help"
+                            >
+                            <small id="seo_og_image_help" class="form-text">
+                                Image shown when sharing on social media (1200x630px recommended)
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" aria-label="Save SEO settings">
+                            💾 Save SEO Settings
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- robots.txt Section -->
+            <section class="admin-card" aria-labelledby="robots-heading">
+                <div class="card-header">
+                    <h2 id="robots-heading">robots.txt Configuration</h2>
+                    <p class="card-description">Control search engine crawling behavior</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="status">
+                        <strong>Current URL:</strong> <a href="/robots.txt" target="_blank" rel="noopener">/robots.txt</a><br>
+                        Use <code>{app_url}</code> as a placeholder for your site's base URL.
+                    </div>
+
+                    <form id="robots-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="robots_txt">robots.txt Content</label>
+                            <textarea
+                                id="robots_txt"
+                                name="web.robots_txt"
+                                class="form-control code-editor"
+                                rows="12"
+                                aria-describedby="robots_txt_help"
+                                spellcheck="false"
+                            >User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Sitemap: {app_url}/sitemap.xml</textarea>
+                            <small id="robots_txt_help" class="form-text">
+                                <strong>Common directives:</strong><br>
+                                • <code>User-agent: *</code> - Applies to all crawlers<br>
+                                • <code>Allow: /</code> - Allow all pages<br>
+                                • <code>Disallow: /admin/</code> - Block admin pages<br>
+                                • <code>Sitemap:</code> - Link to XML sitemap
+                            </small>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary" aria-label="Save robots.txt">
+                                💾 Save robots.txt
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="previewRobotsTxt()" aria-label="Preview robots.txt">
+                                👁️ Preview
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="resetRobotsTxt()" aria-label="Reset to defaults">
+                                🔄 Reset to Default
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- security.txt Section -->
+            <section class="admin-card" aria-labelledby="security-txt-heading">
+                <div class="card-header">
+                    <h2 id="security-txt-heading">security.txt Configuration (RFC 9116)</h2>
+                    <p class="card-description">Security contact information for vulnerability disclosure</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="status">
+                        <strong>Current URL:</strong> <a href="/.well-known/security.txt" target="_blank" rel="noopener">/.well-known/security.txt</a><br>
+                        This file helps security researchers contact you about vulnerabilities.
+                    </div>
+
+                    <form id="security-txt-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="security_contact">
+                                Contact <span class="required" aria-label="required">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="security_contact"
+                                name="security.contact"
+                                class="form-control"
+                                placeholder="security@example.com, https://example.com/security"
+                                required
+                                aria-required="true"
+                                aria-describedby="security_contact_help"
+                            >
+                            <small id="security_contact_help" class="form-text">
+                                Email, URL, or phone number. Use commas to separate multiple contacts.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="security_languages">Preferred Languages</label>
+                            <input
+                                type="text"
+                                id="security_languages"
+                                name="security.languages"
+                                class="form-control"
+                                placeholder="en, es, fr"
+                                aria-describedby="security_languages_help"
+                            >
+                            <small id="security_languages_help" class="form-text">
+                                Comma-separated language codes (e.g., en, es, fr)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="security_encryption">Encryption (PGP Key URL)</label>
+                            <input
+                                type="url"
+                                id="security_encryption"
+                                name="security.encryption"
+                                class="form-control"
+                                placeholder="https://example.com/pgp-key.txt"
+                                aria-describedby="security_encryption_help"
+                            >
+                            <small id="security_encryption_help" class="form-text">
+                                Optional: URL to your PGP public key for encrypted communications
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="security_policy">Disclosure Policy URL</label>
+                            <input
+                                type="url"
+                                id="security_policy"
+                                name="security.policy"
+                                class="form-control"
+                                placeholder="https://example.com/security-policy"
+                                aria-describedby="security_policy_help"
+                            >
+                            <small id="security_policy_help" class="form-text">
+                                Optional: Link to your vulnerability disclosure policy
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="security_acknowledgments">Acknowledgments URL</label>
+                            <input
+                                type="url"
+                                id="security_acknowledgments"
+                                name="security.acknowledgments"
+                                class="form-control"
+                                placeholder="https://example.com/hall-of-fame"
+                                aria-describedby="security_acknowledgments_help"
+                            >
+                            <small id="security_acknowledgments_help" class="form-text">
+                                Optional: Link to your security hall of fame or acknowledgments page
+                            </small>
+                        </div>
+
+                        <div class="alert alert-warning" role="status">
+                            <strong>Auto-renewal:</strong> The expiry date is automatically renewed to 1 year from now on each save.
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary" aria-label="Save security.txt">
+                                💾 Save security.txt
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="previewSecurityTxt()" aria-label="Preview security.txt">
+                                👁️ Preview
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    // Load current settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+    });
+
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/v1/admin/settings/all');
+            const data = await response.json();
+
+            if (data.settings) {
+                // Populate all form fields
+                for (const [key, setting] of Object.entries(data.settings)) {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        input.value = setting.value || '';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            showNotification('Failed to load settings', 'error');
+        }
+    }
+
+    // Branding form submission
+    document.getElementById('branding-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveFormSettings(this, 'Branding settings saved successfully');
+    });
+
+    // SEO form submission
+    document.getElementById('seo-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveFormSettings(this, 'SEO settings saved successfully');
+    });
+
+    // robots.txt form submission
+    document.getElementById('robots-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveFormSettings(this, 'robots.txt saved successfully');
+    });
+
+    // security.txt form submission
+    document.getElementById('security-txt-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveFormSettings(this, 'security.txt saved successfully');
+    });
+
+    async function saveFormSettings(form, successMessage) {
+        const formData = new FormData(form);
+        const settings = {};
+
+        for (const [key, value] of formData.entries()) {
+            settings[key] = value;
+        }
+
+        try {
+            const response = await fetch('/api/v1/admin/settings/bulk', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ settings })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showNotification(successMessage, 'success');
+            } else {
+                throw new Error(data.error?.message || 'Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            showNotification(error.message, 'error');
+        }
+    }
+
+    function previewRobotsTxt() {
+        window.open('/robots.txt', '_blank');
+    }
+
+    function previewSecurityTxt() {
+        window.open('/.well-known/security.txt', '_blank');
+    }
+
+    function resetRobotsTxt() {
+        if (confirm('Reset robots.txt to default configuration?')) {
+            document.getElementById('robots_txt').value = `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Sitemap: {app_url}/sitemap.xml`;
+            showNotification('robots.txt reset to defaults (not saved yet)', 'info');
+        }
+    }
+
+    function showNotification(message, type) {
+        // Simple notification (can be enhanced with a proper notification system)
+        const alertClass = type === 'success' ? 'alert-success' :
+                          type === 'error' ? 'alert-danger' : 'alert-info';
+
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass}`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    </script>
+
+    <style>
+    .code-editor {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .card-description {
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    </style>
+</body>
+</html>
+{{end}}

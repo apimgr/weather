@@ -14,7 +14,7 @@
     <div class="weather-container">
 
         <!-- Location Search Form - Mobile First (matching moon.html) -->
-        <form id="severe-weather-form" class="moon-form">
+        <form id="severe-weather-form" class="moon-form" role="form" aria-label="Severe weather alert search">
             <div class="moon-form__wrapper">
                 <!-- First row: Location input with type and distance filters to the right -->
                 <div class="moon-form__row">
@@ -27,10 +27,18 @@
                             placeholder="Enter city or coordinates"
                             value="{{.LocationName}}"
                             autocomplete="off"
+                            aria-label="Search location"
+                            aria-autocomplete="list"
+                            aria-controls="severe-autocomplete-dropdown"
+                            title="Enter a city name or coordinates to search for severe weather alerts"
                         >
-                        <div id="severe-autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                        <div id="severe-autocomplete-dropdown" class="autocomplete-dropdown" role="listbox" aria-label="Location suggestions"></div>
                     </div>
-                    <select name="type" id="type-select" class="location-input moon-form__units">
+                    <select name="type"
+                            id="type-select"
+                            class="location-input moon-form__units"
+                            aria-label="Filter by weather alert type"
+                            title="Filter alerts by type - hurricanes, tornadoes, storms, winter weather, or floods">
                         <option value="all"{{if eq .TypeFilter "all"}} selected{{end}}>All Types</option>
                         <option value="hurricanes"{{if eq .TypeFilter "hurricanes"}} selected{{end}}>🌀 Hurricanes</option>
                         <option value="tornadoes"{{if eq .TypeFilter "tornadoes"}} selected{{end}}>🌪️ Tornadoes</option>
@@ -38,7 +46,11 @@
                         <option value="winter"{{if eq .TypeFilter "winter"}} selected{{end}}>❄️ Winter</option>
                         <option value="floods"{{if eq .TypeFilter "floods"}} selected{{end}}>🌊 Floods</option>
                     </select>
-                    <select name="distance" id="distance-select" class="location-input moon-form__units">
+                    <select name="distance"
+                            id="distance-select"
+                            class="location-input moon-form__units"
+                            aria-label="Filter by distance radius"
+                            title="Search radius around the location - choose how far to search for weather alerts">
                         <option value="25"{{if eq .DistanceFilter "25"}} selected{{end}}>25 mi</option>
                         <option value="50"{{if eq .DistanceFilter "50"}} selected{{end}}>50 mi</option>
                         <option value="100"{{if eq .DistanceFilter "100"}} selected{{end}}>100 mi</option>
@@ -50,10 +62,17 @@
 
                 <!-- Second row: Buttons -->
                 <div class="moon-form__row">
-                    <button type="submit" class="search-button moon-form__button">
+                    <button type="submit"
+                            class="search-button moon-form__button"
+                            aria-label="Get weather alerts"
+                            title="Search for severe weather alerts with the selected filters">
                         ⚠️ Get Alerts
                     </button>
-                    <button type="button" id="location-btn" class="search-button moon-form__button--location">
+                    <button type="button"
+                            id="location-btn"
+                            class="search-button moon-form__button--location"
+                            aria-label="Use my current location"
+                            title="Automatically detect and use your current location">
                         📍 My Location
                     </button>
                 </div>
@@ -612,13 +631,13 @@
                 dropdown.appendChild(item);
             });
 
-            dropdown.style.display = 'block';
+            dropdown.classList.add('autocomplete-dropdown-visible');
         }
 
         function hideAutocomplete() {
             const dropdown = document.getElementById('severe-autocomplete-dropdown');
             if (dropdown) {
-                dropdown.style.display = 'none';
+                dropdown.classList.remove('autocomplete-dropdown-visible');
                 dropdown.innerHTML = '';
             }
         }

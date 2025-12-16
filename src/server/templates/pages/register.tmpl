@@ -18,43 +18,87 @@
         </div>
 
         {{ if .error }}
-        <div class="error-message">{{ .error }}</div>
+        <div class="error-message" role="alert" aria-live="assertive">{{ .error }}</div>
         {{ end }}
 
-        <form method="POST" action="/register" id="registerForm">
+        <form method="POST" action="/auth/register" id="registerForm" role="form" aria-label="User registration form">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+">
-                <small>3-20 characters, letters, numbers, and underscores only</small>
+                <input type="text"
+                       id="username"
+                       name="username"
+                       required
+                       autofocus
+                       minlength="3"
+                       maxlength="20"
+                       pattern="[a-zA-Z0-9_]+"
+                       aria-label="Username"
+                       aria-required="true"
+                       aria-describedby="username-requirements"
+                       title="Choose a unique username for your account">
+                <small id="username-requirements">3-20 characters, letters, numbers, and underscores only</small>
             </div>
 
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       required
+                       aria-label="Email address"
+                       aria-required="true"
+                       title="Enter your email address for account verification">
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required minlength="8">
-                <small>Minimum 8 characters</small>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       required
+                       minlength="8"
+                       aria-label="Password"
+                       aria-required="true"
+                       aria-describedby="password-requirements password-strength-indicator"
+                       title="Create a secure password for your account">
+                <small id="password-requirements">Minimum 8 characters</small>
                 <div class="password-strength">
-                    <div class="password-strength-bar" id="strengthBar"></div>
+                    <div class="password-strength-bar"
+                         id="strengthBar"
+                         role="progressbar"
+                         aria-label="Password strength indicator"
+                         aria-live="polite"
+                         aria-valuemin="0"
+                         aria-valuemax="4"
+                         aria-valuenow="0"></div>
                 </div>
+                <span class="sr-only" id="password-strength-indicator" aria-live="polite"></span>
             </div>
 
             <div class="form-group">
                 <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" required>
+                <input type="password"
+                       id="confirm_password"
+                       name="confirm_password"
+                       required
+                       aria-label="Confirm password"
+                       aria-required="true"
+                       aria-describedby="password-match-help"
+                       title="Re-enter your password to confirm">
+                <small id="password-match-help" class="sr-only">Password must match the password entered above</small>
             </div>
 
-            <button type="submit" class="btn-primary {{ if .isSetup }}setup{{ end }}">
+            <button type="submit"
+                    class="btn-primary {{ if .isSetup }}setup{{ end }}"
+                    aria-label="{{ if .isSetup }}Create administrator account{{ else }}Create user account{{ end }}"
+                    title="{{ if .isSetup }}Create admin account and complete setup{{ else }}Create your weather account{{ end }}">
                 {{ if .isSetup }}Create Admin Account{{ else }}Create Account{{ end }}
             </button>
         </form>
 
         {{ if not .isSetup }}
         <div class="form-footer">
-            <p>Already have an account? <a href="/login">Sign in here</a></p>
+            <p>Already have an account? <a href="/auth/login">Sign in here</a></p>
         </div>
         {{ end }}
 
@@ -73,6 +117,7 @@
         passwordInput.addEventListener('input', function() {
             const password = this.value;
             let strength = 0;
+            const strengthIndicator = document.getElementById('password-strength-indicator');
 
             if (password.length >= 8) strength++;
             if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
@@ -80,12 +125,17 @@
             if (password.match(/[^a-zA-Z0-9]/)) strength++;
 
             strengthBar.className = 'password-strength-bar';
+            strengthBar.setAttribute('aria-valuenow', strength);
+
             if (strength <= 1) {
                 strengthBar.classList.add('weak');
+                strengthIndicator.textContent = 'Password strength: Weak';
             } else if (strength <= 3) {
                 strengthBar.classList.add('medium');
+                strengthIndicator.textContent = 'Password strength: Medium';
             } else {
                 strengthBar.classList.add('strong');
+                strengthIndicator.textContent = 'Password strength: Strong';
             }
         });
 

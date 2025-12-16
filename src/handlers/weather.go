@@ -273,16 +273,16 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 
 	// Format location with population
 	locationData := gin.H{
-		"Name":                 location.Name,
-		"ShortName":            location.ShortName,
-		"FullName":             location.FullName,
-		"Latitude":             location.Latitude,
-		"Longitude":            location.Longitude,
-		"Country":              location.Country,
-		"CountryCode":          location.CountryCode,
-		"Population":           location.Population,
-		"PopulationFormatted":  formatPopulation(location.Population),
-		"Timezone":             location.Timezone,
+		"Name":                location.Name,
+		"ShortName":           location.ShortName,
+		"FullName":            location.FullName,
+		"Latitude":            location.Latitude,
+		"Longitude":           location.Longitude,
+		"Country":             location.Country,
+		"CountryCode":         location.CountryCode,
+		"Population":          location.Population,
+		"PopulationFormatted": formatPopulation(location.Population),
+		"Timezone":            location.Timezone,
 	}
 
 	// Enrich forecast days with icon and formatted date

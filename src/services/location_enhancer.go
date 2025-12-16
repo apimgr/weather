@@ -14,12 +14,12 @@ import (
 
 // LocationEnhancer enhances location data with external databases
 type LocationEnhancer struct {
-	db            *sql.DB
-	client        *http.Client
-	countriesData []Country
-	citiesData    []City
-	mu            sync.RWMutex
-	initialized   bool
+	db             *sql.DB
+	client         *http.Client
+	countriesData  []Country
+	citiesData     []City
+	mu             sync.RWMutex
+	initialized    bool
 	onInitComplete func(countries, cities bool)
 }
 
@@ -444,19 +444,19 @@ func (le *LocationEnhancer) getStateAbbreviation(stateName string) string {
 // getProvinceAbbreviation returns Canadian province abbreviation
 func (le *LocationEnhancer) getProvinceAbbreviation(provinceName string) string {
 	provinces := map[string]string{
-		"alberta":                    "AB",
-		"british columbia":           "BC",
-		"manitoba":                   "MB",
-		"new brunswick":              "NB",
-		"newfoundland and labrador":  "NL",
-		"northwest territories":      "NT",
-		"nova scotia":                "NS",
-		"nunavut":                    "NU",
-		"ontario":                    "ON",
-		"prince edward island":       "PE",
-		"quebec":                     "QC",
-		"saskatchewan":               "SK",
-		"yukon":                      "YT",
+		"alberta":                   "AB",
+		"british columbia":          "BC",
+		"manitoba":                  "MB",
+		"new brunswick":             "NB",
+		"newfoundland and labrador": "NL",
+		"northwest territories":     "NT",
+		"nova scotia":               "NS",
+		"nunavut":                   "NU",
+		"ontario":                   "ON",
+		"prince edward island":      "PE",
+		"quebec":                    "QC",
+		"saskatchewan":              "SK",
+		"yukon":                     "YT",
 	}
 
 	return provinces[strings.ToLower(provinceName)]

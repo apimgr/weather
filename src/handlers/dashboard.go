@@ -19,7 +19,7 @@ type DashboardHandler struct {
 func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 

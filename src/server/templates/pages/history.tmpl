@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Historical Weather Data</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <script src="/static/js/app.js" defer></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <style>
+        .history-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .history-form {
+            background: var(--dracula-current-line, #44475a);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dracula-purple, #bd93f9);
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid var(--dracula-comment, #6272a4);
+            background: var(--dracula-background, #282a36);
+            color: var(--dracula-foreground, #f8f8f2);
+            font-size: 1rem;
+        }
+        .form-group small {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--dracula-comment, #6272a4);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .submit-button {
+            background: var(--dracula-green, #50fa7b);
+            color: var(--dracula-background, #282a36);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        .submit-button:hover {
+            opacity: 0.9;
+        }
+        .error-box {
+            background: var(--dracula-red, #ff5555);
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .success-box {
+            background: var(--dracula-green, #50fa7b);
+            color: var(--dracula-background, #282a36);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .stats-summary {
+            background: var(--dracula-current-line, #44475a);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .stat-card {
+            background: var(--dracula-background, #282a36);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border-left: 4px solid var(--dracula-purple, #bd93f9);
+        }
+        .stat-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--dracula-purple, #bd93f9);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--dracula-foreground, #f8f8f2);
+        }
+        .stat-card .label {
+            color: var(--dracula-comment, #6272a4);
+            font-size: 0.875rem;
+        }
+        .year-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background: var(--dracula-current-line, #44475a);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .year-data-table thead {
+            background: var(--dracula-background, #282a36);
+        }
+        .year-data-table th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--dracula-purple, #bd93f9);
+            font-weight: 600;
+        }
+        .year-data-table td {
+            padding: 1rem;
+            border-top: 1px solid var(--dracula-comment, #6272a4);
+        }
+        .year-data-table tbody tr:hover {
+            background: var(--dracula-background, #282a36);
+        }
+        .warmest-year {
+            background: var(--dracula-red, #ff5555) !important;
+            color: white !important;
+        }
+        .coldest-year {
+            background: var(--dracula-cyan, #8be9fd) !important;
+            color: var(--dracula-background, #282a36) !important;
+        }
+        .wettest-year {
+            background: var(--dracula-blue, #6272a4) !important;
+            color: white !important;
+        }
+        @media (max-width: 768px) {
+            .history-container {
+                padding: 1rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .year-data-table {
+                font-size: 0.875rem;
+            }
+            .year-data-table th,
+            .year-data-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    {{template "navbar" .}}
+
+    <div class="history-container">
+        <h1>📊 Historical Weather Data</h1>
+        <p>Explore weather patterns for any day across multiple years. Compare temperatures, precipitation, and more.</p>
+
+        {{if .Error}}
+            <div class="error-box" role="alert" aria-live="polite">
+                <strong>Error:</strong> {{.Error}}
+            </div>
+        {{end}}
+
+        {{if .Success}}
+            <div class="success-box" role="status" aria-live="polite">
+                {{.Success}}
+            </div>
+        {{end}}
+
+        <!-- Search Form -->
+        <form class="history-form" method="GET" action="/history" role="form" aria-label="Historical weather search form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="location">
+                        📍 Location
+                        <span aria-hidden="true">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="location"
+                        name="location"
+                        value="{{.Location}}"
+                        placeholder="Enter city, coordinates, or zipcode"
+                        required
+                        aria-required="true"
+                        aria-describedby="location-help"
+                        autocomplete="off"
+                    >
+                    <small id="location-help">
+                        Examples: "New York", "40.7128,-74.0060", or "10001"
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">
+                        📅 Date
+                        <span aria-hidden="true">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="date"
+                        name="date"
+                        value="{{.Date}}"
+                        placeholder="MM/DD or MM/DD/YYYY"
+                        required
+                        aria-required="true"
+                        aria-describedby="date-help"
+                        pattern="^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])(/\d{4})?$"
+                        title="Enter date in MM/DD or MM/DD/YYYY format"
+                    >
+                    <small id="date-help">
+                        Enter month/day (e.g., "12/10") or full date (e.g., "12/10/2020"). If no year is provided, we'll start from {{.StartYear}}.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="years">
+                        🔢 Number of Years
+                    </label>
+                    <input
+                        type="number"
+                        id="years"
+                        name="years"
+                        min="{{.MinYears}}"
+                        max="{{.MaxYears}}"
+                        value="{{if .Historical}}{{len .Historical.Years}}{{else}}{{.DefaultYears}}{{end}}"
+                        aria-describedby="years-help"
+                        aria-valuemin="{{.MinYears}}"
+                        aria-valuemax="{{.MaxYears}}"
+                        aria-valuenow="{{.DefaultYears}}"
+                    >
+                    <small id="years-help">
+                        How many years to display ({{.MinYears}}-{{.MaxYears}}). Default: {{.DefaultYears}}
+                    </small>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-button" aria-label="Search historical weather data">
+                🔍 Search Historical Weather
+            </button>
+        </form>
+
+        {{if .Historical}}
+            <!-- Statistics Summary -->
+            <div class="stats-summary" role="region" aria-labelledby="stats-heading">
+                <h2 id="stats-heading">📈 Statistics for {{.Historical.Date}}</h2>
+                <p>Showing data for {{.Historical.TotalYears}} years ({{(index .Historical.Years (sub (len .Historical.Years) 1)).Year}} - {{(index .Historical.Years 0).Year}})</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card" role="article" aria-labelledby="warmest-year-label">
+                        <h3 id="warmest-year-label">Warmest Year</h3>
+                        <div class="value">{{.Historical.Stats.WarmestYear}}</div>
+                        <div class="label">{{printf "%.1f" .Historical.Stats.MaxTempEver}}°</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="coldest-year-label">
+                        <h3 id="coldest-year-label">Coldest Year</h3>
+                        <div class="value">{{.Historical.Stats.ColdestYear}}</div>
+                        <div class="label">{{printf "%.1f" .Historical.Stats.MinTempEver}}°</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="wettest-year-label">
+                        <h3 id="wettest-year-label">Wettest Year</h3>
+                        <div class="value">{{.Historical.Stats.WettestYear}}</div>
+                        <div class="label">{{printf "%.1f" .Historical.Stats.MaxPrecipitation}} mm</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="driest-year-label">
+                        <h3 id="driest-year-label">Driest Year</h3>
+                        <div class="value">{{.Historical.Stats.DriestYear}}</div>
+                        <div class="label">No rain</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="avg-high-label">
+                        <h3 id="avg-high-label">Average High</h3>
+                        <div class="value">{{printf "%.1f" .Historical.Stats.AvgTempMax}}°</div>
+                        <div class="label">Across all years</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="avg-low-label">
+                        <h3 id="avg-low-label">Average Low</h3>
+                        <div class="value">{{printf "%.1f" .Historical.Stats.AvgTempMin}}°</div>
+                        <div class="label">Across all years</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="avg-precip-label">
+                        <h3 id="avg-precip-label">Average Precipitation</h3>
+                        <div class="value">{{printf "%.1f" .Historical.Stats.AvgPrecipitation}}</div>
+                        <div class="label">mm per year</div>
+                    </div>
+
+                    <div class="stat-card" role="article" aria-labelledby="total-years-label">
+                        <h3 id="total-years-label">Total Years</h3>
+                        <div class="value">{{.Historical.Stats.TotalYears}}</div>
+                        <div class="label">Data points</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Year-by-Year Data Table -->
+            <div role="region" aria-labelledby="yearly-data-heading">
+                <h2 id="yearly-data-heading">📋 Year-by-Year Data</h2>
+                <table class="year-data-table" role="table" aria-label="Historical weather data by year">
+                    <thead>
+                        <tr role="row">
+                            <th role="columnheader" scope="col">Year</th>
+                            <th role="columnheader" scope="col">Date</th>
+                            <th role="columnheader" scope="col">High</th>
+                            <th role="columnheader" scope="col">Low</th>
+                            <th role="columnheader" scope="col">Avg</th>
+                            <th role="columnheader" scope="col">Precipitation</th>
+                            <th role="columnheader" scope="col">Wind</th>
+                            <th role="columnheader" scope="col">Humidity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {{range $index, $year := .Historical.Years}}
+                        <tr role="row"
+                            {{if eq $year.Year $.Historical.Stats.WarmestYear}}class="warmest-year" aria-label="Warmest year"{{end}}
+                            {{if eq $year.Year $.Historical.Stats.ColdestYear}}class="coldest-year" aria-label="Coldest year"{{end}}
+                            {{if eq $year.Year $.Historical.Stats.WettestYear}}class="wettest-year" aria-label="Wettest year"{{end}}
+                        >
+                            <td role="cell">
+                                <strong>{{$year.Year}}</strong>
+                                {{if eq $year.Year $.Historical.Stats.WarmestYear}}<span aria-label="Warmest">🔥</span>{{end}}
+                                {{if eq $year.Year $.Historical.Stats.ColdestYear}}<span aria-label="Coldest">❄️</span>{{end}}
+                                {{if eq $year.Year $.Historical.Stats.WettestYear}}<span aria-label="Wettest">💧</span>{{end}}
+                            </td>
+                            <td role="cell">{{$year.Date}}</td>
+                            <td role="cell">{{printf "%.1f" $year.TempMax}}°</td>
+                            <td role="cell">{{printf "%.1f" $year.TempMin}}°</td>
+                            <td role="cell">{{printf "%.1f" $year.TempAvg}}°</td>
+                            <td role="cell">{{printf "%.1f" $year.Precipitation}} mm</td>
+                            <td role="cell">{{printf "%.0f" $year.WindSpeedMax}} km/h</td>
+                            <td role="cell">{{$year.HumidityMean}}%</td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+            </div>
+        {{else}}
+            <div style="text-align: center; padding: 3rem; color: var(--dracula-comment, #6272a4);">
+                <p style="font-size: 3rem; margin-bottom: 1rem;">📊</p>
+                <p>Enter a location and date above to view historical weather data.</p>
+                <p style="margin-top: 1rem; font-size: 0.875rem;">Available data from 1940 to present</p>
+            </div>
+        {{end}}
+    </div>
+
+    {{template "footer" .}}
+</body>
+</html>

@@ -45,18 +45,18 @@ func (c *CLI) RegisterCommand(cmd *Command) {
 func (c *CLI) Parse(args []string) error {
 	// Define standard flags
 	var (
-		showHelp      = c.flags.Bool("help", false, "Show this help message")
-		showVersion   = c.flags.Bool("version", false, "Show version information")
-		showStatus    = c.flags.Bool("status", false, "Show server status and health")
-		healthcheck   = c.flags.Bool("healthcheck", false, "Run health check and exit (for Docker)")
-		mode          = c.flags.String("mode", "", "Application mode: production or development")
-		port          = c.flags.String("port", "", "Server port")
-		address       = c.flags.String("address", "", "Listen address")
-		dataDir       = c.flags.String("data", "", "Data directory")
-		configDir     = c.flags.String("config", "", "Configuration directory")
-		serviceCmd    = c.flags.String("service", "", "Service management: start, stop, restart, reload, --install, --uninstall")
+		showHelp       = c.flags.Bool("help", false, "Show this help message")
+		showVersion    = c.flags.Bool("version", false, "Show version information")
+		showStatus     = c.flags.Bool("status", false, "Show server status and health")
+		healthcheck    = c.flags.Bool("healthcheck", false, "Run health check and exit (for Docker)")
+		mode           = c.flags.String("mode", "", "Application mode: production or development")
+		port           = c.flags.String("port", "", "Server port")
+		address        = c.flags.String("address", "", "Listen address")
+		dataDir        = c.flags.String("data", "", "Data directory")
+		configDir      = c.flags.String("config", "", "Configuration directory")
+		serviceCmd     = c.flags.String("service", "", "Service management: start, stop, restart, reload, --install, --uninstall")
 		maintenanceCmd = c.flags.String("maintenance", "", "Maintenance: backup, restore, update, mode")
-		updateCmd     = c.flags.String("update", "", "Update: check, yes, branch {stable|beta|daily}")
+		updateCmd      = c.flags.String("update", "", "Update: check, yes, branch {stable|beta|daily}")
 	)
 
 	if err := c.flags.Parse(args); err != nil {

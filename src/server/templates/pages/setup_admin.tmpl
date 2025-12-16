@@ -20,33 +20,75 @@
                 <p>The administrator account manages system settings and users. It's separate from your user account.</p>
             </div>
 
-            <div id="error-message" class="error-message"></div>
+            <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
 
-            <form id="admin-form">
+            <form id="admin-form" role="form" aria-label="Administrator account setup form - Step 2 of 2">
                 <div class="form-group">
                     <label class="form-label" for="username">Username</label>
-                    <input type="text" id="username" name="username" class="form-input" value="administrator" required minlength="3">
-                    <small class="setup-admin-form-hint">Default: administrator (can be changed)</small>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="form-input"
+                           value="administrator"
+                           required
+                           minlength="3"
+                           aria-label="Administrator username"
+                           aria-required="true"
+                           aria-describedby="username-hint"
+                           title="Username for the administrator account">
+                    <small class="setup-admin-form-hint" id="username-hint">Default: administrator (can be changed)</small>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-input" required placeholder="admin@example.com">
-                    <small class="setup-admin-form-hint">For password recovery and notifications</small>
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           class="form-input"
+                           required
+                           placeholder="admin@example.com"
+                           aria-label="Administrator email address"
+                           aria-required="true"
+                           aria-describedby="email-hint"
+                           title="Email address for administrator account">
+                    <small class="setup-admin-form-hint" id="email-hint">For password recovery and notifications</small>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" required minlength="12">
-                    <small class="setup-admin-form-hint">Minimum 12 characters</small>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           class="form-input"
+                           required
+                           minlength="12"
+                           aria-label="Administrator password"
+                           aria-required="true"
+                           aria-describedby="password-hint"
+                           title="Create a secure password for the administrator account">
+                    <small class="setup-admin-form-hint" id="password-hint">Minimum 12 characters</small>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" required minlength="12">
+                    <input type="password"
+                           id="confirm_password"
+                           name="confirm_password"
+                           class="form-input"
+                           required
+                           minlength="12"
+                           aria-label="Confirm administrator password"
+                           aria-required="true"
+                           aria-describedby="password-match-hint"
+                           title="Re-enter administrator password to confirm">
+                    <small class="setup-admin-form-hint sr-only" id="password-match-hint">Password must match the password entered above</small>
                 </div>
 
-                <button type="submit" id="submit-btn" class="submit-button">Create Administrator</button>
+                <button type="submit"
+                        id="submit-btn"
+                        class="submit-button"
+                        aria-label="Create administrator account and complete setup"
+                        title="Complete setup and create administrator account">Create Administrator</button>
             </form>
         </div>
     </div>

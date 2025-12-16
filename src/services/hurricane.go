@@ -23,23 +23,23 @@ type HurricaneData struct {
 
 // Storm represents a tropical storm/hurricane
 type Storm struct {
-	ID            string    `json:"id"`
-	BinNumber     int       `json:"binNumber"`
-	Name          string    `json:"name"`
-	Classification string   `json:"classification"`
-	Intensity     string   `json:"intensity"`
-	Pressure      int      `json:"pressure"`
-	WindSpeed     int      `json:"windSpeed"`
-	MovementSpeed int      `json:"movementSpeed"`
-	MovementDir   string   `json:"movementDir"`
-	Latitude      float64  `json:"latitude"`
-	Longitude     float64  `json:"longitude"`
-	LastUpdate    string   `json:"lastUpdate"`
-	Basin         string   `json:"basin"`
-	DistanceMiles float64  `json:"distanceMiles,omitempty"`
-	PublicAdvisory string  `json:"publicAdvisory,omitempty"`
-	ForecastAdvisory string `json:"forecastAdvisory,omitempty"`
-	DiscussionLink string  `json:"discussionLink,omitempty"`
+	ID               string  `json:"id"`
+	BinNumber        int     `json:"binNumber"`
+	Name             string  `json:"name"`
+	Classification   string  `json:"classification"`
+	Intensity        string  `json:"intensity"`
+	Pressure         int     `json:"pressure"`
+	WindSpeed        int     `json:"windSpeed"`
+	MovementSpeed    int     `json:"movementSpeed"`
+	MovementDir      string  `json:"movementDir"`
+	Latitude         float64 `json:"latitude"`
+	Longitude        float64 `json:"longitude"`
+	LastUpdate       string  `json:"lastUpdate"`
+	Basin            string  `json:"basin"`
+	DistanceMiles    float64 `json:"distanceMiles,omitempty"`
+	PublicAdvisory   string  `json:"publicAdvisory,omitempty"`
+	ForecastAdvisory string  `json:"forecastAdvisory,omitempty"`
+	DiscussionLink   string  `json:"discussionLink,omitempty"`
 }
 
 // NewHurricaneService creates a new hurricane service
@@ -95,20 +95,20 @@ func (s *HurricaneService) fetchNOAAStorms(url string) ([]Storm, error) {
 
 	var noaaData struct {
 		ActiveStorms []struct {
-			ID         string `json:"id"`
-			BinNumber  int    `json:"binNumber"`
-			Name       string `json:"name"`
-			Classification string `json:"classification"`
-			IntensityMPH int `json:"intensityMPH"`
-			PressureMB int `json:"pressureMB"`
-			MovementSpeed int `json:"movementSpeed"`
-			MovementDir string `json:"movementDir"`
-			Latitude  float64 `json:"latitude"`
-			Longitude float64 `json:"longitude"`
-			LastUpdate string `json:"lastUpdate"`
-			PublicAdvisory string `json:"publicAdvisory"`
-			ForecastAdvisory string `json:"forecastAdvisory"`
-			DiscussionLink string `json:"discussionLink"`
+			ID               string  `json:"id"`
+			BinNumber        int     `json:"binNumber"`
+			Name             string  `json:"name"`
+			Classification   string  `json:"classification"`
+			IntensityMPH     int     `json:"intensityMPH"`
+			PressureMB       int     `json:"pressureMB"`
+			MovementSpeed    int     `json:"movementSpeed"`
+			MovementDir      string  `json:"movementDir"`
+			Latitude         float64 `json:"latitude"`
+			Longitude        float64 `json:"longitude"`
+			LastUpdate       string  `json:"lastUpdate"`
+			PublicAdvisory   string  `json:"publicAdvisory"`
+			ForecastAdvisory string  `json:"forecastAdvisory"`
+			DiscussionLink   string  `json:"discussionLink"`
 		} `json:"activeStorms"`
 	}
 
@@ -125,22 +125,22 @@ func (s *HurricaneService) fetchNOAAStorms(url string) ([]Storm, error) {
 		}
 
 		storm := Storm{
-			ID:             s.ID,
-			BinNumber:      s.BinNumber,
-			Name:           s.Name,
-			Classification: s.Classification,
-			Intensity:      intensity,
-			Pressure:       s.PressureMB,
-			WindSpeed:      s.IntensityMPH,
-			MovementSpeed:  s.MovementSpeed,
-			MovementDir:    s.MovementDir,
-			Latitude:       s.Latitude,
-			Longitude:      s.Longitude,
-			LastUpdate:     s.LastUpdate,
-			Basin:          "Atlantic",
-			PublicAdvisory: s.PublicAdvisory,
+			ID:               s.ID,
+			BinNumber:        s.BinNumber,
+			Name:             s.Name,
+			Classification:   s.Classification,
+			Intensity:        intensity,
+			Pressure:         s.PressureMB,
+			WindSpeed:        s.IntensityMPH,
+			MovementSpeed:    s.MovementSpeed,
+			MovementDir:      s.MovementDir,
+			Latitude:         s.Latitude,
+			Longitude:        s.Longitude,
+			LastUpdate:       s.LastUpdate,
+			Basin:            "Atlantic",
+			PublicAdvisory:   s.PublicAdvisory,
 			ForecastAdvisory: s.ForecastAdvisory,
-			DiscussionLink: s.DiscussionLink,
+			DiscussionLink:   s.DiscussionLink,
 		}
 		storms = append(storms, storm)
 	}

@@ -61,16 +61,16 @@ func (h *NotificationChannelHandler) ListChannels(c *gin.Context) {
 		}
 
 		channel := gin.H{
-			"channel_type":   channelType,
-			"channel_name":   channelName,
-			"enabled":        enabled,
-			"state":          state,
-			"failure_count":  failureCount,
-			"last_test_at":   nil,
+			"channel_type":    channelType,
+			"channel_name":    channelName,
+			"enabled":         enabled,
+			"state":           state,
+			"failure_count":   failureCount,
+			"last_test_at":    nil,
 			"last_success_at": nil,
-			"last_error":     nil,
-			"created_at":     nil,
-			"updated_at":     nil,
+			"last_error":      nil,
+			"created_at":      nil,
+			"updated_at":      nil,
 		}
 
 		if lastTestAt.Valid {
@@ -122,15 +122,15 @@ func (h *NotificationChannelHandler) GetChannel(c *gin.Context) {
 	}
 
 	channel := gin.H{
-		"channel_type":   channelType,
-		"channel_name":   channelName,
-		"enabled":        enabled,
-		"state":          state,
-		"config":         config,
-		"failure_count":  failureCount,
-		"last_test_at":   nil,
+		"channel_type":    channelType,
+		"channel_name":    channelName,
+		"enabled":         enabled,
+		"state":           state,
+		"config":          config,
+		"failure_count":   failureCount,
+		"last_test_at":    nil,
 		"last_success_at": nil,
-		"last_error":     nil,
+		"last_error":      nil,
 	}
 
 	if lastTestAt.Valid {

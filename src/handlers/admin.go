@@ -427,10 +427,10 @@ func (h *AdminHandler) GetLogsStats(c *gin.Context) {
 	h.DB.QueryRow("SELECT COUNT(*) FROM audit_log WHERE created_at >= datetime('now', '-1 day')").Scan(&recentLogs)
 
 	c.JSON(http.StatusOK, gin.H{
-		"total":       totalLogs,
-		"errors":      errorLogs,
-		"success":     successLogs,
-		"recent_24h":  recentLogs,
+		"total":      totalLogs,
+		"errors":     errorLogs,
+		"success":    successLogs,
+		"recent_24h": recentLogs,
 	})
 }
 
@@ -591,7 +591,7 @@ func (h *AdminHandler) seedScheduledTasks() {
 func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
@@ -633,6 +633,13 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	settings["logging_error_log"] = settingsModel.GetBool("logging.error_log", true)
 	settings["logging_audit_log"] = settingsModel.GetBool("logging.audit_log", true)
 	settings["logging_rotation_days"] = settingsModel.GetInt("logging.rotation_days", 30)
+
+	// Tor hidden service settings (TEMPLATE.md PART 32)
+	settings["tor_enabled"] = settingsModel.GetBool("tor.enabled", true)
+	settings["tor_onion_address"] = settingsModel.GetString("tor.onion_address", "")
+	settings["tor_socks_port"] = settingsModel.GetInt("tor.socks_port", 9050)
+	settings["tor_control_port"] = settingsModel.GetInt("tor.control_port", 9051)
+	settings["tor_data_dir"] = settingsModel.GetString("tor.data_dir", "")
 
 	c.HTML(http.StatusOK, "admin/admin-settings.tmpl", gin.H{
 		"title":    "Server Settings",

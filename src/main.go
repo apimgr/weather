@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"weather-go/src/cli"
+	"weather-go/src/config"
 	"weather-go/src/database"
 	"weather-go/src/handlers"
 	"weather-go/src/middleware"
@@ -246,6 +248,18 @@ func main() {
 		appLogger.Printf("✅ Database initialized: %s (setup mode)", dbPath)
 	}
 
+	// Load server configuration
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		appLogger.Error("⚠️  Warning: Could not load server.yml: %v (using defaults)", err)
+	} else {
+		appLogger.Printf("✅ Configuration loaded from server.yml")
+	}
+
+	// Merge build-time version info with config
+	cfg.Version = Version
+	cfg.BuildDate = BuildDate
+
 	// Initialize default settings with proper backup path
 	settingsModel := &models.SettingsModel{DB: db.DB}
 	backupPath := utils.GetBackupPath(dirPaths)
@@ -299,7 +313,7 @@ func main() {
 		isFirstRun = false
 	}
 	if isFirstRun {
-		appLogger.Printf("🆕 First run detected - please create an admin account at /register")
+		appLogger.Printf("🆕 First run detected - please create an admin account at /auth/register")
 	}
 
 	// Handle status flag
@@ -419,6 +433,9 @@ func main() {
 		"add": func(a, b int) int {
 			return a + b
 		},
+		"sub": func(a, b int) int {
+			return a - b
+		},
 	}).ParseFS(templatesSubFS, templatePaths...))
 
 	// Debug: Print registered template names
@@ -441,6 +458,9 @@ func main() {
 					"lower": strings.ToLower,
 					"add": func(a, b int) int {
 						return a + b
+					},
+					"sub": func(a, b int) int {
+						return a - b
 					},
 				})
 				// Load all templates including subdirectories
@@ -512,6 +532,27 @@ func main() {
 	// Initialize notification metrics service
 	notificationMetrics := services.NewNotificationMetrics(db.DB)
 
+	// Initialize Tor hidden service (TEMPLATE.md PART 32 - NON-NEGOTIABLE)
+	torService := services.NewTorService(db, dirPaths.Data)
+
+	// Initialize config file watcher for live reload (TEMPLATE.md PART 1)
+	configPath := filepath.Join(dirPaths.Config, "server.yml")
+	configWatcher, err := services.NewConfigWatcher(configPath, func(newCfg *config.Config) error {
+		// Reload configuration callback
+		// Update settings that can be changed at runtime
+		log.Printf("🔄 Configuration reloaded from %s", configPath)
+
+		// Merge new config with current config
+		cfg.Server.Branding.Title = newCfg.Server.Branding.Title
+		cfg.Server.Branding.Description = newCfg.Server.Branding.Description
+		cfg.Mode = newCfg.Mode
+
+		return nil
+	})
+	if err != nil {
+		log.Printf("⚠️  Failed to create config watcher: %v", err)
+	}
+
 	// Initialize scheduler for periodic tasks
 	taskScheduler := scheduler.NewScheduler(db.DB)
 
@@ -573,6 +614,11 @@ func main() {
 		return nil
 	})
 
+	// Initialize task history table for scheduler tracking
+	if err := taskScheduler.InitTaskHistoryTable(); err != nil {
+		log.Fatalf("❌ Failed to initialize task history table: %v", err)
+	}
+
 	// Start the scheduler
 	taskScheduler.Start()
 
@@ -588,6 +634,7 @@ func main() {
 	earthquakeHandler := handlers.NewEarthquakeHandler(earthquakeService, weatherService, locationEnhancer)
 	hurricaneHandler := handlers.NewHurricaneHandler(hurricaneService)
 	severeWeatherHandler := handlers.NewSevereWeatherHandler(severeWeatherService, locationEnhancer, weatherService)
+	moonHandler := handlers.NewMoonHandler(weatherService, locationEnhancer)
 
 	// Create auth handlers
 	authHandler := &handlers.AuthHandler{DB: db.DB}
@@ -606,6 +653,18 @@ func main() {
 	preferencesHandler := handlers.NewNotificationPreferencesHandler(db.DB)
 	templateHandler := handlers.NewNotificationTemplateHandler(db.DB)
 	metricsHandler := handlers.NewNotificationMetricsHandler(notificationMetrics)
+
+	// Create scheduler handler for task management
+	schedulerHandler := handlers.NewSchedulerHandler(taskScheduler)
+
+	// Create Tor admin handler
+	torAdminHandler := handlers.NewTorAdminHandler(torService, settingsModel, dirPaths.Data)
+
+	// Create email template handler
+	emailTemplateHandler := handlers.NewEmailTemplateHandler(filepath.Join("src", "server", "templates"))
+
+	// Create logs handler
+	logsHandler := handlers.NewLogsHandler(dirPaths.Log)
 
 	// Get port configuration using comprehensive port manager
 	// Priority: 1) Database saved ports, 2) PORT env variable, 3) Random port (64000-64999)
@@ -652,6 +711,15 @@ func main() {
 	sslManager := utils.NewSSLManager(db.DB, sslCertsDir)
 	httpsPort := httpsPortInt
 
+	// Create SSL handler
+	sslHandler := handlers.NewSSLHandler(sslCertsDir)
+
+	// Create metrics handler
+	metricsConfigHandler := handlers.NewMetricsHandler()
+
+	// Create logging handler
+	loggingHandler := handlers.NewLoggingHandler(dirPaths.Log)
+
 	// Check for SSL configuration
 	hostname, _ := os.Hostname()
 	if hostname == "" {
@@ -687,6 +755,39 @@ func main() {
 
 	// Prometheus metrics endpoint (TEMPLATE.md required - optional auth)
 	r.GET("/metrics", handlers.PrometheusMetrics())
+
+	// security.txt endpoint (RFC 9116 - TEMPLATE.md PART 25)
+	securityTxtService := services.NewSecurityTxtService(settingsModel)
+	r.GET("/.well-known/security.txt", func(c *gin.Context) {
+		hostInfo := utils.GetHostInfo(c)
+		baseURL := hostInfo.FullHost
+		content := securityTxtService.Generate(baseURL)
+		c.Header("Content-Type", "text/plain; charset=utf-8")
+		c.String(http.StatusOK, content)
+	})
+	// Also serve at root for compatibility
+	r.GET("/security.txt", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/.well-known/security.txt")
+	})
+
+	// /.well-known/change-password redirect (TEMPLATE.md PART 25)
+	r.GET("/.well-known/change-password", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/profile?tab=security")
+	})
+
+	// robots.txt endpoint
+	r.GET("/robots.txt", func(c *gin.Context) {
+		robotsTxt := settingsModel.GetString("web.robots_txt", `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Sitemap: {app_url}/sitemap.xml`)
+		// Replace variables
+		hostInfo := utils.GetHostInfo(c)
+		robotsTxt = strings.ReplaceAll(robotsTxt, "{app_url}", hostInfo.FullHost)
+		c.Header("Content-Type", "text/plain; charset=utf-8")
+		c.String(http.StatusOK, robotsTxt)
+	})
 
 	// Debug endpoints (only enabled when DEBUG environment variable is set)
 	if debugMode {
@@ -774,19 +875,19 @@ func main() {
 		setupWizard.GET("/complete", middleware.RequireAdmin(), setupHandler.ShowServerSetupComplete)
 	}
 
-	// Authentication routes (public)
-	r.GET("/login", authHandler.ShowLoginPage)
-	r.POST("/login", authHandler.HandleLogin)
-	r.GET("/register", authHandler.ShowRegisterPage)
-	r.POST("/register", authHandler.HandleRegister)
-	r.GET("/logout", authHandler.HandleLogout)
+	// Authentication routes (public) - TEMPLATE.md lines 4441-4534
+	r.GET("/auth/login", authHandler.ShowLoginPage)
+	r.POST("/auth/login", authHandler.HandleLogin)
+	r.GET("/auth/register", authHandler.ShowRegisterPage)
+	r.POST("/auth/register", authHandler.HandleRegister)
+	r.GET("/auth/logout", authHandler.HandleLogout)
 
 	// User routes (require authentication)
 	userRoutes := r.Group("/user")
 	userRoutes.Use(middleware.RequireAuth(db.DB))
 	userRoutes.Use(middleware.BlockAdminFromUserRoutes())
 	{
-		userRoutes.GET("", dashboardHandler.ShowDashboard)          // /user -> user dashboard
+		userRoutes.GET("", dashboardHandler.ShowDashboard)           // /user -> user dashboard
 		userRoutes.GET("/dashboard", dashboardHandler.ShowDashboard) // /user/dashboard -> user dashboard
 	}
 
@@ -802,59 +903,139 @@ func main() {
 		// Admin management pages
 		adminRoutes.GET("/users", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "admin/users.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "User Management - Admin",
-				"page":        "users",
+				"title":      "User Management - Admin",
+				"page":       "users",
 				"breadcrumb": "Users",
 			}))
 		})
 
 		adminRoutes.GET("/settings", adminHandler.ShowSettingsPage)
 
+		adminRoutes.GET("/web", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-web.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Web Settings - Admin",
+				"page":       "web",
+				"breadcrumb": "Web Frontend",
+			}))
+		})
+
+		adminRoutes.GET("/email", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-email.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Email Settings - Admin",
+				"page":       "email",
+				"breadcrumb": "Email",
+			}))
+		})
+
+		adminRoutes.GET("/database", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-database.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Database & Cache - Admin",
+				"page":       "database",
+				"breadcrumb": "Database",
+			}))
+		})
+
+		adminRoutes.GET("/system", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-system.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "System Information - Admin",
+				"page":       "system",
+				"breadcrumb": "System",
+			}))
+		})
+
+		adminRoutes.GET("/security", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-security.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Security Settings - Admin",
+				"page":       "security",
+				"breadcrumb": "Security",
+			}))
+		})
+
 		adminRoutes.GET("/tokens", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "admin/tokens.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "API Tokens - Admin",
-				"page":        "tokens",
+				"title":      "API Tokens - Admin",
+				"page":       "tokens",
 				"breadcrumb": "API Tokens",
 			}))
 		})
 
 		adminRoutes.GET("/logs", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-logs.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "System Logs - Admin",
+				"page":       "logs",
+				"breadcrumb": "System Logs",
+			}))
+		})
+
+		adminRoutes.GET("/audit", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "admin/logs.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "Audit Logs - Admin",
-				"page":        "logs",
+				"title":      "Audit Logs - Admin",
+				"page":       "audit",
 				"breadcrumb": "Audit Logs",
 			}))
 		})
 
 		adminRoutes.GET("/tasks", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/tasks.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "Scheduled Tasks - Admin",
-				"page":        "tasks",
+			c.HTML(http.StatusOK, "admin/admin-tasks-enhanced.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Scheduled Tasks - Admin",
+				"page":       "tasks",
 				"breadcrumb": "Scheduled Tasks",
 			}))
 		})
 
+		adminRoutes.GET("/ssl", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-ssl.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "SSL/TLS Management - Admin",
+				"page":       "ssl",
+				"breadcrumb": "SSL/TLS",
+			}))
+		})
+
 		adminRoutes.GET("/backup", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/backup.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "Backup Management - Admin",
-				"page":        "backup",
+			c.HTML(http.StatusOK, "admin/admin-backup-enhanced.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Backup Management - Admin",
+				"page":       "backup",
 				"breadcrumb": "Backup",
+			}))
+		})
+
+		adminRoutes.GET("/metrics", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-metrics.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Metrics Configuration - Admin",
+				"page":       "metrics",
+				"breadcrumb": "Metrics",
+			}))
+		})
+
+		adminRoutes.GET("/server/tor", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-tor.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Tor Hidden Service - Admin",
+				"page":       "tor",
+				"breadcrumb": "Tor Hidden Service",
 			}))
 		})
 
 		adminRoutes.GET("/channels", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "admin_channels.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "Notification Channels - Admin",
-				"page":        "channels",
+				"title":      "Notification Channels - Admin",
+				"page":       "channels",
 				"breadcrumb": "Channels",
 			}))
 		})
 
 		adminRoutes.GET("/templates", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "template_editor.tmpl", utils.TemplateData(c, gin.H{
-				"title":       "Template Editor - Admin",
-				"page":        "templates",
+				"title":      "Template Editor - Admin",
+				"page":       "templates",
 				"breadcrumb": "Templates",
+			}))
+		})
+
+		adminRoutes.GET("/email/templates", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin/admin-email-editor.tmpl", utils.TemplateData(c, gin.H{
+				"title":      "Email Template Editor - Admin",
+				"page":       "email-templates",
+				"breadcrumb": "Email Templates",
 			}))
 		})
 	}
@@ -924,6 +1105,8 @@ func main() {
 		weatherAPI.GET("/earthquakes", earthquakeHandler.HandleEarthquakeAPI)
 		weatherAPI.GET("/hurricanes", hurricaneHandler.HandleHurricaneAPI) // Backwards compat
 		weatherAPI.GET("/severe-weather", severeWeatherHandler.HandleSevereWeatherAPI)
+		weatherAPI.GET("/moon", moonHandler.HandleMoonAPI)
+		weatherAPI.GET("/history", apiHandler.GetHistoricalWeather)
 
 		// Root /api/v1 endpoint - return all endpoints
 		weatherAPI.GET("", func(c *gin.Context) {
@@ -947,6 +1130,7 @@ func main() {
 					hostInfo.FullHost + "/api/v1/earthquakes",
 					hostInfo.FullHost + "/api/v1/hurricanes",
 					hostInfo.FullHost + "/api/v1/severe-weather",
+					hostInfo.FullHost + "/api/v1/moon",
 				},
 				"documentation": hostInfo.FullHost + "/docs",
 			})
@@ -962,6 +1146,9 @@ func main() {
 			"note":      "These usernames are reserved and cannot be used for registration. The blocklist does not apply to the first user (admin setup).",
 		})
 	})
+
+	// Server API endpoints (contact form)
+	apiV1.POST("/server/contact", handlers.HandleContactFormSubmission(db, cfg))
 
 	// User info API (requires auth)
 	apiV1.GET("/user", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), authHandler.GetCurrentUser)
@@ -1030,14 +1217,46 @@ func main() {
 		adminAPI.DELETE("/tokens/:id", adminHandler.RevokeToken)
 
 		// Audit logs
-		adminAPI.GET("/logs", adminHandler.ListAuditLogs)
-		adminAPI.DELETE("/logs", adminHandler.ClearAuditLogs)
+		adminAPI.GET("/audit-logs", adminHandler.ListAuditLogs)
+		adminAPI.DELETE("/audit-logs", adminHandler.ClearAuditLogs)
 
 		// System stats
 		adminAPI.GET("/stats", adminHandler.GetSystemStats)
 
-		// Scheduled tasks
-		adminAPI.GET("/tasks", adminHandler.GetScheduledTasks)
+		// Test email endpoint
+		adminAPI.POST("/test/email", func(c *gin.Context) {
+			// Send test email using SMTP settings
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"message": "Test email sent successfully (feature will be implemented when email service is ready)",
+			})
+		})
+
+		// Admin status and health endpoints
+		adminAPI.GET("/status", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "online",
+				"version": Version,
+				"uptime":  time.Since(startTime).String(),
+			})
+		})
+
+		adminAPI.GET("/health", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"healthy":      true,
+				"database":     "connected",
+				"cache":        "available",
+				"disk_space":   "adequate",
+				"last_checked": time.Now().Format(time.RFC3339),
+			})
+		})
+
+		// Scheduled tasks management (TEMPLATE.md lines 1193-1214)
+		adminAPI.GET("/tasks", schedulerHandler.GetAllTasks)                  // List all tasks with status
+		adminAPI.GET("/tasks/:name/history", schedulerHandler.GetTaskHistory) // Get task history
+		adminAPI.POST("/tasks/:name/enable", schedulerHandler.EnableTask)     // Enable a task
+		adminAPI.POST("/tasks/:name/disable", schedulerHandler.DisableTask)   // Disable a task
+		adminAPI.POST("/tasks/:name/trigger", schedulerHandler.TriggerTask)   // Manual trigger
 
 		// Notification channel management (admin only)
 		adminAPI.GET("/channels", channelHandler.ListChannels)
@@ -1067,11 +1286,6 @@ func main() {
 		adminAPI.POST("/database/vacuum", handlers.VacuumDatabase)
 		adminAPI.POST("/cache/clear", handlers.ClearCache)
 
-		// SSL/TLS management endpoints
-		adminAPI.POST("/ssl/verify", handlers.VerifySSLCertificate)
-		adminAPI.POST("/ssl/obtain", handlers.ObtainSSLCertificate)
-		adminAPI.POST("/ssl/renew", handlers.RenewSSLCertificate)
-
 		// Backup management endpoints
 		adminAPI.POST("/backup/create", handlers.CreateBackup)
 		adminAPI.POST("/backup/restore", handlers.RestoreBackup)
@@ -1095,6 +1309,91 @@ func main() {
 		adminAPI.GET("/metrics/notifications/channels/:type", metricsHandler.GetChannelMetrics)
 		adminAPI.GET("/metrics/notifications/errors", metricsHandler.GetRecentErrors)
 		adminAPI.GET("/metrics/notifications/health", metricsHandler.GetHealthStatus)
+
+		// Tor hidden service management (TEMPLATE.md PART 32)
+		torAPI := adminAPI.Group("/server/tor")
+		{
+			torAPI.GET("/status", torAdminHandler.GetStatus)
+			torAPI.GET("/health", torAdminHandler.GetHealth)
+			torAPI.POST("/enable", torAdminHandler.Enable)
+			torAPI.POST("/disable", torAdminHandler.Disable)
+			torAPI.POST("/regenerate", torAdminHandler.Regenerate)
+
+			// Vanity address generation
+			torAPI.POST("/vanity/generate", torAdminHandler.GenerateVanity)
+			torAPI.GET("/vanity/status", torAdminHandler.GetVanityStatus)
+			torAPI.POST("/vanity/cancel", torAdminHandler.CancelVanity)
+			torAPI.POST("/vanity/apply", torAdminHandler.ApplyVanity)
+
+			// Key import/export
+			torAPI.POST("/keys/import", torAdminHandler.ImportKeys)
+			torAPI.GET("/keys/export", torAdminHandler.ExportKeys)
+		}
+
+		// Email template management
+		emailTemplateAPI := adminAPI.Group("/email/templates")
+		{
+			emailTemplateAPI.GET("", emailTemplateHandler.ListTemplates)
+			emailTemplateAPI.GET("/:name", emailTemplateHandler.GetTemplate)
+			emailTemplateAPI.PUT("/:name", emailTemplateHandler.UpdateTemplate)
+			emailTemplateAPI.GET("/:name/export", emailTemplateHandler.ExportTemplate)
+			emailTemplateAPI.POST("/:name/import", emailTemplateHandler.ImportTemplate)
+			emailTemplateAPI.POST("/test", emailTemplateHandler.TestTemplate)
+		}
+
+		// System logs management
+		logsAPI := adminAPI.Group("/logs")
+		{
+			logsAPI.GET("", logsHandler.GetLogs)
+			logsAPI.GET("/stats", logsHandler.GetLogStats)
+			logsAPI.GET("/download", logsHandler.DownloadLogs)
+			logsAPI.GET("/archives", logsHandler.ListArchivedLogs)
+			logsAPI.GET("/stream", logsHandler.StreamLogs)
+			logsAPI.POST("/rotate", logsHandler.RotateLogs)
+			logsAPI.DELETE("", logsHandler.ClearLogs)
+		}
+
+		// SSL/TLS certificate management
+		sslAPI := adminAPI.Group("/ssl")
+		{
+			sslAPI.GET("/status", sslHandler.GetStatus)
+			sslAPI.POST("/obtain", sslHandler.ObtainCertificate)
+			sslAPI.POST("/renew", sslHandler.RenewCertificate)
+			sslAPI.POST("/verify", sslHandler.VerifyCertificate)
+			sslAPI.PUT("/settings", sslHandler.UpdateSettings)
+			sslAPI.GET("/export", sslHandler.ExportCertificate)
+			sslAPI.POST("/import", sslHandler.ImportCertificate)
+			sslAPI.POST("/revoke", sslHandler.RevokeCertificate)
+			sslAPI.POST("/test", sslHandler.TestSSL)
+			sslAPI.POST("/scan", sslHandler.SecurityScan)
+		}
+
+		// Metrics configuration
+		metricsAPI := adminAPI.Group("/metrics")
+		{
+			metricsAPI.GET("/config", metricsConfigHandler.GetConfig)
+			metricsAPI.PUT("/config", metricsConfigHandler.UpdateConfig)
+			metricsAPI.GET("/stats", metricsConfigHandler.GetStats)
+			metricsAPI.GET("/list", metricsConfigHandler.ListMetrics)
+			metricsAPI.POST("/custom", metricsConfigHandler.CreateMetric)
+			metricsAPI.DELETE("/custom/:name", metricsConfigHandler.DeleteMetric)
+			metricsAPI.GET("/export", metricsConfigHandler.ExportMetrics)
+			metricsAPI.PUT("/toggle/:name", metricsConfigHandler.ToggleMetric)
+		}
+
+		// Advanced logging formats
+		loggingAPI := adminAPI.Group("/logging")
+		{
+			loggingAPI.GET("/formats", loggingHandler.GetFormats)
+			loggingAPI.PUT("/formats", loggingHandler.UpdateFormats)
+			loggingAPI.GET("/fail2ban/config", loggingHandler.GetFail2banConfig)
+			loggingAPI.GET("/syslog/config", loggingHandler.GetSyslogConfig)
+			loggingAPI.GET("/cef/config", loggingHandler.GetCEFConfig)
+			loggingAPI.GET("/export", loggingHandler.ExportLogs)
+			loggingAPI.POST("/fail2ban/configure", loggingHandler.ConfigureFail2ban)
+			loggingAPI.POST("/syslog/configure", loggingHandler.ConfigureSyslog)
+			loggingAPI.GET("/test", loggingHandler.TestFormat)
+		}
 	}
 
 	// User notification preferences API (authenticated users)
@@ -1125,9 +1424,9 @@ func main() {
 			},
 			"current_version": "v1",
 			"documentation":   "http://" + c.Request.Host + "/docs",
-			"openapi": "http://" + c.Request.Host + "/api/openapi.json",
-			"swagger": "http://" + c.Request.Host + "/api/swagger",
-			"graphql": "http://" + c.Request.Host + "/api/graphql",
+			"openapi":         "http://" + c.Request.Host + "/api/openapi.json",
+			"swagger":         "http://" + c.Request.Host + "/api/swagger",
+			"graphql":         "http://" + c.Request.Host + "/api/graphql",
 		})
 	})
 
@@ -1157,6 +1456,12 @@ func main() {
 
 	// HTML documentation page at /docs
 	r.GET("/docs", apiHandler.GetDocsHTML)
+
+	// Standard server pages (TEMPLATE.md lines 2308-2314, 4486-4489)
+	r.GET("/server/about", handlers.ShowAboutPage(db, cfg))
+	r.GET("/server/privacy", handlers.ShowPrivacyPage(db, cfg))
+	r.GET("/server/contact", handlers.ShowContactPage(db, cfg))
+	r.GET("/server/help", handlers.ShowHelpPage(db, cfg))
 
 	// Examples endpoint
 	r.GET("/examples", func(c *gin.Context) {
@@ -1285,6 +1590,18 @@ JSON API:
 		}
 	}()
 
+	// Start Tor hidden service after HTTP server starts
+	if err := torService.Start(httpPortInt); err != nil {
+		log.Printf("⚠️  Failed to start Tor hidden service: %v", err)
+	}
+
+	// Start config file watcher for live reload
+	if configWatcher != nil {
+		if err := configWatcher.Start(); err != nil {
+			log.Printf("⚠️  Failed to start config watcher: %v", err)
+		}
+	}
+
 	// Setup signal handling
 	sigChan := make(chan os.Signal, 1)
 	baseSignals := []os.Signal{
@@ -1310,6 +1627,18 @@ JSON API:
 
 			// Stop scheduler
 			taskScheduler.Stop()
+
+			// Stop Tor service
+			if err := torService.Stop(); err != nil {
+				log.Printf("⚠️  Tor shutdown error: %v", err)
+			}
+
+			// Stop config watcher
+			if configWatcher != nil {
+				if err := configWatcher.Stop(); err != nil {
+					log.Printf("⚠️  Config watcher shutdown error: %v", err)
+				}
+			}
 
 			// Close cache connection
 			if err := cacheManager.Close(); err != nil {

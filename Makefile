@@ -48,7 +48,7 @@ build:
 	@echo "  Building host binary ($(HOST_OS)/$(HOST_ARCH))..."
 	@CGO_ENABLED=0 go build $(BUILD_FLAGS) -o binaries/$(PROJECT_NAME) ./src
 	@echo "  ✅ $(PROJECT_NAME) (host: $(HOST_OS)/$(HOST_ARCH))"
-	@# Strip musl binaries
+	@# Strip Linux binaries for smaller size
 	@if command -v strip >/dev/null 2>&1; then \
 		echo "  Stripping Linux binaries..."; \
 		for file in binaries/*-linux-*; do \

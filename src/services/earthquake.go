@@ -19,23 +19,23 @@ type EarthquakeService struct {
 
 // Earthquake represents a single earthquake event
 type Earthquake struct {
-	ID                  string    `json:"id"`
-	Magnitude           float64   `json:"magnitude"`
-	Place               string    `json:"place"`
-	Time                time.Time `json:"time"`
-	Latitude            float64   `json:"latitude"`
-	Longitude           float64   `json:"longitude"`
-	Depth               float64   `json:"depth"`
-	Type                string    `json:"type"`
-	URL                 string    `json:"url"`
-	Tsunami             int       `json:"tsunami"`
-	Status              string    `json:"status"`
-	Felt                *int      `json:"felt,omitempty"`
-	CDI                 *float64  `json:"cdi,omitempty"`
-	MMI                 *float64  `json:"mmi,omitempty"`
-	MagnitudeType       string    `json:"magnitudeType"`
-	Network             string    `json:"network"`
-	UpdatedTime         time.Time `json:"updated"`
+	ID            string    `json:"id"`
+	Magnitude     float64   `json:"magnitude"`
+	Place         string    `json:"place"`
+	Time          time.Time `json:"time"`
+	Latitude      float64   `json:"latitude"`
+	Longitude     float64   `json:"longitude"`
+	Depth         float64   `json:"depth"`
+	Type          string    `json:"type"`
+	URL           string    `json:"url"`
+	Tsunami       int       `json:"tsunami"`
+	Status        string    `json:"status"`
+	Felt          *int      `json:"felt,omitempty"`
+	CDI           *float64  `json:"cdi,omitempty"`
+	MMI           *float64  `json:"mmi,omitempty"`
+	MagnitudeType string    `json:"magnitudeType"`
+	Network       string    `json:"network"`
+	UpdatedTime   time.Time `json:"updated"`
 }
 
 // EarthquakeCollection represents a collection of earthquakes
@@ -68,32 +68,32 @@ type USGSGeoJSONResponse struct {
 	Features []struct {
 		Type       string `json:"type"`
 		Properties struct {
-			Mag           float64  `json:"mag"`
-			Place         string   `json:"place"`
-			Time          int64    `json:"time"`
-			Updated       int64    `json:"updated"`
-			Tz            *int     `json:"tz"`
-			URL           string   `json:"url"`
-			Detail        string   `json:"detail"`
-			Felt          *int     `json:"felt"`
-			CDI           *float64 `json:"cdi"`
-			MMI           *float64 `json:"mmi"`
-			Alert         *string  `json:"alert"`
-			Status        string   `json:"status"`
-			Tsunami       int      `json:"tsunami"`
-			Sig           int      `json:"sig"`
-			Net           string   `json:"net"`
-			Code          string   `json:"code"`
-			IDs           string   `json:"ids"`
-			Sources       string   `json:"sources"`
-			Types         string   `json:"types"`
-			NST           *int     `json:"nst"`
-			Dmin          *float64 `json:"dmin"`
-			RMS           float64  `json:"rms"`
-			Gap           *float64 `json:"gap"`
-			MagType       string   `json:"magType"`
-			Type          string   `json:"type"`
-			Title         string   `json:"title"`
+			Mag     float64  `json:"mag"`
+			Place   string   `json:"place"`
+			Time    int64    `json:"time"`
+			Updated int64    `json:"updated"`
+			Tz      *int     `json:"tz"`
+			URL     string   `json:"url"`
+			Detail  string   `json:"detail"`
+			Felt    *int     `json:"felt"`
+			CDI     *float64 `json:"cdi"`
+			MMI     *float64 `json:"mmi"`
+			Alert   *string  `json:"alert"`
+			Status  string   `json:"status"`
+			Tsunami int      `json:"tsunami"`
+			Sig     int      `json:"sig"`
+			Net     string   `json:"net"`
+			Code    string   `json:"code"`
+			IDs     string   `json:"ids"`
+			Sources string   `json:"sources"`
+			Types   string   `json:"types"`
+			NST     *int     `json:"nst"`
+			Dmin    *float64 `json:"dmin"`
+			RMS     float64  `json:"rms"`
+			Gap     *float64 `json:"gap"`
+			MagType string   `json:"magType"`
+			Type    string   `json:"type"`
+			Title   string   `json:"title"`
 		} `json:"properties"`
 		Geometry struct {
 			Type        string    `json:"type"`
@@ -126,10 +126,11 @@ func NewEarthquakeService() *EarthquakeService {
 
 // GetEarthquakes fetches earthquakes based on feed type
 // feedType options: "all_hour", "all_day", "all_week", "all_month"
-//                   "1.0_hour", "1.0_day", "1.0_week", "1.0_month"
-//                   "2.5_hour", "2.5_day", "2.5_week", "2.5_month"
-//                   "4.5_hour", "4.5_day", "4.5_week", "4.5_month"
-//                   "significant_hour", "significant_day", "significant_week", "significant_month"
+//
+//	"1.0_hour", "1.0_day", "1.0_week", "1.0_month"
+//	"2.5_hour", "2.5_day", "2.5_week", "2.5_month"
+//	"4.5_hour", "4.5_day", "4.5_week", "4.5_month"
+//	"significant_hour", "significant_day", "significant_week", "significant_month"
 func (es *EarthquakeService) GetEarthquakes(feedType string) (*EarthquakeCollection, error) {
 	cacheKey := fmt.Sprintf("earthquakes_%s", feedType)
 	if cached, found := es.cache.Get(cacheKey); found {

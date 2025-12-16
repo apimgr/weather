@@ -14,7 +14,7 @@
     <div class="weather-container">
 
         <!-- Location Search Form -->
-        <form id="earthquake-form" class="search-form">
+        <form id="earthquake-form" class="search-form" role="form" aria-label="Earthquake search filters">
             <div class="search-row-single flex-column-mobile">
                 <input
                     type="text"
@@ -24,11 +24,16 @@
                     placeholder="🔍 Search location or coordinates"
                     value="{{if .Location}}{{.Location}}{{end}}"
                     autocomplete="off"
+                    aria-label="Search location or coordinates"
+                    title="Search for earthquakes near a specific location - enter a city name or coordinates"
                 >
             </div>
 
             <div class="search-row flex-column-mobile">
-                <select name="feed" class="select-input flex-1">
+                <select name="feed"
+                        class="select-input flex-1"
+                        aria-label="Select time range and magnitude filter"
+                        title="Choose which earthquakes to display based on time range and minimum magnitude">
                     <option value="all_hour" {{if eq .FeedType "all_hour"}}selected{{end}}>Past Hour</option>
                     <option value="all_day" {{if eq .FeedType "all_day"}}selected{{end}}>Past Day</option>
                     <option value="all_week" {{if eq .FeedType "all_week"}}selected{{end}}>Past Week</option>
@@ -38,7 +43,10 @@
                     <option value="significant_day" {{if eq .FeedType "significant_day"}}selected{{end}}>Significant Day</option>
                     <option value="significant_week" {{if eq .FeedType "significant_week"}}selected{{end}}>Significant Week</option>
                 </select>
-                <select name="sort" class="select-input flex-1">
+                <select name="sort"
+                        class="select-input flex-1"
+                        aria-label="Sort earthquakes by"
+                        title="Choose how to sort the earthquake results">
                     <option value="newest" {{if or (eq .Sort "newest") (not .Sort)}}selected{{end}}>Newest First</option>
                     <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>Oldest First</option>
                     <option value="magnitude" {{if eq .Sort "magnitude"}}selected{{end}}>By Magnitude</option>
@@ -51,6 +59,8 @@
                     min="0"
                     value="{{if .Number}}{{.Number}}{{end}}"
                     class="location-input flex-1"
+                    aria-label="Maximum number of results"
+                    title="Limit the number of results shown (enter 0 to show all earthquakes)"
                 >
             </div>
 
@@ -64,16 +74,25 @@
                     min="100"
                     max="20000"
                     class="location-input"
+                    aria-label="Search radius in kilometers"
+                    title="Search radius around the location in kilometers (100-20000 km)"
                 >
             </div>
             {{end}}
 
             <div class="search-row-single">
-                <button type="submit" class="search-button primary flex-1">
+                <button type="submit"
+                        class="search-button primary flex-1"
+                        aria-label="Search for earthquakes"
+                        title="Search for earthquakes with the selected filters">
                     🌍 Search Earthquakes
                 </button>
                 {{if .Location}}
-                <button type="button" class="search-button secondary flex-1" onclick="window.location.href='/earthquake?feed={{.FeedType}}'">
+                <button type="button"
+                        class="search-button secondary flex-1"
+                        onclick="window.location.href='/earthquake?feed={{.FeedType}}'"
+                        aria-label="View all earthquakes worldwide"
+                        title="Clear location filter and view all earthquakes worldwide">
                     🗺️ View All
                 </button>
                 {{end}}
@@ -326,20 +345,8 @@
             item.addEventListener('click', function() {
                 const details = this.querySelector('.eq-details');
                 if (details) {
-                    const isHidden = window.getComputedStyle(details).display === 'none';
-                    details.style.display = isHidden ? 'block' : 'none';
+                    details.classList.toggle('visible');
                 }
-            });
-
-            // Hover effect
-            item.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateX(5px)';
-                this.style.boxShadow = '0 4px 12px rgba(139, 233, 253, 0.3)';
-            });
-
-            item.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateX(0)';
-                this.style.boxShadow = 'none';
             });
         });
 

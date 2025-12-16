@@ -1,0 +1,200 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="weather-container">
+    <h1 class="text-purple">Help & Documentation</h1>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Getting Started</h2>
+        <details class="help-section">
+            <summary class="help-summary">How do I create an account?</summary>
+            <div class="help-content">
+                <p>Click the user icon in the top right corner and select "Register". Fill in your email, username, and password. After registering, you'll be logged in automatically.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">How do I add a location?</summary>
+            <div class="help-content">
+                <p>Go to your <a href="/user/dashboard" class="text-cyan">Dashboard</a> and click "Add Location". You can search by city name, ZIP code, or enter exact coordinates. Save your favorite locations for quick access.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">How do I enable weather alerts?</summary>
+            <div class="help-content">
+                <p>From your dashboard, edit a saved location and enable the "Weather Alerts" toggle. You'll receive notifications for severe weather affecting that location.</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Features</h2>
+        <details class="help-section">
+            <summary class="help-summary">What weather data is available?</summary>
+            <div class="help-content">
+                <ul>
+                    <li>Current weather conditions</li>
+                    <li>Hourly forecasts for the next 24 hours</li>
+                    <li>Daily forecasts up to 16 days ahead</li>
+                    <li>Temperature, humidity, wind speed/direction</li>
+                    <li>Precipitation and cloud cover</li>
+                    <li>Pressure and visibility</li>
+                    <li>UV index and air quality (where available)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">What is Moon Phase tracking?</summary>
+            <div class="help-content">
+                <p>The <a href="/moon" class="text-cyan">Moon page</a> shows current and upcoming moon phases, illumination percentage, moonrise/moonset times, and astronomical events. Useful for photography, stargazing, and astronomical observations.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">How does Severe Weather tracking work?</summary>
+            <div class="help-content">
+                <p>The <a href="/severe-weather" class="text-cyan">Severe Weather page</a> displays active weather warnings, watches, and alerts from national weather services. Filter by type (hurricanes, tornadoes, floods, etc.) and distance from your locations.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">What earthquake data is provided?</summary>
+            <div class="help-content">
+                <p>The <a href="/earthquake" class="text-cyan">Earthquake page</a> shows recent seismic activity from USGS. View by time range, magnitude, location, and check for tsunami warnings. Interactive map shows earthquake locations and intensities.</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">API Access</h2>
+        <details class="help-section">
+            <summary class="help-summary">How do I use the API?</summary>
+            <div class="help-content">
+                <p>Visit the <a href="/docs" class="text-cyan">API Documentation</a> for full details. All API endpoints are available under <code>/api/v1/*</code>. Most endpoints support both JSON and text formats.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">Do I need an API key?</summary>
+            <div class="help-content">
+                <p>No API key is required for public endpoints. If you have an account, you can generate API tokens from your <a href="/user/profile" class="text-cyan">profile page</a> for authenticated access.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">What are the rate limits?</summary>
+            <div class="help-content">
+                <p>Default rate limit is 120 requests per minute. Authenticated users may have higher limits. Check the response headers for <code>X-RateLimit-Limit</code> and <code>X-RateLimit-Remaining</code>.</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Troubleshooting</h2>
+        <details class="help-section">
+            <summary class="help-summary">Weather data isn't loading</summary>
+            <div class="help-content">
+                <p>Try the following:</p>
+                <ul>
+                    <li>Refresh the page (F5)</li>
+                    <li>Clear your browser cache</li>
+                    <li>Check your internet connection</li>
+                    <li>Verify the location is valid</li>
+                </ul>
+                <p>If the problem persists, <a href="/server/contact" class="text-cyan">contact support</a>.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">Notifications aren't working</summary>
+            <div class="help-content">
+                <p>Make sure:</p>
+                <ul>
+                    <li>Alerts are enabled for your location</li>
+                    <li>Your browser allows notifications</li>
+                    <li>You're logged in to receive notifications</li>
+                    <li>Check your notification preferences in your profile</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">I forgot my password</summary>
+            <div class="help-content">
+                <p>Click "Forgot Password" on the <a href="/auth/login" class="text-cyan">login page</a>. Enter your email address and we'll send you a password reset link.</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Privacy & Security</h2>
+        <details class="help-section">
+            <summary class="help-summary">What data do you collect?</summary>
+            <div class="help-content">
+                <p>See our complete <a href="/server/privacy" class="text-cyan">Privacy Policy</a> for details. We collect minimal data: account information, saved locations, and usage logs for security.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">How do I delete my account?</summary>
+            <div class="help-content">
+                <p>Go to your <a href="/user/profile" class="text-cyan">profile page</a> and scroll to the bottom. Click "Delete Account" and confirm. This action is permanent and cannot be undone.</p>
+            </div>
+        </details>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Still Need Help?</h2>
+        <div class="flex gap-md flex-column-mobile margin-y-md">
+            <a href="/server/contact" class="btn btn-primary">Contact Support</a>
+            <a href="/docs" class="btn btn-secondary">API Documentation</a>
+            <a href="https://github.com/{{.server.GitOrg}}/{{.server.GitRepo}}/issues" target="_blank" class="btn btn-secondary">Report an Issue</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.help-section {
+    border-bottom: 1px solid var(--dracula-comment);
+    padding: 1rem 0;
+}
+
+.help-summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--dracula-cyan);
+    padding: 0.5rem;
+    user-select: none;
+}
+
+.help-summary:hover {
+    background: var(--dracula-current-line);
+    border-radius: var(--radius-sm);
+}
+
+.help-content {
+    padding: 1rem 1.5rem;
+    color: var(--dracula-fg);
+}
+
+.help-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.help-content li {
+    margin: 0.5rem 0;
+}
+</style>
+
+<script>
+// Initialize notification polling
+if (typeof Notifications !== 'undefined') {
+    Notifications.startPolling(30000);
+}
+</script>
+
+{{template "footer" .}}

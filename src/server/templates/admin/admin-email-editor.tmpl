@@ -1,0 +1,664 @@
+{{define "admin/admin-email-editor.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .breadcrumb {
+            color: #95a5a6;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .nav-link:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 1fr;
+            gap: 2rem;
+            min-height: calc(100vh - 200px);
+        }
+
+        .template-list {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .template-list h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .template-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .template-item:hover {
+            background: #ecf0f1;
+        }
+
+        .template-item.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .template-name {
+            font-weight: 500;
+            display: block;
+        }
+
+        .template-desc {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .editor-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .editor-panel h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group textarea {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            min-height: 300px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .variables-help {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .variables-help h4 {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .variable-tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            margin: 0.2rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .variable-tag:hover {
+            background: #bbdefb;
+        }
+
+        .preview-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .preview-content {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1.5rem;
+            min-height: 400px;
+            white-space: pre-wrap;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+        }
+
+        .preview-subject {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .preview-body {
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            margin-bottom: 0.5rem;
+            color: #1976d2;
+        }
+
+        @media (max-width: 1200px) {
+            .editor-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .template-list {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Email Template Editor</h1>
+        <div class="breadcrumb">
+            <a href="/admin">Admin</a> /
+            <a href="/admin/email">Email</a> /
+            <span>Template Editor</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav-links">
+            <a href="/admin/email" class="nav-link">← Back to Email Settings</a>
+            <a href="/admin" class="nav-link">Dashboard</a>
+        </div>
+
+        <div class="alert alert-success" id="successAlert" role="alert"></div>
+        <div class="alert alert-error" id="errorAlert" role="alert"></div>
+
+        <div class="info-box">
+            <h4>Template Editor</h4>
+            <p>Edit email templates with live preview. Templates support variables like {app_name}, {app_url}, etc. Changes are saved automatically when you click Save Template.</p>
+        </div>
+
+        <div class="editor-layout">
+            <!-- Template List -->
+            <div class="template-list" role="navigation" aria-label="Email templates">
+                <h2>Templates</h2>
+                <div class="template-item active" data-template="welcome" tabindex="0" role="button" aria-pressed="true">
+                    <span class="template-name">Welcome</span>
+                    <span class="template-desc">First run welcome email</span>
+                </div>
+                <div class="template-item" data-template="password_reset" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Password Reset</span>
+                    <span class="template-desc">Password reset link</span>
+                </div>
+                <div class="template-item" data-template="backup_complete" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Backup Complete</span>
+                    <span class="template-desc">Backup success notification</span>
+                </div>
+                <div class="template-item" data-template="backup_failed" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Backup Failed</span>
+                    <span class="template-desc">Backup failure alert</span>
+                </div>
+                <div class="template-item" data-template="ssl_expiring" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">SSL Expiring</span>
+                    <span class="template-desc">SSL expiration warning</span>
+                </div>
+                <div class="template-item" data-template="ssl_renewed" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">SSL Renewed</span>
+                    <span class="template-desc">SSL renewal confirmation</span>
+                </div>
+                <div class="template-item" data-template="login_alert" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Login Alert</span>
+                    <span class="template-desc">New login notification</span>
+                </div>
+                <div class="template-item" data-template="security_alert" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Security Alert</span>
+                    <span class="template-desc">Security event alerts</span>
+                </div>
+                <div class="template-item" data-template="scheduler_error" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Scheduler Error</span>
+                    <span class="template-desc">Task failure notification</span>
+                </div>
+                <div class="template-item" data-template="test" tabindex="0" role="button" aria-pressed="false">
+                    <span class="template-name">Test Email</span>
+                    <span class="template-desc">SMTP test email</span>
+                </div>
+            </div>
+
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <h2>
+                    <span id="editorTitle">Edit Template</span>
+                </h2>
+
+                <form id="templateForm">
+                    <div class="form-group">
+                        <label for="templateSubject">Subject Line</label>
+                        <input type="text" id="templateSubject" placeholder="Email subject line" aria-required="true">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="templateBody">Email Body</label>
+                        <textarea id="templateBody" placeholder="Email body content..." aria-required="true"></textarea>
+
+                        <div class="variables-help">
+                            <h4>Available Variables (click to insert):</h4>
+                            <span class="variable-tag" data-var="{app_name}">{app_name}</span>
+                            <span class="variable-tag" data-var="{app_url}">{app_url}</span>
+                            <span class="variable-tag" data-var="{admin_email}">{admin_email}</span>
+                            <span class="variable-tag" data-var="{current_year}">{current_year}</span>
+                            <span class="variable-tag" data-var="{reset_link}">{reset_link}</span>
+                            <span class="variable-tag" data-var="{backup_file}">{backup_file}</span>
+                            <span class="variable-tag" data-var="{error_message}">{error_message}</span>
+                            <span class="variable-tag" data-var="{days_until_expiry}">{days_until_expiry}</span>
+                            <span class="variable-tag" data-var="{ip_address}">{ip_address}</span>
+                            <span class="variable-tag" data-var="{timestamp}">{timestamp}</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-primary" id="saveBtn" aria-label="Save template">
+                            Save Template
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="reloadBtn" aria-label="Reload template from disk">
+                            Reload from Disk
+                        </button>
+                        <button type="button" class="btn btn-success" id="testBtn" aria-label="Send test email">
+                            Send Test Email
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="preview-panel">
+                <h2>Live Preview</h2>
+                <div class="preview-content" role="region" aria-label="Email preview">
+                    <div class="preview-subject" id="previewSubject">Subject will appear here</div>
+                    <div class="preview-body" id="previewBody">Email body will appear here...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplate = 'welcome';
+        let templates = {};
+
+        // Sample data for preview
+        const sampleData = {
+            app_name: 'Weather API Manager',
+            app_url: 'https://weather.example.com',
+            admin_email: 'admin@example.com',
+            current_year: new Date().getFullYear(),
+            reset_link: 'https://weather.example.com/reset?token=abc123',
+            backup_file: 'weather_backup_2025-12-13.sql.gz',
+            error_message: 'Database connection timeout',
+            days_until_expiry: '7',
+            ip_address: '192.168.1.100',
+            timestamp: new Date().toLocaleString()
+        };
+
+        // Load template
+        async function loadTemplate(templateName) {
+            try {
+                const response = await fetch(`/api/admin/email/templates/${templateName}`);
+                if (!response.ok) throw new Error('Failed to load template');
+
+                const data = await response.json();
+                templates[templateName] = data;
+
+                document.getElementById('templateSubject').value = data.subject || '';
+                document.getElementById('templateBody').value = data.body || '';
+                document.getElementById('editorTitle').textContent = `Edit: ${templateName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+
+                updatePreview();
+            } catch (error) {
+                showError('Failed to load template: ' + error.message);
+            }
+        }
+
+        // Update preview
+        function updatePreview() {
+            const subject = document.getElementById('templateSubject').value;
+            const body = document.getElementById('templateBody').value;
+
+            // Replace variables with sample data
+            let previewSubject = subject;
+            let previewBody = body;
+
+            for (const [key, value] of Object.entries(sampleData)) {
+                const regex = new RegExp(`\\{${key}\\}`, 'g');
+                previewSubject = previewSubject.replace(regex, value);
+                previewBody = previewBody.replace(regex, value);
+            }
+
+            document.getElementById('previewSubject').textContent = previewSubject || 'Subject will appear here';
+            document.getElementById('previewBody').textContent = previewBody || 'Email body will appear here...';
+        }
+
+        // Save template
+        async function saveTemplate() {
+            const saveBtn = document.getElementById('saveBtn');
+            const originalText = saveBtn.textContent;
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading"></span> Saving...';
+
+            try {
+                const subject = document.getElementById('templateSubject').value;
+                const body = document.getElementById('templateBody').value;
+
+                const response = await fetch(`/api/admin/email/templates/${currentTemplate}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, body })
+                });
+
+                if (!response.ok) throw new Error('Failed to save template');
+
+                showSuccess('Template saved successfully!');
+            } catch (error) {
+                showError('Failed to save template: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        }
+
+        // Reload template
+        async function reloadTemplate() {
+            if (confirm('Reload template from disk? Any unsaved changes will be lost.')) {
+                await loadTemplate(currentTemplate);
+                showSuccess('Template reloaded from disk');
+            }
+        }
+
+        // Send test email
+        async function sendTestEmail() {
+            const testBtn = document.getElementById('testBtn');
+            const originalText = testBtn.textContent;
+
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<span class="loading"></span> Sending...';
+
+            try {
+                const response = await fetch('/api/admin/email/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template: currentTemplate })
+                });
+
+                if (!response.ok) throw new Error('Failed to send test email');
+
+                showSuccess('Test email sent successfully! Check your inbox.');
+            } catch (error) {
+                showError('Failed to send test email: ' + error.message);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = originalText;
+            }
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const alert = document.getElementById('successAlert');
+            alert.textContent = message;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const alert = document.getElementById('errorAlert');
+            alert.textContent = message;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        // Template list click handlers
+        document.querySelectorAll('.template-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.template-item').forEach(i => {
+                    i.classList.remove('active');
+                    i.setAttribute('aria-pressed', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-pressed', 'true');
+                currentTemplate = this.dataset.template;
+                loadTemplate(currentTemplate);
+            });
+
+            // Keyboard accessibility
+            item.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Variable tag click handlers
+        document.querySelectorAll('.variable-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                const textarea = document.getElementById('templateBody');
+                const cursorPos = textarea.selectionStart;
+                const textBefore = textarea.value.substring(0, cursorPos);
+                const textAfter = textarea.value.substring(textarea.selectionEnd);
+
+                textarea.value = textBefore + this.dataset.var + textAfter;
+                textarea.focus();
+                textarea.setSelectionRange(cursorPos + this.dataset.var.length, cursorPos + this.dataset.var.length);
+
+                updatePreview();
+            });
+        });
+
+        // Input handlers
+        document.getElementById('templateSubject').addEventListener('input', updatePreview);
+        document.getElementById('templateBody').addEventListener('input', updatePreview);
+
+        // Button handlers
+        document.getElementById('saveBtn').addEventListener('click', saveTemplate);
+        document.getElementById('reloadBtn').addEventListener('click', reloadTemplate);
+        document.getElementById('testBtn').addEventListener('click', sendTestEmail);
+
+        // Load initial template
+        loadTemplate(currentTemplate);
+    </script>
+</body>
+</html>
+{{end}}

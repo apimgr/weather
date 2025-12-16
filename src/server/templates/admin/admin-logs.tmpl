@@ -1,0 +1,656 @@
+{{define "admin/admin-logs.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .breadcrumb {
+            color: #95a5a6;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .nav-link:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .controls-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .logs-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .logs-header {
+            padding: 1rem 1.5rem;
+            background: #34495e;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-header h2 {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+
+        .logs-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.85rem;
+            height: 600px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #2d2d2d;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-entry:hover {
+            background: #2d2d2d;
+        }
+
+        .log-timestamp {
+            color: #808080;
+            margin-right: 0.5rem;
+        }
+
+        .log-level {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .log-level-DEBUG {
+            background: #3498db;
+            color: white;
+        }
+
+        .log-level-INFO {
+            background: #27ae60;
+            color: white;
+        }
+
+        .log-level-WARN {
+            background: #f39c12;
+            color: white;
+        }
+
+        .log-level-ERROR {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .log-level-FATAL {
+            background: #c0392b;
+            color: white;
+        }
+
+        .log-message {
+            color: #d4d4d4;
+        }
+
+        .no-logs {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #808080;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .search-highlight {
+            background: #f39c12;
+            color: #000;
+            padding: 0 2px;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>System Logs</h1>
+        <div class="breadcrumb">
+            <a href="/admin">Admin</a> /
+            <span>Logs</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav-links">
+            <a href="/admin" class="nav-link">← Dashboard</a>
+            <a href="/admin/system" class="nav-link">System Info</a>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="logLevel">Log Level</label>
+                    <select id="logLevel" aria-label="Filter by log level">
+                        <option value="all">All Levels</option>
+                        <option value="DEBUG">Debug</option>
+                        <option value="INFO">Info</option>
+                        <option value="WARN">Warning</option>
+                        <option value="ERROR">Error</option>
+                        <option value="FATAL">Fatal</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="logSource">Log Source</label>
+                    <select id="logSource" aria-label="Filter by log source">
+                        <option value="all">All Sources</option>
+                        <option value="server">Server</option>
+                        <option value="api">API</option>
+                        <option value="database">Database</option>
+                        <option value="tor">Tor Service</option>
+                        <option value="email">Email</option>
+                        <option value="scheduler">Scheduler</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="searchQuery">Search Logs</label>
+                    <input type="text" id="searchQuery" placeholder="Search in logs..." aria-label="Search logs">
+                </div>
+
+                <div class="control-group">
+                    <label for="tailLines">Tail Lines</label>
+                    <select id="tailLines" aria-label="Number of lines to display">
+                        <option value="100">Last 100 lines</option>
+                        <option value="250" selected>Last 250 lines</option>
+                        <option value="500">Last 500 lines</option>
+                        <option value="1000">Last 1000 lines</option>
+                        <option value="all">All lines</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-label">Total Entries</span>
+                    <span class="stat-value" id="totalEntries">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Filtered</span>
+                    <span class="stat-value" id="filteredEntries">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Errors</span>
+                    <span class="stat-value" id="errorCount" style="color: #e74c3c;">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Warnings</span>
+                    <span class="stat-value" id="warnCount" style="color: #f39c12;">0</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" id="refreshBtn" aria-label="Refresh logs">
+                    <span>🔄</span> Refresh
+                </button>
+                <button class="btn btn-success" id="downloadBtn" aria-label="Download logs">
+                    <span>⬇️</span> Download Logs
+                </button>
+                <button class="btn btn-secondary" id="clearFilterBtn" aria-label="Clear all filters">
+                    Clear Filters
+                </button>
+                <button class="btn btn-danger" id="clearLogsBtn" aria-label="Clear all logs">
+                    <span>🗑️</span> Clear Logs
+                </button>
+            </div>
+        </div>
+
+        <!-- Logs Panel -->
+        <div class="logs-panel">
+            <div class="logs-header">
+                <h2>Log Entries</h2>
+                <div class="auto-refresh">
+                    <input type="checkbox" id="autoRefresh" aria-label="Enable auto-refresh">
+                    <label for="autoRefresh">Auto-refresh (5s)</label>
+                </div>
+            </div>
+            <div class="logs-container" id="logsContainer" role="log" aria-live="polite" aria-atomic="false">
+                <div class="no-logs">
+                    <p>Loading logs...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        let filteredLogs = [];
+        let autoRefreshInterval = null;
+
+        // Fetch logs from server
+        async function fetchLogs() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<span class="loading"></span> Loading...';
+
+            try {
+                const tailLines = document.getElementById('tailLines').value;
+                const response = await fetch(`/api/admin/logs?tail=${tailLines}`);
+
+                if (!response.ok) throw new Error('Failed to fetch logs');
+
+                const data = await response.json();
+                logs = data.logs || [];
+
+                applyFilters();
+                updateStats();
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                showNoLogs('Error loading logs: ' + error.message);
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalText;
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const level = document.getElementById('logLevel').value;
+            const source = document.getElementById('logSource').value;
+            const search = document.getElementById('searchQuery').value.toLowerCase();
+
+            filteredLogs = logs.filter(log => {
+                if (level !== 'all' && log.level !== level) return false;
+                if (source !== 'all' && log.source !== source) return false;
+                if (search && !log.message.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            renderLogs();
+        }
+
+        // Render logs
+        function renderLogs() {
+            const container = document.getElementById('logsContainer');
+
+            if (filteredLogs.length === 0) {
+                showNoLogs('No logs match the current filters');
+                return;
+            }
+
+            const search = document.getElementById('searchQuery').value;
+            let html = '';
+
+            filteredLogs.forEach(log => {
+                let message = escapeHtml(log.message);
+
+                // Highlight search term
+                if (search) {
+                    const regex = new RegExp(`(${escapeRegex(search)})`, 'gi');
+                    message = message.replace(regex, '<span class="search-highlight">$1</span>');
+                }
+
+                html += `
+                    <div class="log-entry">
+                        <span class="log-timestamp">${log.timestamp}</span>
+                        <span class="log-level log-level-${log.level}">${log.level}</span>
+                        <span class="log-message">${message}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Auto-scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Show no logs message
+        function showNoLogs(message) {
+            const container = document.getElementById('logsContainer');
+            container.innerHTML = `
+                <div class="no-logs">
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalEntries').textContent = logs.length;
+            document.getElementById('filteredEntries').textContent = filteredLogs.length;
+
+            const errorCount = logs.filter(log => log.level === 'ERROR' || log.level === 'FATAL').length;
+            const warnCount = logs.filter(log => log.level === 'WARN').length;
+
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('warnCount').textContent = warnCount;
+        }
+
+        // Download logs
+        async function downloadLogs() {
+            try {
+                const response = await fetch('/api/admin/logs/download');
+                if (!response.ok) throw new Error('Failed to download logs');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `logs_${new Date().toISOString().split('T')[0]}.log`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Error downloading logs: ' + error.message);
+            }
+        }
+
+        // Clear logs
+        async function clearLogs() {
+            if (!confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/logs', { method: 'DELETE' });
+                if (!response.ok) throw new Error('Failed to clear logs');
+
+                logs = [];
+                filteredLogs = [];
+                renderLogs();
+                updateStats();
+                alert('Logs cleared successfully');
+            } catch (error) {
+                alert('Error clearing logs: ' + error.message);
+            }
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('logLevel').value = 'all';
+            document.getElementById('logSource').value = 'all';
+            document.getElementById('searchQuery').value = '';
+            applyFilters();
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            const enabled = document.getElementById('autoRefresh').checked;
+
+            if (enabled) {
+                autoRefreshInterval = setInterval(fetchLogs, 5000);
+            } else {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Escape regex
+        function escapeRegex(text) {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Event listeners
+        document.getElementById('logLevel').addEventListener('change', applyFilters);
+        document.getElementById('logSource').addEventListener('change', applyFilters);
+        document.getElementById('searchQuery').addEventListener('input', applyFilters);
+        document.getElementById('tailLines').addEventListener('change', fetchLogs);
+        document.getElementById('refreshBtn').addEventListener('click', fetchLogs);
+        document.getElementById('downloadBtn').addEventListener('click', downloadLogs);
+        document.getElementById('clearLogsBtn').addEventListener('click', clearLogs);
+        document.getElementById('clearFilterBtn').addEventListener('click', clearFilters);
+        document.getElementById('autoRefresh').addEventListener('change', toggleAutoRefresh);
+
+        // Initial load
+        fetchLogs();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
+{{end}}

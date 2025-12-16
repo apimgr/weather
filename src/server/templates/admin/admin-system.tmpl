@@ -1,0 +1,515 @@
+{{define "admin/admin-system.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="/static/css/template-overrides.css">
+</head>
+<body>
+    {{template "components/admin-header.tmpl" .}}
+
+    <div class="admin-container">
+        {{template "components/admin-sidebar.tmpl" .}}
+
+        <main class="admin-content" role="main">
+            <div class="content-header">
+                <h1>⚙️ System Information</h1>
+                <p class="subtitle">Server status, resources, and system monitoring</p>
+            </div>
+
+            <!-- System Status Section -->
+            <section class="admin-card" aria-labelledby="status-heading">
+                <div class="card-header">
+                    <h2 id="status-heading">System Status</h2>
+                    <p class="card-description">Current system health and uptime</p>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Server Status</div>
+                            <div class="stat-value">
+                                <span class="badge badge-success">✅ Online</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Uptime</div>
+                            <div class="stat-value" id="uptime">
+                                <span class="loading">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Version</div>
+                            <div class="stat-value" id="version">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Build Date</div>
+                            <div class="stat-value" id="build-date">-</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="refreshSystemInfo()" aria-label="Refresh system information">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </section>
+
+            <!-- Server Information Section -->
+            <section class="admin-card" aria-labelledby="server-info-heading">
+                <div class="card-header">
+                    <h2 id="server-info-heading">Server Information</h2>
+                    <p class="card-description">Platform and runtime details</p>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Operating System</div>
+                            <div class="info-value" id="os">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Architecture</div>
+                            <div class="info-value" id="arch">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Go Version</div>
+                            <div class="info-value" id="go-version">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Hostname</div>
+                            <div class="info-value" id="hostname">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Working Directory</div>
+                            <div class="info-value" id="working-dir">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Process ID</div>
+                            <div class="info-value" id="pid">-</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resource Usage Section -->
+            <section class="admin-card" aria-labelledby="resources-heading">
+                <div class="card-header">
+                    <h2 id="resources-heading">Resource Usage</h2>
+                    <p class="card-description">Memory, CPU, and goroutine statistics</p>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Memory Allocated</div>
+                            <div class="stat-value" id="memory-alloc">
+                                <span class="loading">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Memory System</div>
+                            <div class="stat-value" id="memory-sys">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Goroutines</div>
+                            <div class="stat-value" id="goroutines">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">GC Runs</div>
+                            <div class="stat-value" id="gc-runs">-</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" role="status" style="margin-top: 20px;">
+                        <strong>Note:</strong> Memory usage is automatically managed by Go's garbage collector. High values are normal for busy servers.
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="triggerGC()" aria-label="Trigger garbage collection">
+                            🧹 Run Garbage Collection
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshResourceUsage()" aria-label="Refresh resource usage">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Network Information Section -->
+            <section class="admin-card" aria-labelledby="network-heading">
+                <div class="card-header">
+                    <h2 id="network-heading">Network Configuration</h2>
+                    <p class="card-description">Server addresses and ports</p>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">HTTP Port</div>
+                            <div class="info-value" id="http-port">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">HTTPS Port</div>
+                            <div class="info-value" id="https-port">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">HTTPS Enabled</div>
+                            <div class="info-value" id="https-enabled">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Tor Hidden Service</div>
+                            <div class="info-value" id="tor-status">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">.onion Address</div>
+                            <div class="info-value" id="onion-address">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Server URL</div>
+                            <div class="info-value" id="server-url">-</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Environment Section -->
+            <section class="admin-card" aria-labelledby="env-heading">
+                <div class="card-header">
+                    <h2 id="env-heading">Environment</h2>
+                    <p class="card-description">Runtime environment variables</p>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Mode</div>
+                            <div class="info-value" id="mode">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Debug Enabled</div>
+                            <div class="info-value" id="debug">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Data Directory</div>
+                            <div class="info-value" id="data-dir">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Config Directory</div>
+                            <div class="info-value" id="config-dir">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Log Directory</div>
+                            <div class="info-value" id="log-dir">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Timezone</div>
+                            <div class="info-value" id="timezone">-</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions Section -->
+            <section class="admin-card" aria-labelledby="actions-heading">
+                <div class="card-header">
+                    <h2 id="actions-heading">System Actions</h2>
+                    <p class="card-description">Maintenance and diagnostic tools</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Warning:</strong> Some actions may temporarily affect service availability. Use with caution on production systems.
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="reloadConfig()" aria-label="Reload configuration">
+                            🔄 Reload Configuration
+                        </button>
+                        <button class="btn btn-info" onclick="viewAllRoutes()" aria-label="View all routes">
+                            🗺️ View All Routes
+                        </button>
+                        <button class="btn btn-info" onclick="exportSystemInfo()" aria-label="Export system information">
+                            📥 Export System Info
+                        </button>
+                    </div>
+
+                    <div id="action-result" class="alert" style="display: none; margin-top: 20px;" role="status" aria-live="polite"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    // Load system info on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSystemInfo();
+        loadResourceUsage();
+        loadNetworkInfo();
+        loadSettings();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadResourceUsage, 30000);
+    });
+
+    async function loadSystemInfo() {
+        try {
+            const response = await fetch('/api/v1/admin/stats');
+            const data = await response.json();
+
+            if (data) {
+                document.getElementById('uptime').textContent = formatUptime(data.uptime_seconds || 0);
+                document.getElementById('version').textContent = data.version || 'dev';
+                document.getElementById('build-date').textContent = data.build_date || 'unknown';
+
+                // Server info
+                document.getElementById('os').textContent = data.os || '-';
+                document.getElementById('arch').textContent = data.arch || '-';
+                document.getElementById('go-version').textContent = data.go_version || '-';
+                document.getElementById('hostname').textContent = data.hostname || '-';
+                document.getElementById('working-dir').textContent = data.working_dir || '-';
+                document.getElementById('pid').textContent = data.pid || '-';
+
+                // Environment
+                document.getElementById('mode').textContent = data.mode || 'production';
+                document.getElementById('debug').textContent = data.debug ? 'Yes' : 'No';
+            }
+        } catch (error) {
+            console.error('Failed to load system info:', error);
+        }
+    }
+
+    async function loadResourceUsage() {
+        try {
+            const response = await fetch('/api/v1/admin/stats');
+            const data = await response.json();
+
+            if (data.memory) {
+                document.getElementById('memory-alloc').textContent = formatBytes(data.memory.alloc || 0);
+                document.getElementById('memory-sys').textContent = formatBytes(data.memory.sys || 0);
+                document.getElementById('goroutines').textContent = data.goroutines || '0';
+                document.getElementById('gc-runs').textContent = data.memory.num_gc || '0';
+            }
+        } catch (error) {
+            console.error('Failed to load resource usage:', error);
+        }
+    }
+
+    async function loadNetworkInfo() {
+        try {
+            const response = await fetch('/api/v1/admin/stats');
+            const data = await response.json();
+
+            document.getElementById('http-port').textContent = data.http_port || '-';
+            document.getElementById('https-port').textContent = data.https_port || '-';
+            document.getElementById('https-enabled').textContent = data.https_enabled ? 'Yes' : 'No';
+            document.getElementById('server-url').textContent = data.server_url || window.location.origin;
+
+            // Tor info
+            if (data.tor) {
+                document.getElementById('tor-status').innerHTML = data.tor.enabled ?
+                    '<span class="badge badge-success">✅ Running</span>' :
+                    '<span class="badge badge-secondary">⚪ Disabled</span>';
+                document.getElementById('onion-address').textContent = data.tor.address || 'Not configured';
+            }
+        } catch (error) {
+            console.error('Failed to load network info:', error);
+        }
+    }
+
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/v1/admin/settings/all');
+            const data = await response.json();
+
+            if (data.settings) {
+                document.getElementById('data-dir').textContent = data.settings['server.data_dir']?.value || '-';
+                document.getElementById('config-dir').textContent = data.settings['server.config_dir']?.value || '-';
+                document.getElementById('log-dir').textContent = data.settings['server.log_dir']?.value || '-';
+                document.getElementById('timezone').textContent = data.settings['server.timezone']?.value || '-';
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+    }
+
+    async function triggerGC() {
+        try {
+            const response = await fetch('/debug/gc', { method: 'POST' });
+            if (response.ok) {
+                showActionResult('✅ Garbage collection completed', 'success');
+                setTimeout(loadResourceUsage, 1000);
+            } else {
+                throw new Error('GC trigger failed');
+            }
+        } catch (error) {
+            showActionResult('❌ Failed to trigger GC: ' + error.message, 'error');
+        }
+    }
+
+    async function reloadConfig() {
+        try {
+            const response = await fetch('/api/v1/admin/reload', { method: 'POST' });
+            const data = await response.json();
+
+            if (response.ok) {
+                showActionResult('✅ Configuration reloaded successfully', 'success');
+            } else {
+                throw new Error(data.error?.message || 'Reload failed');
+            }
+        } catch (error) {
+            showActionResult('❌ ' + error.message, 'error');
+        }
+    }
+
+    function viewAllRoutes() {
+        window.open('/debug/routes', '_blank');
+    }
+
+    function exportSystemInfo() {
+        fetch('/api/v1/admin/stats')
+            .then(response => response.json())
+            .then(data => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'system-info-' + new Date().toISOString().split('T')[0] + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showActionResult('✅ System info exported', 'success');
+            })
+            .catch(error => {
+                showActionResult('❌ Export failed: ' + error.message, 'error');
+            });
+    }
+
+    function refreshSystemInfo() {
+        loadSystemInfo();
+        loadNetworkInfo();
+        loadSettings();
+    }
+
+    function refreshResourceUsage() {
+        loadResourceUsage();
+    }
+
+    function showActionResult(message, type) {
+        const result = document.getElementById('action-result');
+        result.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        result.textContent = message;
+        result.style.display = 'block';
+
+        setTimeout(() => {
+            result.style.display = 'none';
+        }, 5000);
+    }
+
+    function formatUptime(seconds) {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+
+        if (days > 0) {
+            return `${days}d ${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        } else {
+            return `${minutes}m`;
+        }
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    </script>
+
+    <style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    .info-item {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 15px;
+        color: #212529;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .loading {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .button-group, .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons {
+        margin-top: 15px;
+    }
+    </style>
+</body>
+</html>
+{{end}}

@@ -10,11 +10,11 @@ import (
 
 // APIToken represents an API token
 type APIToken struct {
-	ID         int       `json:"id"`
-	UserID     int       `json:"user_id"`
-	Token      string    `json:"token,omitempty"` // Only shown once on creation
-	Name       string    `json:"name"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID         int        `json:"id"`
+	UserID     int        `json:"user_id"`
+	Token      string     `json:"token,omitempty"` // Only shown once on creation
+	Name       string     `json:"name"`
+	CreatedAt  time.Time  `json:"created_at"`
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
 }
 

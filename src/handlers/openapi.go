@@ -279,6 +279,7 @@ func GetSwaggerUI(c *gin.Context) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.String(http.StatusOK, html)
 }
+
 // GetOpenAPISpecYAML returns the OpenAPI 3.0 specification in YAML format
 func GetOpenAPISpecYAML(c *gin.Context) {
 	// Dynamically detect server URL from request

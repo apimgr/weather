@@ -322,13 +322,13 @@
                 dropdown.appendChild(item);
             });
 
-            dropdown.style.display = 'block';
+            dropdown.classList.add('autocomplete-dropdown-visible');
         }
 
         function hideMoonAutocomplete() {
             const dropdown = document.getElementById('moon-autocomplete-dropdown');
             if (dropdown) {
-                dropdown.style.display = 'none';
+                dropdown.classList.remove('autocomplete-dropdown-visible');
                 dropdown.innerHTML = '';
             }
         }

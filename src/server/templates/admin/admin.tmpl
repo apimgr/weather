@@ -1234,13 +1234,15 @@
         }
 
         // Scheduled Tasks Management
+        // Complete scheduler management (TEMPLATE.md lines 1193-1214)
         async function loadScheduledTasks() {
             try {
                 const response = await fetch('/api/v1/admin/tasks');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                const tasks = await response.json();
+                const data = await response.json();
+                const tasks = data.tasks || [];
 
                 if (!Array.isArray(tasks) || tasks.length === 0) {
                     document.getElementById('tasks-list').innerHTML = '<p class="admin-loading-text">No scheduled tasks found</p>';
@@ -1253,31 +1255,58 @@
                             <tr class="admin-table-head-row">
                                 <th class="admin-table-head-cell">Task Name</th>
                                 <th class="admin-table-head-cell">Interval</th>
+                                <th class="admin-table-head-cell">Enabled</th>
                                 <th class="admin-table-head-cell">Status</th>
                                 <th class="admin-table-head-cell">Last Run</th>
                                 <th class="admin-table-head-cell">Next Run</th>
+                                <th class="admin-table-head-cell">Stats</th>
+                                <th class="admin-table-head-cell">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${tasks.map(task => {
-                                const lastRun = task.last_run ? new Date(task.last_run).toLocaleString() : 'Never';
+                                const lastRunInfo = task.last_run ?
+                                    `${new Date(task.last_run.start_time).toLocaleString()}<br>` +
+                                    `<small class="${task.last_run.status === 'success' ? 'status-success' : 'status-error'}">` +
+                                    `${task.last_run.status === 'success' ? '✓' : '✗'} ${task.last_run.duration_ms}ms</small>` :
+                                    'Never';
                                 const nextRun = task.next_run ? new Date(task.next_run).toLocaleString() : 'N/A';
-                                const countdown = task.next_run ? formatRelativeTime(task.next_run) : 'N/A';
-                                const intervalDisplay = task.interval_seconds ? formatInterval(task.interval_seconds) : (task.interval || 'N/A');
+                                const countdown = task.next_run ? formatRelativeTime(task.next_run) : '';
 
                                 return `
                                 <tr class="admin-table-body-row">
                                     <td class="admin-task-name">${task.name}</td>
-                                    <td class="admin-table-body-cell">${intervalDisplay}</td>
+                                    <td class="admin-table-body-cell">${task.interval}</td>
+                                    <td class="admin-table-body-cell">
+                                        <span class="${task.enabled ? 'status-enabled' : 'status-disabled'}">
+                                            ${task.enabled ? '✓ Enabled' : '○ Disabled'}
+                                        </span>
+                                    </td>
                                     <td class="admin-table-body-cell">
                                         <span class="${task.running ? 'admin-task-status-running' : 'admin-task-status-idle'}">
                                             ${task.running ? 'Running' : 'Idle'}
                                         </span>
                                     </td>
-                                    <td class="admin-table-body-cell admin-task-next-run">${lastRun}</td>
+                                    <td class="admin-table-body-cell admin-task-next-run">${lastRunInfo}</td>
                                     <td class="admin-table-body-cell">
                                         <div class="admin-task-next-run">${nextRun}</div>
-                                        ${countdown !== 'N/A' ? `<div class="admin-task-countdown">${countdown}</div>` : ''}
+                                        ${countdown ? `<div class="admin-task-countdown">${countdown}</div>` : ''}
+                                    </td>
+                                    <td class="admin-table-body-cell">
+                                        <small>${task.success_count}✓ / ${task.error_count}✗</small><br>
+                                        <small>${task.run_count} total runs</small>
+                                    </td>
+                                    <td class="admin-table-body-cell">
+                                        <button onclick="triggerTask('${task.name}')" class="btn-primary btn-task-action">
+                                            ▶ Run Now
+                                        </button>
+                                        ${task.enabled ?
+                                            `<button onclick="disableTask('${task.name}')" class="btn-danger btn-task-action">⏸ Disable</button>` :
+                                            `<button onclick="enableTask('${task.name}')" class="btn-success btn-task-action">▶ Enable</button>`
+                                        }
+                                        <button onclick="viewTaskHistory('${task.name}')" class="btn-secondary btn-task-action">
+                                            📊 History
+                                        </button>
                                     </td>
                                 </tr>
                                 `;
@@ -1289,6 +1318,92 @@
             } catch (error) {
                 console.error('Error loading scheduled tasks:', error);
                 document.getElementById('tasks-list').innerHTML = '<p class="admin-error-text">Error loading scheduled tasks: ' + error.message + '</p>';
+            }
+        }
+
+        // Enable a task
+        async function enableTask(taskName) {
+            try {
+                const response = await fetch(`/api/v1/admin/tasks/${taskName}/enable`, { method: 'POST' });
+                if (!response.ok) throw new Error(await response.text());
+                await loadScheduledTasks();
+                Toast.success(`Task "${taskName}" enabled successfully`);
+            } catch (error) {
+                Toast.error('Error enabling task: ' + error.message);
+            }
+        }
+
+        // Disable a task
+        async function disableTask(taskName) {
+            try {
+                const response = await fetch(`/api/v1/admin/tasks/${taskName}/disable`, { method: 'POST' });
+                if (!response.ok) throw new Error(await response.text());
+                await loadScheduledTasks();
+                Toast.success(`Task "${taskName}" disabled successfully`);
+            } catch (error) {
+                Toast.error('Error disabling task: ' + error.message);
+            }
+        }
+
+        // Trigger a task manually
+        async function triggerTask(taskName) {
+            try {
+                const response = await fetch(`/api/v1/admin/tasks/${taskName}/trigger`, { method: 'POST' });
+                if (!response.ok) throw new Error(await response.text());
+                Toast.success(`Task "${taskName}" triggered successfully`);
+                setTimeout(() => loadScheduledTasks(), 2000); // Reload after 2s
+            } catch (error) {
+                Toast.error('Error triggering task: ' + error.message);
+            }
+        }
+
+        // View task history
+        async function viewTaskHistory(taskName) {
+            try {
+                const response = await fetch(`/api/v1/admin/tasks/${taskName}/history?limit=20`);
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                const history = data.history || [];
+
+                if (history.length === 0) {
+                    Toast.info(`No execution history found for task "${taskName}"`);
+                    return;
+                }
+
+                const historyHTML = `
+                    <div class="task-history-scroll">
+                        <table class="admin-table-full">
+                            <thead>
+                                <tr class="admin-table-head-row">
+                                    <th>Start Time</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${history.map(run => `
+                                    <tr class="admin-table-body-row">
+                                        <td>${new Date(run.start_time).toLocaleString()}</td>
+                                        <td>${run.duration_ms}ms</td>
+                                        <td class="${run.status === 'success' ? 'status-success' : 'status-error'}">
+                                            ${run.status === 'success' ? '✓ Success' : '✗ Error'}
+                                        </td>
+                                        <td>${run.error || '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                Modal.create({
+                    title: `Task History: ${taskName}`,
+                    body: historyHTML,
+                    size: 'lg'
+                });
+            } catch (error) {
+                Toast.error('Error loading task history: ' + error.message);
             }
         }
 
@@ -1367,7 +1482,7 @@
         }
 
         async function optimizeDatabase() {
-            if (!confirm('Optimize database? This may take a few moments.')) return;
+            if (!await showConfirm('Optimize database? This may take a few moments.')) return;
 
             try {
                 const response = await fetch('/api/v1/admin/database/optimize', { method: 'POST' });
@@ -1384,7 +1499,7 @@
         }
 
         async function clearCache() {
-            if (!confirm('Clear all cache? This will temporarily slow down requests.')) return;
+            if (!await showConfirm('Clear all cache? This will temporarily slow down requests.')) return;
 
             try {
                 const response = await fetch('/api/v1/admin/cache/clear', { method: 'POST' });
@@ -1401,7 +1516,7 @@
         }
 
         async function vacuumDatabase() {
-            if (!confirm('Vacuum database? This will compact the database file and may take several minutes.')) return;
+            if (!await showConfirm('Vacuum database? This will compact the database file and may take several minutes.')) return;
 
             try {
                 const response = await fetch('/api/v1/admin/database/vacuum', { method: 'POST' });
@@ -1442,7 +1557,7 @@
                 return;
             }
 
-            if (!confirm(`Obtain SSL certificate for ${domain}? This requires port 80/443 to be accessible.`)) return;
+            if (!await showConfirm(`Obtain SSL certificate for ${domain}? This requires port 80/443 to be accessible.`)) return;
 
             try {
                 const response = await fetch('/api/v1/admin/ssl/obtain', {
@@ -1464,7 +1579,7 @@
         }
 
         async function renewCertificate() {
-            if (!confirm('Renew SSL certificate?')) return;
+            if (!await showConfirm('Renew SSL certificate?')) return;
 
             try {
                 const response = await fetch('/api/v1/admin/ssl/renew', { method: 'POST' });
@@ -1482,7 +1597,7 @@
 
         // Backup Handlers
         async function createBackup() {
-            if (!confirm('Create backup now? This may take a few moments.')) return;
+            if (!await showConfirm('Create backup now? This may take a few moments.')) return;
 
             try {
                 const response = await fetch('/api/v1/admin/backup/create', { method: 'POST' });
@@ -1507,7 +1622,7 @@
                 return;
             }
 
-            if (!confirm('⚠️ WARNING: This will replace all current data and restart the server. Continue?')) return;
+            if (!await showConfirm('⚠️ WARNING: This will replace all current data and restart the server. Continue?', 'Restore Backup')) return;
 
             const formData = new FormData();
             formData.append('backup', fileInput.files[0]);
@@ -1570,7 +1685,7 @@
         }
 
         async function deleteBackup(filename) {
-            if (!confirm(`Delete backup ${filename}?`)) return;
+            if (!await showConfirm(`Delete backup ${filename}?`, 'Delete Backup')) return;
 
             try {
                 const response = await fetch(`/api/v1/admin/backup/delete/${filename}`, { method: 'DELETE' });

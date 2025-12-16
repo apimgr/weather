@@ -13,9 +13,9 @@ type User struct {
 	ID           int       `json:"id"`
 	Username     string    `json:"username"`
 	Email        string    `json:"email"`
-	Phone        string    `json:"phone,omitempty"`         // Optional, omit if empty
-	DisplayName  string    `json:"display_name,omitempty"`  // Optional display name
-	PasswordHash string    `json:"-"`                       // Never expose password hash
+	Phone        string    `json:"phone,omitempty"`        // Optional, omit if empty
+	DisplayName  string    `json:"display_name,omitempty"` // Optional display name
+	PasswordHash string    `json:"-"`                      // Never expose password hash
 	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

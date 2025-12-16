@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -117,15 +118,17 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	// Set session cookie
+	// Set session cookie with Secure flag in production mode
+	// Per TEMPLATE.md security requirements and OWASP guidelines
+	isProduction := os.Getenv("MODE") == "production"
 	c.SetCookie(
 		middleware.SessionCookieName,
 		session.ID,
 		sessionTimeout,
 		"/",
 		"",
-		false, // Set to true in production with HTTPS
-		true,  // HttpOnly
+		isProduction, // Secure flag: true in production (requires HTTPS)
+		true,         // HttpOnly: always true to prevent XSS
 	)
 
 	// Respond based on request type
@@ -217,15 +220,17 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		return
 	}
 
-	// Set session cookie
+	// Set session cookie with Secure flag in production mode
+	// Per TEMPLATE.md security requirements and OWASP guidelines
+	isProduction := os.Getenv("MODE") == "production"
 	c.SetCookie(
 		middleware.SessionCookieName,
 		session.ID,
 		sessionTimeout,
 		"/",
 		"",
-		false, // Set to true in production with HTTPS
-		true,  // HttpOnly
+		isProduction, // Secure flag: true in production (requires HTTPS)
+		true,         // HttpOnly: always true to prevent XSS
 	)
 
 	// Respond based on request type

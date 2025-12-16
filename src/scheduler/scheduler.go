@@ -18,6 +18,8 @@ type Task struct {
 	ticker   *time.Ticker
 	stopChan chan bool
 	running  bool
+	enabled  bool       // Can be toggled on/off
+	lastRun  *time.Time // Last execution time
 	mu       sync.Mutex
 }
 
@@ -47,6 +49,8 @@ func (s *Scheduler) AddTask(name string, interval time.Duration, fn func() error
 		Fn:       fn,
 		stopChan: make(chan bool),
 		running:  false,
+		enabled:  true, // Enabled by default
+		lastRun:  nil,
 	}
 
 	s.tasks = append(s.tasks, task)
@@ -109,11 +113,26 @@ func (s *Scheduler) runTask(task *Task) {
 
 // executeTask executes a task and logs results
 func (s *Scheduler) executeTask(task *Task) {
+	// Check if task is enabled
+	task.mu.Lock()
+	if !task.enabled {
+		task.mu.Unlock()
+		return
+	}
+	task.mu.Unlock()
+
 	start := time.Now()
-
 	err := task.Fn()
+	end := time.Now()
+	elapsed := end.Sub(start)
 
-	elapsed := time.Since(start)
+	// Update last run time
+	task.mu.Lock()
+	task.lastRun = &end
+	task.mu.Unlock()
+
+	// Record in database
+	s.RecordTaskRun(task.Name, start, end, err)
 
 	if err != nil {
 		log.Printf("❌ Task '%s' failed after %v: %v", task.Name, elapsed, err)
@@ -384,6 +403,72 @@ func CleanupRateLimitCounters(db *sql.DB) error {
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected > 0 {
 		log.Printf("🧹 Cleaned up %d old rate limit counters", rowsAffected)
+	}
+
+	return nil
+}
+
+// EnableTask enables a task by name
+func (s *Scheduler) EnableTask(taskName string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, task := range s.tasks {
+		if task.Name == taskName {
+			task.mu.Lock()
+			task.enabled = true
+			task.mu.Unlock()
+			log.Printf("✅ Task '%s' enabled", taskName)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("task '%s' not found", taskName)
+}
+
+// DisableTask disables a task by name
+func (s *Scheduler) DisableTask(taskName string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, task := range s.tasks {
+		if task.Name == taskName {
+			task.mu.Lock()
+			task.enabled = false
+			task.mu.Unlock()
+			log.Printf("⏸️  Task '%s' disabled", taskName)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("task '%s' not found", taskName)
+}
+
+// TriggerTask manually triggers a task to run immediately
+func (s *Scheduler) TriggerTask(taskName string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, task := range s.tasks {
+		if task.Name == taskName {
+			log.Printf("🔄 Manually triggering task '%s'", taskName)
+			go s.executeTask(task)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("task '%s' not found", taskName)
+}
+
+// GetTask returns a task by name
+func (s *Scheduler) GetTask(taskName string) *Task {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, task := range s.tasks {
+		if task.Name == taskName {
+			return task
+		}
 	}
 
 	return nil

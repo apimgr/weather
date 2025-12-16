@@ -751,6 +751,11 @@
     border-bottom-color: var(--dracula-purple);
 }
 
+.tab:focus-visible {
+    outline: 3px solid var(--dracula-cyan);
+    outline-offset: 2px;
+}
+
 .tab-content {
     display: none;
 }
@@ -1480,6 +1485,11 @@ select.form-input {
     border-bottom-color: var(--dracula-purple);
 }
 
+.tab:focus-visible {
+    outline: 3px solid var(--dracula-cyan);
+    outline-offset: 2px;
+}
+
 .tab-content {
     display: none;
 }
@@ -1578,4 +1588,45 @@ select.form-input {
 
 .add-location-result-opacity {
     opacity: 0.6;
+}
+
+/* Task Scheduler Status Colors */
+.status-success {
+    color: var(--dracula-green);
+}
+
+.status-error {
+    color: var(--dracula-red);
+}
+
+.status-enabled {
+    color: var(--dracula-green);
+}
+
+.status-disabled {
+    color: var(--dracula-comment);
+}
+
+/* Task History Modal Scroll */
+.task-history-scroll {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Task Action Buttons (compact styling) */
+.btn-task-action {
+    font-size: 0.85em;
+    padding: 4px 8px;
+    margin: 2px;
+}
+
+/* Earthquake card hover effect (TEMPLATE.md compliance - no JS styles) */
+.earthquake-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(139, 233, 253, 0.3);
+}
+
+/* Earthquake details toggle */
+.eq-details.visible {
+    display: block !important;
 }

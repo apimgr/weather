@@ -553,7 +553,7 @@ func (h *SevereWeatherHandler) renderConsoleOutput(data *services.SevereWeatherD
 
 	// No alerts
 	if len(data.Hurricanes) == 0 && len(data.TornadoWarnings) == 0 && len(data.SevereStorms) == 0 &&
-	   len(data.WinterStorms) == 0 && len(data.FloodWarnings) == 0 && len(data.OtherAlerts) == 0 {
+		len(data.WinterStorms) == 0 && len(data.FloodWarnings) == 0 && len(data.OtherAlerts) == 0 {
 		output += "✅ No active severe weather alerts at this time.\n\n"
 	}
 

@@ -1,0 +1,611 @@
+{{define "admin/admin-backup-enhanced.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .breadcrumb {
+            color: #95a5a6;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .nav-link:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .backup-item {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .backup-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-success {
+            background: #27ae60;
+        }
+
+        .status-failed {
+            background: #e74c3c;
+        }
+
+        .status-running {
+            background: #3498db;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .backup-info h3 {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+
+        .backup-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💾 Backup Management</h1>
+        <div class="breadcrumb">
+            <a href="/admin">Admin</a> /
+            <span>Backup</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav-links">
+            <a href="/admin" class="nav-link">← Dashboard</a>
+            <a href="/admin/database" class="nav-link">Database</a>
+        </div>
+
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="totalBackups">0</div>
+                <div class="stat-label">Total Backups</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalSize">0 MB</div>
+                <div class="stat-label">Total Size</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="lastBackup">Never</div>
+                <div class="stat-label">Last Backup</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="nextBackup">-</div>
+                <div class="stat-label">Next Scheduled</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Create Backup -->
+            <div class="card">
+                <h2>➕ Create Backup</h2>
+                <div class="btn-group" style="flex-direction: column; align-items: stretch;">
+                    <button class="btn btn-success" id="fullBackupBtn">
+                        💾 Full Backup
+                    </button>
+                    <button class="btn btn-primary" id="dataOnlyBtn">
+                        📊 Data Only
+                    </button>
+                    <button class="btn btn-primary" id="configOnlyBtn">
+                        ⚙️ Config Only
+                    </button>
+                </div>
+                <div id="backupProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText" style="text-align: center; color: #666;"></p>
+                </div>
+            </div>
+
+            <!-- Automated Backups -->
+            <div class="card">
+                <h2>⏰ Automated Backups</h2>
+                <form id="scheduleForm">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoBackup" checked>
+                            Enable automatic backups
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="frequency">Frequency</label>
+                        <select id="frequency">
+                            <option value="hourly">Every Hour</option>
+                            <option value="daily" selected>Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="retention">Retention (days)</label>
+                        <input type="number" id="retention" value="30" min="1" max="365">
+                        <small>Automatically delete backups older than this</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="compress" checked>
+                            Compress backups (gzip)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="verify" checked>
+                            Verify backup integrity
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">💾 Save Schedule</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Backup List -->
+        <div class="card" style="margin-top: 2rem;">
+            <h2>📋 Backup History</h2>
+            <div id="backupList">
+                <p style="text-align: center; color: #666; padding: 2rem;">Loading backups...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load backup stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/v1/admin/backup/stats');
+                const data = await response.json();
+
+                document.getElementById('totalBackups').textContent = data.total || 0;
+                document.getElementById('totalSize').textContent = data.totalSize || '0 MB';
+                document.getElementById('lastBackup').textContent = data.lastBackup || 'Never';
+                document.getElementById('nextBackup').textContent = data.nextBackup || '-';
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Load backup list
+        async function loadBackups() {
+            try {
+                const response = await fetch('/api/v1/admin/backup/list');
+                const data = await response.json();
+
+                const container = document.getElementById('backupList');
+                if (!data.backups || data.backups.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No backups found</p>';
+                    return;
+                }
+
+                container.innerHTML = data.backups.map(backup => `
+                    <div class="backup-item">
+                        <div class="backup-status status-${backup.status}"></div>
+                        <div class="backup-info">
+                            <h3>${backup.filename}</h3>
+                            <div class="backup-meta">
+                                ${backup.size} • ${backup.date} • ${backup.type}
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary" onclick="downloadBackup('${backup.filename}')">
+                                ⬇️ Download
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="restoreBackup('${backup.filename}')">
+                                🔄 Restore
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteBackup('${backup.filename}')">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load backups:', error);
+            }
+        }
+
+        // Create full backup
+        document.getElementById('fullBackupBtn').addEventListener('click', () => createBackup('full'));
+        document.getElementById('dataOnlyBtn').addEventListener('click', () => createBackup('data'));
+        document.getElementById('configOnlyBtn').addEventListener('click', () => createBackup('config'));
+
+        async function createBackup(type) {
+            const progress = document.getElementById('backupProgress');
+            const fill = document.getElementById('progressFill');
+            const text = document.getElementById('progressText');
+
+            progress.style.display = 'block';
+            updateProgress(0, 'Starting backup...');
+
+            try {
+                const response = await fetch('/api/v1/admin/backup/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type })
+                });
+
+                if (!response.ok) throw new Error('Backup failed');
+
+                // Simulate progress
+                for (let i = 10; i <= 100; i += 10) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    updateProgress(i, i === 100 ? 'Backup complete!' : 'Creating backup...');
+                }
+
+                showSuccess('Backup created successfully!');
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                    loadBackups();
+                    loadStats();
+                }, 2000);
+
+            } catch (error) {
+                showError('Backup failed: ' + error.message);
+                progress.style.display = 'none';
+            }
+        }
+
+        function updateProgress(percent, message) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = message;
+        }
+
+        // Download backup
+        async function downloadBackup(filename) {
+            window.location.href = `/api/v1/admin/backup/download/${filename}`;
+        }
+
+        // Restore backup
+        async function restoreBackup(filename) {
+            if (!confirm(`Restore from backup: ${filename}?\n\nThis will overwrite current data!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/backup/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+
+                if (!response.ok) throw new Error('Restore failed');
+
+                showSuccess('Backup restored successfully! Please restart the application.');
+            } catch (error) {
+                showError('Restore failed: ' + error.message);
+            }
+        }
+
+        // Delete backup
+        async function deleteBackup(filename) {
+            if (!confirm(`Delete backup: ${filename}?`)) return;
+
+            try {
+                const response = await fetch(`/api/v1/admin/backup/delete/${filename}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Delete failed');
+
+                showSuccess('Backup deleted successfully');
+                loadBackups();
+                loadStats();
+            } catch (error) {
+                showError('Delete failed: ' + error.message);
+            }
+        }
+
+        // Save schedule
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const schedule = {
+                enabled: document.getElementById('autoBackup').checked,
+                frequency: document.getElementById('frequency').value,
+                retention: parseInt(document.getElementById('retention').value),
+                compress: document.getElementById('compress').checked,
+                verify: document.getElementById('verify').checked
+            };
+
+            try {
+                const response = await fetch('/api/v1/admin/backup/schedule', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(schedule)
+                });
+
+                if (!response.ok) throw new Error('Failed to save schedule');
+
+                showSuccess('Backup schedule saved successfully!');
+                loadStats();
+            } catch (error) {
+                showError('Failed to save schedule: ' + error.message);
+            }
+        });
+
+        // Show messages
+        function showSuccess(msg) {
+            const alert = document.getElementById('successAlert');
+            alert.textContent = msg;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function showError(msg) {
+            const alert = document.getElementById('errorAlert');
+            alert.textContent = msg;
+            alert.classList.add('show');
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        // Initial load
+        loadStats();
+        loadBackups();
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadStats();
+            loadBackups();
+        }, 30000);
+    </script>
+</body>
+</html>
+{{end}}

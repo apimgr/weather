@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -178,6 +179,92 @@ type OpenMeteoForecastResponse struct {
 		UVIndex                  []float64 `json:"uv_index"`
 	} `json:"hourly"`
 	Timezone string `json:"timezone"`
+}
+
+// HistoricalDay represents weather data for a single historical day
+type HistoricalDay struct {
+	Date                 string  `json:"date"`
+	Year                 int     `json:"year"`
+	Month                int     `json:"month"`
+	Day                  int     `json:"day"`
+	WeatherCode          int     `json:"weatherCode"`
+	TempMax              float64 `json:"tempMax"`
+	TempMin              float64 `json:"tempMin"`
+	TempAvg              float64 `json:"tempAvg"`
+	ApparentTempMax      float64 `json:"apparentTempMax"`
+	ApparentTempMin      float64 `json:"apparentTempMin"`
+	Precipitation        float64 `json:"precipitation"`
+	Rain                 float64 `json:"rain"`
+	Snowfall             float64 `json:"snowfall"`
+	SnowDepth            float64 `json:"snowDepth"`
+	PrecipitationHours   float64 `json:"precipitationHours"`
+	WindSpeedMax         float64 `json:"windSpeedMax"`
+	WindGustsMax         float64 `json:"windGustsMax"`
+	WindDirection        int     `json:"windDirection"`
+	SunshineDuration     float64 `json:"sunshineDuration"`
+	DaylightDuration     float64 `json:"daylightDuration"`
+	PressureMean         float64 `json:"pressureMean"`
+	HumidityMean         int     `json:"humidityMean"`
+	CloudCoverMean       int     `json:"cloudCoverMean"`
+	SolarRadiation       float64 `json:"solarRadiation"`
+	ET0Evapotranspiration float64 `json:"et0Evapotranspiration"`
+}
+
+// HistoricalWeather represents historical weather data for a specific day across multiple years
+type HistoricalWeather struct {
+	Date      string          `json:"date"`       // MM/DD format
+	Month     int             `json:"month"`      // 1-12
+	Day       int             `json:"day"`        // 1-31
+	StartYear int             `json:"startYear"`  // Year to start from
+	Years     []HistoricalDay `json:"years"`      // Data for each year
+	Location  Coordinates     `json:"location"`   // Location information
+	Stats     HistoricalStats `json:"stats"`      // Statistical summary
+}
+
+// HistoricalStats provides statistical analysis of historical data
+type HistoricalStats struct {
+	WarmestYear      int     `json:"warmestYear"`
+	ColdestYear      int     `json:"coldestYear"`
+	WettestYear      int     `json:"wettestYear"`
+	DriestYear       int     `json:"driestYear"`
+	AvgTempMax       float64 `json:"avgTempMax"`
+	AvgTempMin       float64 `json:"avgTempMin"`
+	AvgPrecipitation float64 `json:"avgPrecipitation"`
+	MaxTempEver      float64 `json:"maxTempEver"`
+	MinTempEver      float64 `json:"minTempEver"`
+	MaxPrecipitation float64 `json:"maxPrecipitation"`
+	TotalYears       int     `json:"totalYears"`
+}
+
+// OpenMeteoHistoricalResponse represents the Open-Meteo historical archive API response
+type OpenMeteoHistoricalResponse struct {
+	Daily struct {
+		Time                    []string  `json:"time"`
+		WeatherCode             []int     `json:"weather_code"`
+		Temperature2mMax        []float64 `json:"temperature_2m_max"`
+		Temperature2mMin        []float64 `json:"temperature_2m_min"`
+		Temperature2mMean       []float64 `json:"temperature_2m_mean"`
+		ApparentTemperatureMax  []float64 `json:"apparent_temperature_max"`
+		ApparentTemperatureMin  []float64 `json:"apparent_temperature_min"`
+		PrecipitationSum        []float64 `json:"precipitation_sum"`
+		Rain                    []float64 `json:"rain_sum"`
+		Snowfall                []float64 `json:"snowfall_sum"`
+		SnowDepth               []float64 `json:"snow_depth_mean"`
+		PrecipitationHours      []float64 `json:"precipitation_hours"`
+		WindSpeed10mMax         []float64 `json:"wind_speed_10m_max"`
+		WindGusts10mMax         []float64 `json:"wind_gusts_10m_max"`
+		WindDirection10mDominant []int     `json:"wind_direction_10m_dominant"`
+		SunshineDuration        []float64 `json:"sunshine_duration"`
+		DaylightDuration        []float64 `json:"daylight_duration"`
+		PressureMslMean         []float64 `json:"pressure_msl_mean"`
+		RelativeHumidity2mMean  []int     `json:"relative_humidity_2m_mean"`
+		CloudCoverMean          []int     `json:"cloud_cover_mean"`
+		ShortwaveRadiationSum   []float64 `json:"shortwave_radiation_sum"`
+		ET0Evapotranspiration   []float64 `json:"et0_evapotranspiration"`
+	} `json:"daily"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Timezone  string  `json:"timezone"`
 }
 
 // NewWeatherService creates a new weather service instance
@@ -1338,4 +1425,202 @@ func (ws *WeatherService) tryIPWhois(ip string) (*Coordinates, error) {
 
 	// Get full location data
 	return ws.GetCoordinates(fmt.Sprintf("%s, %s", data.City, data.Region), data.CountryCode)
+}
+
+// GetHistoricalWeather retrieves historical weather data for a specific day across multiple years
+func (ws *WeatherService) GetHistoricalWeather(latitude, longitude float64, month, day, startYear, numberOfYears int) (*HistoricalWeather, error) {
+	// Validate inputs
+	if month < 1 || month > 12 {
+		return nil, fmt.Errorf("invalid month: %d (must be 1-12)", month)
+	}
+	if day < 1 || day > 31 {
+		return nil, fmt.Errorf("invalid day: %d (must be 1-31)", day)
+	}
+	currentYear := time.Now().Year()
+	if startYear > currentYear {
+		return nil, fmt.Errorf("start year %d cannot be in the future", startYear)
+	}
+	if numberOfYears < 1 || numberOfYears > 100 {
+		return nil, fmt.Errorf("invalid number of years: %d (must be 1-100)", numberOfYears)
+	}
+
+	// Create cache key
+	cacheKey := fmt.Sprintf("historical_%f_%f_%d_%d_%d_%d", latitude, longitude, month, day, startYear, numberOfYears)
+	if cached, found := ws.cache.Get(cacheKey); found {
+		return cached.(*HistoricalWeather), nil
+	}
+
+	historical := &HistoricalWeather{
+		Date:      fmt.Sprintf("%02d/%02d", month, day),
+		Month:     month,
+		Day:       day,
+		StartYear: startYear,
+		Years:     make([]HistoricalDay, 0, numberOfYears),
+		Location: Coordinates{
+			Latitude:  latitude,
+			Longitude: longitude,
+		},
+	}
+
+	// Fetch data for each year going backwards from startYear
+	for i := 0; i < numberOfYears; i++ {
+		year := startYear - i
+		if year < 1940 {
+			// Open-Meteo historical data starts from 1940
+			break
+		}
+
+		// Construct date strings for API call
+		targetDate := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
+
+		// Build API URL for single day
+		apiURL := fmt.Sprintf("%s/archive?latitude=%f&longitude=%f&start_date=%s&end_date=%s&daily=weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,apparent_temperature_max,apparent_temperature_min,precipitation_sum,rain_sum,snowfall_sum,snow_depth_mean,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunshine_duration,daylight_duration,pressure_msl_mean,relative_humidity_2m_mean,cloud_cover_mean,shortwave_radiation_sum,et0_evapotranspiration&timezone=auto",
+			ws.openMeteoBaseURL, latitude, longitude, targetDate, targetDate)
+
+		// Make API request
+		resp, err := ws.client.Get(apiURL)
+		if err != nil {
+			log.Printf("⚠️  Failed to fetch historical data for %s: %v", targetDate, err)
+			continue
+		}
+
+		var apiResp OpenMeteoHistoricalResponse
+		if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+			resp.Body.Close()
+			log.Printf("⚠️  Failed to decode historical data for %s: %v", targetDate, err)
+			continue
+		}
+		resp.Body.Close()
+
+		// Parse the response - should have exactly 1 day of data
+		if len(apiResp.Daily.Time) != 1 {
+			log.Printf("⚠️  Unexpected number of days in response for %s: %d", targetDate, len(apiResp.Daily.Time))
+			continue
+		}
+
+		// Create HistoricalDay struct
+		histDay := HistoricalDay{
+			Date:        apiResp.Daily.Time[0],
+			Year:        year,
+			Month:       month,
+			Day:         day,
+			WeatherCode: safeIntAt(apiResp.Daily.WeatherCode, 0),
+			TempMax:     safeFloatAt(apiResp.Daily.Temperature2mMax, 0),
+			TempMin:     safeFloatAt(apiResp.Daily.Temperature2mMin, 0),
+			TempAvg:     safeFloatAt(apiResp.Daily.Temperature2mMean, 0),
+			ApparentTempMax: safeFloatAt(apiResp.Daily.ApparentTemperatureMax, 0),
+			ApparentTempMin: safeFloatAt(apiResp.Daily.ApparentTemperatureMin, 0),
+			Precipitation:   safeFloatAt(apiResp.Daily.PrecipitationSum, 0),
+			Rain:            safeFloatAt(apiResp.Daily.Rain, 0),
+			Snowfall:        safeFloatAt(apiResp.Daily.Snowfall, 0),
+			SnowDepth:       safeFloatAt(apiResp.Daily.SnowDepth, 0),
+			PrecipitationHours: safeFloatAt(apiResp.Daily.PrecipitationHours, 0),
+			WindSpeedMax:    safeFloatAt(apiResp.Daily.WindSpeed10mMax, 0),
+			WindGustsMax:    safeFloatAt(apiResp.Daily.WindGusts10mMax, 0),
+			WindDirection:   safeIntAt(apiResp.Daily.WindDirection10mDominant, 0),
+			SunshineDuration: safeFloatAt(apiResp.Daily.SunshineDuration, 0),
+			DaylightDuration: safeFloatAt(apiResp.Daily.DaylightDuration, 0),
+			PressureMean:    safeFloatAt(apiResp.Daily.PressureMslMean, 0),
+			HumidityMean:    safeIntAt(apiResp.Daily.RelativeHumidity2mMean, 0),
+			CloudCoverMean:  safeIntAt(apiResp.Daily.CloudCoverMean, 0),
+			SolarRadiation:  safeFloatAt(apiResp.Daily.ShortwaveRadiationSum, 0),
+			ET0Evapotranspiration: safeFloatAt(apiResp.Daily.ET0Evapotranspiration, 0),
+		}
+
+		historical.Years = append(historical.Years, histDay)
+	}
+
+	// Calculate statistics
+	if len(historical.Years) > 0 {
+		historical.Stats = calculateHistoricalStats(historical.Years)
+	}
+
+	// Cache the result for 24 hours (historical data doesn't change)
+	ws.cache.Set(cacheKey, historical, 24*time.Hour)
+
+	return historical, nil
+}
+
+// calculateHistoricalStats computes statistical analysis of historical data
+func calculateHistoricalStats(years []HistoricalDay) HistoricalStats {
+	if len(years) == 0 {
+		return HistoricalStats{}
+	}
+
+	stats := HistoricalStats{
+		TotalYears:       len(years),
+		MaxTempEver:      -999,
+		MinTempEver:      999,
+		MaxPrecipitation: 0,
+	}
+
+	var sumTempMax, sumTempMin, sumPrecipitation float64
+	var warmestTemp, coldestTemp, maxPrecip float64
+	warmestTemp = -999
+	coldestTemp = 999
+
+	for _, year := range years {
+		// Sum for averages
+		sumTempMax += year.TempMax
+		sumTempMin += year.TempMin
+		sumPrecipitation += year.Precipitation
+
+		// Track warmest year
+		if year.TempMax > warmestTemp {
+			warmestTemp = year.TempMax
+			stats.WarmestYear = year.Year
+		}
+
+		// Track coldest year
+		if year.TempMin < coldestTemp {
+			coldestTemp = year.TempMin
+			stats.ColdestYear = year.Year
+		}
+
+		// Track wettest year
+		if year.Precipitation > maxPrecip {
+			maxPrecip = year.Precipitation
+			stats.WettestYear = year.Year
+		}
+
+		// Track driest year (non-zero only)
+		if stats.DriestYear == 0 || (year.Precipitation >= 0 && year.Precipitation < sumPrecipitation/float64(len(years))) {
+			stats.DriestYear = year.Year
+		}
+
+		// Track all-time records
+		if year.TempMax > stats.MaxTempEver {
+			stats.MaxTempEver = year.TempMax
+		}
+		if year.TempMin < stats.MinTempEver {
+			stats.MinTempEver = year.TempMin
+		}
+		if year.Precipitation > stats.MaxPrecipitation {
+			stats.MaxPrecipitation = year.Precipitation
+		}
+	}
+
+	// Calculate averages
+	count := float64(len(years))
+	stats.AvgTempMax = sumTempMax / count
+	stats.AvgTempMin = sumTempMin / count
+	stats.AvgPrecipitation = sumPrecipitation / count
+
+	return stats
+}
+
+// safeFloatAt safely retrieves a float64 from a slice at the given index
+func safeFloatAt(slice []float64, index int) float64 {
+	if index >= 0 && index < len(slice) {
+		return slice[index]
+	}
+	return 0.0
+}
+
+// safeIntAt safely retrieves an int from a slice at the given index
+func safeIntAt(slice []int, index int) int {
+	if index >= 0 && index < len(slice) {
+		return slice[index]
+	}
+	return 0
 }

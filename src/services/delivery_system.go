@@ -22,23 +22,23 @@ const (
 
 // NotificationQueue represents a queued notification
 type NotificationQueue struct {
-	ID            int
-	UserID        sql.NullInt64
-	ChannelType   string
-	TemplateID    sql.NullInt64
-	Priority      int
-	State         string
-	Subject       string
-	Body          string
-	Variables     map[string]interface{}
-	RetryCount    int
-	MaxRetries    int
-	NextRetryAt   sql.NullTime
-	DeliveredAt   sql.NullTime
-	FailedAt      sql.NullTime
-	ErrorMessage  sql.NullString
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID           int
+	UserID       sql.NullInt64
+	ChannelType  string
+	TemplateID   sql.NullInt64
+	Priority     int
+	State        string
+	Subject      string
+	Body         string
+	Variables    map[string]interface{}
+	RetryCount   int
+	MaxRetries   int
+	NextRetryAt  sql.NullTime
+	DeliveredAt  sql.NullTime
+	FailedAt     sql.NullTime
+	ErrorMessage sql.NullString
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // DeliverySystem handles notification delivery with retry logic
@@ -70,9 +70,9 @@ func NewDeliverySystem(db *sql.DB, cm *ChannelManager, te *TemplateEngine) *Deli
 // LoadSettings loads delivery system settings from database
 func (ds *DeliverySystem) LoadSettings() error {
 	settings := map[string]*int{
-		"notifications.retry_max":    &ds.maxRetries,
-		"notifications.queue_workers": &ds.queueWorkers,
-		"notifications.batch_size":    &ds.batchSize,
+		"notifications.retry_max":          &ds.maxRetries,
+		"notifications.queue_workers":      &ds.queueWorkers,
+		"notifications.batch_size":         &ds.batchSize,
 		"notifications.rate_limit_per_min": &ds.rateLimitPerMin,
 	}
 

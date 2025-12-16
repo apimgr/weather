@@ -337,44 +337,44 @@ CREATE INDEX IF NOT EXISTS idx_metrics_recorded ON notification_metrics(recorded
 // DefaultSettings are inserted on first setup
 var DefaultSettings = map[string]string{
 	// Server settings
-	"server.port":              "random", // Will be set to actual port on first run
-	"server.address":           "0.0.0.0",
-	"server.theme":             "dark",
+	"server.port":    "random", // Will be set to actual port on first run
+	"server.address": "0.0.0.0",
+	"server.theme":   "dark",
 
 	// Auth settings
-	"auth.session_timeout":     "86400", // 24 hours
+	"auth.session_timeout":            "86400", // 24 hours
 	"auth.require_email_verification": "false",
 
 	// Rate limiting
-	"rate_limit.anonymous":     "120",
-	"rate_limit.window":        "3600", // 1 hour
+	"rate_limit.anonymous": "120",
+	"rate_limit.window":    "3600", // 1 hour
 
 	// Audit
-	"audit.enabled":            "false",
+	"audit.enabled": "false",
 
 	// Legacy notification settings (deprecated, use notification_channels table)
-	"notifications.email":      "false",
-	"notifications.webhook":    "false",
-	"notifications.push":       "false",
+	"notifications.email":   "false",
+	"notifications.webhook": "false",
+	"notifications.push":    "false",
 
 	// Notification system settings
-	"notifications.enabled":           "true",
-	"notifications.retry_max":         "3",
-	"notifications.retry_backoff":     "exponential", // linear or exponential
-	"notifications.queue_workers":     "5",
-	"notifications.batch_size":        "100",
+	"notifications.enabled":            "true",
+	"notifications.retry_max":          "3",
+	"notifications.retry_backoff":      "exponential", // linear or exponential
+	"notifications.queue_workers":      "5",
+	"notifications.batch_size":         "100",
 	"notifications.rate_limit_per_min": "60",
 
 	// SMTP settings (environment variable hints, web UI takes precedence)
-	"smtp.host":                "",     // SMTP_HOST env var
-	"smtp.port":                "587",  // SMTP_PORT env var
-	"smtp.username":            "",     // SMTP_USERNAME env var
-	"smtp.password":            "",     // SMTP_PASSWORD env var (encrypted in DB)
-	"smtp.from_address":        "",     // SMTP_FROM_ADDRESS env var
-	"smtp.from_name":           "Weather Service",
-	"smtp.use_tls":             "true",
-	"smtp.auto_enable":         "true", // Auto-enable on successful test
-	"smtp.test_recipient":      "",     // Test email address
+	"smtp.host":           "",    // SMTP_HOST env var
+	"smtp.port":           "587", // SMTP_PORT env var
+	"smtp.username":       "",    // SMTP_USERNAME env var
+	"smtp.password":       "",    // SMTP_PASSWORD env var (encrypted in DB)
+	"smtp.from_address":   "",    // SMTP_FROM_ADDRESS env var
+	"smtp.from_name":      "Weather Service",
+	"smtp.use_tls":        "true",
+	"smtp.auto_enable":    "true", // Auto-enable on successful test
+	"smtp.test_recipient": "",     // Test email address
 
 	// Weather settings
 	"weather.refresh_interval": "600", // 10 minutes
@@ -382,12 +382,12 @@ var DefaultSettings = map[string]string{
 	"alerts.check_interval":    "300", // 5 minutes
 
 	// Backup settings
-	"backup.enabled":           "true",
-	"backup.interval":          "86400", // Daily
+	"backup.enabled":  "true",
+	"backup.interval": "86400", // Daily
 
 	// Logging
-	"log.format":               "apache",
-	"log.level":                "info",
+	"log.format": "apache",
+	"log.level":  "info",
 }
 
 // DB represents the database connection

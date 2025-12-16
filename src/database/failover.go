@@ -32,11 +32,11 @@ type QueuedWrite struct {
 // NewFailoverManager creates a new failover manager
 func NewFailoverManager(primaryDB *sql.DB, cacheDB *sql.DB) *FailoverManager {
 	fm := &FailoverManager{
-		primaryDB:   primaryDB,
-		cacheDB:     cacheDB,
-		readOnly:    false,
-		writeQueue:  make([]QueuedWrite, 0),
-		stopChan:    make(chan struct{}),
+		primaryDB:  primaryDB,
+		cacheDB:    cacheDB,
+		readOnly:   false,
+		writeQueue: make([]QueuedWrite, 0),
+		stopChan:   make(chan struct{}),
 	}
 
 	// Start monitoring goroutine

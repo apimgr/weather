@@ -27,10 +27,10 @@ type GitHubRelease struct {
 }
 
 const (
-	githubAPI     = "https://api.github.com/repos/apimgr/weather/releases"
-	githubStable  = githubAPI + "/latest"
-	githubBeta    = githubAPI + "/tags/beta"
-	githubDaily   = githubAPI + "/tags/daily"
+	githubAPI    = "https://api.github.com/repos/apimgr/weather/releases"
+	githubStable = githubAPI + "/latest"
+	githubBeta   = githubAPI + "/tags/beta"
+	githubDaily  = githubAPI + "/tags/daily"
 )
 
 // UpdateCommand handles update operations

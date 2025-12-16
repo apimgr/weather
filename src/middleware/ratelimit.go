@@ -10,15 +10,15 @@ import (
 
 const (
 	// Global rate limit (all endpoints)
-	GlobalRPS   = 100  // 100 requests per second
-	GlobalBurst = 200  // Burst allowance
+	GlobalRPS   = 100 // 100 requests per second
+	GlobalBurst = 200 // Burst allowance
 
 	// API rate limit (stricter for API)
-	APIRequestsPerWindow = 100  // 100 requests per 15 minutes
+	APIRequestsPerWindow = 100 // 100 requests per 15 minutes
 	APIWindowDuration    = 15 * time.Minute
 
 	// Admin rate limit (most restrictive)
-	AdminRequestsPerWindow = 30   // 30 requests per 15 minutes
+	AdminRequestsPerWindow = 30 // 30 requests per 15 minutes
 	AdminWindowDuration    = 15 * time.Minute
 )
 

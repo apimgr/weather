@@ -1,0 +1,88 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="weather-container">
+    <h1 class="text-purple">About Weather Service</h1>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Application Information</h2>
+        <div class="stat-box margin-y-md">
+            <div class="stat-box__label">Version</div>
+            <div class="stat-box__value">{{.server.Version}}</div>
+        </div>
+        <div class="stat-box margin-y-md">
+            <div class="stat-box__label">Build Date</div>
+            <div class="stat-box__value">{{.server.BuildDate}}</div>
+        </div>
+        <div class="stat-box margin-y-md">
+            <div class="stat-box__label">Mode</div>
+            <div class="stat-box__value">{{.server.Mode}}</div>
+        </div>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Description</h2>
+        <p>{{.server.Description}}</p>
+    </div>
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Key Features</h2>
+        <ul class="feature-list">
+            <li>🌤️ Real-time weather data from Open-Meteo API</li>
+            <li>🌍 Global location support with geocoding</li>
+            <li>🌙 Moon phase tracking and lunar information</li>
+            <li>⚠️ Severe weather alerts and warnings</li>
+            <li>🌊 Earthquake monitoring from USGS</li>
+            <li>🌀 Hurricane and tropical storm tracking</li>
+            <li>📊 Multi-day weather forecasts (up to 16 days)</li>
+            <li>📱 Mobile-first responsive design</li>
+            <li>🔔 Customizable weather notifications</li>
+            <li>🗺️ Interactive maps with weather overlays</li>
+        </ul>
+    </div>
+
+    {{if .server.Tor.Enabled}}
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">🧅 Tor Hidden Service</h2>
+        <p>This application is also available via Tor for enhanced privacy.</p>
+        <div class="code-wrapper margin-y-md">
+            <code class="mobile-code">{{.server.Tor.OnionAddress}}</code>
+            <button class="copy-btn" onclick="copyToClipboard('{{.server.Tor.OnionAddress}}')">Copy</button>
+        </div>
+        <p class="text-comment"><small>Requires Tor Browser or Tor-enabled browser.</small></p>
+    </div>
+    {{end}}
+
+    <div class="card margin-y-lg">
+        <h2 class="text-cyan">Links</h2>
+        <div class="flex gap-md flex-column-mobile">
+            <a href="https://github.com/{{.server.GitOrg}}/{{.server.GitRepo}}" target="_blank" class="btn btn-primary">
+                GitHub Repository
+            </a>
+            <a href="/docs" class="btn btn-secondary">
+                API Documentation
+            </a>
+            <a href="/server/help" class="btn btn-secondary">
+                Help & Support
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        Toast.success('Copied to clipboard!');
+    }).catch(err => {
+        Toast.error('Failed to copy');
+    });
+}
+
+// Initialize notification polling
+if (typeof Notifications !== 'undefined') {
+    Notifications.startPolling(30000);
+}
+</script>
+
+{{template "footer" .}}

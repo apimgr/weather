@@ -98,15 +98,15 @@ func ComprehensiveHealthCheck(db *database.DB, httpPort string, httpsPort int, s
 
 		// Build response according to spec
 		response := gin.H{
-			"status":    overallStatus,
-			"timestamp": time.Now().Format(time.RFC3339),
-			"version":   version,
+			"status":         overallStatus,
+			"timestamp":      time.Now().Format(time.RFC3339),
+			"version":        version,
 			"uptime_seconds": int64(time.Since(startTime).Seconds()),
 			"checks": gin.H{
 				"database": gin.H{
-					"status":      dbStatus,
-					"type":        "sqlite",
-					"latency_ms":  dbLatency,
+					"status":     dbStatus,
+					"type":       "sqlite",
+					"latency_ms": dbLatency,
 					"connection_pool": gin.H{
 						"active": 1, // SQLite doesn't have connection pooling
 						"idle":   0,
@@ -127,10 +127,10 @@ func ComprehensiveHealthCheck(db *database.DB, httpPort string, httpsPort int, s
 						"loaded": true,
 					},
 					"geoip": gin.H{
-						"status": "loaded",
-						"loaded": true,
+						"status":    "loaded",
+						"loaded":    true,
 						"databases": 4,
-						"types": []string{"IPv4 City", "IPv6 City", "Country", "ASN"},
+						"types":     []string{"IPv4 City", "IPv6 City", "Country", "ASN"},
 					},
 				},
 				"cache": gin.H{
@@ -280,10 +280,10 @@ func getSchedulerStatus() gin.H {
 func getRequestStats() gin.H {
 	// Placeholder - will track in middleware
 	return gin.H{
-		"total_today":    0,
+		"total_today":     0,
 		"rate_per_minute": 0,
-		"errors_today":   0,
-		"error_rate":     0.0,
+		"errors_today":    0,
+		"error_rate":      0.0,
 	}
 }
 

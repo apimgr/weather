@@ -26,8 +26,8 @@ type GeoIPData struct {
 
 // GeoIPService handles IP-based geolocation using sapics/ip-location-db
 type GeoIPService struct {
-	mu          sync.RWMutex
-	enabled     bool
+	mu           sync.RWMutex
+	enabled      bool
 	cityIPv4Path string
 	cityIPv6Path string
 	countryPath  string
@@ -38,10 +38,10 @@ type GeoIPService struct {
 
 // Database URLs from sapics/ip-location-db (SPEC Section 16)
 const (
-	cityIPv4URL  = "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv4.mmdb"
-	cityIPv6URL  = "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv6.mmdb"
-	countryURL   = "https://cdn.jsdelivr.net/npm/@ip-location-db/geo-whois-asn-country-mmdb/geo-whois-asn-country.mmdb"
-	asnURL       = "https://cdn.jsdelivr.net/npm/@ip-location-db/asn-mmdb/asn.mmdb"
+	cityIPv4URL = "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv4.mmdb"
+	cityIPv6URL = "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-city-mmdb/geolite2-city-ipv6.mmdb"
+	countryURL  = "https://cdn.jsdelivr.net/npm/@ip-location-db/geo-whois-asn-country-mmdb/geo-whois-asn-country.mmdb"
+	asnURL      = "https://cdn.jsdelivr.net/npm/@ip-location-db/asn-mmdb/asn.mmdb"
 )
 
 // NewGeoIPService creates a new GeoIP service
@@ -77,10 +77,10 @@ func (gs *GeoIPService) loadDatabases() {
 
 	// Check if all 4 databases exist
 	databases := map[string]string{
-		"City IPv4":  gs.cityIPv4Path,
-		"City IPv6":  gs.cityIPv6Path,
-		"Country":    gs.countryPath,
-		"ASN":        gs.asnPath,
+		"City IPv4": gs.cityIPv4Path,
+		"City IPv6": gs.cityIPv6Path,
+		"Country":   gs.countryPath,
+		"ASN":       gs.asnPath,
 	}
 
 	allExist := true

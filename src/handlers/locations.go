@@ -242,7 +242,7 @@ func (h *LocationHandler) ToggleAlerts(c *gin.Context) {
 func (h *LocationHandler) ShowAddLocationPage(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
@@ -257,7 +257,7 @@ func (h *LocationHandler) ShowAddLocationPage(c *gin.Context) {
 func (h *LocationHandler) ShowEditLocationPage(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 

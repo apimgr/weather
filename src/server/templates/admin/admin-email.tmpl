@@ -1,0 +1,533 @@
+{{define "admin/admin-email.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="/static/css/template-overrides.css">
+</head>
+<body>
+    {{template "components/admin-header.tmpl" .}}
+
+    <div class="admin-container">
+        {{template "components/admin-sidebar.tmpl" .}}
+
+        <main class="admin-content" role="main">
+            <div class="content-header">
+                <h1>📧 Email Settings</h1>
+                <p class="subtitle">Configure SMTP server and email notifications</p>
+            </div>
+
+            <!-- SMTP Configuration Section -->
+            <section class="admin-card" aria-labelledby="smtp-heading">
+                <div class="card-header">
+                    <h2 id="smtp-heading">SMTP Server Configuration</h2>
+                    <p class="card-description">Configure your email server for sending notifications</p>
+                </div>
+                <div class="card-body">
+                    <form id="smtp-form" class="settings-form">
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input
+                                    type="checkbox"
+                                    id="smtp_enabled"
+                                    name="smtp.enabled"
+                                    class="toggle-input"
+                                    aria-describedby="smtp_enabled_help"
+                                >
+                                <span class="toggle-slider"></span>
+                                Enable Email Notifications
+                            </label>
+                            <small id="smtp_enabled_help" class="form-text">
+                                Turn on to send email notifications for alerts, backups, and security events
+                            </small>
+                        </div>
+
+                        <div id="smtp-fields" class="smtp-fields">
+                            <div class="form-row">
+                                <div class="form-group col-md-8">
+                                    <label for="smtp_host">
+                                        SMTP Server
+                                        <span class="required" aria-label="required">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="smtp_host"
+                                        name="smtp.host"
+                                        class="form-control"
+                                        placeholder="smtp.gmail.com"
+                                        required
+                                        aria-required="true"
+                                        aria-describedby="smtp_host_help"
+                                    >
+                                    <small id="smtp_host_help" class="form-text">
+                                        SMTP server hostname or IP address
+                                    </small>
+                                </div>
+
+                                <div class="form-group col-md-4">
+                                    <label for="smtp_port">
+                                        Port
+                                        <span class="required" aria-label="required">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="smtp_port"
+                                        name="smtp.port"
+                                        class="form-control"
+                                        placeholder="587"
+                                        min="1"
+                                        max="65535"
+                                        required
+                                        aria-required="true"
+                                        aria-describedby="smtp_port_help"
+                                    >
+                                    <small id="smtp_port_help" class="form-text">
+                                        Common: 587 (TLS), 465 (SSL), 25 (plain)
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtp_username">Username</label>
+                                <input
+                                    type="text"
+                                    id="smtp_username"
+                                    name="smtp.username"
+                                    class="form-control"
+                                    placeholder="your-email@example.com"
+                                    autocomplete="username"
+                                    aria-describedby="smtp_username_help"
+                                >
+                                <small id="smtp_username_help" class="form-text">
+                                    SMTP authentication username (usually your email address)
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtp_password">Password</label>
+                                <input
+                                    type="password"
+                                    id="smtp_password"
+                                    name="smtp.password"
+                                    class="form-control"
+                                    placeholder="••••••••"
+                                    autocomplete="current-password"
+                                    aria-describedby="smtp_password_help"
+                                >
+                                <small id="smtp_password_help" class="form-text">
+                                    SMTP authentication password or app-specific password
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtp_from">From Address</label>
+                                <input
+                                    type="email"
+                                    id="smtp_from"
+                                    name="smtp.from_address"
+                                    class="form-control"
+                                    placeholder="no-reply@example.com"
+                                    aria-describedby="smtp_from_help"
+                                >
+                                <small id="smtp_from_help" class="form-text">
+                                    Email address shown as sender in outgoing emails
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtp_from_name">From Name</label>
+                                <input
+                                    type="text"
+                                    id="smtp_from_name"
+                                    name="smtp.from_name"
+                                    class="form-control"
+                                    placeholder="Weather App"
+                                    aria-describedby="smtp_from_name_help"
+                                >
+                                <small id="smtp_from_name_help" class="form-text">
+                                    Display name shown as sender in outgoing emails
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtp_encryption">Encryption</label>
+                                <select id="smtp_encryption" name="smtp.encryption" class="form-control" aria-describedby="smtp_encryption_help">
+                                    <option value="tls">TLS (STARTTLS)</option>
+                                    <option value="ssl">SSL</option>
+                                    <option value="none">None (Not Recommended)</option>
+                                </select>
+                                <small id="smtp_encryption_help" class="form-text">
+                                    Encryption method for secure email transmission
+                                </small>
+                            </div>
+
+                            <div class="alert alert-info" role="status">
+                                <strong>Popular SMTP Providers:</strong><br>
+                                • <strong>Gmail:</strong> smtp.gmail.com:587 (TLS) - Use app-specific password<br>
+                                • <strong>Outlook:</strong> smtp.office365.com:587 (TLS)<br>
+                                • <strong>SendGrid:</strong> smtp.sendgrid.net:587 (TLS)<br>
+                                • <strong>Mailgun:</strong> smtp.mailgun.org:587 (TLS)
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary" aria-label="Save SMTP settings">
+                                💾 Save Settings
+                            </button>
+                            <button type="button" class="btn btn-success" id="test-email-btn" aria-label="Send test email">
+                                📨 Send Test Email
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="autodetect-btn" aria-label="Auto-detect SMTP">
+                                🔍 Auto-Detect
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Email Templates Section -->
+            <section class="admin-card" aria-labelledby="templates-heading">
+                <div class="card-header">
+                    <h2 id="templates-heading">Email Templates</h2>
+                    <p class="card-description">Manage notification email templates</p>
+                </div>
+                <div class="card-body">
+                    <div class="template-list">
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Welcome Email</strong>
+                                <p>Sent when the application is first set up</p>
+                            </div>
+                            <a href="/admin/email/templates/welcome" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Password Reset</strong>
+                                <p>Password reset instructions with secure link</p>
+                            </div>
+                            <a href="/admin/email/templates/password_reset" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Backup Complete</strong>
+                                <p>Notification when backup completes successfully</p>
+                            </div>
+                            <a href="/admin/email/templates/backup_complete" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Backup Failed</strong>
+                                <p>Alert when backup process fails</p>
+                            </div>
+                            <a href="/admin/email/templates/backup_failed" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>SSL Certificate Expiring</strong>
+                                <p>Warning when SSL certificate is about to expire</p>
+                            </div>
+                            <a href="/admin/email/templates/ssl_expiring" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>SSL Certificate Renewed</strong>
+                                <p>Confirmation when SSL certificate is renewed</p>
+                            </div>
+                            <a href="/admin/email/templates/ssl_renewed" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Login Alert</strong>
+                                <p>Security notification for new login</p>
+                            </div>
+                            <a href="/admin/email/templates/login_alert" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Security Alert</strong>
+                                <p>Critical security event notifications</p>
+                            </div>
+                            <a href="/admin/email/templates/security_alert" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Scheduler Error</strong>
+                                <p>Alert when scheduled task fails</p>
+                            </div>
+                            <a href="/admin/email/templates/scheduler_error" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+
+                        <div class="template-item">
+                            <div class="template-info">
+                                <strong>Test Email</strong>
+                                <p>Test message to verify SMTP configuration</p>
+                            </div>
+                            <a href="/admin/email/templates/test" class="btn btn-sm btn-secondary">Edit Template</a>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" role="status" style="margin-top: 20px;">
+                        <strong>Template Variables:</strong> Use <code>{app_name}</code>, <code>{app_url}</code>, and other placeholders in your templates. They will be automatically replaced when emails are sent.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Email Result -->
+            <div id="test-result" class="alert" style="display: none;" role="status" aria-live="polite"></div>
+        </main>
+    </div>
+
+    <script>
+    // Load settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+        toggleSMTPFields();
+    });
+
+    // Toggle SMTP fields based on enabled checkbox
+    document.getElementById('smtp_enabled').addEventListener('change', toggleSMTPFields);
+
+    function toggleSMTPFields() {
+        const enabled = document.getElementById('smtp_enabled').checked;
+        const fields = document.getElementById('smtp-fields');
+        fields.style.opacity = enabled ? '1' : '0.5';
+        fields.style.pointerEvents = enabled ? 'auto' : 'none';
+    }
+
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/v1/admin/settings/all');
+            const data = await response.json();
+
+            if (data.settings) {
+                for (const [key, setting] of Object.entries(data.settings)) {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            input.checked = setting.value === 'true';
+                        } else {
+                            input.value = setting.value || '';
+                        }
+                    }
+                }
+                toggleSMTPFields();
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            showNotification('Failed to load settings', 'error');
+        }
+    }
+
+    // SMTP form submission
+    document.getElementById('smtp-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const settings = {};
+
+        for (const [key, value] of formData.entries()) {
+            settings[key] = value;
+        }
+
+        // Handle checkbox
+        settings['smtp.enabled'] = document.getElementById('smtp_enabled').checked ? 'true' : 'false';
+
+        try {
+            const response = await fetch('/api/v1/admin/settings/bulk', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ settings })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showNotification('SMTP settings saved successfully', 'success');
+            } else {
+                throw new Error(data.error?.message || 'Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            showNotification(error.message, 'error');
+        }
+    });
+
+    // Send test email
+    document.getElementById('test-email-btn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = '⏳ Sending...';
+
+        try {
+            const response = await fetch('/api/v1/admin/test/email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showTestResult('✅ Test email sent successfully! Check your inbox.', 'success');
+            } else {
+                throw new Error(data.error?.message || 'Failed to send test email');
+            }
+        } catch (error) {
+            console.error('Test email error:', error);
+            showTestResult('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📨 Send Test Email';
+        }
+    });
+
+    // Auto-detect SMTP
+    document.getElementById('autodetect-btn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = '⏳ Detecting...';
+
+        try {
+            const response = await fetch('/api/v1/admin/smtp/autodetect', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.detected) {
+                showNotification('SMTP server detected at ' + data.host, 'success');
+                // Reload settings
+                loadSettings();
+            } else {
+                showNotification('No SMTP server detected on local network', 'info');
+            }
+        } catch (error) {
+            console.error('Auto-detect error:', error);
+            showNotification('Auto-detection failed', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔍 Auto-Detect';
+        }
+    });
+
+    function showNotification(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' :
+                          type === 'error' ? 'alert-danger' : 'alert-info';
+
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass}`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 4000);
+    }
+
+    function showTestResult(message, type) {
+        const result = document.getElementById('test-result');
+        result.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        result.textContent = message;
+        result.style.display = 'block';
+
+        setTimeout(() => {
+            result.style.display = 'none';
+        }, 5000);
+    }
+    </script>
+
+    <style>
+    .smtp-fields {
+        transition: opacity 0.3s;
+    }
+
+    .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .toggle-input {
+        width: 50px;
+        height: 26px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .col-md-8 {
+        flex: 0 0 66.666%;
+    }
+
+    .col-md-4 {
+        flex: 0 0 33.333%;
+    }
+
+    .template-list {
+        display: grid;
+        gap: 15px;
+    }
+
+    .template-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+
+    .template-info strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .template-info p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    </style>
+</body>
+</html>
+{{end}}

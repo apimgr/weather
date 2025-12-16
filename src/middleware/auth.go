@@ -70,7 +70,7 @@ func AuthMiddleware(db *sql.DB, required bool) gin.HandlerFunc {
 			// Check if request is from browser or API
 			acceptHeader := c.GetHeader("Accept")
 			if strings.Contains(acceptHeader, "text/html") {
-				c.Redirect(http.StatusFound, "/login")
+				c.Redirect(http.StatusFound, "/auth/login")
 				c.Abort()
 				return
 			}
@@ -164,16 +164,16 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 
 		// Skip this middleware for /admin routes, setup routes, API routes, static files, and auth routes
 		if strings.HasPrefix(path, "/admin") ||
-		   strings.HasPrefix(path, "/setup") ||
-		   strings.HasPrefix(path, "/user/setup") ||
-		   strings.HasPrefix(path, "/api") ||
-		   strings.HasPrefix(path, "/static") ||
-		   strings.HasPrefix(path, "/login") ||
-		   strings.HasPrefix(path, "/logout") ||
-		   strings.HasPrefix(path, "/register") ||
-		   strings.HasPrefix(path, "/healthz") ||
-		   strings.HasPrefix(path, "/debug") ||
-		   strings.HasPrefix(path, "/docs") {
+			strings.HasPrefix(path, "/setup") ||
+			strings.HasPrefix(path, "/user/setup") ||
+			strings.HasPrefix(path, "/api") ||
+			strings.HasPrefix(path, "/static") ||
+			strings.HasPrefix(path, "/login") ||
+			strings.HasPrefix(path, "/logout") ||
+			strings.HasPrefix(path, "/register") ||
+			strings.HasPrefix(path, "/healthz") ||
+			strings.HasPrefix(path, "/debug") ||
+			strings.HasPrefix(path, "/docs") {
 			c.Next()
 			return
 		}

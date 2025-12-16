@@ -1,0 +1,610 @@
+{{define "admin/admin-database.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="/static/css/template-overrides.css">
+</head>
+<body>
+    {{template "components/admin-header.tmpl" .}}
+
+    <div class="admin-container">
+        {{template "components/admin-sidebar.tmpl" .}}
+
+        <main class="admin-content" role="main">
+            <div class="content-header">
+                <h1>🗄️ Database & Cache Management</h1>
+                <p class="subtitle">Optimize database performance and manage caching</p>
+            </div>
+
+            <!-- Database Status Section -->
+            <section class="admin-card" aria-labelledby="db-status-heading">
+                <div class="card-header">
+                    <h2 id="db-status-heading">Database Status</h2>
+                    <p class="card-description">Current database connection and statistics</p>
+                </div>
+                <div class="card-body">
+                    <div id="db-stats" class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Connection Status</div>
+                            <div class="stat-value" id="db-status">
+                                <span class="loading">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Database Type</div>
+                            <div class="stat-value" id="db-type">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Database Size</div>
+                            <div class="stat-value" id="db-size">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Tables</div>
+                            <div class="stat-value" id="db-tables">-</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="refreshStats()" aria-label="Refresh database statistics">
+                        🔄 Refresh Stats
+                    </button>
+                </div>
+            </section>
+
+            <!-- Database Optimization Section -->
+            <section class="admin-card" aria-labelledby="db-optimize-heading">
+                <div class="card-header">
+                    <h2 id="db-optimize-heading">Database Optimization</h2>
+                    <p class="card-description">Improve database performance with optimization tools</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="status">
+                        <strong>Note:</strong> These operations may take a few seconds depending on database size. They are safe to run on a live database.
+                    </div>
+
+                    <div class="optimization-actions">
+                        <div class="action-card">
+                            <div class="action-info">
+                                <h3>Optimize Database</h3>
+                                <p>Defragment tables and rebuild indexes for better performance</p>
+                                <ul>
+                                    <li>Reclaims unused space</li>
+                                    <li>Improves query speed</li>
+                                    <li>Rebuilds table statistics</li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-primary" id="optimize-btn" onclick="optimizeDatabase()" aria-label="Optimize database">
+                                ⚡ Optimize Now
+                            </button>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-info">
+                                <h3>Vacuum Database (SQLite)</h3>
+                                <p>Compact the database file and free unused space</p>
+                                <ul>
+                                    <li>Reduces file size</li>
+                                    <li>Improves disk I/O</li>
+                                    <li>Cleans deleted data</li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-primary" id="vacuum-btn" onclick="vacuumDatabase()" aria-label="Vacuum database">
+                                🧹 Vacuum Now
+                            </button>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-info">
+                                <h3>Test Connection</h3>
+                                <p>Verify database connectivity and performance</p>
+                                <ul>
+                                    <li>Tests read/write access</li>
+                                    <li>Measures response time</li>
+                                    <li>Validates configuration</li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-secondary" id="test-btn" onclick="testConnection()" aria-label="Test database connection">
+                                🔍 Test Connection
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="operation-result" class="alert" style="display: none; margin-top: 20px;" role="status" aria-live="polite"></div>
+                </div>
+            </section>
+
+            <!-- Cache Management Section -->
+            <section class="admin-card" aria-labelledby="cache-heading">
+                <div class="card-header">
+                    <h2 id="cache-heading">Cache Management</h2>
+                    <p class="card-description">Configure and manage application caching (Redis/Valkey)</p>
+                </div>
+                <div class="card-body">
+                    <div class="cache-status">
+                        <div class="stat-item">
+                            <div class="stat-label">Cache Status</div>
+                            <div class="stat-value" id="cache-status">
+                                <span class="loading">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Cache Type</div>
+                            <div class="stat-value" id="cache-type">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Hit Rate</div>
+                            <div class="stat-value" id="cache-hitrate">-</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" role="status" style="margin: 20px 0;">
+                        <strong>Cache Configuration:</strong> Cache is automatically enabled if Redis or Valkey is detected. Configure via environment variables:
+                        <code>REDIS_HOST</code>, <code>REDIS_PORT</code>, <code>REDIS_PASSWORD</code>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-warning" id="clear-cache-btn" onclick="clearCache()" aria-label="Clear all cached data">
+                            🗑️ Clear All Cache
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshCacheStats()" aria-label="Refresh cache statistics">
+                            🔄 Refresh Cache Stats
+                        </button>
+                    </div>
+
+                    <div id="cache-result" class="alert" style="display: none; margin-top: 20px;" role="status" aria-live="polite"></div>
+                </div>
+            </section>
+
+            <!-- Database Settings Section -->
+            <section class="admin-card" aria-labelledby="db-settings-heading">
+                <div class="card-header">
+                    <h2 id="db-settings-heading">Database Settings</h2>
+                    <p class="card-description">Configure database behavior</p>
+                </div>
+                <div class="card-body">
+                    <form id="db-settings-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="db_connection_pool">Connection Pool Size</label>
+                            <input
+                                type="number"
+                                id="db_connection_pool"
+                                name="database.pool_size"
+                                class="form-control"
+                                min="1"
+                                max="100"
+                                placeholder="25"
+                                aria-describedby="db_connection_pool_help"
+                            >
+                            <small id="db_connection_pool_help" class="form-text">
+                                Maximum number of database connections (default: 25). Higher values support more concurrent requests.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="db_timeout">Query Timeout (seconds)</label>
+                            <input
+                                type="number"
+                                id="db_timeout"
+                                name="database.timeout"
+                                class="form-control"
+                                min="1"
+                                max="300"
+                                placeholder="30"
+                                aria-describedby="db_timeout_help"
+                            >
+                            <small id="db_timeout_help" class="form-text">
+                                Maximum time to wait for a query to complete (default: 30 seconds)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input
+                                    type="checkbox"
+                                    id="db_auto_optimize"
+                                    name="database.auto_optimize"
+                                    class="toggle-input"
+                                    aria-describedby="db_auto_optimize_help"
+                                >
+                                <span class="toggle-slider"></span>
+                                Enable Auto-Optimization
+                            </label>
+                            <small id="db_auto_optimize_help" class="form-text">
+                                Automatically optimize database weekly during low-traffic periods
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" aria-label="Save database settings">
+                            💾 Save Settings
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    // Load stats and settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDatabaseStats();
+        loadCacheStats();
+        loadSettings();
+    });
+
+    async function loadDatabaseStats() {
+        try {
+            const response = await fetch('/api/v1/admin/stats');
+            const data = await response.json();
+
+            if (data.database) {
+                document.getElementById('db-status').innerHTML = '<span class="badge badge-success">✅ Connected</span>';
+                document.getElementById('db-type').textContent = data.database.type || 'SQLite';
+                document.getElementById('db-size').textContent = formatBytes(data.database.size || 0);
+                document.getElementById('db-tables').textContent = data.database.tables || '0';
+            } else {
+                document.getElementById('db-status').innerHTML = '<span class="badge badge-danger">❌ Error</span>';
+            }
+        } catch (error) {
+            console.error('Failed to load database stats:', error);
+            document.getElementById('db-status').innerHTML = '<span class="badge badge-danger">❌ Error</span>';
+        }
+    }
+
+    async function loadCacheStats() {
+        try {
+            const response = await fetch('/api/v1/admin/stats');
+            const data = await response.json();
+
+            if (data.cache && data.cache.enabled) {
+                document.getElementById('cache-status').innerHTML = '<span class="badge badge-success">✅ Enabled</span>';
+                document.getElementById('cache-type').textContent = data.cache.type || 'Redis';
+                document.getElementById('cache-hitrate').textContent = (data.cache.hit_rate || 0) + '%';
+            } else {
+                document.getElementById('cache-status').innerHTML = '<span class="badge badge-secondary">⚪ Disabled</span>';
+                document.getElementById('cache-type').textContent = 'None';
+                document.getElementById('cache-hitrate').textContent = 'N/A';
+            }
+        } catch (error) {
+            console.error('Failed to load cache stats:', error);
+        }
+    }
+
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/v1/admin/settings/all');
+            const data = await response.json();
+
+            if (data.settings) {
+                for (const [key, setting] of Object.entries(data.settings)) {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            input.checked = setting.value === 'true';
+                        } else {
+                            input.value = setting.value || '';
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+    }
+
+    async function optimizeDatabase() {
+        const btn = document.getElementById('optimize-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Optimizing...';
+
+        try {
+            const response = await fetch('/api/v1/admin/database/optimize', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showOperationResult('✅ Database optimized successfully! Performance improved.', 'success');
+                refreshStats();
+            } else {
+                throw new Error(data.error?.message || 'Optimization failed');
+            }
+        } catch (error) {
+            showOperationResult('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '⚡ Optimize Now';
+        }
+    }
+
+    async function vacuumDatabase() {
+        const btn = document.getElementById('vacuum-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Vacuuming...';
+
+        try {
+            const response = await fetch('/api/v1/admin/database/vacuum', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showOperationResult('✅ Database vacuumed successfully! Space reclaimed.', 'success');
+                refreshStats();
+            } else {
+                throw new Error(data.error?.message || 'Vacuum failed');
+            }
+        } catch (error) {
+            showOperationResult('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🧹 Vacuum Now';
+        }
+    }
+
+    async function testConnection() {
+        const btn = document.getElementById('test-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Testing...';
+
+        try {
+            const response = await fetch('/api/v1/admin/database/test', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showOperationResult(`✅ Connection test passed! Response time: ${data.response_time || 'N/A'}`, 'success');
+            } else {
+                throw new Error(data.error?.message || 'Connection test failed');
+            }
+        } catch (error) {
+            showOperationResult('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔍 Test Connection';
+        }
+    }
+
+    async function clearCache() {
+        if (!confirm('Clear all cached data? This will temporarily slow down the application until cache rebuilds.')) {
+            return;
+        }
+
+        const btn = document.getElementById('clear-cache-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Clearing...';
+
+        try {
+            const response = await fetch('/api/v1/admin/cache/clear', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showCacheResult('✅ Cache cleared successfully!', 'success');
+                refreshCacheStats();
+            } else {
+                throw new Error(data.error?.message || 'Failed to clear cache');
+            }
+        } catch (error) {
+            showCacheResult('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🗑️ Clear All Cache';
+        }
+    }
+
+    function refreshStats() {
+        loadDatabaseStats();
+    }
+
+    function refreshCacheStats() {
+        loadCacheStats();
+    }
+
+    // Settings form submission
+    document.getElementById('db-settings-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const settings = {};
+
+        for (const [key, value] of formData.entries()) {
+            settings[key] = value;
+        }
+
+        settings['database.auto_optimize'] = document.getElementById('db_auto_optimize').checked ? 'true' : 'false';
+
+        try {
+            const response = await fetch('/api/v1/admin/settings/bulk', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ settings })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showNotification('Database settings saved successfully', 'success');
+            } else {
+                throw new Error(data.error?.message || 'Failed to save settings');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    });
+
+    function showOperationResult(message, type) {
+        const result = document.getElementById('operation-result');
+        result.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        result.textContent = message;
+        result.style.display = 'block';
+
+        setTimeout(() => {
+            result.style.display = 'none';
+        }, 5000);
+    }
+
+    function showCacheResult(message, type) {
+        const result = document.getElementById('cache-result');
+        result.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        result.textContent = message;
+        result.style.display = 'block';
+
+        setTimeout(() => {
+            result.style.display = 'none';
+        }, 5000);
+    }
+
+    function showNotification(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass}`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 4000);
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    </script>
+
+    <style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .loading {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .badge-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .optimization-actions {
+        display: grid;
+        gap: 20px;
+        margin-top: 15px;
+    }
+
+    .action-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+
+    .action-info h3 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+    }
+
+    .action-info p {
+        margin: 0 0 10px 0;
+        color: #666;
+    }
+
+    .action-info ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .cache-status {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .toggle-input {
+        width: 50px;
+        height: 26px;
+    }
+    </style>
+</body>
+</html>
+{{end}}
