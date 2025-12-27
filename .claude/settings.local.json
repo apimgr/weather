@@ -68,7 +68,11 @@
       "Bash(git -C /root/Projects/github/apimgr/weather log --oneline)",
       "Bash(/tmp/restructure_weather.sh)",
       "Bash(/dev/null -exec sed -i 's|github.com/apimgr/weather/src/handlers|github.com/apimgr/weather/src/server/handler|g; s|github.com/apimgr/weather/src/models|github.com/apimgr/weather/src/server/model|g; s|github.com/apimgr/weather/src/services|github.com/apimgr/weather/src/server/service|g; s|github.com/apimgr/weather/src/middleware|github.com/apimgr/weather/src/server/middleware|g' {} ;)",
-      "Bash(git -C /root/Projects/github/apimgr/weather status --short)"
+      "Bash(git -C /root/Projects/github/apimgr/weather status --short)",
+      "Bash(if [ -f COMMIT_MESS ])",
+      "Bash(then mv COMMIT_MESS .git/COMMIT_MESS)",
+      "Bash(else echo \"COMMIT_MESS not found in root\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

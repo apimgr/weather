@@ -506,9 +506,166 @@ func SaveDatabaseSettings(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement actual database settings update
+	// Get database from context
+	db, exists := c.Get("db")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
+			Success: false,
+			Error:   "Database connection not available",
+		})
+		return
+	}
+
+	settingsModel := &models.SettingsModel{DB: db.(*sql.DB)}
+
+	// Validate driver value
+	if driver, ok := settings["database.driver"].(string); ok {
+		validDrivers := []string{"file", "sqlite", "postgres", "mysql", "mariadb", "mssql", "mongodb"}
+		isValid := false
+		for _, valid := range validDrivers {
+			if driver == valid {
+				isValid = true
+				break
+			}
+		}
+		if !isValid {
+			c.JSON(http.StatusBadRequest, AdminAPIResponse{
+				Success: false,
+				Error:   "Invalid database driver",
+			})
+			return
+		}
+
+		// Validate port if provided
+		if port, ok := settings["database.port"]; ok {
+			var portNum int
+			switch v := port.(type) {
+			case float64:
+				portNum = int(v)
+			case string:
+				fmt.Sscanf(v, "%d", &portNum)
+			}
+			if portNum < 1 || portNum > 65535 {
+				c.JSON(http.StatusBadRequest, AdminAPIResponse{
+					Success: false,
+					Error:   "Port must be between 1 and 65535",
+				})
+				return
+			}
+		}
+
+		// For remote databases, validate required fields
+		if driver != "file" && driver != "sqlite" {
+			requiredFields := []string{"database.host", "database.port", "database.name"}
+			for _, field := range requiredFields {
+				if val, ok := settings[field]; !ok || val == "" {
+					c.JSON(http.StatusBadRequest, AdminAPIResponse{
+						Success: false,
+						Error:   fmt.Sprintf("Field %s is required for remote databases", field),
+					})
+					return
+				}
+			}
+		}
+	}
+
+	// Save each setting to database
+	for key, value := range settings {
+		var err error
+		switch v := value.(type) {
+		case string:
+			err = settingsModel.SetString(key, v)
+		case float64:
+			err = settingsModel.SetInt(key, int(v))
+		case bool:
+			err = settingsModel.SetBool(key, v)
+		default:
+			err = settingsModel.SetJSON(key, v)
+		}
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, AdminAPIResponse{
+				Success: false,
+				Error:   fmt.Sprintf("Failed to save setting %s: %v", key, err),
+			})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, AdminAPIResponse{
 		Success: true,
-		Message: "Database settings saved successfully",
+		Message: "Database settings saved successfully. Restart the server for changes to take effect.",
+	})
+}
+
+// TestDatabaseConfigConnection tests a database configuration without saving it
+func TestDatabaseConfigConnection(c *gin.Context) {
+	var config struct {
+		Driver   string `json:"driver"`
+		Host     string `json:"host"`
+		Port     int    `json:"port"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		SSLMode  string `json:"sslmode"`
+	}
+
+	if err := c.ShouldBindJSON(&config); err != nil {
+		c.JSON(http.StatusBadRequest, AdminAPIResponse{
+			Success: false,
+			Error:   "Invalid request data",
+		})
+		return
+	}
+
+	// For file and sqlite, just return success
+	if config.Driver == "file" || config.Driver == "sqlite" {
+		c.JSON(http.StatusOK, AdminAPIResponse{
+			Success: true,
+			Message: "Local database configuration is valid",
+			Data: map[string]interface{}{
+				"status": "valid",
+			},
+		})
+		return
+	}
+
+	// TODO: Implement actual connection test for remote databases
+	// This would require importing the appropriate database drivers
+	// and attempting to establish a connection
+
+	// For now, validate that required fields are present
+	if config.Host == "" {
+		c.JSON(http.StatusBadRequest, AdminAPIResponse{
+			Success: false,
+			Error:   "Host is required for remote databases",
+		})
+		return
+	}
+
+	if config.Port < 1 || config.Port > 65535 {
+		c.JSON(http.StatusBadRequest, AdminAPIResponse{
+			Success: false,
+			Error:   "Port must be between 1 and 65535",
+		})
+		return
+	}
+
+	if config.Name == "" {
+		c.JSON(http.StatusBadRequest, AdminAPIResponse{
+			Success: false,
+			Error:   "Database name is required",
+		})
+		return
+	}
+
+	// Placeholder response - in production, this would test the actual connection
+	c.JSON(http.StatusOK, AdminAPIResponse{
+		Success: true,
+		Message: "Database configuration validated successfully",
+		Data: map[string]interface{}{
+			"status": "validated",
+			"note":   "Connection test not yet implemented for remote databases",
+		},
 	})
 }

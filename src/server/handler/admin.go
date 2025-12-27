@@ -607,6 +607,12 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	settings["server_title"] = settingsModel.GetString("server.title", "Weather Service")
 	settings["server_tagline"] = settingsModel.GetString("server.tagline", "Your personal weather dashboard")
 	settings["server_description"] = settingsModel.GetString("server.description", "A comprehensive platform for weather forecasts, moon phases, earthquakes, and hurricane tracking.")
+	settings["server_port"] = settingsModel.GetInt("server.port", 64580)
+	settings["server_mode"] = settingsModel.GetString("server.mode", "production")
+	settings["server_fqdn"] = settingsModel.GetString("server.fqdn", "")
+	settings["server_address"] = settingsModel.GetString("server.address", "[::]")
+	settings["server_daemonize"] = settingsModel.GetBool("server.daemonize", false)
+	settings["server_pidfile"] = settingsModel.GetBool("server.pidfile", true)
 	settings["server_http_port"] = settingsModel.GetInt("server.http_port", 3000)
 	settings["server_https_port"] = settingsModel.GetInt("server.https_port", 0)
 	settings["server_timezone"] = settingsModel.GetString("server.timezone", "America/New_York")
@@ -638,6 +644,60 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	settings["logging_audit_log"] = settingsModel.GetBool("logging.audit_log", true)
 	settings["logging_rotation_days"] = settingsModel.GetInt("logging.rotation_days", 30)
 
+	// SMTP settings
+	settings["smtp_enabled"] = settingsModel.GetBool("smtp.enabled", false)
+	settings["smtp_host"] = settingsModel.GetString("smtp.host", "")
+	settings["smtp_port"] = settingsModel.GetInt("smtp.port", 587)
+	settings["smtp_username"] = settingsModel.GetString("smtp.username", "")
+	settings["smtp_password"] = settingsModel.GetString("smtp.password", "")
+	settings["smtp_from_address"] = settingsModel.GetString("smtp.from_address", "")
+	settings["smtp_from_name"] = settingsModel.GetString("smtp.from_name", "Weather Service")
+	settings["smtp_use_tls"] = settingsModel.GetBool("smtp.use_tls", true)
+
+	// Rate limiting settings
+	settings["rate_limit_enabled"] = settingsModel.GetBool("rate_limit.enabled", true)
+	settings["rate_limit_global"] = settingsModel.GetInt("rate_limit.global", 100)
+	settings["rate_limit_api"] = settingsModel.GetInt("rate_limit.api", 120)
+	settings["rate_limit_admin"] = settingsModel.GetInt("rate_limit.admin", 300)
+	settings["rate_limit_window"] = settingsModel.GetInt("rate_limit.window", 900)
+
+	// SSL/TLS settings
+	settings["ssl_enabled"] = settingsModel.GetBool("ssl.enabled", false)
+	settings["ssl_cert_file"] = settingsModel.GetString("ssl.cert_file", "")
+	settings["ssl_key_file"] = settingsModel.GetString("ssl.key_file", "")
+	settings["ssl_acme_enabled"] = settingsModel.GetBool("ssl.acme_enabled", false)
+	settings["ssl_acme_email"] = settingsModel.GetString("ssl.acme_email", "")
+	settings["ssl_acme_provider"] = settingsModel.GetString("ssl.acme_provider", "letsencrypt")
+
+	// Weather settings
+	settings["weather_refresh_interval"] = settingsModel.GetInt("weather.refresh_interval", 1800)
+	settings["weather_default_units"] = settingsModel.GetString("weather.default_units", "auto")
+	settings["weather_cache_enabled"] = settingsModel.GetBool("weather.cache_enabled", true)
+	settings["alerts_enabled"] = settingsModel.GetBool("alerts.enabled", true)
+	settings["alerts_check_interval"] = settingsModel.GetInt("alerts.check_interval", 900)
+
+	// Notifications settings
+	settings["notifications_enabled"] = settingsModel.GetBool("notifications.enabled", true)
+	settings["notifications_queue_workers"] = settingsModel.GetInt("notifications.queue_workers", 4)
+	settings["notifications_retry_max"] = settingsModel.GetInt("notifications.retry_max", 3)
+	settings["notifications_retry_backoff"] = settingsModel.GetString("notifications.retry_backoff", "exponential")
+
+	// GeoIP settings
+	settings["geoip_enabled"] = settingsModel.GetBool("geoip.enabled", true)
+	settings["geoip_update_interval"] = settingsModel.GetInt("geoip.update_interval", 604800)
+
+	// CORS settings
+	settings["cors_enabled"] = settingsModel.GetBool("cors.enabled", true)
+	settings["cors_allowed_origins"] = settingsModel.GetString("cors.allowed_origins", "*")
+	settings["cors_allow_credentials"] = settingsModel.GetBool("cors.allow_credentials", true)
+	settings["cors_max_age"] = settingsModel.GetInt("cors.max_age", 43200)
+
+	// Scheduler settings
+	settings["scheduler_enabled"] = settingsModel.GetBool("scheduler.enabled", true)
+	settings["scheduler_cleanup_sessions_interval"] = settingsModel.GetInt("scheduler.cleanup_sessions_interval", 3600)
+	settings["scheduler_cleanup_audit_logs_days"] = settingsModel.GetInt("scheduler.cleanup_audit_logs_days", 90)
+	settings["scheduler_cleanup_notifications_days"] = settingsModel.GetInt("scheduler.cleanup_notifications_days", 30)
+
 	// Tor hidden service settings (TEMPLATE.md PART 32)
 	settings["tor_enabled"] = settingsModel.GetBool("tor.enabled", true)
 	settings["tor_onion_address"] = settingsModel.GetString("tor.onion_address", "")
@@ -645,9 +705,25 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 	settings["tor_control_port"] = settingsModel.GetInt("tor.control_port", 9051)
 	settings["tor_data_dir"] = settingsModel.GetString("tor.data_dir", "")
 
+	// Historical weather settings (using Settings struct format for template compatibility)
+	type HistorySettings struct {
+		HistoryEnabled      bool
+		HistoryDefaultYears int
+		HistoryMinYears     int
+		HistoryMaxYears     int
+	}
+
+	historySettings := HistorySettings{
+		HistoryEnabled:      settingsModel.GetBool("history.enabled", true),
+		HistoryDefaultYears: settingsModel.GetInt("history.default_years", 10),
+		HistoryMinYears:     settingsModel.GetInt("history.min_years", 5),
+		HistoryMaxYears:     settingsModel.GetInt("history.max_years", 50),
+	}
+
 	c.HTML(http.StatusOK, "admin/admin-settings.tmpl", gin.H{
 		"title":    "Server Settings",
 		"user":     user,
 		"settings": settings,
+		"Settings": historySettings,
 	})
 }

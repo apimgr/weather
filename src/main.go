@@ -1209,13 +1209,21 @@ func main() {
 	weatherAPI.Use(middleware.OptionalAuth(db.DB))
 	weatherAPI.Use(middleware.APIRateLimitMiddleware())
 	{
+		// Weather endpoints per AI.md PART 36
 		weatherAPI.GET("/weather", apiHandler.GetWeather)
 		weatherAPI.GET("/weather/:location", apiHandler.GetWeatherByLocation)
+		weatherAPI.GET("/weather/forecast", apiHandler.GetForecast)
+		weatherAPI.GET("/weather/location", apiHandler.GetLocation)
+		weatherAPI.GET("/weather/search", apiHandler.SearchLocations)
+
+		// Backwards compatibility - old paths (deprecated)
 		weatherAPI.GET("/forecast", apiHandler.GetForecast)
 		weatherAPI.GET("/forecast/:location", apiHandler.GetForecastByLocation)
 		weatherAPI.GET("/search", apiHandler.SearchLocations)
-		weatherAPI.GET("/ip", apiHandler.GetIP)
 		weatherAPI.GET("/location", apiHandler.GetLocation)
+
+		// Additional endpoints
+		weatherAPI.GET("/ip", apiHandler.GetIP)
 		weatherAPI.GET("/docs", apiHandler.GetDocsJSON)
 		weatherAPI.GET("/earthquakes", earthquakeHandler.HandleEarthquakeAPI)
 		// Backwards compat
@@ -1441,6 +1449,7 @@ func main() {
 
 		// Database management endpoints
 		adminAPI.POST("/database/test", handlers.TestDatabaseConnection)
+		adminAPI.POST("/database/test-config", handlers.TestDatabaseConfigConnection)
 		adminAPI.POST("/database/optimize", handlers.OptimizeDatabase)
 		adminAPI.POST("/database/vacuum", handlers.VacuumDatabase)
 		adminAPI.POST("/cache/clear", handlers.ClearCache)

@@ -107,6 +107,118 @@
         <!-- Server Tab -->
         <div id="tab-server" class="tab-content active" role="tabpanel" aria-labelledby="tab-server">
             <div class="card">
+                <h2>General</h2>
+                <form id="form-server-general"
+                      onsubmit="saveSettings(event, 'server-general')"
+                      role="form"
+                      aria-label="Server general settings">
+                    <div class="form-group">
+                        <label for="server_port">Server Port</label>
+                        <input type="number"
+                               id="server_port"
+                               name="server.port"
+                               value="{{.settings.server_port}}"
+                               min="1"
+                               max="65535"
+                               aria-label="Server port number"
+                               aria-required="true"
+                               aria-describedby="server_port_help"
+                               title="The port the server listens on (1-65535) - changing this requires a server restart">
+                        <small id="server_port_help">Port number for server connections ⚠️ Requires restart</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="server_mode">Server Mode</label>
+                        <select id="server_mode"
+                                name="server.mode"
+                                aria-label="Server mode"
+                                aria-describedby="server_mode_help"
+                                title="Production enforces strict host validation, development allows more permissive settings">
+                            <option value="production" {{if eq .settings.server_mode "production"}}selected{{end}}>Production</option>
+                            <option value="development" {{if eq .settings.server_mode "development"}}selected{{end}}>Development</option>
+                        </select>
+                        <small id="server_mode_help">Production enforces strict host validation ⚠️ Requires restart</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="server_fqdn">FQDN (Fully Qualified Domain Name)</label>
+                        <input type="text"
+                               id="server_fqdn"
+                               name="server.fqdn"
+                               value="{{.settings.server_fqdn}}"
+                               placeholder="api.example.com"
+                               aria-label="Fully qualified domain name"
+                               aria-describedby="server_fqdn_help"
+                               title="Fully qualified domain name for the server (auto-detected if empty)">
+                        <small id="server_fqdn_help">Fully qualified domain name (auto-detected if empty)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="server_address">Listen Address</label>
+                        <input type="text"
+                               id="server_address"
+                               name="server.address"
+                               value="{{.settings.server_address}}"
+                               placeholder="[::]"
+                               aria-label="Listen address"
+                               aria-describedby="server_address_help"
+                               title="IP address to bind to - [::] for all IPv4/IPv6, 0.0.0.0 for IPv4 only">
+                        <small id="server_address_help">Listen address ([::] for all interfaces) ⚠️ Requires restart</small>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary"
+                            aria-label="Save general settings"
+                            title="Save changes to general server settings">Save General Settings</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Process</h2>
+                <form id="form-server-process"
+                      onsubmit="saveSettings(event, 'server-process')"
+                      role="form"
+                      aria-label="Server process settings">
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox"
+                                   name="server.daemonize"
+                                   {{if .settings.server_daemonize}}checked{{end}}
+                                   aria-label="Daemonize server process"
+                                   aria-describedby="server_daemonize_help"
+                                   title="Detach from terminal on start - for manual start only, not for systemd/docker"
+                                   role="switch"
+                                   aria-checked="{{if .settings.server_daemonize}}true{{else}}false{{end}}">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Daemonize</span>
+                        </label>
+                        <small id="server_daemonize_help">Detach from terminal on start (for manual start) ⚠️ Requires restart. Don't use with systemd/docker.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox"
+                                   name="server.pidfile"
+                                   {{if .settings.server_pidfile}}checked{{end}}
+                                   aria-label="Create PID file"
+                                   aria-describedby="server_pidfile_help"
+                                   title="Create a PID file for process management"
+                                   role="switch"
+                                   aria-checked="{{if .settings.server_pidfile}}true{{else}}false{{end}}">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Create PID File</span>
+                        </label>
+                        <small id="server_pidfile_help">Create PID file for process management ⚠️ Requires restart</small>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary"
+                            aria-label="Save process settings"
+                            title="Save changes to process management settings">Save Process Settings</button>
+                </form>
+            </div>
+
+            <div class="card">
                 <h2>Server Branding</h2>
                 <form id="form-server-branding"
                       onsubmit="saveSettings(event, 'server-branding')"

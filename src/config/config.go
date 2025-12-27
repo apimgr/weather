@@ -10,10 +10,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// WeatherConfig represents weather-specific configuration per AI.md PART 36
+type WeatherConfig struct {
+	MultiuserEnabled       bool `yaml:"multiuser_enabled"`        // Multi-user support enabled by default
+	OpenRegistration       bool `yaml:"open_registration"`        // Open registration enabled by default
+	ForecastDays           int  `yaml:"forecast_days"`            // Number of days for forecast
+	UpdateInterval         int  `yaml:"update_interval"`          // Weather data update interval (seconds)
+	LocationSearchEnabled  bool `yaml:"location_search_enabled"`  // Enable location-based weather queries
+}
+
 // Config represents the application configuration from server.yml per AI.md PART 4
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	Web    WebConfig    `yaml:"web"`
+	Server  ServerConfig  `yaml:"server"`
+	Web     WebConfig     `yaml:"web"`
+	Weather WeatherConfig `yaml:"weather"` // Weather-specific settings per AI.md PART 36
 }
 
 // ServerConfig represents server-specific configuration per AI.md PART 4
@@ -210,6 +220,13 @@ func LoadConfig() (*Config, error) {
 
 	// Default config with sane defaults per AI.md PART 4
 	cfg := &Config{
+		Weather: WeatherConfig{
+			MultiuserEnabled:      true,  // Multi-user support enabled by default per AI.md PART 36
+			OpenRegistration:      true,  // Open registration enabled by default per AI.md PART 36
+			ForecastDays:          7,     // 7-day forecast by default per AI.md PART 36
+			UpdateInterval:        3600,  // 3600 seconds (1 hour) update interval per AI.md PART 36
+			LocationSearchEnabled: true,  // Location search enabled by default per AI.md PART 36
+		},
 		Server: ServerConfig{
 			Port:      randomPort(), // Random 64xxx on first run
 			FQDN:      hostname,

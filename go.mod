@@ -15,7 +15,7 @@ require (
 	github.com/gorilla/websocket v1.5.1
 	github.com/graphql-go/graphql v0.8.1
 	github.com/graphql-go/handler v0.2.4
-	github.com/lib/pq v1.10.9
+	github.com/jackc/pgx/v5 v5.7.2
 	github.com/microsoft/go-mssqldb v1.9.3
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/oschwald/geoip2-golang v1.13.0

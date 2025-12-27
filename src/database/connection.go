@@ -7,7 +7,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/microsoft/go-mssqldb"
 	_ "modernc.org/sqlite"
 )
@@ -40,7 +40,7 @@ func InitDBWithConfig(config *DatabaseConfig) (*DB, error) {
 		dsn = config.Database
 
 	case "postgres", "postgresql":
-		driver = "postgres"
+		driver = "pgx"
 		sslMode := config.SSLMode
 		if sslMode == "" {
 			sslMode = "disable"

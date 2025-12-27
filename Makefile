@@ -45,19 +45,17 @@ PLATFORMS = \
 # TEMPLATE.md: Makefile MUST have exactly 4 targets (build, release, docker, test)
 build:
 	@echo "🔨 Building $(PROJECT) v$(VERSION)"
-	@# Generate Swagger documentation if swag is installed
-	@if command -v swag >/dev/null 2>&1; then \
-		echo "  📚 Generating Swagger documentation..."; \
-		swag init -g src/main.go -o docs --parseDependency --parseInternal 2>/dev/null || echo "  ⚠️  Swagger generation failed (continuing build)"; \
-	fi
-	@# Generate GraphQL code (TEMPLATE.md Part 14 requirement)
-	@if command -v gqlgen >/dev/null 2>&1; then \
-		echo "  🔮 Generating GraphQL code..."; \
-		gqlgen generate 2>/dev/null || echo "  ⚠️  GraphQL generation failed (continuing build)"; \
-	else \
-		echo "  🔮 Generating GraphQL code (using go run)..."; \
-		go run github.com/99designs/gqlgen generate 2>/dev/null || echo "  ⚠️  GraphQL generation failed (continuing build)"; \
-	fi
+	@# Generate Swagger documentation (via Docker per AI.md PART 13 line 9162)
+	@echo "  📚 Generating Swagger documentation..."
+	@docker run --rm -v $(PWD):/build -w /build golang:alpine sh -c \
+		"go install github.com/swaggo/swag/cmd/swag@latest && \
+		swag init -g src/main.go -o docs --parseDependency --parseInternal" \
+		2>/dev/null || echo "  ⚠️  Swagger generation failed (continuing build)"
+	@# Generate GraphQL code (via Docker per AI.md PART 13 line 9162)
+	@echo "  🔮 Generating GraphQL code..."
+	@docker run --rm -v $(PWD):/build -w /build golang:alpine sh -c \
+		"go run github.com/99designs/gqlgen generate" \
+		2>/dev/null || echo "  ⚠️  GraphQL generation failed (continuing build)"
 	@mkdir -p binaries
 	@# Build server for all platforms
 	@$(foreach platform,$(PLATFORMS), \

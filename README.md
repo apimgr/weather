@@ -241,7 +241,7 @@ TEMP_DIR=/tmp/weather                # Temporary directory (optional)
 
 ### Configuration File
 
-Optional configuration file at `$CONFIG_DIR/weather.yaml`:
+Optional configuration file at `$CONFIG_DIR/server.yml`:
 
 ```yaml
 server:

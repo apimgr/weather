@@ -158,6 +158,171 @@
                 </div>
             </section>
 
+            <!-- Database Configuration Section -->
+            <section class="admin-card" aria-labelledby="db-config-heading">
+                <div class="card-header">
+                    <h2 id="db-config-heading">Database Configuration</h2>
+                    <p class="card-description">Configure database connection settings</p>
+                </div>
+                <div class="card-body">
+                    <form id="db-config-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="db_driver">Driver</label>
+                            <select
+                                id="db_driver"
+                                name="database.driver"
+                                class="form-control"
+                                aria-describedby="db_driver_help"
+                            >
+                                <option value="file">SQLite (file)</option>
+                                <option value="sqlite">SQLite</option>
+                                <option value="postgres">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="mariadb">MariaDB</option>
+                                <option value="mssql">Microsoft SQL Server</option>
+                                <option value="mongodb">MongoDB</option>
+                            </select>
+                            <small id="db_driver_help" class="form-text">
+                                Database type (default: file)
+                            </small>
+                        </div>
+
+                        <div id="remote-db-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="db_host">Host</label>
+                                <input
+                                    type="text"
+                                    id="db_host"
+                                    name="database.host"
+                                    class="form-control"
+                                    placeholder="localhost"
+                                    aria-describedby="db_host_help"
+                                >
+                                <small id="db_host_help" class="form-text">
+                                    Database server hostname or IP address
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="db_port">Port</label>
+                                <input
+                                    type="number"
+                                    id="db_port"
+                                    name="database.port"
+                                    class="form-control"
+                                    min="1"
+                                    max="65535"
+                                    placeholder="5432"
+                                    aria-describedby="db_port_help"
+                                >
+                                <small id="db_port_help" class="form-text">
+                                    Database server port (1-65535)
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="db_name">Database Name</label>
+                                <input
+                                    type="text"
+                                    id="db_name"
+                                    name="database.name"
+                                    class="form-control"
+                                    placeholder="weather"
+                                    aria-describedby="db_name_help"
+                                >
+                                <small id="db_name_help" class="form-text">
+                                    Name of the database to connect to
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="db_username">Username</label>
+                                <input
+                                    type="text"
+                                    id="db_username"
+                                    name="database.username"
+                                    class="form-control"
+                                    placeholder="admin"
+                                    aria-describedby="db_username_help"
+                                >
+                                <small id="db_username_help" class="form-text">
+                                    Database username for authentication
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="db_password">Password</label>
+                                <div style="position: relative;">
+                                    <input
+                                        type="password"
+                                        id="db_password"
+                                        name="database.password"
+                                        class="form-control"
+                                        style="padding-right: 40px;"
+                                        placeholder="Enter password"
+                                        aria-describedby="db_password_help"
+                                    >
+                                    <button
+                                        type="button"
+                                        id="toggle-password"
+                                        class="btn-toggle-password"
+                                        onclick="togglePasswordVisibility()"
+                                        aria-label="Toggle password visibility"
+                                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px;"
+                                    >
+                                        👁️
+                                    </button>
+                                </div>
+                                <small id="db_password_help" class="form-text">
+                                    Database password for authentication
+                                </small>
+                            </div>
+
+                            <div id="postgres-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="db_sslmode">SSL Mode</label>
+                                    <select
+                                        id="db_sslmode"
+                                        name="database.sslmode"
+                                        class="form-control"
+                                        aria-describedby="db_sslmode_help"
+                                    >
+                                        <option value="disable">Disable</option>
+                                        <option value="require">Require</option>
+                                        <option value="verify-ca">Verify CA</option>
+                                        <option value="verify-full">Verify Full</option>
+                                    </select>
+                                    <small id="db_sslmode_help" class="form-text">
+                                        SSL connection mode for PostgreSQL
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="button-group" style="margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" id="test-db-connection-btn" onclick="testDatabaseConnectionConfig()">
+                                🔍 Test Connection
+                            </button>
+                        </div>
+
+                        <div class="alert alert-warning" role="status" style="margin: 20px 0;">
+                            <strong>⚠️ Warning:</strong> Changes to database configuration require a server restart to take effect.
+                        </div>
+
+                        <div id="db-config-result" class="alert" style="display: none; margin-top: 20px;" role="status" aria-live="polite"></div>
+
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary" onclick="cancelDatabaseConfig()">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" aria-label="Save database configuration">
+                                💾 Save Configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
             <!-- Database Settings Section -->
             <section class="admin-card" aria-labelledby="db-settings-heading">
                 <div class="card-header">
@@ -232,6 +397,8 @@
         loadDatabaseStats();
         loadCacheStats();
         loadSettings();
+        loadDatabaseConfig();
+        setupDatabaseDriverListener();
     });
 
     async function loadDatabaseStats() {
@@ -489,6 +656,194 @@
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Database Configuration Functions
+    async function loadDatabaseConfig() {
+        try {
+            const response = await fetch('/api/v1/admin/settings/all');
+            const data = await response.json();
+
+            if (data.settings) {
+                // Load database driver
+                const driver = data.settings['database.driver'] || 'file';
+                document.getElementById('db_driver').value = driver;
+
+                // Load remote database fields
+                document.getElementById('db_host').value = data.settings['database.host'] || '';
+                document.getElementById('db_port').value = data.settings['database.port'] || '';
+                document.getElementById('db_name').value = data.settings['database.name'] || '';
+                document.getElementById('db_username').value = data.settings['database.username'] || '';
+                document.getElementById('db_password').value = data.settings['database.password'] || '';
+                document.getElementById('db_sslmode').value = data.settings['database.sslmode'] || 'disable';
+
+                // Update field visibility based on driver
+                updateDatabaseFieldVisibility(driver);
+            }
+        } catch (error) {
+            console.error('Failed to load database configuration:', error);
+        }
+    }
+
+    function setupDatabaseDriverListener() {
+        const driverSelect = document.getElementById('db_driver');
+        driverSelect.addEventListener('change', function() {
+            updateDatabaseFieldVisibility(this.value);
+        });
+    }
+
+    function updateDatabaseFieldVisibility(driver) {
+        const remoteFields = document.getElementById('remote-db-fields');
+        const postgresFields = document.getElementById('postgres-fields');
+
+        // Show remote fields for all drivers except 'file' and 'sqlite'
+        if (driver === 'file' || driver === 'sqlite') {
+            remoteFields.style.display = 'none';
+            postgresFields.style.display = 'none';
+        } else {
+            remoteFields.style.display = 'block';
+
+            // Show SSL mode only for PostgreSQL
+            if (driver === 'postgres' || driver === 'postgresql') {
+                postgresFields.style.display = 'block';
+            } else {
+                postgresFields.style.display = 'none';
+            }
+        }
+    }
+
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('db_password');
+        const toggleButton = document.getElementById('toggle-password');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleButton.textContent = '👁️‍🗨️';
+        } else {
+            passwordInput.type = 'password';
+            toggleButton.textContent = '👁️';
+        }
+    }
+
+    async function testDatabaseConnectionConfig() {
+        const btn = document.getElementById('test-db-connection-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Testing...';
+
+        try {
+            const driver = document.getElementById('db_driver').value;
+            const config = {
+                driver: driver
+            };
+
+            // Only include remote DB fields if driver is not file/sqlite
+            if (driver !== 'file' && driver !== 'sqlite') {
+                config.host = document.getElementById('db_host').value;
+                config.port = parseInt(document.getElementById('db_port').value);
+                config.name = document.getElementById('db_name').value;
+                config.username = document.getElementById('db_username').value;
+                config.password = document.getElementById('db_password').value;
+
+                if (driver === 'postgres' || driver === 'postgresql') {
+                    config.sslmode = document.getElementById('db_sslmode').value;
+                }
+            }
+
+            const response = await fetch('/api/v1/admin/database/test-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showDatabaseConfigResult('✅ Connection test passed! Database is accessible.', 'success');
+            } else {
+                throw new Error(data.error || 'Connection test failed');
+            }
+        } catch (error) {
+            showDatabaseConfigResult('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔍 Test Connection';
+        }
+    }
+
+    function cancelDatabaseConfig() {
+        // Reload the current configuration
+        loadDatabaseConfig();
+        showDatabaseConfigResult('Configuration changes cancelled', 'info');
+    }
+
+    // Database configuration form submission
+    document.getElementById('db-config-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const driver = document.getElementById('db_driver').value;
+        const settings = {
+            'database.driver': driver
+        };
+
+        // Only include remote DB fields if driver is not file/sqlite
+        if (driver !== 'file' && driver !== 'sqlite') {
+            settings['database.host'] = document.getElementById('db_host').value;
+            settings['database.port'] = document.getElementById('db_port').value;
+            settings['database.name'] = document.getElementById('db_name').value;
+            settings['database.username'] = document.getElementById('db_username').value;
+            settings['database.password'] = document.getElementById('db_password').value;
+
+            if (driver === 'postgres' || driver === 'postgresql') {
+                settings['database.sslmode'] = document.getElementById('db_sslmode').value;
+            }
+
+            // Validate required fields for remote databases
+            if (!settings['database.host']) {
+                showDatabaseConfigResult('❌ Host is required for remote databases', 'error');
+                return;
+            }
+            if (!settings['database.port']) {
+                showDatabaseConfigResult('❌ Port is required for remote databases', 'error');
+                return;
+            }
+            if (!settings['database.name']) {
+                showDatabaseConfigResult('❌ Database name is required for remote databases', 'error');
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch('/api/v1/admin/settings/database', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showDatabaseConfigResult('✅ Database configuration saved successfully! Please restart the server for changes to take effect.', 'success');
+            } else {
+                throw new Error(data.error || 'Failed to save database configuration');
+            }
+        } catch (error) {
+            showDatabaseConfigResult('❌ ' + error.message, 'error');
+        }
+    });
+
+    function showDatabaseConfigResult(message, type) {
+        const result = document.getElementById('db-config-result');
+        result.className = `alert alert-${type === 'success' ? 'success' : type === 'info' ? 'info' : 'danger'}`;
+        result.textContent = message;
+        result.style.display = 'block';
+
+        setTimeout(() => {
+            result.style.display = 'none';
+        }, 5000);
     }
     </script>
 
