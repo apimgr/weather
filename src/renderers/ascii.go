@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"weather-go/src/utils"
+	"github.com/apimgr/weather/src/utils"
 )
 
 // ASCIIRenderer handles ASCII art weather display with terminal formatting
@@ -41,7 +41,8 @@ func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.Rend
 	// Add forecast based on format
 	if params.Days > 0 {
 		lines = append(lines, "")
-		lines = append(lines, "") // Extra spacing before forecast table
+		// Extra spacing before forecast table
+		lines = append(lines, "")
 
 		// If Width is specified, let renderForecastTable handle adaptive sizing
 		// Otherwise, respect params.Days
@@ -54,7 +55,8 @@ func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.Rend
 	} else if params.Days == -1 {
 		// Default: show full forecast
 		lines = append(lines, "")
-		lines = append(lines, "") // Extra spacing before forecast table
+		// Extra spacing before forecast table
+		lines = append(lines, "")
 		lines = append(lines, r.renderForecastTable(weather.Forecast, params)...)
 	}
 
@@ -71,7 +73,8 @@ func (r *ASCIIRenderer) RenderFull(weather *utils.WeatherData, params utils.Rend
 func (r *ASCIIRenderer) renderHeader(location utils.LocationData) string {
 	fullLocation := r.getFullLocationName(location)
 	header := fmt.Sprintf("Weather report: %s", r.capitalizeLocation(fullLocation))
-	return r.colorize(header, "#f1fa8c", true) // Yellow, bold
+	// Yellow, bold
+	return r.colorize(header, "#f1fa8c", true)
 }
 
 // capitalizeLocation capitalizes first letter of each location part
@@ -136,7 +139,8 @@ func (r *ASCIIRenderer) renderCurrentWeatherArt(current utils.CurrentData, param
 	windDir := getWindArrow(current.WindDirection)
 
 	// Determine if it's day or night based on the icon (if available)
-	_ = !strings.Contains(current.Icon, "🌙") // isDay variable for future use
+	// isDay variable for future use
+	_ = !strings.Contains(current.Icon, "🌙")
 
 	// Create current weather display with Dracula colors
 	lines := []string{
@@ -162,7 +166,8 @@ func (r *ASCIIRenderer) renderForecastTable(forecast []utils.ForecastData, param
 	// Also respect params.Days as an upper bound
 	numDays := r.calculateDaysToShow(params.Width, len(forecast))
 	if params.Days > 0 && params.Days < numDays {
-		numDays = params.Days // User explicitly limited days
+		// User explicitly limited days
+		numDays = params.Days
 	}
 	days := forecast
 	if len(days) > numDays {
@@ -265,7 +270,8 @@ func (r *ASCIIRenderer) calculateDaysToShow(termWidth, availableDays int) int {
 
 	// Narrow terminals: show fewer days
 	if termWidth < 80 {
-		return 1 // Very narrow: 1 day only
+		// Very narrow: 1 day only
+		return 1
 	}
 
 	// Medium width: 2 days
@@ -298,7 +304,8 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 	windSpeed := int(math.Round(day.WindSpeed))
 	windDir := getWindArrow(day.WindDirection)
 	precipitation := fmt.Sprintf("%.1f", day.Precipitation)
-	precipProb := 0 // Default if not available
+	// Default if not available
+	precipProb := 0
 
 	description := day.Condition
 
@@ -310,13 +317,20 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 
 		// EXACTLY 7 lines - NEVER change this count or alignment will break!
 		return []string{
-			centerInWidth("", 30), // Line 1: blank for spacing
-			centerInWidth(r.colorize(description, "#8be9fd", false), 30), // Line 2: condition
-			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),    // Line 3: temperature
-			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),    // Line 4: wind
-			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),      // Line 5: visibility
-			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),  // Line 6: precipitation
-			centerInWidth("", 30), // Line 7: blank for spacing
+			// Line 1: blank for spacing
+			centerInWidth("", 30),
+			// Line 2: condition
+			centerInWidth(r.colorize(description, "#8be9fd", false), 30),
+			// Line 3: temperature
+			centerInWidth(r.colorize(tempLine, "#f1fa8c", false), 30),
+			// Line 4: wind
+			centerInWidth(r.colorize(windLine, "#50fa7b", false), 30),
+			// Line 5: visibility
+			centerInWidth(r.colorize("6 mi", "#bd93f9", false), 30),
+			// Line 6: precipitation
+			centerInWidth(r.colorize(precipLine, "#ff79c6", false), 30),
+			// Line 7: blank for spacing
+			centerInWidth("", 30),
 		}
 	}
 
@@ -335,7 +349,8 @@ func (r *ASCIIRenderer) generateDayPeriods(day utils.ForecastData, params utils.
 
 // getColoredWeatherArt returns colored weather ASCII art
 func (r *ASCIIRenderer) getColoredWeatherArt(weatherCode int, noColors bool) []string {
-	baseArt := r.getWeatherArt(weatherCode, true) // isDay is determined from icon
+	// isDay is determined from icon
+	baseArt := r.getWeatherArt(weatherCode, true)
 	artColor := r.getWeatherColor(weatherCode, true)
 
 	if noColors {
@@ -354,27 +369,35 @@ func (r *ASCIIRenderer) getWeatherColor(weatherCode int, isDay bool) string {
 	// Dracula theme colors for different weather conditions
 	if weatherCode == 0 {
 		if isDay {
-			return "#f1fa8c" // Clear: yellow
+			// Clear: yellow
+			return "#f1fa8c"
 		}
-		return "#bd93f9" // Clear night: purple
+		// Clear night: purple
+		return "#bd93f9"
 	}
 	if weatherCode <= 3 {
-		return "#6272a4" // Cloudy: comment gray
+		// Cloudy: comment gray
+		return "#6272a4"
 	}
 	if weatherCode >= 45 && weatherCode <= 48 {
-		return "#f8f8f2" // Fog: foreground
+		// Fog: foreground
+		return "#f8f8f2"
 	}
 	if weatherCode >= 51 && weatherCode <= 67 {
-		return "#8be9fd" // Rain: cyan
+		// Rain: cyan
+		return "#8be9fd"
 	}
 	if weatherCode >= 71 && weatherCode <= 86 {
-		return "#f8f8f2" // Snow: white
+		// Snow: white
+		return "#f8f8f2"
 	}
 	if weatherCode >= 95 {
-		return "#ff5555" // Storms: red
+		// Storms: red
+		return "#ff5555"
 	}
 
-	return "#f8f8f2" // Default: foreground
+	// Default: foreground
+	return "#f8f8f2"
 }
 
 // getWeatherArt returns ASCII art for a weather condition

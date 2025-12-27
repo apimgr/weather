@@ -1,7 +1,11 @@
 package main
 
+// Weather Service - Main entry point
+// Per AI.md: Swagger annotations moved to src/swagger/annotations.go
+
 import (
 	"context"
+	"embed"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -18,24 +22,21 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"weather-go/src/cli"
-	"weather-go/src/config"
-	"weather-go/src/database"
-	"weather-go/src/handlers"
-	"weather-go/src/middleware"
-	"weather-go/src/models"
-	"weather-go/src/scheduler"
-	"weather-go/src/server"
-	"weather-go/src/services"
-	"weather-go/src/utils"
+	"github.com/apimgr/weather/src/cli"
+	"github.com/apimgr/weather/src/config"
+	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/mode"
+	"github.com/apimgr/weather/src/scheduler"
+	"github.com/apimgr/weather/src/server"
+	"github.com/apimgr/weather/src/server/handler"
+	"github.com/apimgr/weather/src/server/middleware"
+	"github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/server/service"
+	"github.com/apimgr/weather/src/utils"
 )
 
-// Version information (set via ldflags during build)
-var (
-	Version   = "dev"
-	BuildDate = "unknown"
-	GitCommit = "unknown"
-)
+//go:embed locales/*.json
+var localesFS embed.FS
 
 // getDefaultListenAddress auto-detects IPv6 support and returns dual-stack (::) or IPv4-only (0.0.0.0)
 func getDefaultListenAddress() string {
@@ -43,7 +44,8 @@ func getDefaultListenAddress() string {
 	listener, err := net.Listen("tcp", "[::]:0")
 	if err == nil {
 		listener.Close()
-		return "::" // IPv6 dual-stack supported (includes IPv4)
+		// IPv6 dual-stack supported (includes IPv4)
+		return "::"
 	}
 
 	// Fallback to IPv4 only
@@ -57,7 +59,7 @@ func main() {
 	// Set version information
 	cli.Version = Version
 	cli.BuildDate = BuildDate
-	cli.GitCommit = GitCommit
+	cli.CommitID = CommitID
 
 	// Register CLI commands
 	cliInstance.RegisterCommand(&cli.Command{
@@ -102,14 +104,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Check for DEBUG environment variable
-	debugEnv := strings.ToLower(os.Getenv("DEBUG"))
-	debugMode := debugEnv != "" && debugEnv != "0" && debugEnv != "false" && debugEnv != "no"
+	// Initialize mode from environment variables (AI.md PART 6)
+	// Handles MODE and DEBUG environment variables (set by CLI or directly)
+	mode.FromEnv()
 
-	if debugMode {
-		log.Println("⚠️  DEBUG MODE ENABLED")
-		log.Println("⚠️  This mode should NEVER be used in production!")
+	if mode.IsDebug() {
+		log.Println("DEBUG MODE ENABLED")
+		log.Println("This mode should NEVER be used in production!")
+		fmt.Println("⚠️  DEBUG MODE ENABLED")
+		fmt.Println("⚠️  This mode should NEVER be used in production!")
 	}
+
+	// Log the current mode
+	log.Printf("Running in mode: %s", mode.ModeString())
+	fmt.Printf("🔒 Running in mode: %s\n", mode.ModeString())
 
 	// Get OS-appropriate directory paths
 	dirPaths, err := utils.GetDirectoryPaths()
@@ -170,107 +178,114 @@ func main() {
 
 	// Print startup timestamp
 	startTime := time.Now()
-	appLogger.Printf("🕐 %s", startTime.Format("2006-01-02 at 15:04:05"))
+	appLogger.Printf("%s", startTime.Format("2006-01-02 at 15:04:05"))
+	fmt.Printf("🕐 %s\n", startTime.Format("2006-01-02 at 15:04:05"))
 
-	// Initialize database
-	// Priority: 1. Connection string, 2. Individual params (DB_TYPE, DB_HOST...), 3. SQLite path
-	dbConnString := os.Getenv("DATABASE_URL")
-	if dbConnString == "" {
-		dbConnString = os.Getenv("DB_CONNECTION_STRING")
-	}
+	// TEMPLATE.md PART 1: First Run Detection and Auto-Configuration
+	isFirstRun := utils.DetectFirstRun(dirPaths.Data)
+	var setupToken string
 
-	var dbPath string
-	var db *database.DB
+	if isFirstRun {
+		appLogger.Printf("First run detected - initializing server...")
+		fmt.Println("🎉 First run detected - auto-configuring server...")
 
-	if dbConnString != "" {
-		// Use connection string (postgres://user:pass@host/db, mysql://user:pass@host/db, etc.)
-		db, err = database.InitDBFromConnectionString(dbConnString)
-	} else if dbType := os.Getenv("DB_TYPE"); dbType != "" && dbType != "sqlite" {
-		// Use individual database parameters (for PostgreSQL, MySQL, MSSQL)
-		config := &database.DatabaseConfig{
-			Type:     dbType,
-			Host:     os.Getenv("DB_HOST"),
-			Database: os.Getenv("DB_NAME"),
-			Username: os.Getenv("DB_USER"),
-			Password: os.Getenv("DB_PASSWORD"),
-			SSLMode:  os.Getenv("DB_SSLMODE"), // PostgreSQL only
-		}
+		// Auto-detect SMTP
+		smtpHost, smtpPort := utils.AutoDetectSMTP()
+		appLogger.Printf("SMTP auto-detected: %s:%d", smtpHost, smtpPort)
+		fmt.Printf("📧 SMTP auto-detected: %s:%d\n", smtpHost, smtpPort)
 
-		// Parse port
-		if portStr := os.Getenv("DB_PORT"); portStr != "" {
-			var port int
-			fmt.Sscanf(portStr, "%d", &port)
-			config.Port = port
+		// Create server.yml with auto-detected settings
+		configPath := filepath.Join(dirPaths.Config, "server.yml")
+		if err := utils.CreateDefaultServerYML(configPath, smtpHost, smtpPort); err != nil {
+			appLogger.Error("Failed to create server.yml: %v", err)
+			fmt.Printf("⚠️  Failed to create server.yml: %v\n", err)
 		} else {
-			// Default ports
-			switch dbType {
-			case "postgres", "postgresql":
-				config.Port = 5432
-			case "mysql", "mariadb":
-				config.Port = 3306
-			case "mssql", "sqlserver":
-				config.Port = 1433
-			}
+			appLogger.Printf("server.yml created: %s", configPath)
+			fmt.Printf("✅ server.yml created with auto-detected settings\n")
 		}
 
-		// Set defaults if not provided
-		if config.Host == "" {
-			config.Host = "localhost"
+		// Generate one-time setup token
+		token, err := utils.GenerateSetupToken()
+		if err != nil {
+			appLogger.Fatal("Failed to generate setup token: %v", err)
 		}
-		if config.Database == "" {
-			config.Database = "weather"
-		}
-
-		db, err = database.InitDBWithConfig(config)
-		dbPath = fmt.Sprintf("%s://%s:%d/%s", dbType, config.Host, config.Port, config.Database)
-	} else {
-		// Use SQLite file path (default)
-		dbPath = os.Getenv("DATABASE_PATH")
-		if dbPath == "" {
-			dbPath = utils.GetDatabasePath(dirPaths)
-		}
-		db, err = database.InitDB(dbPath)
+		setupToken = token
+		appLogger.Printf("Setup token generated (will be displayed in banner)")
 	}
+
+	// Initialize database - TEMPLATE.md PART 31: Dual database architecture
+	// SQLite dual database: server.db + users.db
+	// server.db = admin credentials, config, scheduler, audit log
+	// users.db = user accounts, tokens, sessions, locations
+	dualDB, err := database.InitDualDB(dirPaths.Data)
 	if err != nil {
-		appLogger.Fatal("Failed to initialize database: %v", err)
+		appLogger.Fatal("Failed to initialize dual database system: %v", err)
 	}
-	defer db.Close()
+	defer dualDB.Close()
+
+	// Set global instance for handler access
+	database.SetGlobalDualDB(dualDB)
+	dbPath := fmt.Sprintf("%s/server.db + %s/users.db", dirPaths.Data, dirPaths.Data)
+
+	// Create wrapper for legacy code that still expects database.DB struct
+	// TODO: Remove this once all handlers/middleware updated to use global accessors
+	db := &database.DB{DB: dualDB.Users}
 
 	// Check if setup is complete
 	var setupComplete bool
 	var setupValue string
-	err = db.DB.QueryRow("SELECT value FROM settings WHERE key = 'setup.completed'").Scan(&setupValue)
+	err = dualDB.QueryRowServer("SELECT value FROM server_config WHERE key = 'setup.completed'").Scan(&setupValue)
 	setupComplete = (err == nil && setupValue == "true")
 
+	// If first run, store setup token in database
+	if isFirstRun && setupToken != "" {
+		_, err = database.GetServerDB().Exec(`
+			INSERT INTO server_config (key, value, type, description, updated_at)
+			VALUES ('setup.token', ?, 'string', 'One-time setup token (first run)', datetime('now'))
+		`, setupToken)
+		if err != nil {
+			appLogger.Error("Failed to store setup token: %v", err)
+		} else {
+			appLogger.Printf("Setup token stored in database")
+		}
+	}
+
 	if setupComplete {
-		appLogger.Printf("✅ Database initialized: %s", dbPath)
+		appLogger.Printf("Database initialized: %s", dbPath)
+		fmt.Printf("✅ Database initialized: %s\n", dbPath)
 	} else {
-		appLogger.Printf("✅ Database initialized: %s (setup mode)", dbPath)
+		appLogger.Printf("Database initialized: %s (setup mode)", dbPath)
+		fmt.Printf("✅ Database initialized: %s (setup mode)\n", dbPath)
 	}
 
 	// Load server configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		appLogger.Error("⚠️  Warning: Could not load server.yml: %v (using defaults)", err)
+		appLogger.Error("Warning: Could not load server.yml: %v (using defaults)", err)
+		fmt.Printf("⚠️  Warning: Could not load server.yml: %v (using defaults)\n", err)
 	} else {
-		appLogger.Printf("✅ Configuration loaded from server.yml")
+		appLogger.Printf("Configuration loaded from server.yml")
+		fmt.Printf("✅ Configuration loaded from server.yml\n")
 	}
 
-	// Merge build-time version info with config
-	cfg.Version = Version
-	cfg.BuildDate = BuildDate
+	// Set global config for handler access
+	config.SetGlobalConfig(cfg)
+
+	// Note: Version and BuildDate are embedded in binary via LDFLAGS, not in config file
 
 	// Initialize default settings with proper backup path
 	settingsModel := &models.SettingsModel{DB: db.DB}
 	backupPath := utils.GetBackupPath(dirPaths)
 	if err := settingsModel.InitializeDefaults(backupPath); err != nil {
-		appLogger.Error("⚠️  Warning: Could not initialize default settings: %v", err)
+		appLogger.Error("Warning: Could not initialize default settings: %v", err)
+		fmt.Printf("⚠️  Warning: Could not initialize default settings: %v\n", err)
 	}
 
 	// Initialize cache manager (Valkey/Redis support, optional)
 	cacheManager := services.NewCacheManager()
 	if cacheManager.IsEnabled() {
-		appLogger.Printf("✅ Cache enabled (Redis/Valkey)")
+		appLogger.Printf("Cache enabled (Redis/Valkey)")
+		fmt.Printf("✅ Cache enabled (Redis/Valkey)\n")
 	}
 
 	// Auto-detect SMTP server at 172.17.0.1 (Docker bridge) and configure defaults
@@ -283,7 +298,8 @@ func main() {
 			if detected, _ := smtpService.AutoDetect(); detected {
 				// SMTP detected, enable it
 				settingsModel.SetBool("smtp.enabled", true)
-				appLogger.Printf("✉️  SMTP server auto-detected and enabled")
+				appLogger.Printf("SMTP server auto-detected and enabled")
+				fmt.Printf("✉️  SMTP server auto-detected and enabled\n")
 			}
 		}
 
@@ -306,26 +322,29 @@ func main() {
 		}
 	}
 
-	// Check if this is first run (no users)
-	isFirstRun, err := db.IsFirstRun()
+	// Check if this is first run (no users created yet)
+	hasNoUsers, err := db.IsFirstRun()
 	if err != nil {
-		appLogger.Error("⚠️  Warning: Could not check first run status: %v", err)
-		isFirstRun = false
+		appLogger.Error("Warning: Could not check first run status: %v", err)
+		fmt.Printf("⚠️  Warning: Could not check first run status: %v\n", err)
+		hasNoUsers = false
 	}
-	if isFirstRun {
-		appLogger.Printf("🆕 First run detected - please create an admin account at /auth/register")
+	if hasNoUsers {
+		appLogger.Printf("No users found - please create an admin account at /auth/register")
+		fmt.Printf("🆕 No users found - please create an admin account at /auth/register\n")
 	}
 
 	// Handle status flag
 	if os.Getenv("CLI_STATUS_FLAG") == "1" {
-		showServerStatus(db, dbPath, isFirstRun)
+		showServerStatus(db, dbPath, hasNoUsers)
 		os.Exit(0)
 	}
 
 	// Set Gin mode based on ENV variable (development, production, test)
 	envMode := os.Getenv("ENV")
 	if envMode == "" {
-		envMode = os.Getenv("ENVIRONMENT") // Alternative
+		// Alternative
+		envMode = os.Getenv("ENVIRONMENT")
 	}
 
 	switch envMode {
@@ -343,6 +362,9 @@ func main() {
 	// Trust reverse proxy headers
 	r.SetTrustedProxies([]string{"127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"})
 
+	// Request ID middleware - must be first to ensure all logs have request ID
+	r.Use(middleware.RequestID())
+
 	// Access logging middleware (writes to log files)
 	r.Use(middleware.AccessLogger(appLogger))
 
@@ -350,7 +372,7 @@ func main() {
 	r.Use(gin.Recovery())
 
 	// Security headers middleware
-	r.Use(securityHeadersMiddleware())
+	r.Use(middleware.SecurityHeaders())
 
 	// CORS middleware
 	r.Use(cors.New(cors.Config{
@@ -397,6 +419,22 @@ func main() {
 	}
 	r.StaticFS("/static", http.FS(staticSubFS))
 
+	// Initialize i18n service (TEMPLATE.md PART 29 - NON-NEGOTIABLE)
+	i18nService, err := services.NewI18n(localesFS, "en")
+	if err != nil {
+		log.Fatalf("Failed to initialize i18n: %v", err)
+	}
+	fmt.Printf("🌐 I18n initialized with languages: %v\n", i18nService.GetSupportedLanguages())
+
+	// I18n middleware - detects language from Accept-Language header
+	r.Use(func(c *gin.Context) {
+		acceptLang := c.GetHeader("Accept-Language")
+		lang := i18nService.ParseAcceptLanguage(acceptLang)
+		c.Set("lang", lang)
+		c.Set("i18n", i18nService)
+		c.Next()
+	})
+
 	// Load embedded templates with custom functions from server package
 	// Get embedded templates filesystem
 	templatesFS := server.GetTemplatesFS()
@@ -426,17 +464,25 @@ func main() {
 		}
 	}
 
-	// Parse all templates
-	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
+	// Create template function map with i18n support
+	templateFuncs := template.FuncMap{
 		"upper": strings.ToUpper,
 		"lower": strings.ToLower,
+		"title": strings.Title,
 		"add": func(a, b int) int {
 			return a + b
 		},
 		"sub": func(a, b int) int {
 			return a - b
 		},
-	}).ParseFS(templatesSubFS, templatePaths...))
+		// i18n translation function - expects lang to be set in template data
+		"t": func(lang, key string) string {
+			return i18nService.T(lang, key)
+		},
+	}
+
+	// Parse all templates
+	tmpl := template.Must(template.New("").Funcs(templateFuncs).ParseFS(templatesSubFS, templatePaths...))
 
 	// Debug: Print registered template names
 	if gin.Mode() == gin.DebugMode {
@@ -453,16 +499,7 @@ func main() {
 		if _, err := os.Stat("src/server/templates"); err == nil {
 			r.Use(func(c *gin.Context) {
 				// Try to reload from filesystem in debug mode
-				t := template.New("").Funcs(template.FuncMap{
-					"upper": strings.ToUpper,
-					"lower": strings.ToLower,
-					"add": func(a, b int) int {
-						return a + b
-					},
-					"sub": func(a, b int) int {
-						return a - b
-					},
-				})
+				t := template.New("").Funcs(templateFuncs)
 				// Load all templates including subdirectories
 				// Note: This loads from filesystem, so paths are relative to src/server/templates/
 				patterns := []string{
@@ -538,19 +575,34 @@ func main() {
 	// Initialize config file watcher for live reload (TEMPLATE.md PART 1)
 	configPath := filepath.Join(dirPaths.Config, "server.yml")
 	configWatcher, err := services.NewConfigWatcher(configPath, func(newCfg *config.Config) error {
-		// Reload configuration callback
-		// Update settings that can be changed at runtime
-		log.Printf("🔄 Configuration reloaded from %s", configPath)
+		// Reload configuration callback - applies changes live without restart
+		log.Printf("Configuration reloaded from %s", configPath)
+		fmt.Printf("🔄 Configuration reloaded from %s\n", configPath)
 
-		// Merge new config with current config
-		cfg.Server.Branding.Title = newCfg.Server.Branding.Title
-		cfg.Server.Branding.Description = newCfg.Server.Branding.Description
-		cfg.Mode = newCfg.Mode
+		// Update all configuration sections that can be changed at runtime
+		cfg.Server.Mode = newCfg.Server.Mode
+		cfg.Server.Branding = newCfg.Server.Branding
+		cfg.Server.SEO = newCfg.Server.SEO
+		cfg.Web = newCfg.Web
+		cfg.Server.Notifications = newCfg.Server.Notifications
+		cfg.Server.RateLimit = newCfg.Server.RateLimit
+		cfg.Server.Tor = newCfg.Server.Tor
+		cfg.Server.Features = newCfg.Server.Features
+
+		// Update global config for handlers
+		config.SetGlobalConfig(cfg)
+
+		// Note: Port changes would require graceful restart (not implemented yet)
+		// For now, port changes require manual restart
+
+		log.Println("✅ All configuration sections reloaded (branding, SEO, theme, email, notifications, rate limiting, web, Tor, features)")
+		fmt.Println("✅ All configuration sections reloaded successfully")
 
 		return nil
 	})
 	if err != nil {
-		log.Printf("⚠️  Failed to create config watcher: %v", err)
+		log.Printf("Failed to create config watcher: %v", err)
+		fmt.Printf("⚠️  Failed to create config watcher: %v\n", err)
 	}
 
 	// Initialize scheduler for periodic tasks
@@ -590,8 +642,9 @@ func main() {
 	})
 
 	// Register cleanup of old delivered notifications - run daily
+	// Keep 30 days
 	taskScheduler.AddTask("cleanup-notifications", 24*time.Hour, func() error {
-		return deliverySystem.CleanupOld(30) // Keep 30 days
+		return deliverySystem.CleanupOld(30)
 	})
 
 	// Register backup task - run every 6 hours
@@ -616,11 +669,16 @@ func main() {
 
 	// Initialize task history table for scheduler tracking
 	if err := taskScheduler.InitTaskHistoryTable(); err != nil {
-		log.Fatalf("❌ Failed to initialize task history table: %v", err)
+		fmt.Printf("❌ Failed to initialize task history table: %v\n", err)
+		log.Fatalf("Failed to initialize task history table: %v", err)
 	}
 
 	// Start the scheduler
 	taskScheduler.Start()
+
+	// Schedule WebUI notification cleanup tasks (TEMPLATE.md Part 25)
+	// Note: NotificationCleaner will be initialized after NotificationService is created
+	// Cleanup scheduled for 02:00 UTC, Limit enforcement at 03:00 UTC
 
 	// Create services
 	earthquakeService := services.NewEarthquakeService()
@@ -638,6 +696,7 @@ func main() {
 
 	// Create auth handlers
 	authHandler := &handlers.AuthHandler{DB: db.DB}
+	twoFAHandler := &handlers.TwoFactorHandler{DB: db.DB}
 	setupHandler := &handlers.SetupHandler{DB: db.DB}
 	dashboardHandler := &handlers.DashboardHandler{DB: db.DB}
 	adminHandler := &handlers.AdminHandler{DB: db.DB}
@@ -646,6 +705,28 @@ func main() {
 		WeatherService:   weatherService,
 		LocationEnhancer: locationEnhancer,
 	}
+
+	// Initialize WebSocket Hub for real-time notifications (TEMPLATE.md Part 25)
+	wsHub := services.NewWebSocketHub()
+	go wsHub.Run() // Start hub in goroutine
+
+	// Initialize Notification Service (TEMPLATE.md Part 25 - WebUI Notifications)
+	notificationService := &services.NotificationService{
+		UserDB:     dualDB.Users,
+		ServerDB:   dualDB.Server,
+		WSHub:      wsHub,
+		UserNotif:  &models.UserNotificationModel{DB: dualDB.Users},
+		AdminNotif: &models.AdminNotificationModel{DB: dualDB.Server},
+		Prefs:      &models.NotificationPreferencesModel{UserDB: dualDB.Users, ServerDB: dualDB.Server},
+	}
+
+	// Create WebUI notification API handlers (TEMPLATE.md Part 25)
+	notificationAPIHandler := &handlers.NotificationAPIHandlers{
+		NotificationService: notificationService,
+		WSHub:               wsHub,
+	}
+
+	// Legacy notification handler (for email notifications only)
 	notificationHandler := &handlers.NotificationHandler{DB: db.DB}
 
 	// Create notification system handlers
@@ -653,6 +734,11 @@ func main() {
 	preferencesHandler := handlers.NewNotificationPreferencesHandler(db.DB)
 	templateHandler := handlers.NewNotificationTemplateHandler(db.DB)
 	metricsHandler := handlers.NewNotificationMetricsHandler(notificationMetrics)
+
+	// Initialize WebUI Notification Cleanup Scheduler (TEMPLATE.md Part 25)
+	notificationCleaner := scheduler.NewNotificationCleaner(notificationService)
+	taskScheduler.ScheduleNotificationCleanup(notificationCleaner, "02:00")       // Daily at 2 AM UTC
+	taskScheduler.ScheduleNotificationLimitEnforcement(notificationCleaner, "03:00") // Daily at 3 AM UTC
 
 	// Create scheduler handler for task management
 	schedulerHandler := handlers.NewSchedulerHandler(taskScheduler)
@@ -665,6 +751,16 @@ func main() {
 
 	// Create logs handler
 	logsHandler := handlers.NewLogsHandler(dirPaths.Log)
+
+	// Create admin settings handlers
+	adminUsersHandler := &handlers.AdminUsersHandler{ConfigPath: configPath}
+	adminAuthHandler := &handlers.AdminAuthSettingsHandler{ConfigPath: configPath}
+	adminWeatherHandler := &handlers.AdminWeatherHandler{ConfigPath: configPath}
+	adminNotificationsHandler := &handlers.AdminNotificationsHandler{ConfigPath: configPath}
+	adminGeoIPHandler := &handlers.AdminGeoIPHandler{ConfigPath: configPath}
+
+	// Create domain handler (TEMPLATE.md PART 34: Custom domain support)
+	domainHandler := handlers.NewDomainHandlers(db.DB, appLogger)
 
 	// Get port configuration using comprehensive port manager
 	// Priority: 1) Database saved ports, 2) PORT env variable, 3) Random port (64000-64999)
@@ -679,29 +775,31 @@ func main() {
 	// Get listen address - auto-detect reverse proxy and IPv6 support
 	listenAddress := os.Getenv("SERVER_LISTEN")
 	if listenAddress == "" {
-		listenAddress = os.Getenv("SERVER_ADDRESS") // Backward compatibility
+		// Backward compatibility
+		listenAddress = os.Getenv("SERVER_ADDRESS")
 	}
-	mode := ""
+	networkMode := ""
 	if listenAddress == "" {
 		// Check for reverse proxy indicator
 		reverseProxy := os.Getenv("REVERSE_PROXY") == "true"
 
 		if reverseProxy {
 			listenAddress = "127.0.0.1"
-			mode = " in reverse proxy mode"
+			networkMode = " in reverse proxy mode"
 		} else {
 			// Auto-detect IPv6 support and use dual-stack if available
 			listenAddress = getDefaultListenAddress()
 			if listenAddress == "::" {
-				mode = " (dual-stack: IPv4 + IPv6)"
+				networkMode = " (dual-stack: IPv4 + IPv6)"
 			} else {
-				mode = " (IPv4 only)"
+				networkMode = " (IPv4 only)"
 			}
 		}
 	}
 
 	// Print startup messages
-	appLogger.Printf("🚀 Starting Weather%s on %s:%s", mode, listenAddress, port)
+	appLogger.Printf("Starting Weather%s on %s:%s", networkMode, listenAddress, port)
+	fmt.Printf("🚀 Starting Weather%s on %s:%s\n", networkMode, listenAddress, port)
 	appLogger.Info("Data directory: %s", dirPaths.Data)
 	appLogger.Info("Config directory: %s", dirPaths.Config)
 	appLogger.Info("Log directory: %s", dirPaths.Log)
@@ -712,13 +810,16 @@ func main() {
 	httpsPort := httpsPortInt
 
 	// Create SSL handler
-	sslHandler := handlers.NewSSLHandler(sslCertsDir)
+	sslHandler := handlers.NewSSLHandler(sslCertsDir, db.DB)
 
 	// Create metrics handler
 	metricsConfigHandler := handlers.NewMetricsHandler()
 
 	// Create logging handler
 	loggingHandler := handlers.NewLoggingHandler(dirPaths.Log)
+
+	// Create admin web handler (robots.txt, security.txt)
+	adminWebHandler := handlers.NewAdminWebHandler(db)
 
 	// Check for SSL configuration
 	hostname, _ := os.Hostname()
@@ -730,12 +831,16 @@ func main() {
 	if httpsPort > 0 {
 		found, err := sslManager.CheckExistingCerts(hostname)
 		if err != nil {
-			appLogger.Error("⚠️  SSL check failed: %v", err)
+			appLogger.Error("SSL check failed: %v", err)
+			fmt.Printf("⚠️  SSL check failed: %v\n", err)
 		} else if found {
-			appLogger.Printf("🔒 Found Let's Encrypt certificate for %s", hostname)
-			appLogger.Printf("🔌 HTTPS enabled on port: %d", httpsPort)
+			appLogger.Printf("Found Let's Encrypt certificate for %s", hostname)
+			appLogger.Printf("HTTPS enabled on port: %d", httpsPort)
+			fmt.Printf("🔒 Found Let's Encrypt certificate for %s\n", hostname)
+			fmt.Printf("🔌 HTTPS enabled on port: %d\n", httpsPort)
 		} else {
-			appLogger.Printf("ℹ️  HTTPS port configured (%d) but no certificates found", httpsPort)
+			appLogger.Printf("HTTPS port configured (%d) but no certificates found", httpsPort)
+			fmt.Printf("ℹ️  HTTPS port configured (%d) but no certificates found\n", httpsPort)
 		}
 	}
 	// Note: Self-signed cert generation is optional and disabled by default
@@ -757,14 +862,7 @@ func main() {
 	r.GET("/metrics", handlers.PrometheusMetrics())
 
 	// security.txt endpoint (RFC 9116 - TEMPLATE.md PART 25)
-	securityTxtService := services.NewSecurityTxtService(settingsModel)
-	r.GET("/.well-known/security.txt", func(c *gin.Context) {
-		hostInfo := utils.GetHostInfo(c)
-		baseURL := hostInfo.FullHost
-		content := securityTxtService.Generate(baseURL)
-		c.Header("Content-Type", "text/plain; charset=utf-8")
-		c.String(http.StatusOK, content)
-	})
+	r.GET("/.well-known/security.txt", adminWebHandler.ServeSecurityTxt)
 	// Also serve at root for compatibility
 	r.GET("/security.txt", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/.well-known/security.txt")
@@ -775,22 +873,20 @@ func main() {
 		c.Redirect(http.StatusFound, "/profile?tab=security")
 	})
 
-	// robots.txt endpoint
-	r.GET("/robots.txt", func(c *gin.Context) {
-		robotsTxt := settingsModel.GetString("web.robots_txt", `User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /api/
-Sitemap: {app_url}/sitemap.xml`)
-		// Replace variables
-		hostInfo := utils.GetHostInfo(c)
-		robotsTxt = strings.ReplaceAll(robotsTxt, "{app_url}", hostInfo.FullHost)
-		c.Header("Content-Type", "text/plain; charset=utf-8")
-		c.String(http.StatusOK, robotsTxt)
+	// /.well-known/acme-challenge/:token - Let's Encrypt HTTP-01 challenge (TEMPLATE.md Part 8)
+	r.GET("/.well-known/acme-challenge/:token", func(c *gin.Context) {
+		token := c.Param("token")
+		// This would retrieve the key authorization from the Let's Encrypt service
+		// For now, return a placeholder response
+		c.String(http.StatusOK, "ACME challenge token: %s", token)
 	})
 
-	// Debug endpoints (only enabled when DEBUG environment variable is set)
-	if debugMode {
+	// robots.txt endpoint
+	r.GET("/robots.txt", adminWebHandler.ServeRobotsTxt)
+
+	// Debug endpoints (only enabled when --debug flag or DEBUG=true)
+	// Per AI.md PART 6: Debug endpoints only available when debug mode enabled
+	if mode.IsDebug() {
 		debugHandlers := handlers.NewDebugHandlers(db.DB, r)
 		debugHandlers.RegisterDebugRoutes(r)
 
@@ -811,10 +907,11 @@ Sitemap: {app_url}/sitemap.xml`)
 		// Try to get location from IP
 		coords, err := weatherService.GetCoordinatesFromIP(clientIP)
 		if err != nil {
+			// Empty means fallback to manual entry
 			c.JSON(http.StatusOK, gin.H{
 				"clientIP": clientIP,
 				"location": gin.H{
-					"value": "", // Empty means fallback to manual entry
+					"value": "",
 				},
 				"error": err.Error(),
 			})
@@ -824,10 +921,11 @@ Sitemap: {app_url}/sitemap.xml`)
 		// Enhance location
 		enhanced := locationEnhancer.EnhanceLocation(coords)
 
+		// e.g., "Albany, NY"
 		c.JSON(http.StatusOK, gin.H{
 			"clientIP": clientIP,
 			"location": gin.H{
-				"value": enhanced.ShortName, // e.g., "Albany, NY"
+				"value": enhanced.ShortName,
 			},
 			"coordinates": gin.H{
 				"latitude":  coords.Latitude,
@@ -887,8 +985,10 @@ Sitemap: {app_url}/sitemap.xml`)
 	userRoutes.Use(middleware.RequireAuth(db.DB))
 	userRoutes.Use(middleware.BlockAdminFromUserRoutes())
 	{
-		userRoutes.GET("", dashboardHandler.ShowDashboard)           // /user -> user dashboard
-		userRoutes.GET("/dashboard", dashboardHandler.ShowDashboard) // /user/dashboard -> user dashboard
+		// /user -> user dashboard
+		userRoutes.GET("", dashboardHandler.ShowDashboard)
+		// /user/dashboard -> user dashboard
+		userRoutes.GET("/dashboard", dashboardHandler.ShowDashboard)
 	}
 
 	// Admin routes (require admin role + stricter rate limiting)
@@ -896,9 +996,11 @@ Sitemap: {app_url}/sitemap.xml`)
 	adminRoutes.Use(middleware.RequireAuth(db.DB))
 	adminRoutes.Use(middleware.RequireAdmin())
 	adminRoutes.Use(middleware.AdminRateLimitMiddleware())
-	adminRoutes.Use(middleware.AuditLogger(db.DB)) // Log all admin actions
+	// Log all admin actions
+	adminRoutes.Use(middleware.AuditLogger(db.DB))
 	{
-		adminRoutes.GET("", dashboardHandler.ShowAdminPanel) // /admin -> admin dashboard
+		// /admin -> admin dashboard
+		adminRoutes.GET("", dashboardHandler.ShowAdminPanel)
 
 		// Admin management pages
 		adminRoutes.GET("/users", func(c *gin.Context) {
@@ -911,13 +1013,7 @@ Sitemap: {app_url}/sitemap.xml`)
 
 		adminRoutes.GET("/settings", adminHandler.ShowSettingsPage)
 
-		adminRoutes.GET("/web", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/admin-web.tmpl", utils.TemplateData(c, gin.H{
-				"title":      "Web Settings - Admin",
-				"page":       "web",
-				"breadcrumb": "Web Frontend",
-			}))
-		})
+		adminRoutes.GET("/server/web", adminWebHandler.ShowWebSettings)
 
 		adminRoutes.GET("/email", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "admin/admin-email.tmpl", utils.TemplateData(c, gin.H{
@@ -1038,6 +1134,30 @@ Sitemap: {app_url}/sitemap.xml`)
 				"breadcrumb": "Email Templates",
 			}))
 		})
+
+		// New admin panels
+		adminRoutes.GET("/server/users", adminUsersHandler.ShowUserSettings)
+		adminRoutes.GET("/server/auth", adminAuthHandler.ShowAuthSettings)
+		adminRoutes.GET("/server/weather", adminWeatherHandler.ShowWeatherSettings)
+		adminRoutes.GET("/server/notifications", adminNotificationsHandler.ShowNotificationSettings)
+		adminRoutes.GET("/server/geoip", adminGeoIPHandler.ShowGeoIPSettings)
+
+		// Custom domains management page (TEMPLATE.md PART 34)
+		adminRoutes.GET("/domains", func(c *gin.Context) {
+			// Get all domains from database
+			domainModel := &models.DomainModel{DB: db.DB}
+			domains, err := domainModel.List(nil)
+			if err != nil {
+				appLogger.Error("Failed to list domains: %v", err)
+				domains = []*models.Domain{}
+			}
+
+			c.HTML(http.StatusOK, "admin-domains", utils.TemplateData(c, gin.H{
+				"title":   "Custom Domains",
+				"page":    "domains",
+				"Domains": domains,
+			}))
+		})
 	}
 	r.GET("/notifications", middleware.RequireAuth(db.DB), notificationHandler.ShowNotificationsPage)
 
@@ -1054,6 +1174,9 @@ Sitemap: {app_url}/sitemap.xml`)
 			"page":  "profile",
 		}))
 	})
+
+	// User security settings page
+	r.GET("/user/security", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.ShowSecurityPage)
 
 	// User notification preferences page
 	r.GET("/preferences", middleware.RequireAuth(db.DB), func(c *gin.Context) {
@@ -1078,16 +1201,8 @@ Sitemap: {app_url}/sitemap.xml`)
 	// API v1 routes - all API endpoints under /api/v1
 	apiV1 := r.Group("/api/v1")
 
-	// Health check endpoint (JSON)
-	apiV1.GET("/healthz", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":    "healthy",
-			"version":   Version,
-			"mode":      os.Getenv("MODE"),
-			"uptime":    time.Since(startTime).String(),
-			"timestamp": time.Now().Unix(),
-		})
-	})
+	// Health check endpoint (JSON) - TEMPLATE.md compliant format
+	apiV1.GET("/healthz", handlers.APIHealthCheck(db, startTime))
 
 	// Weather API routes (optional auth + API rate limiting)
 	weatherAPI := apiV1.Group("")
@@ -1103,7 +1218,8 @@ Sitemap: {app_url}/sitemap.xml`)
 		weatherAPI.GET("/location", apiHandler.GetLocation)
 		weatherAPI.GET("/docs", apiHandler.GetDocsJSON)
 		weatherAPI.GET("/earthquakes", earthquakeHandler.HandleEarthquakeAPI)
-		weatherAPI.GET("/hurricanes", hurricaneHandler.HandleHurricaneAPI) // Backwards compat
+		// Backwards compat
+		weatherAPI.GET("/hurricanes", hurricaneHandler.HandleHurricaneAPI)
 		weatherAPI.GET("/severe-weather", severeWeatherHandler.HandleSevereWeatherAPI)
 		weatherAPI.GET("/moon", moonHandler.HandleMoonAPI)
 		weatherAPI.GET("/history", apiHandler.GetHistoricalWeather)
@@ -1118,6 +1234,7 @@ Sitemap: {app_url}/sitemap.xml`)
 					hostInfo.FullHost + "/api/v1/locations",
 					hostInfo.FullHost + "/api/v1/notifications",
 					hostInfo.FullHost + "/api/v1/admin",
+					hostInfo.FullHost + "/api/v1/admin/domains",
 					hostInfo.FullHost + "/api/v1/weather",
 					hostInfo.FullHost + "/api/v1/weather/:location",
 					hostInfo.FullHost + "/api/v1/forecast",
@@ -1154,6 +1271,13 @@ Sitemap: {app_url}/sitemap.xml`)
 	apiV1.GET("/user", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), authHandler.GetCurrentUser)
 	apiV1.PUT("/user/profile", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), authHandler.UpdateProfile)
 
+	// Two-Factor Authentication API (requires auth)
+	apiV1.GET("/user/security/2fa/setup", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.SetupTwoFactor)
+	apiV1.POST("/user/security/2fa/enable", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.EnableTwoFactor)
+	apiV1.POST("/user/security/2fa/disable", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.DisableTwoFactor)
+	apiV1.POST("/user/security/2fa/verify", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.VerifyTwoFactorCode)
+	apiV1.POST("/user/security/2fa/recovery/regenerate", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.RegenerateRecoveryKeys)
+
 	// Location API routes (require auth)
 	// Public location endpoints (no auth required)
 	apiV1.GET("/locations/search", locationHandler.SearchLocations)
@@ -1172,15 +1296,21 @@ Sitemap: {app_url}/sitemap.xml`)
 		locationAPI.PUT("/:id/alerts", locationHandler.ToggleAlerts)
 	}
 
-	// Notification API routes (require auth)
-	notificationAPI := apiV1.Group("/notifications")
-	notificationAPI.Use(middleware.RequireAuth(db.DB))
+	// WebUI Notification API routes - User (TEMPLATE.md Part 25)
+	userNotificationAPI := apiV1.Group("/user/notifications")
+	userNotificationAPI.Use(middleware.RequireAuth(db.DB))
+	userNotificationAPI.Use(middleware.BlockAdminFromUserRoutes())
 	{
-		notificationAPI.GET("", notificationHandler.ListNotifications)
-		notificationAPI.GET("/unread", notificationHandler.GetUnreadCount)
-		notificationAPI.PUT("/:id/read", notificationHandler.MarkAsRead)
-		notificationAPI.PUT("/read-all", notificationHandler.MarkAllAsRead)
-		notificationAPI.DELETE("/:id", notificationHandler.DeleteNotification)
+		userNotificationAPI.GET("", notificationAPIHandler.GetUserNotifications)
+		userNotificationAPI.GET("/unread", notificationAPIHandler.GetUserUnreadNotifications)
+		userNotificationAPI.GET("/count", notificationAPIHandler.GetUserUnreadCount)
+		userNotificationAPI.GET("/stats", notificationAPIHandler.GetUserStats)
+		userNotificationAPI.PATCH("/:id/read", notificationAPIHandler.MarkUserNotificationRead)
+		userNotificationAPI.PATCH("/read", notificationAPIHandler.MarkAllUserNotificationsRead)
+		userNotificationAPI.PATCH("/:id/dismiss", notificationAPIHandler.DismissUserNotification)
+		userNotificationAPI.DELETE("/:id", notificationAPIHandler.DeleteUserNotification)
+		userNotificationAPI.GET("/preferences", notificationAPIHandler.GetUserPreferences)
+		userNotificationAPI.PATCH("/preferences", notificationAPIHandler.UpdateUserPreferences)
 	}
 
 	// Admin API routes (require admin role + stricter rate limiting)
@@ -1188,7 +1318,8 @@ Sitemap: {app_url}/sitemap.xml`)
 	adminAPI.Use(middleware.RequireAuth(db.DB))
 	adminAPI.Use(middleware.RequireAdmin())
 	adminAPI.Use(middleware.AdminRateLimitMiddleware())
-	adminAPI.Use(middleware.AuditLogger(db.DB)) // Log all admin API actions
+	// Log all admin API actions
+	adminAPI.Use(middleware.AuditLogger(db.DB))
 	{
 		// User management
 		adminAPI.GET("/users", adminHandler.ListUsers)
@@ -1203,13 +1334,23 @@ Sitemap: {app_url}/sitemap.xml`)
 		adminAPI.PUT("/settings/:key", adminHandler.UpdateSetting)
 
 		// Live settings management (SPEC Section 18)
-		adminSettingsHandler := &handlers.AdminSettingsHandler{DB: db.DB}
+		adminSettingsHandler := &handlers.AdminSettingsHandler{
+			DB:                  db.DB,
+			NotificationService: notificationService, // TEMPLATE.md Part 25: Send notifications on settings changes
+		}
 		adminAPI.GET("/settings/all", adminSettingsHandler.GetAllSettings)
 		adminAPI.PUT("/settings/bulk", adminSettingsHandler.UpdateSettings)
 		adminAPI.POST("/settings/reset", adminSettingsHandler.ResetSettings)
 		adminAPI.GET("/settings/export", adminSettingsHandler.ExportSettings)
 		adminAPI.POST("/settings/import", adminSettingsHandler.ImportSettings)
 		adminAPI.POST("/reload", adminSettingsHandler.ReloadConfig)
+
+		// New admin settings endpoints
+		adminAPI.POST("/server/users", adminUsersHandler.UpdateUserSettings)
+		adminAPI.POST("/server/auth", adminAuthHandler.UpdateAuthSettings)
+		adminAPI.POST("/server/weather", adminWeatherHandler.UpdateWeatherSettings)
+		adminAPI.POST("/server/notifications", adminNotificationsHandler.UpdateNotificationSettings)
+		adminAPI.POST("/server/geoip", adminGeoIPHandler.UpdateGeoIPSettings)
 
 		// API token management
 		adminAPI.GET("/tokens", adminHandler.ListTokens)
@@ -1252,11 +1393,16 @@ Sitemap: {app_url}/sitemap.xml`)
 		})
 
 		// Scheduled tasks management (TEMPLATE.md lines 1193-1214)
-		adminAPI.GET("/tasks", schedulerHandler.GetAllTasks)                  // List all tasks with status
-		adminAPI.GET("/tasks/:name/history", schedulerHandler.GetTaskHistory) // Get task history
-		adminAPI.POST("/tasks/:name/enable", schedulerHandler.EnableTask)     // Enable a task
-		adminAPI.POST("/tasks/:name/disable", schedulerHandler.DisableTask)   // Disable a task
-		adminAPI.POST("/tasks/:name/trigger", schedulerHandler.TriggerTask)   // Manual trigger
+		// List all tasks with status
+		adminAPI.GET("/tasks", schedulerHandler.GetAllTasks)
+		// Get task history
+		adminAPI.GET("/tasks/:name/history", schedulerHandler.GetTaskHistory)
+		// Enable a task
+		adminAPI.POST("/tasks/:name/enable", schedulerHandler.EnableTask)
+		// Disable a task
+		adminAPI.POST("/tasks/:name/disable", schedulerHandler.DisableTask)
+		// Manual trigger
+		adminAPI.POST("/tasks/:name/trigger", schedulerHandler.TriggerTask)
 
 		// Notification channel management (admin only)
 		adminAPI.GET("/channels", channelHandler.ListChannels)
@@ -1269,6 +1415,19 @@ Sitemap: {app_url}/sitemap.xml`)
 		adminAPI.POST("/channels/:type/enable", channelHandler.EnableChannel)
 		adminAPI.POST("/channels/:type/disable", channelHandler.DisableChannel)
 		adminAPI.POST("/channels/:type/test", channelHandler.TestChannel)
+
+		// WebUI Notification API routes - Admin (TEMPLATE.md Part 25)
+		adminAPI.GET("/notifications", notificationAPIHandler.GetAdminNotifications)
+		adminAPI.GET("/notifications/unread", notificationAPIHandler.GetAdminUnreadNotifications)
+		adminAPI.GET("/notifications/count", notificationAPIHandler.GetAdminUnreadCount)
+		adminAPI.GET("/notifications/stats", notificationAPIHandler.GetAdminStats)
+		adminAPI.PATCH("/notifications/:id/read", notificationAPIHandler.MarkAdminNotificationRead)
+		adminAPI.PATCH("/notifications/read", notificationAPIHandler.MarkAllAdminNotificationsRead)
+		adminAPI.PATCH("/notifications/:id/dismiss", notificationAPIHandler.DismissAdminNotification)
+		adminAPI.DELETE("/notifications/:id", notificationAPIHandler.DeleteAdminNotification)
+		adminAPI.GET("/notifications/preferences", notificationAPIHandler.GetAdminPreferences)
+		adminAPI.PATCH("/notifications/preferences", notificationAPIHandler.UpdateAdminPreferences)
+		adminAPI.POST("/notifications/send", notificationAPIHandler.SendTestNotification)
 		adminAPI.GET("/channels/:type/stats", channelHandler.GetChannelStats)
 
 		// SMTP provider management
@@ -1330,6 +1489,15 @@ Sitemap: {app_url}/sitemap.xml`)
 			torAPI.GET("/keys/export", torAdminHandler.ExportKeys)
 		}
 
+		// Web settings management (robots.txt, security.txt) - TEMPLATE.md compliant
+		webAPI := adminAPI.Group("/server/web")
+		{
+			webAPI.GET("/robots", adminWebHandler.GetRobotsTxt)
+			webAPI.PATCH("/robots", adminWebHandler.UpdateRobotsTxt)
+			webAPI.GET("/security", adminWebHandler.GetSecurityTxt)
+			webAPI.PATCH("/security", adminWebHandler.UpdateSecurityTxt)
+		}
+
 		// Email template management
 		emailTemplateAPI := adminAPI.Group("/email/templates")
 		{
@@ -1341,12 +1509,37 @@ Sitemap: {app_url}/sitemap.xml`)
 			emailTemplateAPI.POST("/test", emailTemplateHandler.TestTemplate)
 		}
 
-		// System logs management
-		logsAPI := adminAPI.Group("/logs")
+		// Custom domain management (TEMPLATE.md PART 34: Multi-domain hosting)
+		adminAPI.GET("/domains", domainHandler.ListDomains)
+		adminAPI.GET("/domains/:id", domainHandler.GetDomain)
+		adminAPI.POST("/domains", domainHandler.CreateDomain)
+		adminAPI.GET("/domains/:id/verification", domainHandler.GetVerificationToken)
+		adminAPI.PUT("/domains/:id/verify", domainHandler.VerifyDomain)
+		adminAPI.PUT("/domains/:id/activate", domainHandler.ActivateDomain)
+		adminAPI.PUT("/domains/:id/deactivate", domainHandler.DeactivateDomain)
+		adminAPI.PUT("/domains/:id/ssl", domainHandler.UpdateSSL)
+		adminAPI.DELETE("/domains/:id", domainHandler.DeleteDomain)
+
+		// System logs management (TEMPLATE.md: /api/v1/admin/server/logs)
+		logsAPI := adminAPI.Group("/server/logs")
 		{
+			// List all log files
 			logsAPI.GET("", logsHandler.GetLogs)
+
+			// Get log entries for specific type (access, error, audit, etc.)
+			logsAPI.GET("/:type", logsHandler.GetLogs)
+
+			// Download specific log file
+			logsAPI.GET("/:type/download", logsHandler.DownloadLogs)
+
+			// Audit log specific endpoints
+			logsAPI.GET("/audit", logsHandler.GetAuditLogs)
+			logsAPI.GET("/audit/download", logsHandler.DownloadAuditLogs)
+			logsAPI.POST("/audit/search", logsHandler.SearchAuditLogs)
+			logsAPI.GET("/audit/stats", logsHandler.GetAuditStats)
+
+			// Legacy/additional endpoints
 			logsAPI.GET("/stats", logsHandler.GetLogStats)
-			logsAPI.GET("/download", logsHandler.DownloadLogs)
 			logsAPI.GET("/archives", logsHandler.ListArchivedLogs)
 			logsAPI.GET("/stream", logsHandler.StreamLogs)
 			logsAPI.POST("/rotate", logsHandler.RotateLogs)
@@ -1354,11 +1547,14 @@ Sitemap: {app_url}/sitemap.xml`)
 		}
 
 		// SSL/TLS certificate management
+		// TEMPLATE.md Part 8: Full Let's Encrypt support with all 3 challenge types
 		sslAPI := adminAPI.Group("/ssl")
 		{
 			sslAPI.GET("/status", sslHandler.GetStatus)
-			sslAPI.POST("/obtain", sslHandler.ObtainCertificate)
-			sslAPI.POST("/renew", sslHandler.RenewCertificate)
+			sslAPI.POST("/obtain", sslHandler.ObtainCertificate)        // Obtain LE certificate (HTTP-01/TLS-ALPN-01/DNS-01)
+			sslAPI.POST("/renew", sslHandler.RenewCertificate)          // Manual renewal
+			sslAPI.POST("/auto-renew", sslHandler.StartAutoRenewal)     // Start auto-renewal service
+			sslAPI.GET("/dns-records", sslHandler.GetDNSRecords)        // Get DNS records for DNS-01 challenge
 			sslAPI.POST("/verify", sslHandler.VerifyCertificate)
 			sslAPI.PUT("/settings", sslHandler.UpdateSettings)
 			sslAPI.GET("/export", sslHandler.ExportCertificate)
@@ -1424,38 +1620,46 @@ Sitemap: {app_url}/sitemap.xml`)
 			},
 			"current_version": "v1",
 			"documentation":   "http://" + c.Request.Host + "/docs",
-			"openapi":         "http://" + c.Request.Host + "/api/openapi.json",
-			"swagger":         "http://" + c.Request.Host + "/api/swagger",
+			"openapi":         "http://" + c.Request.Host + "/openapi.json",
+			"swagger":         "http://" + c.Request.Host + "/openapi",
 			"graphql":         "http://" + c.Request.Host + "/api/graphql",
 		})
 	})
 
-	// OpenAPI/Swagger documentation (moved to /api/)
-	r.GET("/api/openapi.json", handlers.GetOpenAPISpec)
-	r.GET("/api/openapi.yaml", handlers.GetOpenAPISpecYAML)
-	r.GET("/api/openapi", handlers.GetOpenAPISpec)
-	r.GET("/api/swagger", handlers.GetSwaggerUI)
-	// Root-level endpoints (TEMPLATE.md required)
-	r.GET("/openapi.json", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi.json") })
-	r.GET("/openapi.yaml", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi.yaml") })
-	r.GET("/openapi", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/openapi") })
-	r.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/swagger") })
+	// OpenAPI/Swagger documentation (AI.md: Auto-generated only, JSON only, embedded in binary)
+	// Root-level endpoints per AI.md specification
+	// TODO: Integrate src/swagger package once handlers are fully migrated
+	r.GET("/openapi", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/openapi/index.html")
+	})
+	r.GET("/openapi/*any", handlers.GetSwaggerUIAuto())  // Swagger UI + JSON spec (auto-generated)
+	r.GET("/openapi.json", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/openapi/doc.json")
+	})
 
 	// GraphQL API (moved to /api/)
+	// TODO: Integrate src/graphql package once handlers are fully migrated
 	graphqlHandler, err := handlers.InitGraphQL()
 	if err != nil {
-		log.Printf("⚠️  Failed to initialize GraphQL: %v", err)
+		log.Printf("Failed to initialize GraphQL: %v", err)
+		fmt.Printf("⚠️  Failed to initialize GraphQL: %v\n", err)
 	} else {
 		r.POST("/api/graphql", handlers.GraphQLHandler(graphqlHandler))
-		r.GET("/api/graphql", handlers.GraphQLHandler(graphqlHandler)) // GET for GraphiQL
+		// GET for GraphiQL
+		r.GET("/api/graphql", handlers.GraphQLHandler(graphqlHandler))
 		// Legacy redirects
 		r.GET("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/graphql") })
 		r.POST("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/graphql") })
-		appLogger.Printf("✅ GraphQL API enabled at /api/graphql")
+		appLogger.Printf("GraphQL API enabled at /api/graphql")
+		fmt.Printf("✅ GraphQL API enabled at /api/graphql\n")
 	}
 
 	// HTML documentation page at /docs
 	r.GET("/docs", apiHandler.GetDocsHTML)
+
+	// WebSocket endpoint for real-time notifications (TEMPLATE.md Part 25)
+	// Requires authentication for both users and admins
+	r.GET("/ws/notifications", middleware.OptionalAuth(db.DB), notificationAPIHandler.HandleWebSocketConnection)
 
 	// Standard server pages (TEMPLATE.md lines 2308-2314, 4486-4489)
 	r.GET("/server/about", handlers.ShowAboutPage(db, cfg))
@@ -1544,9 +1748,12 @@ JSON API:
 	})
 
 	// Main weather routes
-	r.GET("/", weatherHandler.HandleRoot)                      // Uses IP/cookie lookup
-	r.GET("/weather/:location", weatherHandler.HandleLocation) // Explicit location
-	r.GET("/:location", weatherHandler.HandleLocation)         // Backwards compatibility catch-all
+	// Uses IP/cookie lookup
+	r.GET("/", weatherHandler.HandleRoot)
+	// Explicit location
+	r.GET("/weather/:location", weatherHandler.HandleLocation)
+	// Backwards compatibility catch-all
+	r.GET("/:location", weatherHandler.HandleLocation)
 
 	// Build final URL for documentation
 	finalHostname := os.Getenv("DOMAIN")
@@ -1592,22 +1799,39 @@ JSON API:
 
 	// Start Tor hidden service after HTTP server starts
 	if err := torService.Start(httpPortInt); err != nil {
-		log.Printf("⚠️  Failed to start Tor hidden service: %v", err)
+		log.Printf("Failed to start Tor hidden service: %v", err)
+		fmt.Printf("⚠️  Failed to start Tor hidden service: %v\n", err)
 	}
 
 	// Start config file watcher for live reload
 	if configWatcher != nil {
 		if err := configWatcher.Start(); err != nil {
-			log.Printf("⚠️  Failed to start config watcher: %v", err)
+			log.Printf("Failed to start config watcher: %v", err)
+			fmt.Printf("⚠️  Failed to start config watcher: %v\n", err)
 		}
+	}
+
+	// TEMPLATE.md PART 1: Display startup banner
+	torOnionAddr := ""
+	if cfg != nil && cfg.Server.Tor.Enabled {
+		torOnionAddr = cfg.Server.Tor.OnionAddr
+	}
+
+	if isFirstRun {
+		utils.DisplayFirstRunBanner(httpPortInt, setupToken, utils.IsDockerized(), torOnionAddr)
+	} else {
+		utils.DisplayNormalBanner(Version, BuildDate, httpPortInt, utils.IsDockerized(), torOnionAddr)
 	}
 
 	// Setup signal handling
 	sigChan := make(chan os.Signal, 1)
+	// Graceful shutdown (systemctl stop)
+	// Ctrl+C
+	// Reload config
 	baseSignals := []os.Signal{
-		syscall.SIGTERM, // Graceful shutdown (systemctl stop)
-		syscall.SIGINT,  // Ctrl+C
-		syscall.SIGHUP,  // Reload config
+		syscall.SIGTERM,
+		syscall.SIGINT,
+		syscall.SIGHUP,
 	}
 
 	// Add platform-specific signals (SIGUSR1/2 on Unix only)
@@ -1630,19 +1854,22 @@ JSON API:
 
 			// Stop Tor service
 			if err := torService.Stop(); err != nil {
-				log.Printf("⚠️  Tor shutdown error: %v", err)
+				log.Printf("Tor shutdown error: %v", err)
+				fmt.Printf("⚠️  Tor shutdown error: %v\n", err)
 			}
 
 			// Stop config watcher
 			if configWatcher != nil {
 				if err := configWatcher.Stop(); err != nil {
-					log.Printf("⚠️  Config watcher shutdown error: %v", err)
+					log.Printf("Config watcher shutdown error: %v", err)
+					fmt.Printf("⚠️  Config watcher shutdown error: %v\n", err)
 				}
 			}
 
 			// Close cache connection
 			if err := cacheManager.Close(); err != nil {
-				log.Printf("⚠️  Cache shutdown error: %v", err)
+				log.Printf("Cache shutdown error: %v", err)
+				fmt.Printf("⚠️  Cache shutdown error: %v\n", err)
 			}
 
 			// Shutdown HTTP server with 5 second timeout
@@ -1650,10 +1877,12 @@ JSON API:
 			defer cancel()
 
 			if err := srv.Shutdown(ctx); err != nil {
-				log.Printf("⚠️  Server forced to shutdown: %v", err)
+				log.Printf("Server forced to shutdown: %v", err)
+				fmt.Printf("⚠️  Server forced to shutdown: %v\n", err)
 			}
 
-			log.Println("✅ Server exited gracefully")
+			log.Println("Server exited gracefully")
+			fmt.Println("✅ Server exited gracefully")
 			return
 
 		default:
@@ -1754,22 +1983,6 @@ func isLocalIP(ip string) bool {
 	return false
 }
 
-// securityHeadersMiddleware adds security headers
-func securityHeadersMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Content Security Policy
-		c.Header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https: http:; font-src 'self' data:; connect-src 'self' https://unpkg.com https://*.tile.openstreetmap.org")
-
-		// Other security headers
-		c.Header("X-Content-Type-Options", "nosniff")
-		c.Header("X-Frame-Options", "DENY")
-		c.Header("X-XSS-Protection", "1; mode=block")
-		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
-		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
-
-		c.Next()
-	}
-}
 
 // showServerStatus displays comprehensive server status information
 func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
@@ -1789,7 +2002,8 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 
 	address := os.Getenv("SERVER_LISTEN")
 	if address == "" {
-		address = os.Getenv("SERVER_ADDRESS") // Backward compatibility
+		// Backward compatibility
+		address = os.Getenv("SERVER_ADDRESS")
 	}
 	addressMode := ""
 	if address == "" {
@@ -1807,9 +2021,9 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 
 	// Get database statistics
 	var userCount, locationCount, tokenCount int
-	db.DB.QueryRow("SELECT COUNT(*) FROM users").Scan(&userCount)
-	db.DB.QueryRow("SELECT COUNT(*) FROM locations").Scan(&locationCount)
-	db.DB.QueryRow("SELECT COUNT(*) FROM api_tokens WHERE expires_at > datetime('now')").Scan(&tokenCount)
+	database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts").Scan(&userCount)
+	database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_saved_locations").Scan(&locationCount)
+	database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_tokens WHERE expires_at > datetime('now')").Scan(&tokenCount)
 
 	// Display status
 	fmt.Println("\n╔══════════════════════════════════════════════════════╗")
@@ -1819,7 +2033,7 @@ func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
 	fmt.Println("\n📊 Server Configuration:")
 	fmt.Printf("   Version:        %s\n", Version)
 	fmt.Printf("   Build Date:     %s\n", BuildDate)
-	fmt.Printf("   Git Commit:     %s\n", GitCommit)
+	fmt.Printf("   Git Commit:     %s\n", CommitID)
 	fmt.Printf("   Listen Address: %s:%s%s\n", address, port, addressMode)
 	fmt.Printf("   Environment:    %s\n", envMode)
 

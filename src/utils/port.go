@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"weather-go/src/models"
+	"github.com/apimgr/weather/src/database"
 )
 
 const (
@@ -22,16 +22,46 @@ const (
 
 // PortManager handles port selection and persistence
 type PortManager struct {
-	db            *sql.DB
-	settingsModel *models.SettingsModel
+	db *sql.DB
 }
 
 // NewPortManager creates a new port manager
 func NewPortManager(db *sql.DB) *PortManager {
 	return &PortManager{
-		db:            db,
-		settingsModel: &models.SettingsModel{DB: db},
+		db: db,
 	}
+}
+
+// Helper methods for database access (avoiding import cycle with models)
+func (pm *PortManager) getIntSetting(key string, defaultValue int) int {
+	var value int
+	err := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = ?", key).Scan(&value)
+	if err != nil {
+		return defaultValue
+	}
+	return value
+}
+
+func (pm *PortManager) setIntSetting(key string, value int) error {
+	_, err := database.GetServerDB().Exec(`
+		INSERT INTO server_config (key, value, type, updated_at)
+		VALUES (?, ?, 'integer', ?)
+		ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
+	`, key, fmt.Sprintf("%d", value), time.Now(), fmt.Sprintf("%d", value), time.Now())
+	return err
+}
+
+func (pm *PortManager) setBoolSetting(key string, value bool) error {
+	boolStr := "false"
+	if value {
+		boolStr = "true"
+	}
+	_, err := database.GetServerDB().Exec(`
+		INSERT INTO server_config (key, value, type, updated_at)
+		VALUES (?, ?, 'boolean', ?)
+		ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
+	`, key, boolStr, time.Now(), boolStr, time.Now())
+	return err
 }
 
 // IsPortAvailable checks if a port is available for binding
@@ -66,7 +96,7 @@ func GetRandomAvailablePort() (int, error) {
 func (pm *PortManager) GetOrAssignPort(portType string) (int, error) {
 	// Try to get saved port from database
 	var savedPort int
-	err := pm.db.QueryRow("SELECT value FROM settings WHERE key = ?", "server.port."+portType).Scan(&savedPort)
+	err := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = ?", "server.port."+portType).Scan(&savedPort)
 
 	if err == nil && savedPort > 0 {
 		// Found saved port, check if it's still available
@@ -83,8 +113,8 @@ func (pm *PortManager) GetOrAssignPort(portType string) (int, error) {
 	}
 
 	// Save to database
-	_, err = pm.db.Exec(`
-		INSERT INTO settings (key, value, type, description, updated_at)
+	_, err = database.GetServerDB().Exec(`
+		INSERT INTO server_config (key, value, type, description, updated_at)
 		VALUES (?, ?, 'integer', ?, ?)
 		ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
 	`, "server.port."+portType, fmt.Sprintf("%d", newPort),
@@ -100,8 +130,8 @@ func (pm *PortManager) GetOrAssignPort(portType string) (int, error) {
 
 // SavePort saves a port to the database
 func (pm *PortManager) SavePort(portType string, port int) error {
-	_, err := pm.db.Exec(`
-		INSERT INTO settings (key, value, type, description, updated_at)
+	_, err := database.GetServerDB().Exec(`
+		INSERT INTO server_config (key, value, type, description, updated_at)
 		VALUES (?, ?, 'integer', ?, ?)
 		ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
 	`, "server.port."+portType, fmt.Sprintf("%d", port),
@@ -114,7 +144,7 @@ func (pm *PortManager) SavePort(portType string, port int) error {
 // GetSavedPort retrieves a saved port from the database
 func (pm *PortManager) GetSavedPort(portType string) (int, error) {
 	var savedPort int
-	err := pm.db.QueryRow("SELECT value FROM settings WHERE key = ?", "server.port."+portType).Scan(&savedPort)
+	err := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = ?", "server.port."+portType).Scan(&savedPort)
 	if err != nil {
 		return 0, err
 	}
@@ -126,8 +156,8 @@ func (pm *PortManager) GetSavedPort(portType string) (int, error) {
 // Follows priority: 1) Database saved ports, 2) PORT env variable, 3) Random port
 func (pm *PortManager) GetServerPorts() (int, int, error) {
 	// Check for saved ports in database first
-	httpPort := pm.settingsModel.GetInt("server.http_port", 0)
-	httpsPort := pm.settingsModel.GetInt("server.https_port", 0)
+	httpPort := pm.getIntSetting("server.http_port", 0)
+	httpsPort := pm.getIntSetting("server.https_port", 0)
 
 	// If HTTP port is saved and available, use it
 	if httpPort > 0 && IsPortAvailable(httpPort) {
@@ -147,8 +177,8 @@ func (pm *PortManager) GetServerPorts() (int, int, error) {
 	}
 
 	// Save to database for future use
-	pm.settingsModel.SetInt("server.http_port", randomPort)
-	pm.settingsModel.SetInt("server.https_port", 0)
+	pm.setIntSetting("server.http_port", randomPort)
+	pm.setIntSetting("server.https_port", 0)
 
 	return randomPort, 0, nil
 }
@@ -170,8 +200,8 @@ func (pm *PortManager) ParsePortConfig(portStr string) (int, int, error) {
 	// Single port configuration
 	if len(parts) == 1 {
 		// Save to database
-		pm.settingsModel.SetInt("server.http_port", httpPort)
-		pm.settingsModel.SetInt("server.https_port", 0)
+		pm.setIntSetting("server.http_port", httpPort)
+		pm.setIntSetting("server.https_port", 0)
 		return httpPort, 0, nil
 	}
 
@@ -186,13 +216,13 @@ func (pm *PortManager) ParsePortConfig(portStr string) (int, int, error) {
 	}
 
 	// Save to database
-	pm.settingsModel.SetInt("server.http_port", httpPort)
-	pm.settingsModel.SetInt("server.https_port", httpsPort)
-	pm.settingsModel.SetBool("server.https_enabled", true)
+	pm.setIntSetting("server.http_port", httpPort)
+	pm.setIntSetting("server.https_port", httpsPort)
+	pm.setBoolSetting("server.https_enabled", true)
 
 	// Detect if using standard ports (80,443) for Let's Encrypt
 	if httpPort == 80 && httpsPort == 443 {
-		pm.settingsModel.SetBool("server.letsencrypt_enabled", true)
+		pm.setBoolSetting("server.letsencrypt_enabled", true)
 	}
 
 	return httpPort, httpsPort, nil
@@ -251,17 +281,17 @@ func (pm *PortManager) UpdatePort(httpPort, httpsPort int) error {
 		return fmt.Errorf("HTTP port %d is not available", httpPort)
 	}
 
-	pm.settingsModel.SetInt("server.http_port", httpPort)
+	pm.setIntSetting("server.http_port", httpPort)
 
 	if httpsPort > 0 {
 		if !IsPortAvailable(httpsPort) {
 			return fmt.Errorf("HTTPS port %d is not available", httpsPort)
 		}
-		pm.settingsModel.SetInt("server.https_port", httpsPort)
-		pm.settingsModel.SetBool("server.https_enabled", true)
+		pm.setIntSetting("server.https_port", httpsPort)
+		pm.setBoolSetting("server.https_enabled", true)
 	} else {
-		pm.settingsModel.SetInt("server.https_port", 0)
-		pm.settingsModel.SetBool("server.https_enabled", false)
+		pm.setIntSetting("server.https_port", 0)
+		pm.setBoolSetting("server.https_enabled", false)
 	}
 
 	return nil

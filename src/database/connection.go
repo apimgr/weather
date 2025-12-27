@@ -14,13 +14,15 @@ import (
 
 // DatabaseConfig holds database connection configuration
 type DatabaseConfig struct {
-	Type     string // sqlite, postgres, mysql, mssql, mongodb
+	// sqlite, postgres, mysql, mssql, mongodb
+	Type     string
 	Host     string
 	Port     int
 	Database string
 	Username string
 	Password string
-	SSLMode  string // For PostgreSQL
+	// For PostgreSQL
+	SSLMode  string
 	Options  map[string]string
 }
 

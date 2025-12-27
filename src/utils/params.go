@@ -18,8 +18,10 @@ func ParseQueryParams(c *gin.Context) *RenderParams {
 		Format:   0,
 		Units:    "auto",
 		Language: "en",
-		Days:     3, // Default: show 3 days (adaptive based on terminal width)
-		Width:    0, // 0 = auto-detect based on content
+		// Default: show 3 days (adaptive based on terminal width)
+		Days:     3,
+		// 0 = auto-detect based on content
+		Width:    0,
 	}
 
 	// Check for combined parameter flags (e.g., ?TFm or ?qn)
@@ -59,26 +61,33 @@ func ParseQueryParams(c *gin.Context) *RenderParams {
 			params.Format = 0
 		case "1":
 			params.Format = 1
-			params.NoColors = true // Format 1-4 always output plain text only
+			// Format 1-4 always output plain text only
+			params.NoColors = true
 		case "2":
 			params.Format = 2
-			params.NoColors = true // Format 1-4 always output plain text only
+			// Format 1-4 always output plain text only
+			params.NoColors = true
 		case "3":
 			params.Format = 3
-			params.NoColors = true // Format 1-4 always output plain text only
+			// Format 1-4 always output plain text only
+			params.NoColors = true
 		case "4":
 			params.Format = 4
-			params.NoColors = true // Format 1-4 always output plain text only
+			// Format 1-4 always output plain text only
+			params.NoColors = true
 		}
 	}
 
 	// Unit parameters - check if parameter exists
 	if _, exists := c.GetQuery("u"); exists {
-		params.Units = "imperial" // USCS/Imperial
+		// USCS/Imperial
+		params.Units = "imperial"
 	} else if _, exists := c.GetQuery("m"); exists {
-		params.Units = "metric" // Metric
+		// Metric
+		params.Units = "metric"
 	} else if _, exists := c.GetQuery("M"); exists {
-		params.Units = "metric" // SI (metric with m/s for wind)
+		// SI (metric with m/s for wind)
+		params.Units = "metric"
 	} else if units := c.Query("units"); units != "" {
 		params.Units = units
 	}
@@ -87,32 +96,40 @@ func ParseQueryParams(c *gin.Context) *RenderParams {
 	if days := c.Query("days"); days != "" {
 		requestedDays := parseIntSafe(days)
 		if requestedDays < 0 {
-			requestedDays = 0 // Negative values become 0 (current only)
+			// Negative values become 0 (current only)
+			requestedDays = 0
 		}
 		if requestedDays > MaxForecastDays {
-			requestedDays = MaxForecastDays // Cap at max available days
+			// Cap at max available days
+			requestedDays = MaxForecastDays
 		}
 		params.Days = requestedDays
 	}
 
 	// Style options - check if parameter exists
 	if _, exists := c.GetQuery("F"); exists {
-		params.NoFooter = true // Hide footer
+		// Hide footer
+		params.NoFooter = true
 	}
 	if _, exists := c.GetQuery("n"); exists {
-		params.Narrow = true // Narrow format
+		// Narrow format
+		params.Narrow = true
 	}
 	if _, exists := c.GetQuery("q"); exists {
-		params.Quiet = true // Quiet mode
+		// Quiet mode
+		params.Quiet = true
 	}
 	if _, exists := c.GetQuery("Q"); exists {
-		params.SuperQuiet = true // Super quiet mode
+		// Super quiet mode
+		params.SuperQuiet = true
 	}
 	if _, exists := c.GetQuery("T"); exists {
-		params.NoColors = true // No terminal colors
+		// No terminal colors
+		params.NoColors = true
 	}
 	if _, exists := c.GetQuery("A"); exists {
-		params.ForceANSI = true // Force ANSI/terminal output
+		// Force ANSI/terminal output
+		params.ForceANSI = true
 	}
 
 	// Check Accept header for text/plain (also disable colors)

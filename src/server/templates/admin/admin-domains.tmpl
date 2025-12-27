@@ -1,0 +1,531 @@
+{{define "admin-domains"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Domains - Admin - {{.AppName}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <style>
+        .domains-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .domain-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .domain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .domain-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .domain-status {
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-verified {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-unverified {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .domain-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .domain-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .add-domain-form {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .verification-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .verification-info h4 {
+            margin-top: 0;
+            color: #004085;
+        }
+
+        .verification-code {
+            background: white;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+
+        .ssl-info {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    {{template "admin-nav" .}}
+
+    <div class="domains-container">
+        <h1>Custom Domains Management</h1>
+        <p>Manage custom domains for the weather service. TEMPLATE.md PART 34.</p>
+
+        <!-- Add Domain Form -->
+        <div class="add-domain-form">
+            <h2>Add New Domain</h2>
+            <form id="addDomainForm">
+                <div class="form-group">
+                    <label for="domain">Domain Name:</label>
+                    <input type="text" id="domain" name="domain" placeholder="example.com" required>
+                    <small>Enter domain without http:// or https://</small>
+                </div>
+
+                {{if .IsAdmin}}
+                <div class="form-group">
+                    <label for="userID">Assign to User (optional):</label>
+                    <select id="userID" name="user_id">
+                        <option value="">Server Default</option>
+                        {{range .Users}}
+                        <option value="{{.ID}}">{{.Username}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                {{end}}
+
+                <button type="submit" class="btn btn-primary">Add Domain</button>
+            </form>
+        </div>
+
+        <!-- Domains List -->
+        <div id="domainsList">
+            {{if .Domains}}
+                {{range .Domains}}
+                <div class="domain-card" data-domain-id="{{.ID}}">
+                    <div class="domain-header">
+                        <div class="domain-name">{{.Domain}}</div>
+                        <div class="domain-status">
+                            {{if .IsVerified}}
+                            <span class="status-badge status-verified">✓ Verified</span>
+                            {{else}}
+                            <span class="status-badge status-unverified">⚠ Unverified</span>
+                            {{end}}
+
+                            {{if .IsActive}}
+                            <span class="status-badge status-active">● Active</span>
+                            {{else}}
+                            <span class="status-badge status-inactive">○ Inactive</span>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <div class="domain-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Domain ID</span>
+                            <span class="detail-value">{{.ID}}</span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">Owner</span>
+                            <span class="detail-value">
+                                {{if .UserID}}
+                                User ID: {{.UserID}}
+                                {{else}}
+                                Server Default
+                                {{end}}
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">SSL Enabled</span>
+                            <span class="detail-value">
+                                {{if .SSLEnabled}}
+                                ✓ Yes
+                                {{else}}
+                                ✗ No
+                                {{end}}
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">Redirect WWW</span>
+                            <span class="detail-value">
+                                {{if .RedirectWWW}}
+                                ✓ Yes
+                                {{else}}
+                                ✗ No
+                                {{end}}
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label">Created</span>
+                            <span class="detail-value">{{.CreatedAt.Format "2006-01-02 15:04"}}</span>
+                        </div>
+
+                        {{if .VerifiedAt}}
+                        <div class="detail-item">
+                            <span class="detail-label">Verified At</span>
+                            <span class="detail-value">{{.VerifiedAt.Format "2006-01-02 15:04"}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+
+                    {{if not .IsVerified}}
+                    <div class="verification-info">
+                        <h4>Domain Verification Required</h4>
+                        <p>Add the following TXT record to your domain's DNS:</p>
+                        <div class="verification-code">
+                            _weather-verify.{{.Domain}} TXT "weather-verify-{{.ID}}"
+                        </div>
+                        <p>After adding the DNS record, click "Verify Domain" below.</p>
+                    </div>
+                    {{end}}
+
+                    {{if .SSLEnabled}}
+                    <div class="ssl-info">
+                        <strong>SSL Certificate:</strong> {{.SSLCertPath}}<br>
+                        <strong>SSL Key:</strong> {{.SSLKeyPath}}
+                    </div>
+                    {{end}}
+
+                    <div class="domain-actions">
+                        {{if not .IsVerified}}
+                        <button class="btn btn-success" onclick="verifyDomain({{.ID}})">
+                            Verify Domain
+                        </button>
+                        {{end}}
+
+                        {{if .IsVerified}}
+                            {{if .IsActive}}
+                            <button class="btn btn-warning" onclick="deactivateDomain({{.ID}})">
+                                Deactivate
+                            </button>
+                            {{else}}
+                            <button class="btn btn-success" onclick="activateDomain({{.ID}})">
+                                Activate
+                            </button>
+                            {{end}}
+                        {{end}}
+
+                        <button class="btn btn-secondary" onclick="showSSLForm({{.ID}})">
+                            Update SSL
+                        </button>
+
+                        <button class="btn btn-danger" onclick="deleteDomain({{.ID}}, '{{.Domain}}')">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                {{end}}
+            {{else}}
+                <div class="domain-card">
+                    <p>No custom domains configured yet. Add one above to get started.</p>
+                </div>
+            {{end}}
+        </div>
+    </div>
+
+    <script>
+        // Add domain form submission
+        document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const domain = document.getElementById('domain').value;
+            const userIDSelect = document.getElementById('userID');
+            const userID = userIDSelect ? (userIDSelect.value || null) : null;
+
+            try {
+                const response = await fetch('/api/v1/admin/domains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        domain: domain,
+                        user_id: userID
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Domain added successfully!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Failed to add domain: ' + error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Verify domain
+        async function verifyDomain(id) {
+            try {
+                const response = await fetch(`/api/v1/admin/domains/${id}/verify`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    alert('Domain verified successfully!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Verification failed: ' + error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Activate domain
+        async function activateDomain(id) {
+            try {
+                const response = await fetch(`/api/v1/admin/domains/${id}/activate`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    alert('Domain activated successfully!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Activation failed: ' + error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Deactivate domain
+        async function deactivateDomain(id) {
+            try {
+                const response = await fetch(`/api/v1/admin/domains/${id}/deactivate`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    alert('Domain deactivated successfully!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Deactivation failed: ' + error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Delete domain
+        async function deleteDomain(id, domain) {
+            if (!confirm(`Are you sure you want to delete domain "${domain}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/admin/domains/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Domain deleted successfully!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Deletion failed: ' + error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Show SSL form (simplified version)
+        function showSSLForm(id) {
+            const certPath = prompt('Enter SSL certificate path:');
+            if (!certPath) return;
+
+            const keyPath = prompt('Enter SSL key path:');
+            if (!keyPath) return;
+
+            updateSSL(id, certPath, keyPath);
+        }
+
+        // Update SSL
+        async function updateSSL(id, certPath, keyPath) {
+            try {
+                const response = await fetch(`/api/v1/admin/domains/${id}/ssl`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        cert_path: certPath,
+                        key_path: keyPath
+                    })
+                });
+
+                if (response.ok) {
+                    alert('SSL configuration updated successfully!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('SSL update failed: ' + error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
+{{end}}

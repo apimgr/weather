@@ -112,13 +112,15 @@ func NewLogger(logDir string) (*Logger, error) {
 	)
 
 	l.auditLog = log.New(
-		auditFile, // Audit only to file, not stdout
+		// Audit only to file, not stdout
+		auditFile,
 		"",
 		0,
 	)
 
 	l.securityLog = log.New(
-		securityFile, // Security only to file, not stdout
+		// Security only to file, not stdout
+		securityFile,
 		"",
 		0,
 	)
@@ -217,13 +219,27 @@ func (l *Logger) Audit(userID, action, resource, oldValue, newValue, ip, userAge
 // Print is a helper for general output (goes to access log)
 func (l *Logger) Print(v ...interface{}) {
 	msg := fmt.Sprint(v...)
-	fmt.Println(msg) // Also to stdout for compatibility
+	// Also to stdout for compatibility
+	fmt.Println(msg)
 }
 
 // Printf is a helper for formatted general output
 func (l *Logger) Printf(format string, v ...interface{}) {
 	msg := fmt.Sprintf(format, v...)
-	fmt.Println(msg) // Also to stdout for compatibility
+	// Also to stdout for compatibility
+	fmt.Println(msg)
+}
+
+// Write writes a pre-formatted log line to the access log (for LogFormatter)
+func (l *Logger) Write(line string) {
+	if l.accessLog != nil {
+		l.accessLog.Print(line)
+	}
+}
+
+// Warn logs a warning message (alias for Server with prefix)
+func (l *Logger) Warn(format string, v ...interface{}) {
+	l.Server("[WARN] "+format, v...)
 }
 
 // RotateLogs rotates log files (called by scheduler)
@@ -264,7 +280,8 @@ func (l *Logger) RotateLogs() error {
 
 // cleanOldLogs removes logs older than retention period
 func (l *Logger) cleanOldLogs() error {
-	cutoff := time.Now().AddDate(0, 0, -30) // 30 days ago
+	// 30 days ago
+	cutoff := time.Now().AddDate(0, 0, -30)
 
 	entries, err := os.ReadDir(l.logDir)
 	if err != nil {

@@ -62,17 +62,28 @@ type MoonData struct {
 
 // RenderParams represents rendering parameters for weather output
 type RenderParams struct {
-	Format     int    `json:"format"`     // 0-4: different output formats
-	Units      string `json:"units"`      // metric, imperial, M (m/s)
-	Language   string `json:"language"`   // en, es, fr, etc.
-	Days       int    `json:"days"`       // 0, 1, 2 (number of forecast days)
-	NoFooter   bool   `json:"noFooter"`   // F: hide footer
-	Quiet      bool   `json:"quiet"`      // q: quiet mode
-	SuperQuiet bool   `json:"superQuiet"` // Q: super quiet
-	NoColors   bool   `json:"noColors"`   // T: no terminal colors
-	Narrow     bool   `json:"narrow"`     // n: narrow output
-	ForceANSI  bool   `json:"forceANSI"`  // A: force ANSI/terminal
-	Width      int    `json:"width"`      // Terminal width in columns (for adaptive layout)
+	// 0-4: different output formats
+	Format     int    `json:"format"`
+	// metric, imperial, M (m/s)
+	Units      string `json:"units"`
+	// en, es, fr, etc.
+	Language   string `json:"language"`
+	// 0, 1, 2 (number of forecast days)
+	Days       int    `json:"days"`
+	// F: hide footer
+	NoFooter   bool   `json:"noFooter"`
+	// q: quiet mode
+	Quiet      bool   `json:"quiet"`
+	// Q: super quiet
+	SuperQuiet bool   `json:"superQuiet"`
+	// T: no terminal colors
+	NoColors   bool   `json:"noColors"`
+	// n: narrow output
+	Narrow     bool   `json:"narrow"`
+	// A: force ANSI/terminal
+	ForceANSI  bool   `json:"forceANSI"`
+	// Terminal width in columns (for adaptive layout)
+	Width      int    `json:"width"`
 }
 
 // Country represents country data

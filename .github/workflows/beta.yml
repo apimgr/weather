@@ -5,130 +5,106 @@ on:
     branches:
       - beta
 
-permissions:
-  contents: write
+env:
+  PROJECTNAME: weather
 
 jobs:
   build:
-    name: Build Beta Binaries
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - os: linux
-            arch: amd64
-          - os: linux
-            arch: arm64
-          - os: darwin
-            arch: amd64
-          - os: darwin
-            arch: arm64
-          - os: windows
-            arch: amd64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
             ext: .exe
-          - os: windows
-            arch: arm64
+          - goos: windows
+            goarch: arm64
             ext: .exe
-          - os: freebsd
-            arch: amd64
-          - os: freebsd
-            arch: arm64
+          - goos: freebsd
+            goarch: amd64
+          - goos: freebsd
+            goarch: arm64
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
 
-      - name: Generate version
-        id: version
+      - name: Set build info
         run: |
-          VERSION=$(date -u '+%Y%m%d%H%M')-beta
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Beta version: $VERSION"
+          echo "VERSION=$(date -u +"%Y%m%d%H%M%S")-beta" >> $GITHUB_ENV
+          echo "COMMIT_ID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date +"%a %b %d, %Y at %H:%M:%S %Z")" >> $GITHUB_ENV
 
-      - name: Build binary
+      - name: Build server
         env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
         run: |
-          BINARY_NAME=weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
-          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${{ github.sha }}" -o $BINARY_NAME ./src
-          ls -lh $BINARY_NAME
+          LDFLAGS="-s -w -X 'main.Version=${{ env.VERSION }}' -X 'main.CommitID=${{ env.COMMIT_ID }}' -X 'main.BuildDate=${{ env.BUILD_DATE }}'"
+          go build -ldflags "${LDFLAGS}" -o ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} src
 
-      - name: Upload binary
+      # CLI build - only if src/client/ directory exists
+      - name: Build CLI
+        if: hashFiles('src/client/') != ''
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          LDFLAGS="-s -w -X 'main.Version=${{ env.VERSION }}' -X 'main.CommitID=${{ env.COMMIT_ID }}' -X 'main.BuildDate=${{ env.BUILD_DATE }}'"
+          go build -ldflags "${LDFLAGS}" -o ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli${{ matrix.ext }} src/client
+
+      - name: Upload server artifact
         uses: actions/upload-artifact@v4
         with:
-          name: weather-${{ matrix.os }}-${{ matrix.arch }}
-          path: weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
-          retention-days: 7
+          name: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+
+      - name: Upload CLI artifact
+        if: hashFiles('src/client/') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli
+          path: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli${{ matrix.ext }}
 
   release:
-    name: Create Beta Release
     needs: build
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    permissions:
+      contents: write
 
-      - name: Generate version
-        id: version
-        run: |
-          VERSION=$(date -u '+%Y%m%d%H%M')-beta
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: binaries
+          merge-multiple: true
 
-      - name: Prepare binaries
-        run: |
-          mkdir -p releases
-          find binaries -type f -exec mv {} releases/ \;
-          ls -lh releases/
+      - name: Set version
+        run: echo "VERSION=$(date -u +"%Y%m%d%H%M%S")-beta" >> $GITHUB_ENV
 
-      - name: Create source archive
-        run: |
-          tar --exclude='.git' --exclude='.github' --exclude='binaries' --exclude='releases' \
-              -czf releases/weather-source-${{ steps.version.outputs.VERSION }}.tar.gz .
+      - name: Create version.txt
+        run: echo "${{ env.VERSION }}" > binaries/version.txt
 
-      - name: Delete existing beta release
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release delete beta --yes || true
-          git push origin :refs/tags/beta || true
-
-      - name: Create beta release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create beta \
-            --title "Beta Build - ${{ steps.version.outputs.VERSION }}" \
-            --notes "**Automated beta build from beta branch**
-
-            Build: ${{ steps.version.outputs.VERSION }}
-            Commit: ${{ github.sha }}
-            Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-
-            This is a beta pre-release build. Use at your own risk.
-
-            **Installation:**
-            \`\`\`bash
-            # Download for your platform
-            wget https://github.com/apimgr/weather/releases/download/beta/weather-linux-amd64
-            chmod +x weather-linux-amd64
-            sudo mv weather-linux-amd64 /usr/local/bin/weather
-
-            # Or use the update command
-            weather --update branch beta
-            \`\`\`" \
-            --prerelease \
-            releases/*
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          files: binaries/*
+          prerelease: true
+          generate_release_notes: true

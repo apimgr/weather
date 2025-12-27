@@ -291,7 +291,8 @@ func downloadFile(filepath string, url string) error {
 		}
 	}
 
-	fmt.Println() // New line after progress
+	// New line after progress
+	fmt.Println()
 	return nil
 }
 

@@ -1,12 +1,12 @@
 /* Dracula Theme for MkDocs Material */
+/* https://draculatheme.com/contribute */
 
 :root {
-  /* Dracula color palette - High Contrast Version for ReadTheDocs */
+  /* Dracula color palette */
   --dracula-background: #282a36;
   --dracula-current-line: #44475a;
-  --dracula-selection: #44475a;
   --dracula-foreground: #f8f8f2;
-  --dracula-comment: #9ca3db; /* Lightened from #6272a4 for better contrast */
+  --dracula-comment: #6272a4;
   --dracula-cyan: #8be9fd;
   --dracula-green: #50fa7b;
   --dracula-orange: #ffb86c;
@@ -16,485 +16,162 @@
   --dracula-yellow: #f1fa8c;
 }
 
-/* Override Material theme colors */
-[data-md-color-scheme="default"] {
-  --md-primary-fg-color: var(--dracula-purple);
-  --md-primary-fg-color--light: var(--dracula-purple);
-  --md-primary-fg-color--dark: var(--dracula-purple);
-
-  --md-accent-fg-color: var(--dracula-cyan);
-  --md-accent-fg-color--transparent: rgba(139, 233, 253, 0.1);
-
+/* Apply Dracula scheme */
+[data-md-color-scheme="dracula"] {
   --md-default-bg-color: var(--dracula-background);
   --md-default-fg-color: var(--dracula-foreground);
   --md-default-fg-color--light: var(--dracula-comment);
   --md-default-fg-color--lighter: var(--dracula-current-line);
+  --md-default-fg-color--lightest: var(--dracula-current-line);
 
-  --md-code-bg-color: var(--dracula-current-line);
+  --md-primary-fg-color: var(--dracula-purple);
+  --md-primary-fg-color--light: var(--dracula-pink);
+  --md-primary-fg-color--dark: var(--dracula-purple);
+  --md-primary-bg-color: var(--dracula-foreground);
+  --md-primary-bg-color--light: var(--dracula-foreground);
+
+  --md-accent-fg-color: var(--dracula-pink);
+  --md-accent-fg-color--transparent: rgba(255, 121, 198, 0.1);
+  --md-accent-bg-color: var(--dracula-pink);
+
   --md-code-fg-color: var(--dracula-foreground);
+  --md-code-bg-color: var(--dracula-current-line);
 
+  --md-code-hl-color: rgba(255, 184, 108, 0.2);
+  --md-code-hl-number-color: var(--dracula-purple);
+  --md-code-hl-special-color: var(--dracula-pink);
+  --md-code-hl-function-color: var(--dracula-green);
+  --md-code-hl-constant-color: var(--dracula-purple);
+  --md-code-hl-keyword-color: var(--dracula-pink);
+  --md-code-hl-string-color: var(--dracula-yellow);
+  --md-code-hl-name-color: var(--dracula-foreground);
+  --md-code-hl-operator-color: var(--dracula-pink);
+  --md-code-hl-punctuation-color: var(--dracula-foreground);
+  --md-code-hl-comment-color: var(--dracula-comment);
+  --md-code-hl-generic-color: var(--dracula-foreground);
+  --md-code-hl-variable-color: var(--dracula-foreground);
+
+  --md-typeset-color: var(--dracula-foreground);
   --md-typeset-a-color: var(--dracula-cyan);
 
-  --md-typeset-mark-color: var(--dracula-yellow);
+  --md-typeset-kbd-color: var(--dracula-foreground);
+  --md-typeset-kbd-accent-color: var(--dracula-current-line);
+  --md-typeset-kbd-border-color: var(--dracula-comment);
+
+  --md-typeset-mark-color: rgba(241, 250, 140, 0.3);
+
+  --md-typeset-table-color: var(--dracula-current-line);
 
   --md-admonition-fg-color: var(--dracula-foreground);
   --md-admonition-bg-color: var(--dracula-current-line);
+
+  --md-footer-bg-color: var(--dracula-current-line);
+  --md-footer-bg-color--dark: var(--dracula-background);
 }
 
-/* Body and typography */
-body {
-  background-color: var(--dracula-background);
+/* Navigation and sidebar */
+[data-md-color-scheme="dracula"] .md-nav__link {
   color: var(--dracula-foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
-/* Headers */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--dracula-purple);
-  font-weight: 600;
-}
-
-h1 {
-  border-bottom: 2px solid var(--dracula-cyan);
-  padding-bottom: 0.5rem;
-}
-
-/* Links */
-a {
+[data-md-color-scheme="dracula"] .md-nav__link:hover {
   color: var(--dracula-cyan);
-  text-decoration: none;
-  transition: color 0.2s ease;
 }
 
-a:hover {
-  color: var(--dracula-green);
-  text-decoration: underline;
-}
-
-/* Code blocks */
-code {
-  background-color: var(--dracula-current-line);
-  color: var(--dracula-foreground);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-  font-size: 0.9em;
-}
-
-pre {
-  background-color: var(--dracula-current-line);
-  border-left: 4px solid var(--dracula-cyan);
-  padding: 1rem;
-  border-radius: 4px;
-  overflow-x: auto;
-}
-
-pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-/* Inline code in different contexts */
-.md-typeset code {
-  background-color: var(--dracula-current-line);
+[data-md-color-scheme="dracula"] .md-nav__link--active {
   color: var(--dracula-pink);
-}
-
-/* Tables */
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1rem 0;
-}
-
-th {
-  background-color: var(--dracula-current-line);
-  color: var(--dracula-purple);
-  font-weight: 600;
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 2px solid var(--dracula-cyan);
-}
-
-td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--dracula-current-line);
-}
-
-tr:hover {
-  background-color: var(--dracula-current-line);
-}
-
-/* Blockquotes */
-blockquote {
-  border-left: 4px solid var(--dracula-purple);
-  padding-left: 1rem;
-  margin: 1rem 0;
-  color: var(--dracula-foreground);
-  font-style: italic;
-  background-color: rgba(189, 147, 249, 0.1);
-  padding: 1rem;
-  border-radius: 4px;
-}
-
-/* Admonitions */
-.md-typeset .admonition {
-  border-left: 4px solid var(--dracula-cyan);
-  background-color: rgba(139, 233, 253, 0.1);
-}
-
-.md-typeset .admonition.note {
-  border-color: var(--dracula-cyan);
-}
-
-.md-typeset .admonition.warning {
-  border-color: var(--dracula-orange);
-  background-color: rgba(255, 184, 108, 0.1);
-}
-
-.md-typeset .admonition.danger {
-  border-color: var(--dracula-red);
-  background-color: rgba(255, 85, 85, 0.1);
-}
-
-.md-typeset .admonition.success {
-  border-color: var(--dracula-green);
-  background-color: rgba(80, 250, 123, 0.1);
-}
-
-/* Navigation */
-.md-nav__link--active {
-  color: var(--dracula-cyan);
-  font-weight: 600;
-}
-
-.md-nav__link:hover {
-  color: var(--dracula-purple);
 }
 
 /* Search */
-.md-search__input {
+[data-md-color-scheme="dracula"] .md-search__input {
   background-color: var(--dracula-current-line);
   color: var(--dracula-foreground);
-  border: 1px solid var(--dracula-comment);
 }
 
-.md-search__input::placeholder {
+[data-md-color-scheme="dracula"] .md-search__input::placeholder {
   color: var(--dracula-comment);
 }
 
-/* Buttons */
-.md-button {
-  background-color: var(--dracula-purple);
-  color: var(--dracula-background);
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
-  transition: background-color 0.2s ease;
-}
-
-.md-button:hover {
-  background-color: var(--dracula-pink);
-}
-
-.md-button--primary {
-  background-color: var(--dracula-cyan);
-  color: var(--dracula-background);
-}
-
-.md-button--primary:hover {
-  background-color: var(--dracula-green);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--dracula-background);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--dracula-comment);
-  border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--dracula-purple);
-}
-
-/* Syntax highlighting overrides */
-.highlight .hll { background-color: var(--dracula-selection); }
-.highlight .c { color: var(--dracula-comment); font-style: italic; }
-.highlight .k { color: var(--dracula-pink); }
-.highlight .o { color: var(--dracula-pink); }
-.highlight .cm { color: var(--dracula-comment); font-style: italic; }
-.highlight .cp { color: var(--dracula-pink); }
-.highlight .c1 { color: var(--dracula-comment); font-style: italic; }
-.highlight .cs { color: var(--dracula-comment); font-style: italic; }
-.highlight .gd { color: var(--dracula-red); }
-.highlight .ge { font-style: italic; }
-.highlight .gr { color: var(--dracula-red); }
-.highlight .gh { color: var(--dracula-cyan); font-weight: bold; }
-.highlight .gi { color: var(--dracula-green); }
-.highlight .go { color: var(--dracula-foreground); }
-.highlight .gp { color: var(--dracula-cyan); }
-.highlight .gs { font-weight: bold; }
-.highlight .gu { color: var(--dracula-cyan); font-weight: bold; }
-.highlight .gt { color: var(--dracula-red); }
-.highlight .kc { color: var(--dracula-pink); }
-.highlight .kd { color: var(--dracula-cyan); }
-.highlight .kn { color: var(--dracula-pink); }
-.highlight .kp { color: var(--dracula-pink); }
-.highlight .kr { color: var(--dracula-pink); }
-.highlight .kt { color: var(--dracula-cyan); }
-.highlight .m { color: var(--dracula-purple); }
-.highlight .s { color: var(--dracula-yellow); }
-.highlight .na { color: var(--dracula-green); }
-.highlight .nb { color: var(--dracula-cyan); }
-.highlight .nc { color: var(--dracula-cyan); }
-.highlight .no { color: var(--dracula-purple); }
-.highlight .nd { color: var(--dracula-green); }
-.highlight .ni { color: var(--dracula-pink); }
-.highlight .ne { color: var(--dracula-cyan); }
-.highlight .nf { color: var(--dracula-green); }
-.highlight .nl { color: var(--dracula-cyan); }
-.highlight .nn { color: var(--dracula-foreground); }
-.highlight .nx { color: var(--dracula-foreground); }
-.highlight .py { color: var(--dracula-foreground); }
-.highlight .nt { color: var(--dracula-pink); }
-.highlight .nv { color: var(--dracula-foreground); }
-.highlight .ow { color: var(--dracula-pink); }
-.highlight .w { color: var(--dracula-foreground); }
-.highlight .mf { color: var(--dracula-purple); }
-.highlight .mh { color: var(--dracula-purple); }
-.highlight .mi { color: var(--dracula-purple); }
-.highlight .mo { color: var(--dracula-purple); }
-.highlight .sb { color: var(--dracula-yellow); }
-.highlight .sc { color: var(--dracula-yellow); }
-.highlight .sd { color: var(--dracula-yellow); }
-.highlight .s2 { color: var(--dracula-yellow); }
-.highlight .se { color: var(--dracula-pink); }
-.highlight .sh { color: var(--dracula-yellow); }
-.highlight .si { color: var(--dracula-yellow); }
-.highlight .sx { color: var(--dracula-yellow); }
-.highlight .sr { color: var(--dracula-yellow); }
-.highlight .s1 { color: var(--dracula-yellow); }
-.highlight .ss { color: var(--dracula-yellow); }
-.highlight .bp { color: var(--dracula-foreground); }
-.highlight .vc { color: var(--dracula-foreground); }
-.highlight .vg { color: var(--dracula-foreground); }
-.highlight .vi { color: var(--dracula-foreground); }
-.highlight .il { color: var(--dracula-purple); }
-
-/* Custom badges */
-.badge {
-  display: inline-block;
-  padding: 0.25em 0.5em;
-  font-size: 0.875em;
-  font-weight: 600;
-  line-height: 1;
-  border-radius: 3px;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-}
-
-.badge-success {
-  background-color: var(--dracula-green);
-  color: var(--dracula-background);
-}
-
-.badge-warning {
-  background-color: var(--dracula-orange);
-  color: var(--dracula-background);
-}
-
-.badge-danger {
-  background-color: var(--dracula-red);
-  color: var(--dracula-foreground);
-}
-
-.badge-info {
-  background-color: var(--dracula-cyan);
-  color: var(--dracula-background);
-}
-
-/* Footer */
-.md-footer {
+/* Tables */
+[data-md-color-scheme="dracula"] .md-typeset table:not([class]) th {
   background-color: var(--dracula-current-line);
-  color: var(--dracula-foreground);
-}
-
-.md-footer-meta {
-  background-color: var(--dracula-background);
-}
-
-/* Header */
-.md-header {
-  background-color: var(--dracula-current-line);
-  color: var(--dracula-foreground);
-}
-
-/* Tabs */
-.md-tabs {
-  background-color: var(--dracula-purple);
-}
-
-.md-tabs__link--active {
-  color: var(--dracula-yellow);
-}
-
-/* Responsive adjustments */
-@media screen and (max-width: 76.1875em) {
-  .md-nav {
-    background-color: var(--dracula-background);
-  }
-}
-
-/* Print styles */
-@media print {
-  body {
-    background-color: white;
-    color: black;
-  }
-
-  a {
-    color: blue;
-  }
-
-  code, pre {
-    background-color: #f5f5f5;
-    color: black;
-  }
-}
-
-/* ============================================
-   HIGH CONTRAST IMPROVEMENTS
-   ============================================ */
-
-/* Main content area - ensure high contrast */
-.md-content {
-  color: var(--dracula-foreground);
-}
-
-.md-content p {
-  color: var(--dracula-foreground);
-  line-height: 1.8;
-}
-
-/* Sidebar navigation - better contrast */
-.md-nav {
-  color: var(--dracula-foreground);
-}
-
-.md-nav__item {
-  color: var(--dracula-foreground);
-}
-
-.md-nav__link {
-  color: var(--dracula-foreground);
-}
-
-.md-nav__link:focus,
-.md-nav__link:hover {
-  color: var(--dracula-cyan);
-}
-
-/* Ensure all list items are readable */
-li {
-  color: var(--dracula-foreground);
-}
-
-/* Table improvements */
-td {
-  color: var(--dracula-foreground);
-}
-
-/* Make sure paragraphs inside lists are visible */
-li > p {
-  color: var(--dracula-foreground);
-}
-
-/* Code inline - higher contrast */
-.md-typeset code {
-  background-color: #383a59; /* Lighter than current-line for better contrast */
-  color: var(--dracula-pink);
-  border: 1px solid var(--dracula-purple);
-  padding: 0.1em 0.4em;
-  font-weight: 500;
-}
-
-/* Code blocks - better background */
-.md-typeset pre {
-  background-color: #383a59;
-  border: 1px solid var(--dracula-purple);
-}
-
-.md-typeset pre code {
-  background-color: transparent;
-  color: var(--dracula-foreground);
-  border: none;
-}
-
-/* Admonition titles */
-.md-typeset .admonition-title {
-  color: var(--dracula-foreground);
-  font-weight: 700;
-}
-
-/* Strong/Bold text - more emphasis */
-strong, b {
-  color: var(--dracula-yellow);
-  font-weight: 700;
-}
-
-/* Em/Italic text */
-em, i {
-  color: var(--dracula-cyan);
-}
-
-/* Ensure section headings are very visible */
-.md-typeset h1 {
-  color: var(--dracula-cyan);
-  font-weight: 700;
-}
-
-.md-typeset h2 {
   color: var(--dracula-purple);
-  font-weight: 700;
 }
 
-.md-typeset h3 {
-  color: var(--dracula-pink);
-  font-weight: 600;
+[data-md-color-scheme="dracula"] .md-typeset table:not([class]) tr:hover {
+  background-color: rgba(68, 71, 90, 0.5);
 }
 
-.md-typeset h4,
-.md-typeset h5,
-.md-typeset h6 {
-  color: var(--dracula-green);
-  font-weight: 600;
+/* Code blocks */
+[data-md-color-scheme="dracula"] .highlight {
+  background-color: var(--dracula-current-line);
 }
 
-/* Search results */
-.md-search-result__item {
+[data-md-color-scheme="dracula"] code {
+  background-color: var(--dracula-current-line);
   color: var(--dracula-foreground);
 }
 
-.md-search-result__meta {
-  color: var(--dracula-comment);
+/* Admonitions */
+[data-md-color-scheme="dracula"] .md-typeset .admonition,
+[data-md-color-scheme="dracula"] .md-typeset details {
+  border-color: var(--dracula-purple);
+  background-color: var(--dracula-current-line);
 }
 
-/* Ensure TOC is readable */
-.md-nav--secondary .md-nav__link {
-  color: var(--dracula-foreground);
+[data-md-color-scheme="dracula"] .md-typeset .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset summary {
+  background-color: rgba(189, 147, 249, 0.1);
 }
 
-.md-nav--secondary .md-nav__link--active {
-  color: var(--dracula-cyan);
-  font-weight: 600;
+/* Note admonition */
+[data-md-color-scheme="dracula"] .md-typeset .admonition.note,
+[data-md-color-scheme="dracula"] .md-typeset details.note {
+  border-color: var(--dracula-cyan);
+}
+
+[data-md-color-scheme="dracula"] .md-typeset .note > .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset .note > summary {
+  background-color: rgba(139, 233, 253, 0.1);
+}
+
+/* Warning admonition */
+[data-md-color-scheme="dracula"] .md-typeset .admonition.warning,
+[data-md-color-scheme="dracula"] .md-typeset details.warning {
+  border-color: var(--dracula-orange);
+}
+
+[data-md-color-scheme="dracula"] .md-typeset .warning > .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset .warning > summary {
+  background-color: rgba(255, 184, 108, 0.1);
+}
+
+/* Danger/Error admonition */
+[data-md-color-scheme="dracula"] .md-typeset .admonition.danger,
+[data-md-color-scheme="dracula"] .md-typeset .admonition.error,
+[data-md-color-scheme="dracula"] .md-typeset details.danger,
+[data-md-color-scheme="dracula"] .md-typeset details.error {
+  border-color: var(--dracula-red);
+}
+
+[data-md-color-scheme="dracula"] .md-typeset .danger > .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset .error > .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset .danger > summary,
+[data-md-color-scheme="dracula"] .md-typeset .error > summary {
+  background-color: rgba(255, 85, 85, 0.1);
+}
+
+/* Tip/Success admonition */
+[data-md-color-scheme="dracula"] .md-typeset .admonition.tip,
+[data-md-color-scheme="dracula"] .md-typeset .admonition.success,
+[data-md-color-scheme="dracula"] .md-typeset details.tip,
+[data-md-color-scheme="dracula"] .md-typeset details.success {
+  border-color: var(--dracula-green);
+}
+
+[data-md-color-scheme="dracula"] .md-typeset .tip > .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset .success > .admonition-title,
+[data-md-color-scheme="dracula"] .md-typeset .tip > summary,
+[data-md-color-scheme="dracula"] .md-typeset .success > summary {
+  background-color: rgba(80, 250, 123, 0.1);
 }

@@ -1,0 +1,384 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="profile-page-header-title">🔒 Security Settings</h1>
+        <p class="text-comment">Manage your account security and two-factor authentication</p>
+    </div>
+
+    <!-- Two-Factor Authentication Card -->
+    <div class="card profile-card">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Two-Factor Authentication</h2>
+        </div>
+        <div class="card-body">
+            {{if .user.TwoFactorEnabled}}
+                <!-- 2FA Enabled State -->
+                <div class="alert alert-success margin-y-md">
+                    <strong>✓ Two-factor authentication is enabled</strong>
+                    <p class="text-sm margin-y-sm">Your account is protected with an additional layer of security.</p>
+                </div>
+
+                <div class="info-grid margin-y-md">
+                    <div class="info-item">
+                        <div class="info-label">Recovery Keys Remaining</div>
+                        <div class="info-value">
+                            <span class="{{if lt .recoveryKeysCount 3}}text-danger{{else}}text-success{{end}}">
+                                {{.recoveryKeysCount}} / 10
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {{if lt .recoveryKeysCount 3}}
+                <div class="alert alert-warning margin-y-md">
+                    <strong>⚠ Low Recovery Keys</strong>
+                    <p class="text-sm margin-y-sm">You have less than 3 recovery keys remaining. Consider regenerating them.</p>
+                </div>
+                {{end}}
+
+                <div class="profile-form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="regenerateRecoveryKeys()">
+                        🔄 Regenerate Recovery Keys
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="disable2FA()">
+                        🔓 Disable Two-Factor Authentication
+                    </button>
+                </div>
+            {{else}}
+                <!-- 2FA Disabled State -->
+                <div class="alert alert-info margin-y-md">
+                    <strong>ℹ Two-factor authentication is disabled</strong>
+                    <p class="text-sm margin-y-sm">Enable 2FA to add an extra layer of security to your account.</p>
+                </div>
+
+                <p class="text-comment margin-y-md">
+                    Two-factor authentication (2FA) adds an additional security step to your login process.
+                    After enabling, you'll need to enter a code from your authenticator app when logging in.
+                </p>
+
+                <button type="button" class="btn btn-primary" onclick="enable2FA()">
+                    🔒 Enable Two-Factor Authentication
+                </button>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<!-- 2FA Setup Modal -->
+<div id="setup2FAModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Enable Two-Factor Authentication</h3>
+            <button class="modal-close" onclick="closeSetupModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="setupStep1">
+                <h4>Step 1: Scan QR Code</h4>
+                <p class="text-comment">Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.)</p>
+                <div id="qrCodeContainer" class="text-center margin-y-md"></div>
+                <details class="margin-y-md">
+                    <summary class="text-comment">Can't scan? Enter manually</summary>
+                    <div class="margin-y-sm">
+                        <label class="form-label">Secret Key</label>
+                        <input type="text" id="manualSecret" class="form-input" readonly>
+                        <small class="text-comment">Enter this key manually in your authenticator app</small>
+                    </div>
+                </details>
+                <button type="button" class="btn btn-primary" onclick="nextSetupStep()">Next</button>
+            </div>
+
+            <div id="setupStep2" style="display: none;">
+                <h4>Step 2: Verify Code</h4>
+                <p class="text-comment">Enter the 6-digit code from your authenticator app</p>
+                <form id="verify2FAForm" class="margin-y-md">
+                    <div class="form-group">
+                        <label class="form-label">Verification Code</label>
+                        <input type="text" id="verificationCode" class="form-input" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify & Enable</button>
+                    <button type="button" class="btn btn-secondary" onclick="prevSetupStep()">Back</button>
+                </form>
+            </div>
+
+            <div id="setupStep3" style="display: none;">
+                <h4>Step 3: Save Recovery Keys</h4>
+                <div class="alert alert-warning margin-y-md">
+                    <strong>⚠ Important: Save These Recovery Keys</strong>
+                    <p class="text-sm">These keys can be used to access your account if you lose your authenticator device. Each key can only be used once.</p>
+                </div>
+                <div id="recoveryKeysContainer" class="margin-y-md"></div>
+                <button type="button" class="btn btn-primary" onclick="downloadRecoveryKeys()">💾 Download Recovery Keys</button>
+                <button type="button" class="btn btn-success" onclick="finishSetup()">✓ I've Saved My Keys</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Disable 2FA Modal -->
+<div id="disable2FAModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Disable Two-Factor Authentication</h3>
+            <button class="modal-close" onclick="closeDisableModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-warning">
+                <strong>⚠ Warning</strong>
+                <p>Disabling 2FA will make your account less secure. All recovery keys will be deleted.</p>
+            </div>
+            <form id="disable2FAForm">
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" id="disablePassword" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-danger">Disable 2FA</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDisableModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-comment);
+}
+.modal-body {
+    padding: 1.5rem;
+}
+#qrCodeContainer img {
+    max-width: 200px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+}
+#recoveryKeysContainer {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+.recovery-key {
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    background: var(--bg);
+    border-radius: 4px;
+}
+</style>
+
+<script>
+let setup2FASecret = '';
+let recoveryKeysList = [];
+
+// Enable 2FA Flow
+async function enable2FA() {
+    try {
+        const response = await fetch('/api/v1/user/security/2fa/setup', {
+            method: 'GET'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to start 2FA setup');
+        }
+
+        const data = await response.json();
+        setup2FASecret = data.secret;
+
+        // Show QR code
+        document.getElementById('qrCodeContainer').innerHTML = `<img src="${data.qr_code}" alt="QR Code">`;
+        document.getElementById('manualSecret').value = data.secret;
+
+        // Show modal
+        document.getElementById('setup2FAModal').style.display = 'flex';
+        document.getElementById('setupStep1').style.display = 'block';
+        document.getElementById('setupStep2').style.display = 'none';
+        document.getElementById('setupStep3').style.display = 'none';
+    } catch (error) {
+        Toast.error('Failed to setup 2FA: ' + error.message);
+    }
+}
+
+function nextSetupStep() {
+    document.getElementById('setupStep1').style.display = 'none';
+    document.getElementById('setupStep2').style.display = 'block';
+    document.getElementById('verificationCode').focus();
+}
+
+function prevSetupStep() {
+    document.getElementById('setupStep2').style.display = 'none';
+    document.getElementById('setupStep1').style.display = 'block';
+}
+
+// Verify and enable 2FA
+document.getElementById('verify2FAForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const code = document.getElementById('verificationCode').value;
+
+    try {
+        const response = await fetch('/api/v1/user/security/2fa/enable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                secret: setup2FASecret,
+                code: code
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Invalid verification code');
+        }
+
+        const data = await response.json();
+        recoveryKeysList = data.recovery_keys;
+
+        // Show recovery keys
+        displayRecoveryKeys(recoveryKeysList);
+
+        document.getElementById('setupStep2').style.display = 'none';
+        document.getElementById('setupStep3').style.display = 'block';
+    } catch (error) {
+        Toast.error('Verification failed: ' + error.message);
+    }
+});
+
+function displayRecoveryKeys(keys) {
+    const container = document.getElementById('recoveryKeysContainer');
+    container.innerHTML = '<h4>Your Recovery Keys:</h4>' +
+        keys.map(key => `<div class="recovery-key">${key}</div>`).join('');
+}
+
+function downloadRecoveryKeys() {
+    const text = 'Weather Service - Recovery Keys\n\n' +
+        'These recovery keys can be used to access your account if you lose your authenticator device.\n' +
+        'Each key can only be used once. Keep them in a safe place.\n\n' +
+        recoveryKeysList.join('\n');
+
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'recovery-keys.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function finishSetup() {
+    closeSetupModal();
+    Toast.success('Two-factor authentication enabled successfully!');
+    setTimeout(() => window.location.reload(), 1000);
+}
+
+function closeSetupModal() {
+    document.getElementById('setup2FAModal').style.display = 'none';
+    document.getElementById('verificationCode').value = '';
+    setup2FASecret = '';
+    recoveryKeysList = [];
+}
+
+// Disable 2FA
+function disable2FA() {
+    document.getElementById('disable2FAModal').style.display = 'flex';
+}
+
+document.getElementById('disable2FAForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const password = document.getElementById('disablePassword').value;
+
+    try {
+        const response = await fetch('/api/v1/user/security/2fa/disable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to disable 2FA');
+        }
+
+        Toast.success('Two-factor authentication disabled');
+        setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+        Toast.error('Failed to disable 2FA: ' + error.message);
+    }
+});
+
+function closeDisableModal() {
+    document.getElementById('disable2FAModal').style.display = 'none';
+    document.getElementById('disablePassword').value = '';
+}
+
+// Regenerate Recovery Keys
+async function regenerateRecoveryKeys() {
+    const code = prompt('Enter your authenticator code to regenerate recovery keys:');
+    if (!code) return;
+
+    try {
+        const response = await fetch('/api/v1/user/security/2fa/recovery/regenerate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to regenerate recovery keys');
+        }
+
+        const data = await response.json();
+        recoveryKeysList = data.recovery_keys;
+
+        // Show keys in modal
+        displayRecoveryKeys(recoveryKeysList);
+        document.getElementById('setup2FAModal').style.display = 'flex';
+        document.getElementById('setupStep1').style.display = 'none';
+        document.getElementById('setupStep2').style.display = 'none';
+        document.getElementById('setupStep3').style.display = 'block';
+    } catch (error) {
+        Toast.error('Failed to regenerate recovery keys: ' + error.message);
+    }
+}
+</script>
+
+{{template "footer" .}}
+</body>
+</html>

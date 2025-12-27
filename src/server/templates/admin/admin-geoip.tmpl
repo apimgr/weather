@@ -1,0 +1,24 @@
+{{template "head" .}}
+{{template "navbar" .}}
+<main class="container">
+<div class="admin-header"><h1>🌍 GeoIP Settings</h1></div>
+<form id="geoipSettingsForm">
+<section class="card"><h2>GeoIP Configuration</h2>
+<label><input type="checkbox" name="enabled"> Enable GeoIP</label>
+<label>Data Directory: <input type="text" name="dir" value="/var/lib/weather/geoip"></label>
+<label>Update Frequency (hours): <input type="number" name="update_frequency" value="168"></label>
+<p class="note">Data source: <a href="https://github.com/sapics/ip-location-db" target="_blank">sapics/ip-location-db</a></p>
+</section>
+<section class="card"><h2>Databases</h2>
+<label><input type="checkbox" name="database_asn" checked> ASN Database</label>
+<label><input type="checkbox" name="database_country" checked> Country Database</label>
+<label><input type="checkbox" name="database_city"> City Database</label>
+</section>
+<section class="card"><h2>Country Blocking</h2>
+<label>Deny Countries (comma-separated): <input type="text" name="deny_countries" placeholder="CN,RU"></label>
+<p class="note">Use ISO 3166-1 alpha-2 codes</p>
+</section>
+<button type="submit">Save Settings</button>
+</form>
+</main>
+{{template "footer" .}}

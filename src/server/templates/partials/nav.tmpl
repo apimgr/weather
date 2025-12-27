@@ -14,18 +14,20 @@
             <a href="/severe-weather" class="navbar-link {{if eq .page "severe-weather"}}active{{end}}" role="menuitem" aria-label="Severe weather alerts" title="View severe weather alerts and warnings">Severe Weather</a>
             <a href="/earthquake" class="navbar-link {{if eq .page "earthquake"}}active{{end}}" role="menuitem" aria-label="Recent earthquakes" title="View recent earthquake activity">Earthquakes</a>
             <a href="/user/dashboard" class="navbar-link {{if eq .page "dashboard"}}active{{end}}" role="menuitem" aria-label="User dashboard" title="View your saved locations and preferences">Dashboard</a>
-            {{if eq .user.Role "admin"}}
-            <a href="/admin" class="navbar-link {{if eq .page "admin"}}active{{end}}" role="menuitem" aria-label="Admin panel" title="Access administration settings">Admin</a>
-            {{end}}
         </div>
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
-            <!-- Notification Bell -->
-            <button class="notification-bell" onclick="window.location.href='/notifications'" title="View notifications - Check weather alerts and updates" aria-label="Notifications" aria-describedby="notification-badge">
-                🔔
-                <span class="notification-badge" id="notification-badge" class="display-none" aria-live="polite" role="status">0</span>
-            </button>
+            <!-- Notification Bell (WebUI Notification System) -->
+            <div class="notification-bell-wrapper">
+                <a href="#" id="notification-bell" class="notification-bell" title="Notifications" aria-label="Notifications" aria-describedby="notification-badge">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                    </svg>
+                    <span id="notification-badge" class="hidden" aria-live="polite" role="status"></span>
+                </a>
+                <!-- Notification center dropdown will be inserted here by notifications.js -->
+            </div>
 
             <!-- Profile Avatar with Dropdown -->
             <div class="profile-avatar">
@@ -86,9 +88,6 @@
         <a href="/severe-weather" class="mobile-menu-item" role="menuitem" title="View severe weather alerts">Severe Weather</a>
         <a href="/earthquake" class="mobile-menu-item" role="menuitem" title="View earthquakes">Earthquakes</a>
         <a href="/user/dashboard" class="mobile-menu-item" role="menuitem" title="View your dashboard">Dashboard</a>
-        {{if eq .user.Role "admin"}}
-        <a href="/admin" class="mobile-menu-item" role="menuitem" title="Access admin panel">Admin</a>
-        {{end}}
     </div>
 </nav>
 

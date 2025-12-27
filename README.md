@@ -17,6 +17,7 @@ Weather Service is a comprehensive weather platform built with Go, providing:
 - **Earthquake Tracking** - Real-time earthquake data from USGS with interactive maps
 - **Moon Phases** - Detailed lunar information including phases, illumination, rise/set times
 - **Hurricane Tracking** - Active storm tracking with advisories and forecasts from NOAA
+- **Real-Time Notifications** - WebSocket-powered notification system with toast, banner, and notification center
 - **GeoIP Location** - Automatic location detection via IP address (IPv4 and IPv6)
 - **Location Persistence** - Cookie-based location memory (30 days)
 - **Mobile Responsive** - Optimized for desktop, tablet, and mobile devices
@@ -30,6 +31,7 @@ Weather Service is a comprehensive weather platform built with Go, providing:
 - ✅ **Production Grade** - Rate limiting, caching, health checks, graceful shutdown
 - ✅ **RESTful JSON API** - Clean, well-documented API endpoints
 - ✅ **Web Interface** - Modern, responsive UI with Dracula theme
+- ✅ **Real-Time Notifications** - WebSocket-powered notifications with customizable preferences
 - ✅ **Lightweight** - <50MB memory, <200ms response times
 - ✅ **Zero Configuration** - Works out of the box with sensible defaults
 
@@ -518,6 +520,21 @@ curl http://localhost/api/v1/moon?location=Tokyo
 | `GET /earthquake/{location}` | GET | Earthquakes near location |
 | `GET /api/v1/earthquakes?location={loc}&radius={km}` | GET | JSON earthquake data |
 | `GET /api/health` | GET | Health check |
+
+#### Notifications
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /ws/notifications` | WebSocket | Real-time notification stream |
+| `GET /api/v1/user/notifications` | GET | List user notifications (paginated) |
+| `GET /api/v1/user/notifications/count` | GET | Get unread notification count |
+| `PATCH /api/v1/user/notifications/:id/read` | PATCH | Mark notification as read |
+| `PATCH /api/v1/user/notifications/read` | PATCH | Mark all notifications as read |
+| `DELETE /api/v1/user/notifications/:id` | DELETE | Delete notification |
+| `GET /api/v1/user/notifications/preferences` | GET | Get notification preferences |
+| `PATCH /api/v1/user/notifications/preferences` | PATCH | Update notification preferences |
+
+See [docs/API_NOTIFICATIONS.md](docs/API_NOTIFICATIONS.md) for complete notification API documentation.
 
 ### Location Formats
 

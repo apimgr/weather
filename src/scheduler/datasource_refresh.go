@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"weather-go/src/services"
+	"github.com/apimgr/weather/src/server/service"
 )
 
 // DataSourceRefresher holds references to all data sources that need periodic updates

@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
-	"weather-go/src/database"
-	"weather-go/src/handlers"
-	"weather-go/src/services"
+	_ "modernc.org/sqlite"
+	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/server/handler"
+	"github.com/apimgr/weather/src/server/service"
 )
 
 func setupIntegrationTest(t *testing.T) (*gin.Engine, *database.DB) {

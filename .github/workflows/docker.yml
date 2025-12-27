@@ -1,32 +1,27 @@
-name: Docker Build and Push
+name: Docker Build
 
 on:
   push:
-    branches:
-      - main
-      - master
-      - beta
+    branches: ['**']  # ALL branches
     tags:
       - 'v*'
-      - '[0-9]*'
+      - '*.*.*'
   workflow_dispatch:
 
 env:
+  PROJECTNAME: weather
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-permissions:
-  contents: read
-  packages: write
-  id-token: write
-
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -41,92 +36,78 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata and tags
-        id: meta
+      - name: Set build info
         run: |
-          VERSION=$(cat release.txt 2>/dev/null || echo "1.0.0")
-          DATE_TAG=$(date +'%y%m')
-          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          GIT_COMMIT=$(git rev-parse --short HEAD)
-
-          # Determine tags based on push type (TEMPLATE.md compliant)
+          echo "COMMIT_ID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "YYMM=$(date +"%y%m")" >> $GITHUB_ENV
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Tag push: version (strip v), latest, GIT_COMMIT, YYMM
-            TAG_VERSION=${GITHUB_REF#refs/tags/}
-            TAG_VERSION=${TAG_VERSION#v}  # Remove 'v' prefix if present
-            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG_VERSION}"
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GIT_COMMIT}"
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${DATE_TAG}"
-            echo "version=${TAG_VERSION}" >> $GITHUB_OUTPUT
-            echo "is_tag=true" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/heads/beta ]]; then
-            # Beta branch push: beta tag only
-            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:beta"
-            echo "version=beta" >> $GITHUB_OUTPUT
-            echo "is_tag=false" >> $GITHUB_OUTPUT
+            VERSION="${GITHUB_REF#refs/tags/}"
+            echo "VERSION=${VERSION#v}" >> $GITHUB_ENV  # Strip 'v' prefix
+            echo "IS_TAG=true" >> $GITHUB_ENV
           else
-            # Regular push (main/master): dev tag only
-            TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
-            echo "version=dev" >> $GITHUB_OUTPUT
-            echo "is_tag=false" >> $GITHUB_OUTPUT
+            echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+            echo "IS_TAG=false" >> $GITHUB_ENV
+          fi
+          echo "BUILD_DATE=$(date +"%a %b %d, %Y at %H:%M:%S %Z")" >> $GITHUB_ENV
+
+      - name: Determine tags
+        id: tags
+        run: |
+          TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.COMMIT_ID }}"
+
+          if [[ "${{ env.IS_TAG }}" == "true" ]]; then
+            # Release tag - version, latest, YYMM
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.YYMM }}"
+          else
+            # All pushes get devel tag
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:devel"
+
+            # Beta branch also gets beta tag
+            if [[ "${{ github.ref }}" == refs/heads/beta ]]; then
+              TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:beta"
+            fi
           fi
 
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-          echo "date_tag=${DATE_TAG}" >> $GITHUB_OUTPUT
-          echo "build_date=${BUILD_DATE}" >> $GITHUB_OUTPUT
-          echo "git_commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
-          # Display tags for verification
-          echo "📦 Docker tags to be created:"
-          echo "${TAGS}" | tr ',' '\n' | sed 's/^/  - /'
-
-      - name: Build and push Docker images
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |
-            VERSION=${{ steps.meta.outputs.version }}
-            BUILD_DATE=${{ steps.meta.outputs.build_date }}
-            GIT_COMMIT=${{ steps.meta.outputs.git_commit }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Set package visibility to public
-        continue-on-error: true
-        run: |
-          # Set package visibility to public using GitHub API
-          PACKAGE_NAME="weather"
-
-          curl -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME} \
-            -d '{"visibility":"public"}' || echo "Package visibility setting not available (may already be public or require admin access)"
-
-      - name: Summary
-        run: |
-          echo "## 🐳 Docker Images Built and Pushed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Date Tag:** ${{ steps.meta.outputs.date_tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ steps.meta.outputs.git_commit }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Visibility:** Public" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Tags:" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.meta.outputs.is_tag }}" = "true" ]; then
-            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.date_tag }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+            VERSION="${{ env.VERSION }}"
+            BUILD_DATE="${{ env.BUILD_DATE }}"
+            COMMIT_ID="${{ env.COMMIT_ID }}"
+          # OCI Image Labels (applied to image config)
+          labels: |
+            org.opencontainers.image.vendor="apimgr"
+            org.opencontainers.image.authors="apimgr"
+            org.opencontainers.image.title="${{ env.PROJECTNAME }}"
+            org.opencontainers.image.base.name="${{ env.PROJECTNAME }}"
+            org.opencontainers.image.description="Containerized version of ${{ env.PROJECTNAME }}"
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.version="${{ env.VERSION }}"
+            org.opencontainers.image.created="${{ env.BUILD_DATE }}"
+            org.opencontainers.image.revision="${{ env.COMMIT_ID }}"
+            org.opencontainers.image.url="${{ github.server_url }}/${{ github.repository }}"
+            org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
+            org.opencontainers.image.documentation="${{ github.server_url }}/${{ github.repository }}"
+          # OCI Annotations for multi-arch manifest (required for registry display)
+          annotations: |
+            manifest:org.opencontainers.image.vendor=apimgr
+            manifest:org.opencontainers.image.authors=apimgr
+            manifest:org.opencontainers.image.title=${{ env.PROJECTNAME }}
+            manifest:org.opencontainers.image.description=Containerized version of ${{ env.PROJECTNAME }}
+            manifest:org.opencontainers.image.licenses=MIT
+            manifest:org.opencontainers.image.version=${{ env.VERSION }}
+            manifest:org.opencontainers.image.created=${{ env.BUILD_DATE }}
+            manifest:org.opencontainers.image.revision=${{ env.COMMIT_ID }}
+            manifest:org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}
+            manifest:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            manifest:org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}

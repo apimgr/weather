@@ -9,15 +9,23 @@ import (
 
 // DirectoryPaths holds all application directory paths
 type DirectoryPaths struct {
-	Config string // Configuration directory
-	Data   string // Data directory (database, user files)
-	Log    string // Log directory
-	Cache  string // Cache directory
+	// Configuration directory
+	Config string
+	// Data directory (database, user files)
+	Data   string
+	// Log directory
+	Log    string
+	// Cache directory
+	Cache  string
 }
 
 // GetDirectoryPaths returns the appropriate directory paths based on privileges and OS
 func GetDirectoryPaths() (*DirectoryPaths, error) {
+	// TEMPLATE.md PART 3: Use {projectorg}/{projectname} pattern
+	// This creates paths like /etc/apimgr/weather/ instead of /etc/weather/
+	projectOrg := "apimgr"
 	projectName := "weather"
+	projectPath := filepath.Join(projectOrg, projectName)
 
 	// Check if running as root/administrator
 	hasRoot := isRoot()
@@ -28,10 +36,10 @@ func GetDirectoryPaths() (*DirectoryPaths, error) {
 	case "linux", "freebsd", "openbsd", "netbsd":
 		if hasRoot {
 			paths = DirectoryPaths{
-				Config: filepath.Join("/etc", projectName),
-				Data:   filepath.Join("/var/lib", projectName),
-				Log:    filepath.Join("/var/log", projectName),
-				Cache:  filepath.Join("/var/cache", projectName),
+				Config: filepath.Join("/etc", projectPath),
+				Data:   filepath.Join("/var/lib", projectPath),
+				Log:    filepath.Join("/var/log", projectPath),
+				Cache:  filepath.Join("/var/cache", projectPath),
 			}
 		} else {
 			homeDir, err := os.UserHomeDir()
@@ -39,20 +47,21 @@ func GetDirectoryPaths() (*DirectoryPaths, error) {
 				return nil, fmt.Errorf("failed to get home directory: %w", err)
 			}
 			paths = DirectoryPaths{
-				Config: filepath.Join(homeDir, ".config", projectName),
-				Data:   filepath.Join(homeDir, ".local", "share", projectName),
-				Log:    filepath.Join(homeDir, ".local", "share", projectName, "logs"),
-				Cache:  filepath.Join(homeDir, ".cache", projectName),
+				Config: filepath.Join(homeDir, ".config", projectPath),
+				Data:   filepath.Join(homeDir, ".local", "share", projectPath),
+				Log:    filepath.Join(homeDir, ".local", "share", projectPath, "logs"),
+				Cache:  filepath.Join(homeDir, ".cache", projectPath),
 			}
 		}
 
-	case "darwin": // macOS
+	// macOS
+	case "darwin":
 		if hasRoot {
 			paths = DirectoryPaths{
-				Config: filepath.Join("/Library/Application Support", projectName),
-				Data:   filepath.Join("/Library/Application Support", projectName, "data"),
-				Log:    filepath.Join("/Library/Logs", projectName),
-				Cache:  filepath.Join("/Library/Caches", projectName),
+				Config: filepath.Join("/Library/Application Support", projectPath),
+				Data:   filepath.Join("/Library/Application Support", projectPath, "data"),
+				Log:    filepath.Join("/Library/Logs", projectPath),
+				Cache:  filepath.Join("/Library/Caches", projectPath),
 			}
 		} else {
 			homeDir, err := os.UserHomeDir()
@@ -60,10 +69,10 @@ func GetDirectoryPaths() (*DirectoryPaths, error) {
 				return nil, fmt.Errorf("failed to get home directory: %w", err)
 			}
 			paths = DirectoryPaths{
-				Config: filepath.Join(homeDir, "Library", "Application Support", projectName),
-				Data:   filepath.Join(homeDir, "Library", "Application Support", projectName, "data"),
-				Log:    filepath.Join(homeDir, "Library", "Logs", projectName),
-				Cache:  filepath.Join(homeDir, "Library", "Caches", projectName),
+				Config: filepath.Join(homeDir, "Library", "Application Support", projectPath),
+				Data:   filepath.Join(homeDir, "Library", "Application Support", projectPath, "data"),
+				Log:    filepath.Join(homeDir, "Library", "Logs", projectPath),
+				Cache:  filepath.Join(homeDir, "Library", "Caches", projectPath),
 			}
 		}
 
@@ -87,10 +96,10 @@ func GetDirectoryPaths() (*DirectoryPaths, error) {
 		}
 
 		paths = DirectoryPaths{
-			Config: filepath.Join(appData, projectName),
-			Data:   filepath.Join(localAppData, projectName, "data"),
-			Log:    filepath.Join(localAppData, projectName, "logs"),
-			Cache:  filepath.Join(localAppData, projectName, "cache"),
+			Config: filepath.Join(appData, projectPath),
+			Data:   filepath.Join(localAppData, projectPath, "data"),
+			Log:    filepath.Join(localAppData, projectPath, "logs"),
+			Cache:  filepath.Join(localAppData, projectPath, "cache"),
 		}
 
 	default:
@@ -194,7 +203,7 @@ func GetTempPath() string {
 // GetTestDirectoryPaths returns directory paths for testing (uses temp directory)
 // This should be used by all tests to avoid polluting system directories
 func GetTestDirectoryPaths() (*DirectoryPaths, error) {
-	tempBase := filepath.Join(os.TempDir(), "weather-test")
+	tempBase := filepath.Join(os.TempDir(), "apimgr-weather-test")
 
 	paths := &DirectoryPaths{
 		Config: filepath.Join(tempBase, "config"),

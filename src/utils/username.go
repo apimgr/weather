@@ -6,21 +6,32 @@ import (
 	"strings"
 )
 
-// Username validation rules
+// Username validation rules per AI.md PART 22
 const (
 	MinUsernameLength = 3
-	MaxUsernameLength = 20
+	MaxUsernameLength = 32
 )
 
-var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+// Username regex per AI.md PART 22:
+// - Must start with a-z (lowercase letter)
+// - Can contain a-z, 0-9, _, - (lowercase only)
+// - Must end with a-z or 0-9 (not _ or -)
+// - Length 3-32 characters
+var usernameRegex = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,30}[a-z0-9]$`)
 
-// ValidateUsername validates a username according to the rules:
-// - Length between 3 and 20 characters
-// - Only alphanumeric characters and underscores
+// ValidateUsername validates a username according to AI.md PART 22:
+// - Length between 3 and 32 characters
+// - Only lowercase letters (a-z), numbers (0-9), underscore (_), hyphen (-)
+// - Must start with a letter (a-z)
+// - Cannot end with underscore or hyphen
+// - No consecutive __, --, _-, -_
 // - Not on the blocklist
 func ValidateUsername(username string) error {
 	// Trim spaces
 	username = strings.TrimSpace(username)
+
+	// Convert to lowercase per AI.md PART 22 (case-insensitive)
+	username = strings.ToLower(username)
 
 	// Check length
 	if len(username) < MinUsernameLength {
@@ -31,9 +42,30 @@ func ValidateUsername(username string) error {
 		return fmt.Errorf("username must be no more than %d characters long", MaxUsernameLength)
 	}
 
-	// Check format (alphanumeric + underscore only)
+	// Check format with regex
 	if !usernameRegex.MatchString(username) {
-		return fmt.Errorf("username can only contain letters, numbers, and underscores")
+		// Provide more specific error messages
+		if !regexp.MustCompile(`^[a-z]`).MatchString(username) {
+			return fmt.Errorf("username must start with a lowercase letter (a-z)")
+		}
+		if regexp.MustCompile(`[_-]$`).MatchString(username) {
+			return fmt.Errorf("username cannot end with underscore or hyphen")
+		}
+		if regexp.MustCompile(`[^a-z0-9_-]`).MatchString(username) {
+			return fmt.Errorf("username can only contain lowercase letters (a-z), numbers (0-9), underscore (_), and hyphen (-)")
+		}
+		return fmt.Errorf("username format is invalid")
+	}
+
+	// Check for consecutive special characters per AI.md PART 22
+	if strings.Contains(username, "__") {
+		return fmt.Errorf("username cannot contain consecutive underscores (__)")
+	}
+	if strings.Contains(username, "--") {
+		return fmt.Errorf("username cannot contain consecutive hyphens (--)")
+	}
+	if strings.Contains(username, "_-") || strings.Contains(username, "-_") {
+		return fmt.Errorf("username cannot contain consecutive underscore and hyphen (_- or -_)")
 	}
 
 	// Check against blocklist
@@ -55,7 +87,8 @@ func NormalizeUsername(username string) string {
 // Basic validation - can be enhanced with libphonenumber later
 func ValidatePhone(phone string) error {
 	if phone == "" {
-		return nil // Phone is optional
+		// Phone is optional
+		return nil
 	}
 
 	// Remove common formatting characters

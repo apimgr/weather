@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"weather-go/src/utils"
+	"github.com/apimgr/weather/src/utils"
 )
 
 // OneLineRenderer handles one-line format weather displays

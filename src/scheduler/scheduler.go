@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/apimgr/weather/src/database"
 )
 
 // Task represents a scheduled task
@@ -18,8 +20,10 @@ type Task struct {
 	ticker   *time.Ticker
 	stopChan chan bool
 	running  bool
-	enabled  bool       // Can be toggled on/off
-	lastRun  *time.Time // Last execution time
+	// Can be toggled on/off
+	enabled  bool
+	// Last execution time
+	lastRun  *time.Time
 	mu       sync.Mutex
 }
 
@@ -49,7 +53,8 @@ func (s *Scheduler) AddTask(name string, interval time.Duration, fn func() error
 		Fn:       fn,
 		stopChan: make(chan bool),
 		running:  false,
-		enabled:  true, // Enabled by default
+		// Enabled by default
+		enabled:  true,
 		lastRun:  nil,
 	}
 
@@ -148,7 +153,7 @@ func (s *Scheduler) executeTask(task *Task) {
 func (s *Scheduler) logTaskExecution(taskName string, duration time.Duration, err error) {
 	// Check if audit logging is enabled
 	var auditEnabled string
-	queryErr := s.db.QueryRow("SELECT value FROM settings WHERE key = 'audit.enabled'").Scan(&auditEnabled)
+	queryErr := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = 'audit.enabled'").Scan(&auditEnabled)
 	if queryErr != nil || auditEnabled != "true" {
 		return
 	}
@@ -160,8 +165,8 @@ func (s *Scheduler) logTaskExecution(taskName string, duration time.Duration, er
 		details = fmt.Sprintf("Failed: %v", err)
 	}
 
-	_, insertErr := s.db.Exec(`
-		INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details, ip_address, user_agent, status)
+	_, insertErr := database.GetServerDB().Exec(`
+		INSERT INTO server_audit_log (user_id, action, resource_type, resource_id, details, ip_address, user_agent, status)
 		VALUES (NULL, ?, 'scheduler', ?, ?, 'system', 'scheduler', ?)
 	`, taskName, taskName, details, status)
 
@@ -192,7 +197,7 @@ func (s *Scheduler) GetTaskStatus() []map[string]interface{} {
 
 // CleanupOldSessions removes expired sessions
 func CleanupOldSessions(db *sql.DB) error {
-	result, err := db.Exec("DELETE FROM sessions WHERE expires_at < datetime('now')")
+	result, err := database.GetUsersDB().Exec("DELETE FROM user_sessions WHERE expires_at < datetime('now')")
 	if err != nil {
 		return fmt.Errorf("failed to cleanup sessions: %w", err)
 	}
@@ -209,13 +214,14 @@ func CleanupOldSessions(db *sql.DB) error {
 func CleanupOldAuditLogs(db *sql.DB) error {
 	// Get retention days from settings
 	var retentionDays int
-	err := db.QueryRow("SELECT value FROM settings WHERE key = 'audit.retention_days'").Scan(&retentionDays)
+	err := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = 'audit.retention_days'").Scan(&retentionDays)
 	if err != nil {
-		retentionDays = 90 // Default to 90 days
+		// Default to 90 days
+		retentionDays = 90
 	}
 
-	result, err := db.Exec(`
-		DELETE FROM audit_logs
+	result, err := database.GetServerDB().Exec(`
+		DELETE FROM server_audit_log
 		WHERE created_at < datetime('now', '-' || ? || ' days')
 	`, retentionDays)
 
@@ -234,10 +240,10 @@ func CleanupOldAuditLogs(db *sql.DB) error {
 // CheckWeatherAlerts checks for weather alerts on saved locations
 func CheckWeatherAlerts(db *sql.DB) error {
 	// Get all locations with alerts enabled
-	rows, err := db.Query(`
+	rows, err := database.GetUsersDB().Query(`
 		SELECT l.id, l.name, l.latitude, l.longitude, l.user_id
-		FROM saved_locations l
-		JOIN users u ON l.user_id = u.id
+		FROM user_saved_locations l
+		JOIN user_accounts u ON l.user_id = u.id
 		WHERE l.alerts_enabled = 1
 	`)
 	if err != nil {
@@ -351,8 +357,8 @@ func checkAndCreateAlerts(db *sql.DB, userID, locationID int, locationName strin
 
 // createNotification creates a notification in the database
 func createNotification(db *sql.DB, userID int, notifType, title, message, link string) {
-	_, err := db.Exec(`
-		INSERT INTO notifications (user_id, type, title, message, link, read)
+	_, err := database.GetUsersDB().Exec(`
+		INSERT INTO user_notifications (user_id, type, title, message, link, read)
 		VALUES (?, ?, ?, ?, ?, 0)
 	`, userID, notifType, title, message, link)
 
@@ -375,9 +381,10 @@ func RefreshWeatherCache(db *sql.DB) error {
 func CreateSystemBackup(db *sql.DB) error {
 	// Get backup settings
 	var backupEnabled string
-	err := db.QueryRow("SELECT value FROM settings WHERE key = 'backup.enabled'").Scan(&backupEnabled)
+	err := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = 'backup.enabled'").Scan(&backupEnabled)
 	if err != nil || backupEnabled != "true" {
-		return nil // Backups disabled
+		// Backups disabled
+		return nil
 	}
 
 	// TODO: Implement actual backup functionality
@@ -392,8 +399,8 @@ func CreateSystemBackup(db *sql.DB) error {
 // CleanupRateLimitCounters resets rate limit counters
 func CleanupRateLimitCounters(db *sql.DB) error {
 	// Reset hourly counters that are older than 1 hour
-	result, err := db.Exec(`
-		DELETE FROM rate_limits
+	result, err := database.GetServerDB().Exec(`
+		DELETE FROM server_rate_limits
 		WHERE window_start < datetime('now', '-1 hour')
 	`)
 	if err != nil {

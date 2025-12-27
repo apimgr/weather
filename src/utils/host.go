@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -22,17 +21,8 @@ func GetHostInfo(c *gin.Context) *HostInfo {
 		}
 	}
 
-	// Detect hostname - prioritize DOMAIN env variable
-	hostname := os.Getenv("DOMAIN")
-	if hostname == "" {
-		hostname = c.GetHeader("X-Forwarded-Host")
-	}
-	if hostname == "" {
-		hostname = c.Request.Host
-	}
-
-	// Filter out invalid hostnames that should never be shown to users
-	hostname = sanitizeHostname(hostname)
+	// Get hostname from request (reverse proxy headers first)
+	hostname := GetHostFromRequest(c)
 
 	// Build full host URL
 	fullHost := fmt.Sprintf("%s://%s", protocol, hostname)
@@ -46,134 +36,102 @@ func GetHostInfo(c *gin.Context) *HostInfo {
 	}
 }
 
-// sanitizeHostname filters out invalid hostnames and returns the most relevant one
-func sanitizeHostname(hostname string) string {
-	// Remove port from hostname for checking
-	host := hostname
-	if strings.Contains(hostname, ":") {
-		host, _, _ = net.SplitHostPort(hostname)
-	}
-
-	// List of invalid hostnames that should never be shown
-	invalidHosts := []string{
-		"localhost",
-		"127.0.0.1",
-		"0.0.0.0",
-		"::1",
-		"[::1]",
-		"[::]",
-	}
-
-	// Check if hostname is invalid
-	for _, invalid := range invalidHosts {
-		if host == invalid {
-			// Try to get actual server IP or FQDN
-			return getRealHostname(hostname)
+// GetHostFromRequest resolves hostname from request (TEMPLATE.md compliant)
+// Priority: X-Forwarded-Host > X-Real-Host > X-Original-Host > GetFQDN()
+func GetHostFromRequest(c *gin.Context) string {
+	// 1. Reverse proxy headers (highest priority)
+	for _, header := range []string{"X-Forwarded-Host", "X-Real-Host", "X-Original-Host"} {
+		if host := c.GetHeader(header); host != "" {
+			// Strip port if present
+			if h, _, err := net.SplitHostPort(host); err == nil {
+				return h
+			}
+			return host
 		}
 	}
 
-	// Check if hostname looks like a container ID (Docker assigns random container names/IDs)
-	if len(host) == 12 || len(host) == 64 {
-		// Could be a Docker container ID, try to get real hostname
-		return getRealHostname(hostname)
-	}
-
-	return hostname
+	// 2. Fall back to static FQDN resolution
+	return GetFQDN()
 }
 
-// getRealHostname attempts to get the real hostname or IP
-func getRealHostname(fallback string) string {
-	// Try DOMAIN env variable first
+// GetFQDN resolves the fully qualified domain name (TEMPLATE.md compliant)
+// Priority: DOMAIN env > os.Hostname() > HOSTNAME env > IPv6 > IPv4
+func GetFQDN() string {
+	// 1. DOMAIN env var (explicit user override)
 	if domain := os.Getenv("DOMAIN"); domain != "" {
 		return domain
 	}
 
-	// Try HOSTNAME env variable
-	if hostname := os.Getenv("HOSTNAME"); hostname != "" && !isInvalidHost(hostname) {
-		// Add port back if fallback had one
-		if strings.Contains(fallback, ":") {
-			_, port, _ := net.SplitHostPort(fallback)
-			if port != "" && port != "80" && port != "443" {
-				return hostname + ":" + port
-			}
-		}
-		return hostname
-	}
-
-	// Try to get system hostname
-	if cmd := exec.Command("hostname", "-I"); cmd.Err == nil {
-		if output, err := cmd.Output(); err == nil {
-			ips := strings.Fields(strings.TrimSpace(string(output)))
-			if len(ips) > 0 && !isInvalidHost(ips[0]) {
-				// Use first non-loopback IP
-				if strings.Contains(fallback, ":") {
-					_, port, _ := net.SplitHostPort(fallback)
-					if port != "" && port != "80" && port != "443" {
-						return ips[0] + ":" + port
-					}
-				}
-				return ips[0]
-			}
+	// 2. os.Hostname() - cross-platform
+	if hostname, err := os.Hostname(); err == nil && hostname != "" {
+		if !isLoopback(hostname) {
+			return hostname
 		}
 	}
 
-	// Try to get FQDN
-	if cmd := exec.Command("hostname", "-f"); cmd.Err == nil {
-		if output, err := cmd.Output(); err == nil {
-			fqdn := strings.TrimSpace(string(output))
-			if fqdn != "" && !isInvalidHost(fqdn) {
-				if strings.Contains(fallback, ":") {
-					_, port, _ := net.SplitHostPort(fallback)
-					if port != "" && port != "80" && port != "443" {
-						return fqdn + ":" + port
-					}
-				}
-				return fqdn
-			}
+	// 3. HOSTNAME env var
+	if hostname := os.Getenv("HOSTNAME"); hostname != "" {
+		if !isLoopback(hostname) {
+			return hostname
 		}
 	}
 
-	// Last resort: return fallback
-	return fallback
+	// 4. Global IPv6 (preferred for modern networks)
+	if ipv6 := getGlobalIPv6(); ipv6 != "" {
+		return ipv6
+	}
+
+	// 5. Global IPv4
+	if ipv4 := getGlobalIPv4(); ipv4 != "" {
+		return ipv4
+	}
+
+	// Last resort
+	return "localhost"
 }
 
-// isInvalidHost checks if hostname should not be shown to users
-func isInvalidHost(host string) bool {
-	// Remove port if present
-	if strings.Contains(host, ":") {
-		host, _, _ = net.SplitHostPort(host)
+// isLoopback checks if host is a loopback address
+func isLoopback(host string) bool {
+	lower := strings.ToLower(host)
+	if lower == "localhost" {
+		return true
 	}
-
-	invalidHosts := []string{
-		"localhost",
-		"127.0.0.1",
-		"0.0.0.0",
-		"::1",
-		"",
+	if ip := net.ParseIP(host); ip != nil {
+		return ip.IsLoopback()
 	}
+	return false
+}
 
-	for _, invalid := range invalidHosts {
-		if host == invalid {
-			return true
-		}
+// getGlobalIPv6 returns the first global unicast IPv6 address
+func getGlobalIPv6() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
 	}
-
-	// Check for Docker container IDs (12 or 64 char hex strings)
-	if len(host) == 12 || len(host) == 64 {
-		// Check if it's all hex characters
-		isHex := true
-		for _, c := range host {
-			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
-				isHex = false
-				break
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok {
+			if ipnet.IP.To4() == nil && ipnet.IP.IsGlobalUnicast() {
+				return ipnet.IP.String()
 			}
 		}
-		if isHex {
-			return true
+	}
+	return ""
+}
+
+// getGlobalIPv4 returns the first global unicast IPv4 address
+func getGlobalIPv4() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok {
+			if ip4 := ipnet.IP.To4(); ip4 != nil && ipnet.IP.IsGlobalUnicast() {
+				return ip4.String()
+			}
 		}
 	}
-
-	return false
+	return ""
 }
 
 // GetClientIP extracts the real client IP from reverse proxy headers
@@ -215,7 +173,8 @@ func IsLocalhost(ip string) bool {
 		"127.0.0.1",
 		"::1",
 		"localhost",
-		"172.17.0.1", // Docker bridge
+		// Docker bridge
+		"172.17.0.1",
 		"172.18.0.1",
 		"172.19.0.1",
 	}
@@ -251,13 +210,4 @@ func IsBrowser(c *gin.Context) bool {
 
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && findSubstring(s, substr)
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

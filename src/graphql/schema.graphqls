@@ -1,0 +1,1023 @@
+# GraphQL Schema for Weather API
+# Auto-generated schema that mirrors ALL REST API endpoints per TEMPLATE.md Part 14
+# This schema MUST stay 100% in sync with REST API and Swagger
+
+# ============================================================================
+# SCALARS
+# ============================================================================
+
+scalar Time
+scalar Any
+
+# ============================================================================
+# HEALTH & STATUS TYPES
+# ============================================================================
+
+type HealthStatus {
+  status: String!
+  message: String
+  database: DatabaseHealth
+  memory: MemoryHealth
+  disk: DiskHealth
+  ssl: SSLHealth
+  scheduler: SchedulerHealth
+  sessions: SessionsHealth
+  requests: RequestsHealth
+  locationDatabases: LocationDatabasesHealth
+  uptime: String!
+  timestamp: Time!
+}
+
+type DatabaseHealth {
+  status: String!
+  latency: Int
+  error: String
+}
+
+type MemoryHealth {
+  used: Float!
+  total: Float!
+  percentage: Float!
+}
+
+type DiskHealth {
+  used: Float!
+  total: Float!
+  percentage: Float!
+}
+
+type SSLHealth {
+  enabled: Boolean!
+  expiresAt: Time
+  daysRemaining: Int
+}
+
+type SchedulerHealth {
+  running: Boolean!
+  tasks: Int
+  lastRun: Time
+}
+
+type SessionsHealth {
+  active: Int!
+  total: Int!
+}
+
+type RequestsHealth {
+  total: Int!
+  perSecond: Float
+}
+
+type LocationDatabasesHealth {
+  countries: LocationDBStatus
+  cities: LocationDBStatus
+  zipcodes: LocationDBStatus
+  geoip: LocationDBStatus
+}
+
+type LocationDBStatus {
+  loaded: Boolean!
+  count: Int
+  lastUpdated: Time
+}
+
+# ============================================================================
+# WEATHER TYPES
+# ============================================================================
+
+type Weather {
+  location: Location!
+  current: CurrentWeather!
+  forecast: [ForecastDay!]
+  alerts: [WeatherAlert!]
+  astronomy: Astronomy
+  timestamp: Time!
+}
+
+type Location {
+  name: String!
+  region: String
+  country: String!
+  lat: Float!
+  lon: Float!
+  timezone: String
+  localtime: String
+}
+
+type CurrentWeather {
+  temperature: Float!
+  feelsLike: Float
+  humidity: Int!
+  pressure: Float
+  windSpeed: Float!
+  windDirection: String
+  precipitation: Float
+  cloudCover: Int
+  visibility: Float
+  uvIndex: Float
+  condition: WeatherCondition!
+  lastUpdated: Time!
+}
+
+type WeatherCondition {
+  text: String!
+  icon: String
+  code: Int
+}
+
+type ForecastDay {
+  date: String!
+  day: DayForecast!
+  hour: [HourForecast!]
+  astro: Astronomy
+}
+
+type DayForecast {
+  maxTemp: Float!
+  minTemp: Float!
+  avgTemp: Float
+  maxWind: Float
+  totalPrecipitation: Float
+  avgHumidity: Float
+  condition: WeatherCondition!
+  chanceOfRain: Int
+  chanceOfSnow: Int
+}
+
+type HourForecast {
+  time: String!
+  temperature: Float!
+  feelsLike: Float
+  humidity: Int
+  windSpeed: Float
+  windDirection: String
+  precipitation: Float
+  chanceOfRain: Int
+  chanceOfSnow: Int
+  condition: WeatherCondition!
+}
+
+type Astronomy {
+  sunrise: String
+  sunset: String
+  moonrise: String
+  moonset: String
+  moonPhase: String
+  moonIllumination: Int
+}
+
+type WeatherAlert {
+  headline: String!
+  severity: String!
+  urgency: String
+  areas: String
+  category: String
+  event: String!
+  effective: Time
+  expires: Time
+  description: String!
+  instruction: String
+}
+
+type HistoricalWeather {
+  location: Location!
+  date: String!
+  day: DayForecast!
+  hour: [HourForecast!]
+  astro: Astronomy
+}
+
+# ============================================================================
+# LOCATION SEARCH TYPES
+# ============================================================================
+
+type LocationSearchResult {
+  id: Int
+  name: String!
+  region: String
+  country: String!
+  lat: Float!
+  lon: Float!
+  url: String
+}
+
+type ZipCodeLookup {
+  zipCode: String!
+  city: String!
+  state: String!
+  country: String!
+  lat: Float!
+  lon: Float!
+}
+
+type CoordinatesLookup {
+  lat: Float!
+  lon: Float!
+  city: String
+  region: String
+  country: String!
+  timezone: String
+}
+
+# ============================================================================
+# IP GEOLOCATION TYPES
+# ============================================================================
+
+type IPGeolocation {
+  ip: String!
+  city: String
+  region: String
+  country: String!
+  countryCode: String!
+  lat: Float!
+  lon: Float!
+  timezone: String
+  isp: String
+  org: String
+}
+
+# ============================================================================
+# NATURAL DISASTERS TYPES
+# ============================================================================
+
+type Earthquake {
+  id: String!
+  magnitude: Float!
+  location: String!
+  depth: Float
+  time: Time!
+  lat: Float!
+  lon: Float!
+  tsunami: Boolean
+  url: String
+}
+
+type Hurricane {
+  id: String!
+  name: String!
+  category: Int!
+  maxWindSpeed: Float!
+  minPressure: Float
+  location: Location!
+  status: String!
+  movement: HurricaneMovement
+  forecast: [HurricaneForecast!]
+  lastUpdated: Time!
+}
+
+type HurricaneMovement {
+  direction: String
+  speed: Float
+}
+
+type HurricaneForecast {
+  time: Time!
+  lat: Float!
+  lon: Float!
+  maxWindSpeed: Float
+  category: Int
+}
+
+type SevereWeather {
+  id: String!
+  type: String!
+  severity: String!
+  location: Location!
+  effective: Time!
+  expires: Time!
+  description: String!
+  instruction: String
+}
+
+type MoonPhase {
+  phase: String!
+  illumination: Float!
+  age: Float
+  distance: Float
+  angle: Float
+  moonrise: String
+  moonset: String
+  nextFullMoon: Time
+  nextNewMoon: Time
+}
+
+# ============================================================================
+# USER TYPES
+# ============================================================================
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  phone: String
+  displayName: String
+  role: String!
+  createdAt: Time!
+  updatedAt: Time!
+  lastLoginAt: Time
+}
+
+type UserProfile {
+  id: ID!
+  username: String!
+  email: String!
+  phone: String
+  displayName: String
+}
+
+# ============================================================================
+# SAVED LOCATIONS TYPES
+# ============================================================================
+
+type SavedLocation {
+  id: ID!
+  userId: Int!
+  name: String!
+  lat: Float!
+  lon: Float!
+  country: String
+  region: String
+  alerts: Boolean!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+# ============================================================================
+# NOTIFICATIONS TYPES
+# ============================================================================
+
+type Notification {
+  id: ID!
+  userId: Int!
+  type: String!
+  title: String!
+  message: String!
+  read: Boolean!
+  createdAt: Time!
+  readAt: Time
+}
+
+type UnreadCount {
+  count: Int!
+}
+
+# ============================================================================
+# ADMIN TYPES
+# ============================================================================
+
+type Setting {
+  key: String!
+  value: String
+  type: String
+  description: String
+  updatedAt: Time
+  updatedBy: String
+}
+
+type APIToken {
+  id: ID!
+  token: String!
+  name: String
+  createdAt: Time!
+  expiresAt: Time
+  lastUsedAt: Time
+  lastUsedIP: String
+}
+
+type AuditLog {
+  id: ID!
+  userId: Int
+  action: String!
+  resource: String
+  details: String
+  ip: String
+  userAgent: String
+  createdAt: Time!
+}
+
+type SystemStats {
+  uptime: String!
+  requests: RequestStats!
+  users: UserStats!
+  locations: LocationStats!
+  notifications: NotificationStats!
+  database: DatabaseStats!
+}
+
+type RequestStats {
+  total: Int!
+  perSecond: Float
+  errors: Int
+}
+
+type UserStats {
+  total: Int!
+  active: Int
+  admins: Int
+}
+
+type LocationStats {
+  total: Int!
+  perUser: Float
+}
+
+type NotificationStats {
+  total: Int!
+  unread: Int
+}
+
+type DatabaseStats {
+  size: Float!
+  tables: Int
+  connections: Int
+}
+
+# ============================================================================
+# SCHEDULER TYPES
+# ============================================================================
+
+type ScheduledTask {
+  name: String!
+  schedule: String!
+  enabled: Boolean!
+  lastRun: Time
+  nextRun: Time
+  runCount: Int!
+  errorCount: Int!
+  avgDuration: Float
+}
+
+type TaskHistory {
+  taskName: String!
+  startedAt: Time!
+  completedAt: Time
+  duration: Float
+  success: Boolean!
+  error: String
+}
+
+# ============================================================================
+# NOTIFICATION CHANNELS TYPES
+# ============================================================================
+
+type NotificationChannel {
+  type: String!
+  enabled: Boolean!
+  config: Any
+  stats: ChannelStats
+}
+
+type ChannelStats {
+  sent: Int!
+  failed: Int!
+  lastSent: Time
+}
+
+type QueueStats {
+  pending: Int!
+  processing: Int!
+  completed: Int!
+  failed: Int!
+}
+
+type SMTPProvider {
+  name: String!
+  host: String!
+  port: Int!
+  secure: Boolean!
+}
+
+# ============================================================================
+# 2FA/TOTP TYPES
+# ============================================================================
+
+type TOTPSetup {
+  secret: String!
+  qrCode: String!
+  recoveryCodes: [String!]!
+}
+
+type TOTPStatus {
+  enabled: Boolean!
+  verified: Boolean!
+}
+
+# ============================================================================
+# USER PREFERENCES TYPES
+# ============================================================================
+
+type UserPreference {
+  key: String!
+  value: String!
+  updatedAt: Time!
+}
+
+type UserSubscription {
+  id: ID!
+  type: String!
+  enabled: Boolean!
+  config: Any
+}
+
+# ============================================================================
+# DATABASE OPERATIONS TYPES
+# ============================================================================
+
+type DatabaseConnectionTest {
+  success: Boolean!
+  latency: Int
+  error: String
+}
+
+type DatabaseOptimizeResult {
+  success: Boolean!
+  tablesOptimized: Int
+  duration: Float
+}
+
+# ============================================================================
+# BACKUP TYPES
+# ============================================================================
+
+type Backup {
+  id: ID!
+  filename: String!
+  size: Int!
+  createdAt: Time!
+  type: String!
+}
+
+type BackupDownload {
+  url: String!
+  expiresAt: Time!
+}
+
+# ============================================================================
+# EMAIL TEMPLATE TYPES
+# ============================================================================
+
+type EmailTemplate {
+  id: ID!
+  name: String!
+  subject: String!
+  body: String!
+  variables: [String!]
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type EmailTemplatePreview {
+  subject: String!
+  body: String!
+}
+
+# ============================================================================
+# NOTIFICATION METRICS TYPES
+# ============================================================================
+
+type NotificationMetricsSummary {
+  total: Int!
+  successful: Int!
+  failed: Int!
+  pending: Int!
+  averageDeliveryTime: Float
+}
+
+type ChannelMetrics {
+  type: String!
+  sent: Int!
+  failed: Int!
+  successRate: Float!
+  avgDeliveryTime: Float
+}
+
+type NotificationError {
+  timestamp: Time!
+  channel: String!
+  error: String!
+  retryCount: Int
+}
+
+type NotificationHealth {
+  healthy: Boolean!
+  issues: [String!]
+}
+
+# ============================================================================
+# TOR MANAGEMENT TYPES
+# ============================================================================
+
+type TorStatus {
+  enabled: Boolean!
+  running: Boolean!
+  onionAddress: String
+  version: String
+}
+
+type TorHealth {
+  healthy: Boolean!
+  uptime: String
+  circuitsBuilt: Int
+}
+
+type VanityGenerationStatus {
+  running: Boolean!
+  pattern: String
+  progress: Float
+  estimatedTimeRemaining: Int
+}
+
+type TorKeys {
+  privateKey: String!
+  publicKey: String!
+}
+
+# ============================================================================
+# WEB SETTINGS TYPES
+# ============================================================================
+
+type WebSettings {
+  robotsTxt: String!
+  securityTxt: String!
+}
+
+# ============================================================================
+# LOGS TYPES
+# ============================================================================
+
+type LogEntry {
+  timestamp: Time!
+  level: String!
+  message: String!
+  source: String
+  metadata: Any
+}
+
+type LogStats {
+  total: Int!
+  byLevel: Any
+  bySource: Any
+  size: Int!
+}
+
+type ArchivedLog {
+  filename: String!
+  size: Int!
+  createdAt: Time!
+  compressed: Boolean!
+}
+
+# ============================================================================
+# SSL/TLS TYPES
+# ============================================================================
+
+type SSLStatus {
+  enabled: Boolean!
+  autoRenew: Boolean!
+  certificate: SSLCertificate
+}
+
+type SSLCertificate {
+  domain: String!
+  issuer: String!
+  validFrom: Time!
+  validUntil: Time!
+  daysRemaining: Int!
+}
+
+type DNSRecord {
+  name: String!
+  type: String!
+  value: String!
+  ttl: Int
+}
+
+type SSLTestResult {
+  valid: Boolean!
+  grade: String
+  issues: [String!]
+}
+
+# ============================================================================
+# METRICS CONFIGURATION TYPES
+# ============================================================================
+
+type MetricsConfig {
+  enabled: Boolean!
+  endpoint: String!
+  includeSystem: Boolean!
+  token: String
+}
+
+type MetricDefinition {
+  name: String!
+  type: String!
+  description: String
+  enabled: Boolean!
+}
+
+# ============================================================================
+# LOGGING CONFIGURATION TYPES
+# ============================================================================
+
+type LogFormat {
+  name: String!
+  format: String!
+  enabled: Boolean!
+}
+
+type Fail2banConfig {
+  enabled: Boolean!
+  maxRetry: Int!
+  findTime: Int!
+  banTime: Int!
+}
+
+type SyslogConfig {
+  enabled: Boolean!
+  host: String!
+  port: Int!
+  protocol: String!
+}
+
+# ============================================================================
+# CONTACT FORM TYPES
+# ============================================================================
+
+type ContactSubmission {
+  success: Boolean!
+  message: String!
+}
+
+# ============================================================================
+# GENERIC TYPES
+# ============================================================================
+
+type GenericResponse {
+  success: Boolean!
+  message: String!
+}
+
+type BulkResponse {
+  success: Boolean!
+  message: String!
+  updated: Int
+  failed: Int
+}
+
+# ============================================================================
+# QUERY TYPE
+# ============================================================================
+
+type Query {
+  # Health & Status
+  health: HealthStatus!
+
+  # Weather Endpoints
+  weather(location: String, lat: Float, lon: Float): Weather!
+  forecast(location: String, lat: Float, lon: Float, days: Int): Weather!
+  searchLocations(query: String!): [LocationSearchResult!]!
+  ipGeolocation(ip: String): IPGeolocation!
+  currentLocation: IPGeolocation!
+  historicalWeather(location: String!, date: String!): HistoricalWeather!
+
+  # Location Lookups
+  lookupZipCode(code: String!): ZipCodeLookup!
+  lookupCoordinates(lat: Float!, lon: Float!): CoordinatesLookup!
+
+  # Natural Disasters
+  earthquakes(minMagnitude: Float, limit: Int): [Earthquake!]!
+  hurricanes(active: Boolean): [Hurricane!]!
+  severeWeather(location: String): [SevereWeather!]!
+  moonPhase(date: String): MoonPhase!
+
+  # User Endpoints (require authentication)
+  currentUser: User!
+
+  # Saved Locations (require authentication)
+  savedLocations: [SavedLocation!]!
+  savedLocation(id: ID!): SavedLocation
+
+  # Notifications (require authentication)
+  notifications: [Notification!]!
+  unreadNotifications: UnreadCount!
+
+  # Admin Endpoints (require admin)
+  adminUsers: [User!]!
+  adminSettings: [Setting!]!
+  adminSetting(key: String!): Setting
+  adminTokens: [APIToken!]!
+  adminAuditLogs(limit: Int, offset: Int): [AuditLog!]!
+  adminStats: SystemStats!
+  adminTasks: [ScheduledTask!]!
+  adminTaskHistory(name: String!): [TaskHistory!]!
+  adminChannels: [NotificationChannel!]!
+  adminChannel(type: String!): NotificationChannel
+  adminChannelStats(type: String!): ChannelStats
+  adminQueueStats: QueueStats!
+  adminSMTPProviders: [SMTPProvider!]!
+
+  # 2FA/TOTP Queries
+  totp2FAStatus: TOTPStatus!
+
+  # User Preferences Queries
+  userPreferences: [UserPreference!]!
+  userPreference(key: String!): UserPreference
+  userSubscriptions: [UserSubscription!]!
+
+  # Database Operations
+  adminDatabaseTest: DatabaseConnectionTest!
+
+  # Backup Operations
+  adminBackups: [Backup!]!
+  adminBackup(id: ID!): Backup
+
+  # Email Templates
+  adminEmailTemplates: [EmailTemplate!]!
+  adminEmailTemplate(id: ID!): EmailTemplate
+  adminEmailTemplateVariables(id: ID!): [String!]!
+  adminEmailTemplatePreview(id: ID!, data: Any): EmailTemplatePreview!
+
+  # Notification Metrics
+  adminNotificationMetricsSummary: NotificationMetricsSummary!
+  adminNotificationChannelMetrics: [ChannelMetrics!]!
+  adminNotificationRecentErrors(limit: Int): [NotificationError!]!
+  adminNotificationHealth: NotificationHealth!
+
+  # Tor Management
+  adminTorStatus: TorStatus!
+  adminTorHealth: TorHealth!
+  adminTorVanityStatus: VanityGenerationStatus
+
+  # Web Settings
+  adminWebSettings: WebSettings!
+
+  # Logs Management
+  adminLogs(type: String!, limit: Int, offset: Int): [LogEntry!]!
+  adminAuditLogsSearch(query: String!, limit: Int): [AuditLog!]!
+  adminAuditLogsStats: LogStats!
+  adminLogStats(type: String!): LogStats!
+  adminArchivedLogs: [ArchivedLog!]!
+
+  # SSL/TLS Management
+  adminSSLStatus: SSLStatus!
+  adminSSLDNSRecords(domain: String!): [DNSRecord!]!
+  adminSSLTest: SSLTestResult!
+
+  # Metrics Configuration
+  adminMetricsConfig: MetricsConfig!
+  adminMetricsList: [MetricDefinition!]!
+
+  # Logging Configuration
+  adminLogFormats: [LogFormat!]!
+  adminFail2banConfig: Fail2banConfig
+  adminSyslogConfig: SyslogConfig
+}
+
+# ============================================================================
+# MUTATION TYPE
+# ============================================================================
+
+type Mutation {
+  # User Mutations
+  updateUserProfile(displayName: String, phone: String): User!
+
+  # Saved Locations Mutations
+  createSavedLocation(name: String!, lat: Float!, lon: Float!, country: String, region: String, alerts: Boolean): SavedLocation!
+  updateSavedLocation(id: ID!, name: String, alerts: Boolean): SavedLocation!
+  deleteSavedLocation(id: ID!): GenericResponse!
+  toggleLocationAlerts(id: ID!): SavedLocation!
+
+  # Notifications Mutations
+  markNotificationRead(id: ID!): Notification!
+  markAllNotificationsRead: GenericResponse!
+  deleteNotification(id: ID!): GenericResponse!
+
+  # Admin User Mutations
+  adminCreateUser(username: String!, email: String!, password: String!, role: String!): User!
+  adminUpdateUser(id: ID!, username: String, email: String, role: String): User!
+  adminDeleteUser(id: ID!): GenericResponse!
+  adminUpdateUserPassword(id: ID!, password: String!): GenericResponse!
+
+  # Admin Settings Mutations
+  adminUpdateSetting(key: String!, value: String!): Setting!
+  adminUpdateSettings(settings: [SettingInput!]!): BulkResponse!
+  adminResetSettings: GenericResponse!
+  adminReloadConfig: GenericResponse!
+
+  # Admin Token Mutations
+  adminGenerateToken(name: String!, expiresIn: Int): APIToken!
+  adminRevokeToken(id: ID!): GenericResponse!
+
+  # Admin Audit Mutations
+  adminClearAuditLogs: GenericResponse!
+
+  # Admin Task Mutations
+  adminEnableTask(name: String!): ScheduledTask!
+  adminDisableTask(name: String!): ScheduledTask!
+  adminTriggerTask(name: String!): GenericResponse!
+
+  # Admin Channel Mutations
+  adminUpdateChannel(type: String!, enabled: Boolean, config: Any): NotificationChannel!
+  adminEnableChannel(type: String!): NotificationChannel!
+  adminDisableChannel(type: String!): NotificationChannel!
+  adminTestChannel(type: String!): GenericResponse!
+  adminInitializeChannels: GenericResponse!
+  adminAutoDetectSMTP: SMTPProvider
+
+  # Contact Form
+  submitContactForm(name: String!, email: String!, subject: String!, message: String!): ContactSubmission!
+
+  # 2FA/TOTP Mutations
+  setup2FA: TOTPSetup!
+  enable2FA(code: String!): GenericResponse!
+  disable2FA(code: String!): GenericResponse!
+  verify2FACode(code: String!): GenericResponse!
+  regenerate2FARecoveryCodes: [String!]!
+
+  # User Preferences Mutations
+  updateUserPreference(key: String!, value: String!): UserPreference!
+  createUserPreference(key: String!, value: String!): UserPreference!
+  deleteUserPreference(key: String!): GenericResponse!
+  createUserSubscription(type: String!, config: Any): UserSubscription!
+  updateUserSubscription(id: ID!, enabled: Boolean, config: Any): UserSubscription!
+
+  # Database Operations
+  adminDatabaseOptimize: DatabaseOptimizeResult!
+  adminDatabaseVacuum: GenericResponse!
+  adminDatabaseClearCache: GenericResponse!
+
+  # Backup Operations
+  adminCreateBackup: Backup!
+  adminRestoreBackup(id: ID!): GenericResponse!
+  adminDownloadBackup(id: ID!): BackupDownload!
+  adminDeleteBackup(id: ID!): GenericResponse!
+
+  # Email Templates
+  adminCreateEmailTemplate(name: String!, subject: String!, body: String!): EmailTemplate!
+  adminUpdateEmailTemplate(id: ID!, subject: String, body: String): EmailTemplate!
+  adminDeleteEmailTemplate(id: ID!): GenericResponse!
+  adminCloneEmailTemplate(id: ID!, name: String!): EmailTemplate!
+  adminInitializeEmailTemplates: GenericResponse!
+  adminTestEmailTemplate(id: ID!, recipient: String!): GenericResponse!
+
+  # Tor Management
+  adminTorEnable: GenericResponse!
+  adminTorDisable: GenericResponse!
+  adminTorRegenerate: TorStatus!
+  adminTorGenerateVanity(pattern: String!): GenericResponse!
+  adminTorCancelVanity: GenericResponse!
+  adminTorApplyVanity: GenericResponse!
+  adminTorImportKeys(privateKey: String!, publicKey: String!): GenericResponse!
+  adminTorExportKeys: TorKeys!
+
+  # Web Settings
+  adminUpdateRobotsTxt(content: String!): GenericResponse!
+  adminUpdateSecurityTxt(content: String!): GenericResponse!
+
+  # Logs Management
+  adminDownloadLogs(type: String!): BackupDownload!
+  adminDownloadAuditLogs: BackupDownload!
+  adminRotateLogs(type: String!): GenericResponse!
+  adminClearLogs(type: String!): GenericResponse!
+
+  # SSL/TLS Management
+  adminSSLObtainCertificate(domain: String!): GenericResponse!
+  adminSSLRenewCertificate: GenericResponse!
+  adminSSLStartAutoRenewal: GenericResponse!
+  adminSSLVerifyCertificate: SSLTestResult!
+  adminSSLUpdateSettings(autoRenew: Boolean, email: String): GenericResponse!
+  adminSSLExportCertificate: BackupDownload!
+  adminSSLImportCertificate(cert: String!, key: String!): GenericResponse!
+  adminSSLRevokeCertificate: GenericResponse!
+  adminSSLSecurityScan: SSLTestResult!
+
+  # Metrics Configuration
+  adminUpdateMetricsConfig(enabled: Boolean, endpoint: String, includeSystem: Boolean, token: String): MetricsConfig!
+  adminCreateMetric(name: String!, type: String!, description: String): MetricDefinition!
+  adminDeleteMetric(name: String!): GenericResponse!
+  adminToggleMetric(name: String!): MetricDefinition!
+  adminExportMetrics: BackupDownload!
+
+  # Logging Configuration
+  adminUpdateLogFormats(formats: [LogFormatInput!]!): GenericResponse!
+  adminUpdateFail2banConfig(enabled: Boolean, maxRetry: Int, findTime: Int, banTime: Int): Fail2banConfig!
+  adminUpdateSyslogConfig(enabled: Boolean, host: String, port: Int, protocol: String): SyslogConfig!
+  adminTestLogFormat(name: String!): GenericResponse!
+  adminExportLogs(type: String!): BackupDownload!
+}
+
+# ============================================================================
+# INPUT TYPES
+# ============================================================================
+
+input SettingInput {
+  key: String!
+  value: String!
+}
+
+input LogFormatInput {
+  name: String!
+  format: String!
+  enabled: Boolean!
+}

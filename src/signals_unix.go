@@ -8,6 +8,8 @@ import (
 )
 
 var platformSignals = []syscall.Signal{
-	syscall.SIGUSR1, // Reopen log files
-	syscall.SIGUSR2, // Toggle debug mode
+	// Reopen log files
+	syscall.SIGUSR1,
+	// Toggle debug mode
+	syscall.SIGUSR2,
 }

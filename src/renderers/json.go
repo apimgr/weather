@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"weather-go/src/utils"
+	"github.com/apimgr/weather/src/utils"
 )
 
 // JSONRenderer handles JSON API response formatting

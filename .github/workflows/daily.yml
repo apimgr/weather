@@ -2,153 +2,107 @@ name: Daily Build
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Daily at 3am UTC
+    - cron: '0 3 * * *'  # 3am UTC daily
   push:
     branches:
       - main
       - master
+  workflow_dispatch:
 
-permissions:
-  contents: write
+env:
+  PROJECTNAME: weather
 
 jobs:
   build:
-    name: Build Daily Binaries
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - os: linux
-            arch: amd64
-          - os: linux
-            arch: arm64
-          - os: darwin
-            arch: amd64
-          - os: darwin
-            arch: arm64
-          - os: windows
-            arch: amd64
-            ext: .exe
-          - os: windows
-            arch: arm64
-            ext: .exe
-          - os: freebsd
-            arch: amd64
-          - os: freebsd
-            arch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
 
-      - name: Generate version
-        id: version
+      - name: Set build info
         run: |
-          VERSION=$(date -u '+%Y%m%d%H%M')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Daily version: $VERSION"
+          echo "VERSION=$(date -u +"%Y%m%d%H%M%S")" >> $GITHUB_ENV
+          echo "COMMIT_ID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date +"%a %b %d, %Y at %H:%M:%S %Z")" >> $GITHUB_ENV
 
-      - name: Build binary
+      - name: Build server
         env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
         run: |
-          BINARY_NAME=weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
-          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          go build -ldflags="-s -w -X main.Version=${{ steps.version.outputs.VERSION }} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${{ github.sha }}" -o $BINARY_NAME ./src
-          ls -lh $BINARY_NAME
+          LDFLAGS="-s -w -X 'main.Version=${{ env.VERSION }}' -X 'main.CommitID=${{ env.COMMIT_ID }}' -X 'main.BuildDate=${{ env.BUILD_DATE }}'"
+          go build -ldflags "${LDFLAGS}" -o ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }} src
 
-      - name: Upload binary
+      # CLI build - only if src/client/ directory exists
+      - name: Build CLI
+        if: hashFiles('src/client/') != ''
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          LDFLAGS="-s -w -X 'main.Version=${{ env.VERSION }}' -X 'main.CommitID=${{ env.COMMIT_ID }}' -X 'main.BuildDate=${{ env.BUILD_DATE }}'"
+          go build -ldflags "${LDFLAGS}" -o ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli src/client
+
+      - name: Upload server artifact
         uses: actions/upload-artifact@v4
         with:
-          name: weather-${{ matrix.os }}-${{ matrix.arch }}
-          path: weather-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext || '' }}
-          retention-days: 7
+          name: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}
+
+      - name: Upload CLI artifact
+        if: hashFiles('src/client/') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli
+          path: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli
 
   release:
-    name: Create Daily Release
     needs: build
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    permissions:
+      contents: write
 
-      - name: Generate version
-        id: version
-        run: |
-          VERSION=$(date -u '+%Y%m%d%H%M')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: binaries
+          merge-multiple: true
 
-      - name: Prepare binaries
+      - name: Set version
+        run: echo "VERSION=$(date -u +"%Y%m%d%H%M%S")" >> $GITHUB_ENV
+
+      - name: Create version.txt
+        run: echo "${{ env.VERSION }}" > binaries/version.txt
+
+      - name: Delete previous daily release
         run: |
-          mkdir -p releases
-          find binaries -type f -exec mv {} releases/ \;
-          ls -lh releases/
-
-      - name: Create source archive
-        run: |
-          tar --exclude='.git' --exclude='.github' --exclude='binaries' --exclude='releases' \
-              -czf releases/weather-source-${{ steps.version.outputs.VERSION }}.tar.gz .
-
-      - name: Delete existing daily release with same date
-        continue-on-error: true
+          gh release delete daily --yes 2>/dev/null || true
+          git push origin :refs/tags/daily 2>/dev/null || true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          TODAY=$(date -u '+%Y%m%d')
-          gh release list | grep "$TODAY" | awk '{print $1}' | while read tag; do
-            gh release delete "$tag" --yes || true
-            git push origin ":refs/tags/$tag" || true
-          done
 
-      - name: Cleanup old daily releases
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Keep only last 7 daily releases
-          gh release list --limit 100 | grep -E '^[0-9]{12}' | tail -n +8 | awk '{print $1}' | while read tag; do
-            echo "Deleting old daily release: $tag"
-            gh release delete "$tag" --yes || true
-            git push origin ":refs/tags/$tag" || true
-          done
-
-      - name: Create daily release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create ${{ steps.version.outputs.VERSION }} \
-            --title "Daily Build - ${{ steps.version.outputs.VERSION }}" \
-            --notes "**Automated daily build from main/master branch**
-
-            Build: ${{ steps.version.outputs.VERSION }}
-            Commit: ${{ github.sha }}
-            Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-
-            This is an automated daily development build. Use for testing only.
-
-            **Installation:**
-            \`\`\`bash
-            # Download for your platform
-            wget https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.VERSION }}/weather-linux-amd64
-            chmod +x weather-linux-amd64
-            sudo mv weather-linux-amd64 /usr/local/bin/weather
-
-            # Or use the update command
-            weather --update branch daily
-            \`\`\`
-
-            **Note:** Daily builds are kept for 7 days only. For stable releases, use tagged versions." \
-            --prerelease \
-            releases/*
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: daily
+          name: "Daily Build ${{ env.VERSION }}"
+          files: binaries/*
+          prerelease: true
+          body: "Daily build: ${{ env.VERSION }}"

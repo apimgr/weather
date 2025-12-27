@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+
+	"github.com/apimgr/weather/src/utils"
 )
 
 // ServiceCommand handles service management operations
@@ -69,9 +71,18 @@ func showServiceHelp() {
 }
 
 func installService() error {
-	// Check if running as root/admin
-	if !isPrivileged() {
-		return fmt.Errorf("service installation requires root/administrator privileges")
+	// Check if running as root/admin, attempt escalation if not
+	// TEMPLATE.md PART 8: Attempt privilege escalation before failing
+	if !utils.IsPrivileged() {
+		// Attempt privilege escalation
+		attempted, err := utils.EscalatePrivileges(append([]string{"--service", "--install"}, os.Args[1:]...))
+		if attempted {
+			// Escalation was attempted, command was re-run with privileges
+			// Return the error (if any) from the elevated process
+			return err
+		}
+		// Escalation not possible
+		return fmt.Errorf("service installation requires root/administrator privileges (and escalation failed)")
 	}
 
 	switch runtime.GOOS {
@@ -93,8 +104,14 @@ func installService() error {
 }
 
 func uninstallService() error {
-	if !isPrivileged() {
-		return fmt.Errorf("service uninstallation requires root/administrator privileges")
+	// Check if running as root/admin, attempt escalation if not
+	if !utils.IsPrivileged() {
+		// Attempt privilege escalation
+		attempted, err := utils.EscalatePrivileges(append([]string{"--service", "--uninstall"}, os.Args[1:]...))
+		if attempted {
+			return err
+		}
+		return fmt.Errorf("service uninstallation requires root/administrator privileges (and escalation failed)")
 	}
 
 	switch runtime.GOOS {
@@ -116,8 +133,13 @@ func uninstallService() error {
 }
 
 func disableService() error {
-	if !isPrivileged() {
-		return fmt.Errorf("disabling service requires root/administrator privileges")
+	if !utils.IsPrivileged() {
+		// Attempt privilege escalation
+		attempted, err := utils.EscalatePrivileges(append([]string{"--service", "--disable"}, os.Args[1:]...))
+		if attempted {
+			return err
+		}
+		return fmt.Errorf("disabling service requires root/administrator privileges (and escalation failed)")
 	}
 
 	switch runtime.GOOS {
@@ -471,7 +493,8 @@ exec svlogd -tt /var/log/apimgr/weather
 
 	// Enable service by symlinking to /var/service
 	linkPath := "/var/service/weather"
-	os.Remove(linkPath) // Remove if exists
+	// Remove if exists
+	os.Remove(linkPath)
 	if err := os.Symlink(serviceDir, linkPath); err != nil {
 		return fmt.Errorf("failed to enable service: %w", err)
 	}
@@ -503,10 +526,6 @@ func uninstallRunitService() error {
 }
 
 // Helper functions
-func isPrivileged() bool {
-	return os.Geteuid() == 0
-}
-
 func runCommand(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout

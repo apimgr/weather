@@ -2,7 +2,7 @@ package services_test
 
 import (
 	"testing"
-	"weather-go/src/services"
+	"github.com/apimgr/weather/src/server/service"
 )
 
 func TestWeatherService_GetWeatherDescription(t *testing.T) {

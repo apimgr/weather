@@ -24,8 +24,9 @@
                 <input type="text"
                        id="identifier"
                        name="identifier"
+                       {{if .identifier}}value="{{.identifier}}" readonly{{end}}
                        required
-                       autofocus
+                       {{if not .require_2fa}}autofocus{{end}}
                        aria-label="Username, email, or phone number"
                        aria-required="true"
                        title="Enter your username, email, or phone to sign in">
@@ -36,11 +37,32 @@
                 <input type="password"
                        id="password"
                        name="password"
+                       {{if .require_2fa}}readonly{{end}}
                        required
                        aria-label="Account password"
                        aria-required="true"
                        title="Enter your account password">
             </div>
+
+            {{if .require_2fa}}
+            <div class="form-group" id="twoFactorGroup">
+                <label for="two_factor_code" id="twoFactorLabel">Two-Factor Authentication Code</label>
+                <input type="text"
+                       id="two_factor_code"
+                       name="two_factor_code"
+                       required
+                       autofocus
+                       maxlength="19"
+                       placeholder="Enter 6-digit code or recovery key"
+                       aria-label="Two-factor authentication code"
+                       aria-required="true"
+                       title="Enter your authenticator code or recovery key">
+                <input type="hidden" id="use_recovery_key" name="use_recovery_key" value="false">
+                <div class="form-footer" style="margin-top: 0.5rem;">
+                    <a href="#" id="toggleRecoveryKey" style="font-size: 0.9rem;">Use recovery key instead</a>
+                </div>
+            </div>
+            {{end}}
 
             <button type="submit"
                     class="btn-primary"
@@ -58,8 +80,43 @@
     </div>
 
     <script>
-        // Auto-focus identifier field
+        // Auto-focus appropriate field
+        {{if .require_2fa}}
+        document.getElementById('two_factor_code').focus();
+        {{else}}
         document.getElementById('identifier').focus();
+        {{end}}
+
+        {{if .require_2fa}}
+        // Toggle between TOTP code and recovery key
+        const toggleLink = document.getElementById('toggleRecoveryKey');
+        const twoFactorInput = document.getElementById('two_factor_code');
+        const twoFactorLabel = document.getElementById('twoFactorLabel');
+        const useRecoveryKeyInput = document.getElementById('use_recovery_key');
+        let usingRecoveryKey = false;
+
+        toggleLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            usingRecoveryKey = !usingRecoveryKey;
+
+            if (usingRecoveryKey) {
+                twoFactorLabel.textContent = 'Recovery Key';
+                twoFactorInput.placeholder = 'Enter recovery key (XXXX-XXXX-XXXX-XXXX)';
+                twoFactorInput.maxLength = 19;
+                toggleLink.textContent = 'Use authenticator code instead';
+                useRecoveryKeyInput.value = 'true';
+            } else {
+                twoFactorLabel.textContent = 'Two-Factor Authentication Code';
+                twoFactorInput.placeholder = 'Enter 6-digit code';
+                twoFactorInput.maxLength = 6;
+                toggleLink.textContent = 'Use recovery key instead';
+                useRecoveryKeyInput.value = 'false';
+            }
+
+            twoFactorInput.value = '';
+            twoFactorInput.focus();
+        });
+        {{end}}
 
         // HTML5 form validation handles empty fields automatically via 'required' attribute
         // No JavaScript validation needed - compliant with TEMPLATE.md lines 770, 1009-1018

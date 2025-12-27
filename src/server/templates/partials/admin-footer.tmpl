@@ -1,0 +1,17 @@
+<!-- Admin Footer per AI.md PART 18 -->
+<footer class="admin-footer">
+    <div class="footer-left">
+        <span class="footer-version">v{{ .version }}</span>
+    </div>
+    <div class="footer-center">
+        <a href="/admin/help" class="footer-link">Documentation</a>
+        <span class="footer-separator">•</span>
+        <a href="/api/v1/healthz" target="_blank" class="footer-link">API Status</a>
+    </div>
+    <div class="footer-right">
+        <div class="footer-status">
+            <span class="status-dot status-{{ .systemStatus }}"></span>
+            <span class="status-label">System {{ .systemStatusText }}</span>
+        </div>
+    </div>
+</footer>

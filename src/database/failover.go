@@ -12,7 +12,8 @@ import (
 // FailoverManager handles database failover and read-only mode
 type FailoverManager struct {
 	primaryDB   *sql.DB
-	cacheDB     *sql.DB // SQLite fallback
+	// SQLite fallback
+	cacheDB     *sql.DB
 	readOnly    bool
 	writeQueue  []QueuedWrite
 	mu          sync.RWMutex
@@ -229,7 +230,8 @@ func (fm *FailoverManager) replayWrites() {
 	fm.mu.Lock()
 	queue := make([]QueuedWrite, len(fm.writeQueue))
 	copy(queue, fm.writeQueue)
-	fm.writeQueue = fm.writeQueue[:0] // Clear queue
+	// Clear queue
+	fm.writeQueue = fm.writeQueue[:0]
 	fm.mu.Unlock()
 
 	if len(queue) == 0 {

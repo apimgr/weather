@@ -1,11 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dracula">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}}</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>Setup Complete - Admin Panel</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--background);
+            color: var(--foreground);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .setup-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .setup-card {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 8px;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .setup-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .setup-title {
+            margin: 0 0 1rem 0;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--green);
+        }
+
+        .setup-description {
+            margin-bottom: 2rem;
+            color: var(--foreground);
+            font-size: 1.125rem;
+        }
+
+        .info-box {
+            background: var(--background);
+            border: 1px solid var(--comment);
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+            color: var(--purple);
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .info-box li {
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+        }
+
+        .admin-link {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--purple);
+            color: var(--background);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .admin-link:hover {
+            background: #9580ff;
+        }
+
+        .admin-link-secondary {
+            background: var(--selection);
+            color: var(--foreground);
+        }
+
+        .admin-link-secondary:hover {
+            background: var(--comment);
+        }
+
+        .setup-button {
+            margin-top: 1rem;
+            padding: 1rem 2rem;
+            background: var(--green);
+            color: var(--background);
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .setup-button:hover {
+            background: #5af78e;
+        }
+
+        .isolation-note {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(139, 233, 253, 0.1);
+            border: 1px solid var(--cyan);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--cyan);
+        }
+    </style>
 </head>
 <body>
     <div class="setup-container">
@@ -13,33 +135,42 @@
             <div class="setup-icon">✅</div>
             <h1 class="setup-title">Setup Complete!</h1>
             <div class="setup-description">
-                <p>Congratulations! Your Weather Service is now fully configured and ready to use.</p>
+                <p>Congratulations! Your admin account has been created and the server is configured.</p>
             </div>
 
             <div class="info-box">
-                <h3>What's Next?</h3>
+                <h3>Admin Panel Access</h3>
                 <ul>
-                    <li>Manage users and permissions from the Admin Dashboard</li>
-                    <li>Create API tokens for programmatic access</li>
-                    <li>Configure weather alerts and notifications</li>
-                    <li>Explore the full weather forecast features</li>
-                    <li>Set up your saved locations</li>
+                    <li><strong>Your admin credentials have been set</strong></li>
+                    <li>You can now manage server settings and configuration</li>
+                    <li>Configure SSL/TLS, email, and notifications</li>
+                    <li>Manage API tokens and security settings</li>
+                    <li>Set up scheduled tasks and backups</li>
                 </ul>
             </div>
 
             <div class="info-box">
-                <h3>Quick Links</h3>
+                <h3>Next Steps</h3>
                 <ul>
-                    <li><a href="/admin" class="setup-complete-link">Admin Dashboard</a></li>
-                    <li><a href="/user/dashboard" class="setup-complete-link">User Dashboard</a></li>
-                    <li><a href="/docs" class="setup-complete-link">API Documentation</a></li>
-                    <li><a href="/admin/settings" class="setup-complete-link">Server Settings</a></li>
+                    <li>Review server settings and branding</li>
+                    <li>Configure SSL/TLS certificates (recommended)</li>
+                    <li>Set up email notifications (SMTP)</li>
+                    <li>Enable scheduled backups</li>
+                    <li>Review security settings</li>
                 </ul>
             </div>
 
-            <button class="setup-button" onclick="window.location.href='/admin'">
-                Go to Admin Dashboard
-            </button>
+            <!-- Admin Panel Links Only (per AI.md PART 18 - No public route links) -->
+            <div style="margin: 2rem 0;">
+                <a href="/admin/dashboard" class="admin-link">Go to Dashboard</a>
+                <a href="/admin/server/settings" class="admin-link admin-link-secondary">Server Settings</a>
+            </div>
+
+            <!-- Note about admin panel isolation per AI.md PART 18 -->
+            <div class="isolation-note">
+                <strong>Admin Panel Isolation:</strong> This admin panel is completely separate from the public site.
+                To access the public weather interface, open a new browser tab and navigate to the server's homepage.
+            </div>
         </div>
     </div>
 </body>

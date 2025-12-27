@@ -1,0 +1,36 @@
+{{template "head" .}}
+{{template "navbar" .}}
+<main class="container">
+<div class="admin-header"><h1>👥 User Management</h1></div>
+<form id="userSettingsForm">
+<section class="card"><h2>Multi-User Mode</h2>
+<label><input type="checkbox" name="enabled"> Enable multi-user mode</label>
+</section>
+<section class="card"><h2>Registration</h2>
+<label><input type="checkbox" name="registration_enabled"> Enable registration</label>
+<label><input type="checkbox" name="registration_require_approval"> Require admin approval</label>
+<label><input type="checkbox" name="registration_require_email_verification"> Require email verification</label>
+<label><input type="checkbox" name="registration_invite_only"> Invite only</label>
+</section>
+<section class="card"><h2>Username Policy</h2>
+<label>Min Length: <input type="number" name="username_min_length" value="3"></label>
+<label>Max Length: <input type="number" name="username_max_length" value="32"></label>
+<label>Allowed Characters: <input type="text" name="username_allowed_chars" value="a-zA-Z0-9_-"></label>
+<label><input type="checkbox" name="username_blocklist_enabled"> Enable username blocklist</label>
+</section>
+<section class="card"><h2>Password Policy</h2>
+<label>Min Length: <input type="number" name="password_min_length" value="12"></label>
+<label><input type="checkbox" name="password_require_uppercase"> Require uppercase</label>
+<label><input type="checkbox" name="password_require_lowercase"> Require lowercase</label>
+<label><input type="checkbox" name="password_require_numbers"> Require numbers</label>
+<label><input type="checkbox" name="password_require_symbols"> Require symbols</label>
+</section>
+<section class="card"><h2>Sessions</h2>
+<label>Timeout (minutes): <input type="number" name="session_timeout" value="1440"></label>
+<label><input type="checkbox" name="session_extend_on_activity"> Extend on activity</label>
+<label>Max sessions per user: <input type="number" name="session_max_sessions_per_user" value="5"></label>
+</section>
+<button type="submit">Save Settings</button>
+</form>
+</main>
+{{template "footer" .}}

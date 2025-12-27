@@ -1,0 +1,37 @@
+name: weather
+
+services:
+  weather:
+    image: ghcr.io/apimgr/weather:latest
+    container_name: weather
+    restart: unless-stopped
+    environment:
+      # Hardcoded with sane defaults - NO .env files
+      - MODE=production
+      - TZ=America/New_York
+      # DOMAIN (optional - containers behind reverse proxy auto-detect from headers)
+      # Only set if NOT behind reverse proxy, comma-separated list supported
+      # - DOMAIN=myapp.com,www.myapp.com,api.myapp.com
+      # SMTP (optional - autodetects if not set)
+      # - SMTP_HOST=smtp.example.com
+      # - SMTP_PORT=587
+      # - SMTP_USERNAME=user
+      # - SMTP_PASSWORD=pass
+      # - SMTP_FROM_NAME=Weather Service
+      # - SMTP_FROM_EMAIL=no-reply@example.com
+      # - SMTP_TLS=auto
+    ports:
+      # Production: bound to Docker bridge only (reverse proxy handles external)
+      # Internal port is always 80, external port is random in 64xxx range
+      - "172.17.0.1:64580:80"
+    volumes:
+      # SELinux shared labels (:z) for production volumes
+      - ./rootfs/config:/config:z
+      - ./rootfs/data:/data:z
+    networks:
+      - weather
+
+networks:
+  weather:
+    name: weather
+    external: false

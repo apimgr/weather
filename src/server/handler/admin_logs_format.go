@@ -1,0 +1,188 @@
+package handlers
+
+import (
+	"database/sql"
+	"net/http"
+	"time"
+
+	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/server/service"
+	"github.com/apimgr/weather/src/utils"
+	"github.com/gin-gonic/gin"
+)
+
+// LogFormatHandler handles log format configuration
+// TEMPLATE.md Part 25: Support 7 log formats
+type LogFormatHandler struct {
+	DB *sql.DB
+}
+
+// NewLogFormatHandler creates a new log format handler
+func NewLogFormatHandler(db *sql.DB) *LogFormatHandler {
+	return &LogFormatHandler{DB: db}
+}
+
+// GetLogFormat returns the current log format setting
+func (h *LogFormatHandler) GetLogFormat(c *gin.Context) {
+	// Get log format from server config
+	var logFormat string
+	err := database.GetServerDB().QueryRow(`
+		SELECT value FROM server_config WHERE key = 'logs.format'
+	`).Scan(&logFormat)
+
+	if err != nil && err != sql.ErrNoRows {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get log format setting",
+		})
+		return
+	}
+
+	// Default to apache if not set
+	if logFormat == "" {
+		logFormat = "apache"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"format":  logFormat,
+		"formats": []string{"apache", "nginx", "json", "fail2ban", "syslog", "cef", "text"},
+	})
+}
+
+// SetLogFormat updates the log format setting
+func (h *LogFormatHandler) SetLogFormat(c *gin.Context) {
+	var request struct {
+		Format string `json:"format" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate format
+	validFormats := map[string]bool{
+		"apache":   true,
+		"nginx":    true,
+		"json":     true,
+		"fail2ban": true,
+		"syslog":   true,
+		"cef":      true,
+		"text":     true,
+	}
+
+	if !validFormats[request.Format] {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":         "Invalid log format",
+			"valid_formats": []string{"apache", "nginx", "json", "fail2ban", "syslog", "cef", "text"},
+		})
+		return
+	}
+
+	// Update or insert setting
+	_, err := database.GetServerDB().Exec(`
+		INSERT INTO server_config (key, value, type, description, updated_at)
+		VALUES ('logs.format', ?, 'string', 'Access log format', ?)
+		ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
+	`, request.Format, time.Now(), request.Format, time.Now())
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to update log format",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Log format updated successfully",
+		"format":  request.Format,
+		"note":    "Restart the server for changes to take effect",
+	})
+}
+
+// PreviewLogFormat shows a preview of different log formats
+func (h *LogFormatHandler) PreviewLogFormat(c *gin.Context) {
+	format := c.Query("format")
+	if format == "" {
+		format = "apache"
+	}
+
+	// Create sample log entry
+	sampleEntry := &services.LogEntry{
+		Timestamp:   time.Now(),
+		RemoteAddr:  "192.168.1.100",
+		Method:      "GET",
+		Path:        "/api/v1/weather",
+		Protocol:    "HTTP/1.1",
+		StatusCode:  200,
+		BytesSent:   1234,
+		Referer:     "https://example.com/page",
+		UserAgent:   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+		RequestTime: 0.045,
+		RequestID:   "req-abc123def456",
+		Username:    "john.doe",
+	}
+
+	// Format preview for all formats
+	previews := make(map[string]string)
+	formats := []services.LogFormat{
+		services.LogFormatApache,
+		services.LogFormatNginx,
+		services.LogFormatJSON,
+		services.LogFormatFail2ban,
+		services.LogFormatSyslog,
+		services.LogFormatCEF,
+		services.LogFormatText,
+	}
+
+	for _, fmt := range formats {
+		formatter := services.NewLogFormatter(fmt)
+		previews[string(fmt)] = formatter.Format(sampleEntry)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":        true,
+		"current_format": format,
+		"previews":       previews,
+		"sample_data": gin.H{
+			"timestamp":    sampleEntry.Timestamp.Format(time.RFC3339),
+			"remote_addr":  sampleEntry.RemoteAddr,
+			"method":       sampleEntry.Method,
+			"path":         sampleEntry.Path,
+			"status_code":  sampleEntry.StatusCode,
+			"bytes_sent":   sampleEntry.BytesSent,
+			"request_time": sampleEntry.RequestTime,
+			"username":     sampleEntry.Username,
+		},
+	})
+}
+
+// ShowLogFormatPage renders the log format configuration page
+func (h *LogFormatHandler) ShowLogFormatPage(c *gin.Context) {
+	// Get current format
+	var logFormat string
+	database.GetServerDB().QueryRow(`
+		SELECT value FROM server_config WHERE key = 'logs.format'
+	`).Scan(&logFormat)
+
+	if logFormat == "" {
+		logFormat = "apache"
+	}
+
+	c.HTML(http.StatusOK, "admin/admin-logs-format.tmpl", utils.TemplateData(c, gin.H{
+		"title":         "Log Format Configuration",
+		"page":          "logs-format",
+		"current_format": logFormat,
+		"formats": []map[string]string{
+			{"id": "apache", "name": "Apache Combined", "description": "Standard Apache combined log format"},
+			{"id": "nginx", "name": "Nginx", "description": "Nginx access log format with request time"},
+			{"id": "json", "name": "JSON", "description": "Structured JSON logs for log aggregation"},
+			{"id": "fail2ban", "name": "fail2ban", "description": "Compatible with fail2ban for IP blocking"},
+			{"id": "syslog", "name": "Syslog (RFC 5424)", "description": "RFC 5424 compliant syslog format"},
+			{"id": "cef", "name": "CEF (ArcSight)", "description": "Common Event Format for SIEM systems"},
+			{"id": "text", "name": "Custom Text", "description": "Human-readable custom text format"},
+		},
+	}))
+}

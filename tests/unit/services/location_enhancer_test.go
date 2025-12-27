@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
-	"weather-go/src/database"
-	"weather-go/src/services"
+	_ "modernc.org/sqlite"
+	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/server/service"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {

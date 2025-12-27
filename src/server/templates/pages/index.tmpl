@@ -1,7 +1,7 @@
 {{template "head" .}}
 {{template "navbar" .}}
 
-<main class="container">
+<main class="container" id="main-content" role="main" aria-label="Weather forecast content">
     <div class="admin-header">
         <div>
             <h1>🌤️ Weather Forecast</h1>
@@ -10,11 +10,12 @@
     </div>
 
         <!-- Location Search Form - Mobile First -->
-        <form id="weather-form" class="weather-form">
+        <form id="weather-form" class="weather-form" role="search" aria-label="{{t .server.Lang "aria_search_form"}}">
             <div class="weather-form__wrapper">
                 <!-- First row: Location input and units -->
                 <div class="weather-form__row">
                     <div class="weather-form__input-wrapper">
+                        <label for="location-input" class="sr-only">{{t .server.Lang "label_location"}}</label>
                         <input
                             type="text"
                             id="location-input"
@@ -23,10 +24,14 @@
                             placeholder="Enter city or coordinates"
                             value="{{.Location}}"
                             autocomplete="off"
+                            aria-label="Location search input"
+                            aria-autocomplete="list"
+                            aria-controls="autocomplete-dropdown"
                         >
-                        <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                        <div id="autocomplete-dropdown" class="autocomplete-dropdown" role="listbox" aria-label="Location suggestions"></div>
                     </div>
-                    <select name="units" id="units-select" class="location-input weather-form__units">
+                    <label for="units-select" class="sr-only">Temperature unit</label>
+                    <select name="units" id="units-select" class="location-input weather-form__units" aria-label="Temperature unit selection">
                         <option value="imperial"{{if eq .Units "imperial"}} selected{{end}}>°F</option>
                         <option value="metric"{{if eq .Units "metric"}} selected{{end}}>°C</option>
                     </select>
@@ -34,10 +39,10 @@
 
                 <!-- Second row: Buttons -->
                 <div class="weather-form__button-row">
-                    <button type="submit" class="search-button weather-form__button">
+                    <button type="submit" class="search-button weather-form__button" aria-label="{{t .server.Lang "btn_search"}} weather">
                         🌤️ Get Weather
                     </button>
-                    <button type="button" id="location-btn" class="search-button weather-form__button--location">
+                    <button type="button" id="location-btn" class="search-button weather-form__button--location" aria-label="Use my current location">
                         📍 My Location
                     </button>
                 </div>

@@ -1,74 +1,81 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+)
 
+// TestIsUsernameBlocked tests the username blocklist per AI.md PART 22
 func TestIsUsernameBlocked(t *testing.T) {
 	tests := []struct {
+		name     string
 		email    string
-		blocked  bool
-		testName string
+		wantBlocked bool
 	}{
-		// Exact matches
-		{"admin@example.com", true, "admin exact match"},
-		{"root@example.com", true, "root exact match"},
-		{"test@example.com", true, "test exact match"},
+		// Exact matches from blocklist
+		{"admin", "admin@example.com", true},
+		{"root", "root@example.com", true},
+		{"system", "system@example.com", true},
+		{"moderator", "moderator@example.com", true},
+		{"official", "official@example.com", true},
+		{"verified", "verified@example.com", true},
 
-		// Variations with numbers
-		{"admin123@example.com", true, "admin with numbers (exact blocklist match)"},
-		{"admin_1@example.com", true, "admin with underscore"},
-		{"test-123@example.com", true, "test with hyphen"},
-		{"test1@example.com", true, "test1 (exact blocklist match)"},
+		// Critical terms as substrings (should be blocked per AI.md PART 22)
+		{"contains_admin", "myadmin@example.com", true},
+		{"contains_admin_middle", "myadminuser@example.com", true},
+		{"contains_root", "rootuser@example.com", true},
+		{"contains_root_end", "userroot@example.com", true},
+		{"contains_system", "mysystem@example.com", true},
+		{"contains_mod", "mymod@example.com", true},
+		{"contains_official", "unofficialname@example.com", true},
+		{"contains_verified", "verifieduser@example.com", true},
 
-		// Should NOT be blocked (legitimate usernames)
-		{"administrator123@example.com", true, "administrator with suffix (blocked)"},
-		{"johnadmin@example.com", false, "admin in middle"},
-		{"testing@example.com", true, "testing is blocked"},
-		{"user.name@example.com", false, "legitimate user"},
-		{"alice@example.com", false, "normal name"},
-		{"bob.smith@example.com", false, "normal name with dot"},
+		// Variations with simple suffixes (should be blocked)
+		{"test_with_numbers", "test123@example.com", true},
+		{"user_with_underscore", "user_1@example.com", true},
+		{"guest_with_hyphen", "guest-1@example.com", true},
+		{"api_with_numbers", "api123@example.com", true},
 
-		// Case insensitive
-		{"ADMIN@example.com", true, "uppercase admin"},
-		{"RoOt@example.com", true, "mixed case root"},
+		// Complex suffixes (should NOT be blocked)
+		{"testing", "testing@example.com", false},
+		{"username", "username@example.com", false},
 
-		// Single characters
-		{"a@example.com", true, "single letter"},
-		{"z@example.com", true, "single letter z"},
-
-		// Numbers
-		{"1@example.com", true, "single digit"},
-		{"123@example.com", true, "starts with blocked single digit"},
-		{"00@example.com", true, "00 reserved"},
-		{"john1234@example.com", false, "legitimate username with numbers"},
+		// Valid usernames (not on blocklist)
+		{"valid_john", "john@example.com", false},
+		{"valid_jane", "jane@example.com", false},
+		{"valid_player", "player@example.com", false},
+		{"valid_gamer", "gamer@example.com", false},
 
 		// Edge cases
-		{"@example.com", true, "empty username"},
-		{"support@example.com", true, "support reserved"},
-		{"noreply@example.com", true, "noreply reserved"},
+		{"empty_username", "@example.com", true},
+		{"no_at_sign", "username", true},
+
+		// Case insensitivity
+		{"admin_uppercase", "ADMIN@example.com", true},
+		{"admin_mixed", "AdMiN@example.com", true},
+
+		// Project-specific
+		{"weather", "weather@example.com", true},
+		{"apimgr", "apimgr@example.com", true},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			result := IsUsernameBlocked(tt.email)
-			if result != tt.blocked {
-				t.Errorf("IsUsernameBlocked(%q) = %v, want %v", tt.email, result, tt.blocked)
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsUsernameBlocked(tt.email)
+			if got != tt.wantBlocked {
+				t.Errorf("IsUsernameBlocked(%q) = %v, want %v", tt.email, got, tt.wantBlocked)
 			}
 		})
 	}
 }
 
-func TestGetBlocklistSize(t *testing.T) {
+// TestBlocklistSize verifies the blocklist has entries
+func TestBlocklistSize(t *testing.T) {
 	size := GetBlocklistSize()
 	if size == 0 {
-		t.Error("Blocklist size should not be zero")
+		t.Error("UsernameBlocklist should not be empty")
 	}
-	if size != len(UsernameBlocklist) {
-		t.Errorf("GetBlocklistSize() = %d, want %d", size, len(UsernameBlocklist))
+	if size < 100 {
+		t.Errorf("UsernameBlocklist size = %d, expected at least 100 entries per AI.md PART 22", size)
 	}
-}
-
-func TestIsBlocklistPublic(t *testing.T) {
-	if !IsBlocklistPublic() {
-		t.Error("Blocklist should be public")
-	}
+	t.Logf("Blocklist contains %d entries", size)
 }

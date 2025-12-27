@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/apimgr/weather/src/database"
 )
 
 // TaskRun represents a single execution of a task
@@ -13,8 +15,10 @@ type TaskRun struct {
 	TaskName  string    `json:"task_name"`
 	StartTime time.Time `json:"start_time"`
 	EndTime   time.Time `json:"end_time"`
-	Duration  int64     `json:"duration_ms"` // milliseconds
-	Status    string    `json:"status"`      // "success", "error"
+	// milliseconds
+	Duration  int64     `json:"duration_ms"`
+	// "success", "error"
+	Status    string    `json:"status"`
 	Error     string    `json:"error,omitempty"`
 }
 
@@ -31,10 +35,10 @@ type TaskInfo struct {
 	ErrorCount   int        `json:"error_count"`
 }
 
-// InitTaskHistoryTable creates the task_history table if it doesn't exist
+// InitTaskHistoryTable creates the server_scheduler_history table if it doesn't exist
 func (s *Scheduler) InitTaskHistoryTable() error {
 	query := `
-	CREATE TABLE IF NOT EXISTS task_history (
+	CREATE TABLE IF NOT EXISTS server_scheduler_history (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		task_name TEXT NOT NULL,
 		start_time DATETIME NOT NULL,
@@ -44,11 +48,11 @@ func (s *Scheduler) InitTaskHistoryTable() error {
 		error TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
-	CREATE INDEX IF NOT EXISTS idx_task_history_name ON task_history(task_name);
-	CREATE INDEX IF NOT EXISTS idx_task_history_start ON task_history(start_time DESC);
+	CREATE INDEX IF NOT EXISTS idx_server_scheduler_history_name ON server_scheduler_history(task_name);
+	CREATE INDEX IF NOT EXISTS idx_server_scheduler_history_start ON server_scheduler_history(start_time DESC);
 	`
 
-	_, err := s.db.Exec(query)
+	_, err := database.GetServerDB().Exec(query)
 	return err
 }
 
@@ -63,8 +67,8 @@ func (s *Scheduler) RecordTaskRun(taskName string, startTime, endTime time.Time,
 		errorMsg = err.Error()
 	}
 
-	_, dbErr := s.db.Exec(`
-		INSERT INTO task_history (task_name, start_time, end_time, duration_ms, status, error)
+	_, dbErr := database.GetServerDB().Exec(`
+		INSERT INTO server_scheduler_history (task_name, start_time, end_time, duration_ms, status, error)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`, taskName, startTime, endTime, duration, status, errorMsg)
 
@@ -77,9 +81,9 @@ func (s *Scheduler) GetTaskHistory(taskName string, limit int) ([]TaskRun, error
 		limit = 50
 	}
 
-	rows, err := s.db.Query(`
+	rows, err := database.GetServerDB().Query(`
 		SELECT id, task_name, start_time, end_time, duration_ms, status, COALESCE(error, '')
-		FROM task_history
+		FROM server_scheduler_history
 		WHERE task_name = ?
 		ORDER BY start_time DESC
 		LIMIT ?
@@ -107,9 +111,9 @@ func (s *Scheduler) GetTaskHistory(taskName string, limit int) ([]TaskRun, error
 // GetLastTaskRun returns the most recent run for a task
 func (s *Scheduler) GetLastTaskRun(taskName string) (*TaskRun, error) {
 	var run TaskRun
-	err := s.db.QueryRow(`
+	err := database.GetServerDB().QueryRow(`
 		SELECT id, task_name, start_time, end_time, duration_ms, status, COALESCE(error, '')
-		FROM task_history
+		FROM server_scheduler_history
 		WHERE task_name = ?
 		ORDER BY start_time DESC
 		LIMIT 1
@@ -128,12 +132,12 @@ func (s *Scheduler) GetLastTaskRun(taskName string) (*TaskRun, error) {
 
 // GetTaskStats returns statistics for a task
 func (s *Scheduler) GetTaskStats(taskName string) (total, success, errors int, err error) {
-	err = s.db.QueryRow(`
+	err = database.GetServerDB().QueryRow(`
 		SELECT
 			COUNT(*) as total,
 			SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success,
 			SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors
-		FROM task_history
+		FROM server_scheduler_history
 		WHERE task_name = ?
 	`, taskName).Scan(&total, &success, &errors)
 
@@ -188,11 +192,12 @@ func (s *Scheduler) GetAllTaskInfo() ([]TaskInfo, error) {
 // CleanupOldTaskHistory removes task history older than the specified days
 func (s *Scheduler) CleanupOldTaskHistory(days int) error {
 	if days <= 0 {
-		days = 90 // Default: keep 90 days
+		// Default: keep 90 days
+		days = 90
 	}
 
-	result, err := s.db.Exec(`
-		DELETE FROM task_history
+	result, err := database.GetServerDB().Exec(`
+		DELETE FROM server_scheduler_history
 		WHERE start_time < datetime('now', ?)
 	`, fmt.Sprintf("-%d days", days))
 

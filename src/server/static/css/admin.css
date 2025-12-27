@@ -1,0 +1,415 @@
+/* Admin Panel Styles per AI.md PART 18 */
+
+/* Layout Structure */
+.admin-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+}
+
+/* Admin Header per AI.md PART 18 */
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--current-line);
+    border-bottom: 1px solid var(--comment);
+    height: 60px;
+    flex-shrink: 0;
+}
+
+.admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--foreground);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background: var(--selection);
+}
+
+.admin-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--foreground);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.admin-logo-icon {
+    font-size: 1.5rem;
+}
+
+.admin-header-center {
+    flex: 1;
+    max-width: 500px;
+    margin: 0 2rem;
+}
+
+.admin-search {
+    position: relative;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--comment);
+}
+
+.admin-search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+    background: var(--background);
+    border: 1px solid var(--comment);
+    border-radius: 4px;
+    color: var(--foreground);
+    font-size: 0.875rem;
+}
+
+.admin-search-input:focus {
+    outline: none;
+    border-color: var(--purple);
+}
+
+.admin-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* Status Indicator per AI.md PART 18 */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.status-ok,
+.status-dot.status-green {
+    background: var(--green);
+}
+
+.status-dot.status-warning,
+.status-dot.status-yellow {
+    background: var(--yellow);
+}
+
+.status-dot.status-error,
+.status-dot.status-red {
+    background: var(--red);
+}
+
+.admin-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--foreground);
+}
+
+.user-icon {
+    color: var(--comment);
+}
+
+.admin-username {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--red);
+    color: var(--background);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-logout:hover {
+    background: #ff6b7b;
+}
+
+/* Main Layout */
+.admin-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar per AI.md PART 18 */
+.admin-sidebar {
+    width: 260px;
+    background: var(--current-line);
+    border-right: 1px solid var(--comment);
+    overflow-y: auto;
+    flex-shrink: 0;
+    transition: width 0.3s, margin 0.3s;
+}
+
+.admin-sidebar.collapsed {
+    width: 60px;
+}
+
+.admin-sidebar.collapsed .nav-text,
+.admin-sidebar.collapsed .section-text,
+.admin-sidebar.collapsed .section-chevron,
+.admin-sidebar.collapsed .nav-subitem {
+    display: none;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+/* Navigation Sections per AI.md PART 18 */
+.nav-section {
+    margin-bottom: 0.5rem;
+}
+
+.nav-section-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    color: var(--foreground);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.nav-section-header:hover {
+    background: var(--selection);
+}
+
+.section-icon {
+    flex-shrink: 0;
+    color: var(--purple);
+}
+
+.section-text {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.section-chevron {
+    flex-shrink: 0;
+    color: var(--comment);
+    transition: transform 0.2s;
+}
+
+.nav-section-header.expanded .section-chevron {
+    transform: rotate(180deg);
+}
+
+.nav-section-content {
+    display: none;
+    padding-left: 2.75rem;
+}
+
+.nav-section-content.expanded {
+    display: block;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--foreground);
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.nav-item:hover {
+    background: var(--selection);
+}
+
+.nav-item.active {
+    background: var(--selection);
+    border-left: 3px solid var(--purple);
+}
+
+.nav-icon {
+    flex-shrink: 0;
+    color: var(--purple);
+}
+
+.nav-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.nav-subitem {
+    display: block;
+    padding: 0.5rem 0;
+    color: var(--foreground);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+}
+
+.nav-subitem:hover {
+    color: var(--purple);
+}
+
+.nav-subitem.active {
+    color: var(--purple);
+    font-weight: 500;
+}
+
+/* Main Content */
+.admin-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background: var(--background);
+}
+
+/* Breadcrumb per AI.md PART 18 */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: var(--comment);
+}
+
+.breadcrumb-link {
+    color: var(--comment);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-link:hover {
+    color: var(--purple);
+}
+
+.breadcrumb-separator {
+    color: var(--comment);
+}
+
+.breadcrumb-current {
+    color: var(--foreground);
+    font-weight: 500;
+}
+
+.page-content {
+    background: var(--current-line);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+/* Admin Footer per AI.md PART 18 */
+.admin-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--current-line);
+    border-top: 1px solid var(--comment);
+    font-size: 0.75rem;
+    color: var(--comment);
+    flex-shrink: 0;
+}
+
+.footer-left,
+.footer-center,
+.footer-right {
+    flex: 1;
+}
+
+.footer-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.footer-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.footer-link {
+    color: var(--comment);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-link:hover {
+    color: var(--purple);
+}
+
+.footer-separator {
+    color: var(--comment);
+}
+
+.footer-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Mobile Responsiveness per AI.md PART 18 */
+@media (max-width: 768px) {
+    .admin-header-center {
+        display: none;
+    }
+
+    .admin-sidebar {
+        position: fixed;
+        left: -260px;
+        top: 60px;
+        bottom: 0;
+        z-index: 1000;
+        transition: left 0.3s;
+    }
+
+    .admin-sidebar.mobile-open {
+        left: 0;
+    }
+
+    .admin-content {
+        padding: 1rem;
+    }
+
+    .footer-center {
+        display: none;
+    }
+}

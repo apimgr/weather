@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
-	"weather-go/src/database"
-	"weather-go/src/handlers"
+	_ "modernc.org/sqlite"
+	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/server/handler"
 )
 
 func setupTestRouter(t *testing.T) (*gin.Engine, *database.DB) {

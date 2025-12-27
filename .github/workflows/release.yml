@@ -1,198 +1,128 @@
-name: Binary Release
+name: Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-      - '*.*.*'
-  workflow_dispatch:
+      - 'v*'
+      - '[0-9]*.[0-9]*.[0-9]*'
 
-permissions:
-  contents: write
+env:
+  PROJECTNAME: weather
 
 jobs:
-  delete-existing:
-    name: Delete Existing Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Delete existing release and tag
-        continue-on-error: true
-        run: |
-          TAG_NAME="${GITHUB_REF#refs/tags/}"
-          echo "🗑️  Checking for existing release ${TAG_NAME}..."
-
-          # Delete GitHub release if exists
-          gh release delete "${TAG_NAME}" -y 2>/dev/null && echo "Deleted release" || echo "No release to delete"
-
-          # Delete remote tag if exists
-          git push origin ":refs/tags/${TAG_NAME}" 2>/dev/null && echo "Deleted remote tag" || echo "No remote tag to delete"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build:
-    name: Build Binaries
-    needs: delete-existing
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         include:
-          - os: linux
-            arch: amd64
-          - os: linux
-            arch: arm64
-          - os: darwin
-            arch: amd64
-          - os: darwin
-            arch: arm64
-          - os: windows
-            arch: amd64
-          - os: windows
-            arch: arm64
-          - os: freebsd
-            arch: amd64
-          - os: freebsd
-            arch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+            ext: .exe
+          - goos: windows
+            goarch: arm64
+            ext: .exe
+          - goos: freebsd
+            goarch: amd64
+          - goos: freebsd
+            goarch: arm64
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
 
-      - name: Build Binary
+      - name: Set build info
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+          echo "COMMIT_ID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date +"%a %b %d, %Y at %H:%M:%S %Z")" >> $GITHUB_ENV
+
+      - name: Build server
         env:
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          mkdir -p dist
+          LDFLAGS="-s -w -X 'main.Version=${{ env.VERSION }}' -X 'main.CommitID=${{ env.COMMIT_ID }}' -X 'main.BuildDate=${{ env.BUILD_DATE }}'"
+          go build -ldflags "${LDFLAGS}" -o ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} src
 
-          BINARY_NAME="weather-${{ matrix.os }}-${{ matrix.arch }}"
-          if [ "${{ matrix.os }}" = "windows" ]; then
-            BINARY_NAME="${BINARY_NAME}.exe"
-          fi
+      # CLI build - only if src/client/ directory exists
+      - name: Build CLI
+        if: hashFiles('src/client/') != ''
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          LDFLAGS="-s -w -X 'main.Version=${{ env.VERSION }}' -X 'main.CommitID=${{ env.COMMIT_ID }}' -X 'main.BuildDate=${{ env.BUILD_DATE }}'"
+          go build -ldflags "${LDFLAGS}" -o ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli${{ matrix.ext }} src/client
 
-          VERSION=$(cat release.txt 2>/dev/null || echo "dev")
-          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-
-          go build \
-            -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildDate=${BUILD_DATE} -X main.GitCommit=${GIT_COMMIT}" \
-            -trimpath \
-            -o "dist/${BINARY_NAME}" \
-            ./src
-
-          # Strip Linux binaries
-          if [ "${{ matrix.os }}" = "linux" ] && command -v strip >/dev/null 2>&1; then
-            strip "dist/${BINARY_NAME}" 2>/dev/null || true
-          fi
-
-          ls -lh dist/
-
-      - name: Upload Artifacts
+      - name: Upload server artifact
         uses: actions/upload-artifact@v4
         with:
-          name: weather-${{ matrix.os }}-${{ matrix.arch }}
-          path: dist/*
+          name: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+
+      - name: Upload CLI artifact
+        if: hashFiles('src/client/') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli
+          path: ${{ env.PROJECTNAME }}-${{ matrix.goos }}-${{ matrix.goarch }}-cli${{ matrix.ext }}
 
   release:
-    name: Create GitHub Release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Download All Artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: binaries
+          merge-multiple: true
 
-      - name: Prepare Release Assets
+      - name: Set version
         run: |
-          mkdir -p release
-          find artifacts -type f -name "weather-*" -exec cp {} release/ \;
-          ls -lh release/
+          TAG="${GITHUB_REF_NAME}"
+          # VERSION for version.txt (strip v if present)
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+          # RELEASE_TAG: add v prefix only if semver without v
+          if [[ "$TAG" == v* ]]; then
+            echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          elif [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "RELEASE_TAG=v$TAG" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          fi
 
-      - name: Extract version info
-        id: version
+      - name: Create version.txt
+        run: echo "${{ env.VERSION }}" > binaries/version.txt
+
+      - name: Create source archive
         run: |
-          TAG_NAME="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG_NAME#v}"
-          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
-          echo "git_commit=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          tar --exclude='.git' --exclude='.github' --exclude='.gitea' \
+            --exclude='binaries' --exclude='releases' --exclude='*.tar.gz' \
+            -czf binaries/${{ env.PROJECTNAME }}-${{ env.VERSION }}-source.tar.gz .
 
       - name: Create Release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v1
         with:
-          tag: ${{ steps.version.outputs.tag }}
-          name: Weather Service ${{ steps.version.outputs.version }}
-          body: |
-            ## 🌤️ Weather Service ${{ steps.version.outputs.version }}
-
-            **Built:** ${{ steps.version.outputs.build_date }}
-            **Commit:** ${{ steps.version.outputs.git_commit }}
-
-            ### 📦 Downloads
-
-            | Platform | Architecture | Download |
-            |----------|--------------|----------|
-            | Linux | AMD64 | [weather-linux-amd64](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-linux-amd64) |
-            | Linux | ARM64 | [weather-linux-arm64](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-linux-arm64) |
-            | macOS | AMD64 | [weather-darwin-amd64](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-darwin-amd64) |
-            | macOS | ARM64 | [weather-darwin-arm64](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-darwin-arm64) |
-            | Windows | AMD64 | [weather-windows-amd64.exe](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-windows-amd64.exe) |
-            | Windows | ARM64 | [weather-windows-arm64.exe](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-windows-arm64.exe) |
-            | FreeBSD | AMD64 | [weather-freebsd-amd64](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-freebsd-amd64) |
-            | FreeBSD | ARM64 | [weather-freebsd-arm64](https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-freebsd-arm64) |
-
-            ### 🐳 Docker
-
-            ```bash
-            docker pull ghcr.io/apimgr/weather:latest
-            docker pull ghcr.io/apimgr/weather:${{ steps.version.outputs.version }}
-            ```
-
-            ### 📥 Quick Install
-
-            ```bash
-            # Linux/macOS/FreeBSD
-            wget https://github.com/apimgr/weather/releases/download/${{ steps.version.outputs.tag }}/weather-linux-amd64
-            chmod +x weather-linux-amd64
-            sudo mv weather-linux-amd64 /usr/local/bin/weather
-
-            # Run
-            weather --port 8080
-            ```
-
-            ### ✨ Features
-
-            - Beautiful weather forecasts with ASCII art
-            - Moon phase tracking
-            - Earthquake monitoring with interactive map
-            - Severe weather alerts (hurricanes, tornadoes, floods, etc.)
-            - GeoIP location detection (MaxMind GeoLite2)
-            - 16-day detailed forecasts
-            - User authentication & admin dashboard
-            - API tokens & scheduled tasks
-            - No API key required
-            - Single static binary
-
-            ### 📖 Documentation
-
-            Full documentation: https://github.com/apimgr/weather/blob/main/README.md
-          allowUpdates: true
-          removeArtifacts: true
-          replacesArtifacts: true
-          artifacts: "release/*"
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: binaries/*
+          generate_release_notes: true
+          make_latest: true

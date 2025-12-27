@@ -9,9 +9,9 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
-	"weather-go/src/database"
-	"weather-go/src/models"
-	"weather-go/src/utils"
+	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/utils"
 )
 
 func handlePlatformSignal(sig os.Signal, db *database.DB, appLogger *utils.Logger, dirPaths *utils.DirectoryPaths) bool {

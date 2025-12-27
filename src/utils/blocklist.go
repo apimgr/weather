@@ -4,122 +4,111 @@ import (
 	"strings"
 )
 
-// UsernameBlocklist contains reserved usernames that cannot be registered
+// UsernameBlocklist contains reserved usernames per AI.md PART 22
 // This list prevents users from registering common system usernames, admin terms,
 // and potentially confusing identifiers
 var UsernameBlocklist = []string{
-	// System/Admin terms
-	"admin", "administrator", "root", "superuser", "sudo", "sysadmin",
-	"system", "moderator", "mod", "owner", "staff", "support",
-	"help", "helpdesk", "webmaster", "postmaster", "hostmaster",
-	"admins", "administrators",
+	// System & Administrative
+	"admin", "administrator", "root", "system", "sysadmin", "superuser",
+	"master", "owner", "operator", "manager", "moderator", "mod",
+	"staff", "support", "helpdesk", "help", "service", "daemon",
 
-	// Service accounts
-	"noreply", "no-reply", "mailer-daemon", "daemon", "nobody",
-	"service", "api", "bot", "system-bot", "automated",
+	// Server & Technical
+	"server", "host", "node", "cluster", "api", "www", "web", "mail",
+	"email", "smtp", "ftp", "ssh", "dns", "proxy", "gateway", "router",
+	"firewall", "localhost", "local", "internal", "external", "public",
+	"private", "network", "database", "db", "cache", "redis", "mysql",
+	"postgres", "mongodb", "elastic", "nginx", "apache", "docker",
 
-	// Common usernames
-	"user", "guest", "anonymous", "anon", "public", "default",
-	"test", "testing", "demo", "example", "sample", "tests",
+	// Application & Service Names
+	"app", "application", "bot", "robot", "crawler", "spider", "scraper",
+	"webhook", "callback", "cron", "scheduler", "worker", "queue", "job",
+	"task", "process", "service", "microservice", "lambda", "function",
 
-	// Security-related
-	"security", "abuse", "spam", "phishing", "fraud", "scam",
-	"hacker", "exploit", "malware", "virus",
+	// Authentication & Security
+	"auth", "authentication", "login", "logout", "signin", "signout",
+	"signup", "register", "password", "passwd", "token", "oauth", "sso",
+	"saml", "ldap", "kerberos", "security", "secure", "ssl", "tls",
+	"certificate", "cert", "key", "secret", "credential", "session",
 
-	// Application-specific
-	"weather", "weatherapp", "app", "application", "server",
-	"api-server", "backend", "frontend", "database", "db",
+	// Roles & Permissions
+	"guest", "anonymous", "anon", "user", "users", "member", "members",
+	"subscriber", "editor", "author", "contributor", "reviewer", "auditor",
+	"analyst", "developer", "dev", "devops", "engineer", "architect",
+	"designer", "tester", "qa", "billing", "finance", "legal", "hr",
+	"sales", "marketing", "ceo", "cto", "cfo", "coo", "founder", "cofounder",
 
-	// Reserved routes/endpoints
-	"login", "logout", "register", "signup", "signin", "signout",
-	"auth", "authentication", "session", "sessions", "token", "tokens",
-	"user", "users", "account", "accounts", "profile", "profiles",
-	"settings", "preferences", "config", "configuration",
-	"dashboard", "panel", "admin-panel", "control-panel",
-	"api", "v1", "v2", "v3", "version", "versions",
-	"docs", "documentation", "api-docs", "swagger",
-	"static", "assets", "public", "files", "uploads",
-	"download", "downloads", "export", "exports",
-	"health", "healthz", "healthcheck", "status", "ping",
-	"metrics", "stats", "statistics", "analytics",
-	"webhook", "webhooks", "callback", "callbacks",
-	"notification", "notifications", "alert", "alerts",
-	"message", "messages", "email", "emails", "mail",
-	"search", "find", "query", "queries",
-	"feed", "feeds", "rss", "atom",
-	"blog", "blogs", "post", "posts", "article", "articles",
-	"page", "pages", "site", "sites",
-	"tag", "tags", "category", "categories",
-	"group", "groups", "team", "teams", "organization", "organizations",
-	"company", "companies", "business", "businesses",
+	// Common Reserved
+	"account", "accounts", "profile", "profiles", "settings", "config",
+	"configuration", "dashboard", "panel", "console", "portal", "home",
+	"index", "main", "default", "null", "nil", "undefined", "void",
+	"true", "false", "test", "testing", "debug", "demo", "example",
+	"sample", "temp", "temporary", "tmp", "backup", "archive", "log",
+	"logs", "audit", "report", "reports", "analytics", "stats", "status",
 
-	// Social/Communication
-	"follow", "following", "follower", "followers",
-	"friend", "friends", "contact", "contacts",
-	"chat", "message", "dm", "inbox", "outbox",
+	// API & Endpoints
+	"api", "rest", "graphql", "grpc", "websocket", "ws", "wss", "http",
+	"https", "endpoint", "endpoints", "route", "routes", "path", "url",
+	"uri", "callback", "hook", "hooks", "event", "events", "stream",
 
-	// Actions/Verbs
-	"create", "new", "add", "edit", "update", "delete", "remove",
-	"show", "view", "list", "index", "home", "main",
-	"about", "info", "information", "faq", "faqs",
-	"terms", "tos", "privacy", "legal", "dmca",
-	"cookie", "cookies", "gdpr", "ccpa",
+	// Content & Media
+	"blog", "news", "article", "articles", "post", "posts", "page", "pages",
+	"feed", "rss", "atom", "sitemap", "robots", "favicon", "static",
+	"assets", "images", "image", "img", "media", "upload", "uploads",
+	"download", "downloads", "file", "files", "document", "documents",
 
-	// Common brands/services (prevent impersonation)
-	"google", "facebook", "twitter", "github", "microsoft",
-	"apple", "amazon", "netflix", "youtube", "instagram",
-	"linkedin", "reddit", "discord", "slack", "zoom",
+	// Communication
+	"contact", "message", "messages", "chat", "notification", "notifications",
+	"alert", "alerts", "inbox", "outbox", "sent", "draft", "drafts",
+	"spam", "abuse", "report", "flag", "block", "mute", "ban",
 
-	// Weather-specific
-	"forecast", "forecasts", "temperature", "humidity",
-	"wind", "rain", "snow", "storm", "hurricane", "earthquake",
-	"moon", "sun", "cloud", "clouds", "sky",
-	"location", "locations", "saved", "favorite", "favorites",
+	// Commerce & Billing
+	"shop", "store", "cart", "checkout", "order", "orders", "invoice",
+	"invoices", "payment", "payments", "subscription", "subscriptions",
+	"plan", "plans", "pricing", "billing", "refund", "coupon", "discount",
 
-	// Offensive/Inappropriate (basic list)
-	"fuck", "shit", "ass", "bitch", "damn", "hell",
-	"sex", "porn", "xxx", "adult", "nsfw",
-	"kill", "death", "die", "suicide", "murder",
-	"nazi", "hitler", "terrorist", "terrorism",
-	"drug", "drugs", "cocaine", "heroin", "meth",
+	// Social Features
+	"follow", "follower", "followers", "following", "friend", "friends",
+	"like", "likes", "share", "shares", "comment", "comments", "reply",
+	"mention", "mentions", "tag", "tags", "group", "groups", "team", "teams",
+	"community", "communities", "forum", "forums", "channel", "channels",
 
-	// Special characters/confusing
-	"null", "nil", "undefined", "void", "none",
-	"true", "false", "yes", "no", "ok", "error",
-	"success", "fail", "failure", "warning",
-	"placeholder", "tmp", "temp", "temporary",
+	// Brand & Legal
+	"official", "verified", "trusted", "partner", "affiliate", "sponsor",
+	"brand", "trademark", "copyright", "legal", "terms", "privacy",
+	"policy", "policies", "tos", "eula", "gdpr", "dmca", "abuse",
 
-	// Single characters (too generic/confusing)
-	"a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
-	"k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
-	"u", "v", "w", "x", "y", "z",
-	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+	// Offensive / Impersonation Prevention
+	"fuck", "shit", "ass", "bitch", "bastard", "damn", "cunt", "dick",
+	"penis", "vagina", "sex", "porn", "xxx", "nude", "naked", "nsfw",
+	"kill", "murder", "death", "die", "suicide", "hate", "nazi", "hitler",
+	"racist", "racism", "terrorist", "terrorism", "isis", "alqaeda",
 
-	// Common short patterns
-	"00", "01", "10", "11", "99",
+	// Numbers & Special
+	"0", "1", "123", "1234", "12345", "000", "111", "666", "911", "420", "69",
 
-	// Common variations
-	"admin1", "admin2", "admin123", "test1", "test123",
-	"user1", "user123", "guest1", "guest123",
+	// Common Spam Patterns
+	"info", "noreply", "no-reply", "donotreply", "mailer", "postmaster",
+	"webmaster", "hostmaster", "abuse", "spam", "junk", "trash",
 
-	// Automated/Bot accounts
-	"robot", "crawler", "spider", "scraper", "agent",
-	"script", "automation", "auto",
-
-	// Special cases
-	"me", "myself", "self", "you", "your", "yours",
-	"everyone", "all", "here", "channel",
-	"system-admin", "sys-admin", "site-admin",
-	"super-admin", "super-user", "power-user",
+	// Project-specific
+	"weather", "apimgr",
 }
 
-// IsUsernameBlocked checks if a username (email local part) is on the blocklist
+// Critical terms that block substrings per AI.md PART 22
+// These terms are blocked even if they appear anywhere in the username
+var criticalSubstringTerms = []string{
+	"admin", "root", "system", "mod", "official", "verified",
+}
+
+// IsUsernameBlocked checks if a username (email local part) is on the blocklist per AI.md PART 22
 // Returns true if the username is blocked, false otherwise
 func IsUsernameBlocked(email string) bool {
 	// Extract username from email (everything before @)
 	parts := strings.Split(email, "@")
 	if len(parts) < 2 || parts[0] == "" {
-		return true // Invalid email format or empty username
+		// Invalid email format or empty username
+		return true
 	}
 
 	username := strings.ToLower(strings.TrimSpace(parts[0]))
@@ -129,18 +118,38 @@ func IsUsernameBlocked(email string) bool {
 		return true
 	}
 
-	// Check exact matches
+	// Check exact matches against full blocklist
 	for _, blocked := range UsernameBlocklist {
 		if username == strings.ToLower(blocked) {
 			return true
 		}
 	}
 
+	// Check for critical terms as substrings per AI.md PART 22
+	// Block usernames containing "admin", "root", "system", "mod", "official", "verified"
+	for _, critical := range criticalSubstringTerms {
+		if strings.Contains(username, critical) {
+			return true
+		}
+	}
+
 	// Check for variations with numbers/special chars at the end
-	// e.g., "admin123", "admin_1", "admin-test"
-	// But NOT "administrator" or "testing" (where blocked word is a substring)
+	// e.g., "test123", "user_1", "guest-test"
+	// But NOT "testing" or "username" (where blocked word is part of a larger word)
 	for _, blocked := range UsernameBlocklist {
 		blockedLower := strings.ToLower(blocked)
+
+		// Skip critical terms (already checked as substrings above)
+		isCritical := false
+		for _, critical := range criticalSubstringTerms {
+			if blockedLower == critical {
+				isCritical = true
+				break
+			}
+		}
+		if isCritical {
+			continue
+		}
 
 		// Only check if username starts with the blocked term
 		if !strings.HasPrefix(username, blockedLower) {
@@ -151,9 +160,10 @@ func IsUsernameBlocked(email string) bool {
 		suffix := username[len(blockedLower):]
 
 		// If there's a suffix, only block if it's "simple" (numbers/punctuation only)
-		// This allows "administrator" and "testing" but blocks "admin123" and "test_1"
+		// This allows "testing" and "username" but blocks "test123" and "user_1"
 		if suffix != "" && !isSimpleSuffix(suffix) {
-			continue // Has complex suffix, allow it
+			// Has complex suffix, allow it
+			continue
 		}
 
 		// If we get here, it's either exact match or blocked term + simple suffix

@@ -1,0 +1,227 @@
+{{template "head" .}}
+{{template "navbar" .}}
+<main class="container" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+<div class="admin-header"><h1>🔔 Notification Settings</h1></div>
+
+<!-- Admin Personal Notification Preferences -->
+<section class="card" style="margin-bottom: 2rem;">
+    <h2 style="color: var(--dracula-purple, #bd93f9); margin-top: 0;">👤 Your Notification Preferences</h2>
+    <p class="text-comment" style="margin-bottom: 1.5rem;">
+        Customize how you receive notifications as an administrator. These settings apply only to your account.
+    </p>
+
+    <form id="adminNotificationPreferencesForm">
+        <!-- Display Mode Toggles -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="color: var(--dracula-cyan, #8be9fd); margin-bottom: 1rem; font-size: 1.1rem;">Display Modes</h3>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="adminEnableToast" checked>
+                    <span>Enable Toast Notifications</span>
+                </label>
+                <small class="text-comment" style="display: block; margin-left: 1.5rem;">Show temporary popups in the top-right corner (auto-dismiss)</small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="adminEnableBanner" checked>
+                    <span>Enable Banner Notifications</span>
+                </label>
+                <small class="text-comment" style="display: block; margin-left: 1.5rem;">Show persistent banners at the top of the page (manual dismiss)</small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="adminEnableCenter" checked>
+                    <span>Enable Notification Center</span>
+                </label>
+                <small class="text-comment" style="display: block; margin-left: 1.5rem;">Store notifications in the notification center (bell icon)</small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="adminEnableSound">
+                    <span>Enable Notification Sound</span>
+                </label>
+                <small class="text-comment" style="display: block; margin-left: 1.5rem;">Play a sound when receiving notifications</small>
+            </div>
+        </div>
+
+        <!-- Toast Duration Settings -->
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: var(--dracula-cyan, #8be9fd); margin-bottom: 1rem; font-size: 1.1rem;">Toast Auto-Dismiss Duration</h3>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div>
+                    <label for="adminToastDurationSuccess" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Success Notifications</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="range" id="adminToastDurationSuccess" min="1" max="60" value="5"
+                               style="flex: 1;" oninput="updateAdminDurationLabel('success', this.value)">
+                        <span id="adminDurationLabelSuccess" style="min-width: 60px; color: var(--dracula-green, #50fa7b); font-weight: bold;">5s</span>
+                    </div>
+                    <small class="text-comment" style="display: block; margin-top: 0.5rem;">How long success toasts remain visible (1-60 seconds)</small>
+                </div>
+
+                <div>
+                    <label for="adminToastDurationInfo" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Info Notifications</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="range" id="adminToastDurationInfo" min="1" max="60" value="5"
+                               style="flex: 1;" oninput="updateAdminDurationLabel('info', this.value)">
+                        <span id="adminDurationLabelInfo" style="min-width: 60px; color: var(--dracula-cyan, #8be9fd); font-weight: bold;">5s</span>
+                    </div>
+                    <small class="text-comment" style="display: block; margin-top: 0.5rem;">How long info toasts remain visible (1-60 seconds)</small>
+                </div>
+
+                <div>
+                    <label for="adminToastDurationWarning" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Warning Notifications</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="range" id="adminToastDurationWarning" min="1" max="60" value="10"
+                               style="flex: 1;" oninput="updateAdminDurationLabel('warning', this.value)">
+                        <span id="adminDurationLabelWarning" style="min-width: 60px; color: var(--dracula-orange, #ffb86c); font-weight: bold;">10s</span>
+                    </div>
+                    <small class="text-comment" style="display: block; margin-top: 0.5rem;">How long warning toasts remain visible (1-60 seconds)</small>
+                </div>
+            </div>
+
+            <div style="background: var(--dracula-current-line, #44475a); padding: 1rem; border-radius: 4px; margin-top: 1rem; border-left: 4px solid var(--dracula-purple, #bd93f9);">
+                <p style="margin: 0; color: var(--dracula-foreground, #f8f8f2); font-size: 0.9rem;">
+                    <strong>Note:</strong> Error and security notifications always require manual dismissal for safety.
+                </p>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-right: 1rem;">💾 Save Preferences</button>
+        <button type="button" class="btn btn-secondary" onclick="loadAdminNotificationPreferences()">↻ Reset</button>
+    </form>
+</section>
+
+<!-- System-wide Notification Settings -->
+<form id="notificationSettingsForm">
+<section class="card" style="margin-bottom: 2rem;"><h2>📧 Email Events</h2>
+<p class="text-comment" style="margin-bottom: 1rem;">Configure which system events trigger email notifications to administrators.</p>
+<label><input type="checkbox" name="email_startup"> Server Startup</label>
+<label><input type="checkbox" name="email_shutdown"> Server Shutdown</label>
+<label><input type="checkbox" name="email_backup_complete"> Backup Complete</label>
+<label><input type="checkbox" name="email_backup_failed"> Backup Failed</label>
+<label><input type="checkbox" name="email_cert_renewal"> SSL Certificate Renewal</label>
+</section>
+<section class="card" style="margin-bottom: 2rem;"><h2>🪝 Webhook</h2>
+<p class="text-comment" style="margin-bottom: 1rem;">Send system events to external webhooks for integration with other services.</p>
+<label><input type="checkbox" name="webhook_enabled"> Enable Webhook</label>
+<label>URL: <input type="url" name="webhook_url"></label>
+<label>Events: <input type="text" name="webhook_events" placeholder="startup,shutdown,backup"></label>
+</section>
+<section class="card" style="margin-bottom: 2rem;"><h2>⚙️ System Settings</h2>
+<p class="text-comment" style="margin-bottom: 1rem;">Global settings for the notification system (applies to all users).</p>
+<label>Max Stored Notifications: <input type="number" name="webui_max_stored" value="100" min="10" max="1000"></label>
+<small class="text-comment">Maximum number of notifications to keep per user (default: 100)</small>
+<label>Retention Period (days): <input type="number" name="webui_retention_days" value="30" min="1" max="365"></label>
+<small class="text-comment">How long to keep notifications before automatic cleanup (default: 30 days)</small>
+</section>
+<button type="submit" class="btn btn-primary">💾 Save System Settings</button>
+</form>
+</main>
+
+<script>
+// Update admin duration label as slider moves
+function updateAdminDurationLabel(type, value) {
+    document.getElementById(`adminDurationLabel${type.charAt(0).toUpperCase() + type.slice(1)}`).textContent = value + 's';
+}
+
+// Load admin notification preferences on page load
+async function loadAdminNotificationPreferences() {
+    try {
+        const response = await fetch('/api/v1/admin/notifications/preferences');
+
+        if (!response.ok) {
+            throw new Error('Failed to load preferences');
+        }
+
+        const prefs = await response.json();
+
+        // Set checkbox values
+        document.getElementById('adminEnableToast').checked = prefs.enable_toast !== false;
+        document.getElementById('adminEnableBanner').checked = prefs.enable_banner !== false;
+        document.getElementById('adminEnableCenter').checked = prefs.enable_center !== false;
+        document.getElementById('adminEnableSound').checked = prefs.enable_sound === true;
+
+        // Set toast duration values
+        const successDuration = prefs.toast_duration_success || 5;
+        const infoDuration = prefs.toast_duration_info || 5;
+        const warningDuration = prefs.toast_duration_warning || 10;
+
+        document.getElementById('adminToastDurationSuccess').value = successDuration;
+        document.getElementById('adminToastDurationInfo').value = infoDuration;
+        document.getElementById('adminToastDurationWarning').value = warningDuration;
+
+        updateAdminDurationLabel('success', successDuration);
+        updateAdminDurationLabel('info', infoDuration);
+        updateAdminDurationLabel('warning', warningDuration);
+    } catch (error) {
+        console.error('Failed to load admin notification preferences:', error);
+        // Use defaults if loading fails
+    }
+}
+
+// Save admin notification preferences
+document.getElementById('adminNotificationPreferencesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const preferences = {
+        enable_toast: document.getElementById('adminEnableToast').checked,
+        enable_banner: document.getElementById('adminEnableBanner').checked,
+        enable_center: document.getElementById('adminEnableCenter').checked,
+        enable_sound: document.getElementById('adminEnableSound').checked,
+        toast_duration_success: parseInt(document.getElementById('adminToastDurationSuccess').value),
+        toast_duration_info: parseInt(document.getElementById('adminToastDurationInfo').value),
+        toast_duration_warning: parseInt(document.getElementById('adminToastDurationWarning').value)
+    };
+
+    try {
+        const response = await fetch('/api/v1/admin/notifications/preferences', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(preferences)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update preferences');
+        }
+
+        // Show success notification using the notification manager
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.preferences = preferences;
+            notificationManager.showToast({
+                type: 'success',
+                title: 'Preferences Saved',
+                message: 'Your notification preferences have been updated successfully.',
+                display: 'toast'
+            });
+        } else {
+            alert('Notification preferences updated successfully!');
+        }
+    } catch (error) {
+        if (typeof notificationManager !== 'undefined') {
+            notificationManager.showToast({
+                type: 'error',
+                title: 'Save Failed',
+                message: 'Failed to update preferences: ' + error.message,
+                display: 'toast'
+            });
+        } else {
+            alert('Failed to update preferences: ' + error.message);
+        }
+    }
+});
+
+// Load admin preferences when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdminNotificationPreferences();
+});
+</script>
+
+{{template "footer" .}}
