@@ -1,5 +1,5 @@
 // Package handlers provides setup wizard per TEMPLATE.md PART 22
-package handlers
+package handler
 
 import (
 	"log"

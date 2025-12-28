@@ -305,9 +305,11 @@ func (mc *ModeConfig) GetSecurityHeaders() bool {
 // GetCORSPolicy returns the CORS policy based on mode
 func (mc *ModeConfig) GetCORSPolicy() string {
 	if mc.IsDevelopment {
-		return "*" // Allow all origins in development
+		// Allow all origins in development
+		return "*"
 	}
-	return "strict" // Strict origin checking in production
+	// Strict origin checking in production
+	return "strict"
 }
 
 // GetRateLimitEnabled returns whether rate limiting should be enforced

@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"net/http"
@@ -12,11 +12,11 @@ import (
 
 // HurricaneHandler handles hurricane tracking requests
 type HurricaneHandler struct {
-	hurricaneService *services.HurricaneService
+	hurricaneService *service.HurricaneService
 }
 
 // NewHurricaneHandler creates a new hurricane handler
-func NewHurricaneHandler(hurricaneService *services.HurricaneService) *HurricaneHandler {
+func NewHurricaneHandler(hurricaneService *service.HurricaneService) *HurricaneHandler {
 	return &HurricaneHandler{
 		hurricaneService: hurricaneService,
 	}
@@ -76,7 +76,7 @@ func (h *HurricaneHandler) HandleHurricaneAPI(c *gin.Context) {
 }
 
 // renderConsoleOutput renders hurricane data for console/terminal
-func (h *HurricaneHandler) renderConsoleOutput(data *services.HurricaneData) string {
+func (h *HurricaneHandler) renderConsoleOutput(data *service.HurricaneData) string {
 	if len(data.ActiveStorms) == 0 {
 		return "🌊 No active tropical storms or hurricanes at this time.\n\n"
 	}

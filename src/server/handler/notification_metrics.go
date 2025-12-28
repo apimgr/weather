@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"net/http"
@@ -11,11 +11,11 @@ import (
 
 // NotificationMetricsHandler handles notification metrics API endpoints
 type NotificationMetricsHandler struct {
-	metrics *services.NotificationMetrics
+	metrics *service.NotificationMetrics
 }
 
 // NewNotificationMetricsHandler creates a new notification metrics handler
-func NewNotificationMetricsHandler(metrics *services.NotificationMetrics) *NotificationMetricsHandler {
+func NewNotificationMetricsHandler(metrics *service.NotificationMetrics) *NotificationMetricsHandler {
 	return &NotificationMetricsHandler{
 		metrics: metrics,
 	}

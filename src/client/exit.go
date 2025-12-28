@@ -2,13 +2,20 @@ package client
 
 // Exit codes as specified in TEMPLATE.md PART 33
 const (
-	ExitSuccess      = 0  // Success
-	ExitGeneralError = 1  // General error
-	ExitConfigError  = 2  // Config error
-	ExitConnError    = 3  // Connection error
-	ExitAuthError    = 4  // Authentication error
-	ExitNotFound     = 5  // Not found
-	ExitUsageError   = 64 // Usage error
+	// Success
+	ExitSuccess      = 0
+	// General error
+	ExitGeneralError = 1
+	// Config error
+	ExitConfigError  = 2
+	// Connection error
+	ExitConnError    = 3
+	// Authentication error
+	ExitAuthError    = 4
+	// Not found
+	ExitNotFound     = 5
+	// Usage error
+	ExitUsageError   = 64
 )
 
 // ExitError represents an error with a specific exit code

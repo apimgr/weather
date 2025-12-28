@@ -1,11 +1,14 @@
-package handlers
+package handler
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"time"
+
 	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
 	"github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/server/service"
 	"github.com/apimgr/weather/src/utils"
 
 	"github.com/gin-gonic/gin"
@@ -161,13 +164,17 @@ Time: %s`, form.Name, form.Email, form.Subject, form.Message, c.ClientIP(), c.Re
 // saveContactToDB saves contact form submission to database when SMTP unavailable
 // Per AI.md PART 26: Graceful degradation when SMTP not configured
 func saveContactToDB(c *gin.Context, name, email, subject, message string) error {
-	db := GetDB(c)
-	if db == nil {
+	dbInterface, exists := c.Get("db")
+	if !exists {
+		return fmt.Errorf("database not available")
+	}
+	db, ok := dbInterface.(*database.DB)
+	if !ok || db == nil {
 		return fmt.Errorf("database not available")
 	}
 
 	// Create contact_submissions table if not exists
-	_, err := db.Exec(`
+	_, err := db.DB.Exec(`
 		CREATE TABLE IF NOT EXISTS contact_submissions (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
@@ -185,7 +192,7 @@ func saveContactToDB(c *gin.Context, name, email, subject, message string) error
 	}
 
 	// Insert contact submission
-	_, err = db.Exec(`
+	_, err = db.DB.Exec(`
 		INSERT INTO contact_submissions (name, email, subject, message, ip_address, user_agent)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`, name, email, subject, message, c.ClientIP(), c.Request.UserAgent())
@@ -194,9 +201,9 @@ func saveContactToDB(c *gin.Context, name, email, subject, message string) error
 }
 
 // GetSMTPService returns the SMTP service from context if available
-func GetSMTPService(c *gin.Context) *services.SMTPService {
+func GetSMTPService(c *gin.Context) *service.SMTPService {
 	if smtp, exists := c.Get("smtp"); exists {
-		if smtpService, ok := smtp.(*services.SMTPService); ok {
+		if smtpService, ok := smtp.(*service.SMTPService); ok {
 			return smtpService
 		}
 	}

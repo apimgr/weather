@@ -320,7 +320,8 @@ func TestWrapText(t *testing.T) {
 	tests := []struct {
 		text     string
 		width    int
-		expected int // expected number of lines
+		// expected number of lines
+		expected int
 	}{
 		{"short", 10, 1},
 		{"this is a longer text that should wrap", 10, 5},

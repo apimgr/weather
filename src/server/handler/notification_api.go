@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -29,13 +29,15 @@ var upgrader = websocket.Upgrader{
 		// Production mode: check against configured CORS origins
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			return true // No origin header - allow (same-origin)
+			// No origin header - allow (same-origin)
+			return true
 		}
 
 		// Load config to check allowed origins
 		cfg, err := config.LoadConfig()
 		if err != nil || cfg == nil {
-			return false // Config load failed - reject for safety
+			// Config load failed - reject for safety
+			return false
 		}
 
 		// Check if CORS is set to allow all
@@ -60,12 +62,12 @@ var upgrader = websocket.Upgrader{
 
 // NotificationAPIHandlers handles all notification API endpoints
 type NotificationAPIHandlers struct {
-	NotificationService *services.NotificationService
-	WSHub               *services.WebSocketHub
+	NotificationService *service.NotificationService
+	WSHub               *service.WebSocketHub
 }
 
 // NewNotificationAPIHandlers creates a new notification API handlers instance
-func NewNotificationAPIHandlers(notificationService *services.NotificationService, wsHub *services.WebSocketHub) *NotificationAPIHandlers {
+func NewNotificationAPIHandlers(notificationService *service.NotificationService, wsHub *service.WebSocketHub) *NotificationAPIHandlers {
 	return &NotificationAPIHandlers{
 		NotificationService: notificationService,
 		WSHub:               wsHub,
@@ -648,10 +650,10 @@ func (h *NotificationAPIHandlers) HandleWebSocketConnection(c *gin.Context) {
 	}
 
 	// Create WebSocket client
-	var client *services.WebSocketClient
+	var client *service.WebSocketClient
 	if userExists {
 		userIDInt := userID.(int)
-		client = &services.WebSocketClient{
+		client = &service.WebSocketClient{
 			ID:       fmt.Sprintf("user-%d", userIDInt),
 			Conn:     conn,
 			Hub:      h.WSHub,
@@ -661,7 +663,7 @@ func (h *NotificationAPIHandlers) HandleWebSocketConnection(c *gin.Context) {
 		}
 	} else {
 		adminIDInt := adminID.(int)
-		client = &services.WebSocketClient{
+		client = &service.WebSocketClient{
 			ID:       fmt.Sprintf("admin-%d", adminIDInt),
 			Conn:     conn,
 			Hub:      h.WSHub,

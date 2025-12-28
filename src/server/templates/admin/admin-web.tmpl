@@ -32,6 +32,7 @@
                 </div>
                 <div class="card-body">
                     <form id="branding-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="app_name">
                                 Application Name
@@ -97,6 +98,7 @@
                 </div>
                 <div class="card-body">
                     <form id="seo-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="seo_keywords">Meta Keywords</label>
                             <input
@@ -162,6 +164,7 @@
                     </div>
 
                     <form id="robots-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="robots_txt">robots.txt Content</label>
                             <textarea
@@ -213,6 +216,7 @@ Sitemap: {app_url}/sitemap.xml</textarea>
                     </div>
 
                     <form id="security-txt-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="security_contact">
                                 Contact <span class="required" aria-label="required">*</span>

@@ -19,6 +19,7 @@
             <div id="error-message" class="setup-error" role="alert" aria-live="polite"></div>
 
             <form id="setup-form" role="form" aria-label="User account setup form - Step 1 of 2">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="setup-form-group">
                     <label class="setup-form-label" for="username">Username</label>
                     <input type="text"

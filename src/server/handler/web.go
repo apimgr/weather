@@ -1,10 +1,11 @@
-package handlers
+package handler
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -15,12 +16,12 @@ import (
 
 // WebHandler handles web interface routes (HTML pages)
 type WebHandler struct {
-	weatherService   *services.WeatherService
-	locationEnhancer *services.LocationEnhancer
+	weatherService   *service.WeatherService
+	locationEnhancer *service.LocationEnhancer
 }
 
 // NewWebHandler creates a new web handler
-func NewWebHandler(ws *services.WeatherService, le *services.LocationEnhancer) *WebHandler {
+func NewWebHandler(ws *service.WeatherService, le *service.LocationEnhancer) *WebHandler {
 	return &WebHandler{
 		weatherService:   ws,
 		locationEnhancer: le,
@@ -206,7 +207,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 		return
 	}
 
-	var coords *services.Coordinates
+	var coords *service.Coordinates
 	var err error
 
 	coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
@@ -230,9 +231,9 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	middleware.SaveLocationCookies(c, enhanced.Latitude, enhanced.Longitude, enhanced.ShortName)
 
 	// Get moon data from moon service
-	moonService := services.NewMoonService()
-	moonData := moonService.Calculate(0, 0, time.Now()) // Default location, will be enhanced with actual coordinates
-	// For now, provide basic structure
+	moonService := service.NewMoonService()
+	moonDataCalc := moonService.Calculate(enhanced.Latitude, enhanced.Longitude, time.Now())
+
 	moonData := gin.H{
 		"Location": gin.H{
 			"Name":                enhanced.Name,
@@ -248,10 +249,10 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 			"PopulationFormatted": fmt.Sprintf("%d", enhanced.Population),
 		},
 		"Moon": gin.H{
-			"Phase":         "First Quarter",
-			"Illumination":  50,
-			"Icon":          "🌓",
-			"Age":           7,
+			"Phase":         moonDataCalc.Phase,
+			"Illumination":  moonDataCalc.Illumination,
+			"Icon":          moonDataCalc.Icon,
+			"Age":           moonDataCalc.Age,
 			"Rise":          "12:00",
 			"Set":           "00:00",
 			"RiseFormatted": "12:00 PM",

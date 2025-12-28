@@ -267,6 +267,7 @@
             <p>Import keys generated with external tools (for prefixes longer than 6 characters)</p>
 
             <form id="import-form" onsubmit="importKeys(event)" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label for="key-file">
                         Tor Private Key File

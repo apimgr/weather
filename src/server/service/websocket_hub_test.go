@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"encoding/json"
@@ -16,7 +16,8 @@ func TestWebSocketHub_RegisterClient(t *testing.T) {
 	userID := 1
 	client := &WebSocketClient{
 		ID:       ClientIDForUser(userID),
-		Conn:     nil, // Mock connection
+		// Mock connection
+		Conn:     nil,
 		Hub:      hub,
 		Send:     make(chan []byte, 256),
 		UserID:   &userID,
@@ -383,7 +384,8 @@ func TestWebSocketHub_BroadcastToNonExistentUser(t *testing.T) {
 	defer hub.Stop()
 
 	// Create a test notification
-	userID := 999 // User that doesn't exist
+	// User that doesn't exist
+	userID := 999
 	notification := &models.Notification{
 		ID:      "test-ulid-789",
 		UserID:  &userID,

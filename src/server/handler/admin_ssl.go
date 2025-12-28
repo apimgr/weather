@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"crypto/tls"
@@ -14,7 +14,7 @@ import (
 
 type SSLHandler struct {
 	certsDir  string
-	leService *services.LetsEncryptService
+	leService *service.LetsEncryptService
 	db        *sql.DB
 }
 
@@ -27,7 +27,7 @@ func NewSSLHandler(certsDir string, db *sql.DB) *SSLHandler {
 
 // InitLetsEncrypt initializes the Let's Encrypt service
 func (h *SSLHandler) InitLetsEncrypt(email string, staging bool) error {
-	leService, err := services.NewLetsEncryptService(email, h.certsDir, staging)
+	leService, err := service.NewLetsEncryptService(email, h.certsDir, staging)
 	if err != nil {
 		return fmt.Errorf("failed to initialize Let's Encrypt: %w", err)
 	}
@@ -87,8 +87,10 @@ func (h *SSLHandler) ObtainCertificate(c *gin.Context) {
 		Domain        string   `json:"domain" binding:"required"`
 		Email         string   `json:"email" binding:"required"`
 		AltNames      []string `json:"altNames"`
-		ChallengeType string   `json:"challengeType" binding:"required"` // http-01, tls-alpn-01, dns-01
-		Staging       bool     `json:"staging"`                          // Use staging server for testing
+		// http-01, tls-alpn-01, dns-01
+		ChallengeType string   `json:"challengeType" binding:"required"`
+		// Use staging server for testing
+		Staging       bool     `json:"staging"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -149,7 +151,8 @@ func (h *SSLHandler) RenewCertificate(c *gin.Context) {
 	var request struct {
 		Domain        string `json:"domain" binding:"required"`
 		ChallengeType string `json:"challengeType" binding:"required"`
-		Force         bool   `json:"force"` // Force renewal even if not needed
+		// Force renewal even if not needed
+		Force         bool   `json:"force"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {

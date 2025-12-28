@@ -412,6 +412,7 @@
                 <div class="card">
                     <h2>⚙️ Prometheus Configuration</h2>
                     <form id="prometheusForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label>
                                 <input type="checkbox" id="prometheusEnabled" checked>
@@ -582,6 +583,7 @@
             <div class="card">
                 <h2>➕ Add Custom Metric</h2>
                 <form id="customMetricForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="grid">
                         <div class="form-group">
                             <label for="metricName">Metric Name</label>

@@ -16,7 +16,8 @@ func TestSet(t *testing.T) {
 		{"prod", Production},
 		{"DEVELOPMENT", Development},
 		{"PRODUCTION", Production},
-		{"anything", Production}, // Default to production
+		// Default to production
+		{"anything", Production},
 	}
 
 	for _, tt := range tests {

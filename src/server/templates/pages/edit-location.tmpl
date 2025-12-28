@@ -12,6 +12,7 @@
             <div id="message" role="alert" aria-live="polite"></div>
 
             <form id="locationForm" role="form" aria-label="Edit location details">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label for="name">Location Name</label>
                     <input type="text"

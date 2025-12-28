@@ -15,6 +15,7 @@
 
         <!-- Location Search Form - Mobile First (matching moon.html) -->
         <form id="severe-weather-form" class="moon-form" role="form" aria-label="Severe weather alert search">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
             <div class="moon-form__wrapper">
                 <!-- First row: Location input with type and distance filters to the right -->
                 <div class="moon-form__row">

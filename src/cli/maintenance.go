@@ -2,14 +2,11 @@ package cli
 
 import (
 	"archive/tar"
-	"bytes"
-	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -32,367 +29,52 @@ type BackupManifest struct {
 	LogsIncluded     bool      `json:"logs_included"`
 	GeoIPIncluded    bool      `json:"geoip_included"`
 	Encrypted        bool      `json:"encrypted"`
-	EncryptionMethod string    `json:"encryption_method,omitempty"` // "AES-256-GCM"
-	Checksum         string    `json:"checksum"`                    // sha256:...
+	// "AES-256-GCM"
+	EncryptionMethod string    `json:"encryption_method,omitempty"`
+	// sha256:...
+	Checksum         string    `json:"checksum"`
 }
 
-// MaintenanceCommand handles maintenance operations per TEMPLATE.md PART 6
+// MaintenanceCommand handles maintenance operations per AI.md PART 25
 func MaintenanceCommand(args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("no maintenance command specified. Use: backup, restore, verify, admin-recovery")
 	}
 
 	cmd := args[0]
+	remainingArgs := args[1:]
 
 	switch cmd {
 	case "backup":
-		backupFile := ""
-		if len(args) > 1 {
-			backupFile = args[1]
-		}
-		return createBackup(backupFile)
+		// Per AI.md PART 25 lines 22351-22467
+		return MaintenanceBackupCommand(remainingArgs)
 
 	case "restore":
-		if len(args) < 2 {
-			return fmt.Errorf("restore requires a backup file path")
-		}
-		return restoreBackup(args[1])
+		// Per AI.md PART 25 lines 22588-22649
+		return MaintenanceRestoreCommand(remainingArgs)
 
 	case "verify":
-		// TEMPLATE.md PART 6: Verify system integrity
+		// AI.md PART 25: Verify system integrity
 		return verifySystem()
 
-	case "admin-recovery":
-		// TEMPLATE.md PART 6: Emergency admin account recovery
-		return adminRecoverySetup()
-
-	// Legacy commands (not in TEMPLATE.md PART 6 spec)
-	case "setup":
-		fmt.Println("Note: 'setup' is deprecated, use 'admin-recovery'")
+	case "admin-recovery", "setup":
+		// AI.md PART 25 lines 22643-22750
 		return adminRecoverySetup()
 
 	case "update":
 		return updateServerConfig()
 
 	case "mode":
-		if len(args) < 2 {
+		if len(remainingArgs) < 1 {
 			return fmt.Errorf("mode requires a value: production or development")
 		}
-		return setMaintenanceMode(args[1])
+		return setMaintenanceMode(remainingArgs[0])
 
 	default:
 		return fmt.Errorf("unknown maintenance command: %s", cmd)
 	}
 }
 
-// createBackup creates a backup of database, config, and logs per AI.md PART 24
-func createBackup(backupFile string) error {
-	// AI.md PART 24: Create backup in memory first, then encrypt if needed
-
-	// Create buffer to hold unencrypted tar.gz
-	var buf bytes.Buffer
-
-	// Create gzip writer to buffer
-	gzWriter := gzip.NewWriter(&buf)
-
-	// Create tar writer
-	tarWriter := tar.NewWriter(gzWriter)
-
-	// Get directory paths
-	dataDir := os.Getenv("DATA_DIR")
-	configDir := os.Getenv("CONFIG_DIR")
-	logDir := os.Getenv("LOG_DIR")
-
-	// Default paths if not set
-	if dataDir == "" {
-		dataDir = "/var/lib/apimgr/weather"
-	}
-	if configDir == "" {
-		configDir = "/etc/apimgr/weather"
-	}
-	if logDir == "" {
-		logDir = "/var/log/apimgr/weather"
-	}
-
-	// TEMPLATE.md Part 31: Backup BOTH databases (server.db + users.db)
-	manifest := &BackupManifest{
-		Version:   "1.0",
-		CreatedAt: time.Now(),
-	}
-
-	// Backup server.db (admin credentials, server state, scheduler)
-	serverDBPath := filepath.Join(dataDir, "db", "server.db")
-	if err := addFileToTar(tarWriter, serverDBPath, "database/server.db"); err != nil {
-		fmt.Printf("Warning: Failed to backup server.db: %v\n", err)
-	} else {
-		fmt.Println("  ✓ Server database (server.db) backed up")
-		manifest.ServerDB = true
-	}
-
-	// Backup users.db (user accounts, tokens, sessions)
-	usersDBPath := filepath.Join(dataDir, "db", "users.db")
-	if err := addFileToTar(tarWriter, usersDBPath, "database/users.db"); err != nil {
-		fmt.Printf("Warning: Failed to backup users.db: %v\n", err)
-	} else {
-		fmt.Println("  ✓ Users database (users.db) backed up")
-		manifest.UsersDB = true
-	}
-
-	// Backup server.yml config
-	configPath := filepath.Join(configDir, "server.yml")
-	if err := addFileToTar(tarWriter, configPath, "config/server.yml"); err != nil {
-		fmt.Printf("Warning: Failed to backup config: %v\n", err)
-	} else {
-		fmt.Println("  ✓ Configuration backed up")
-		manifest.ConfigFiles = true
-	}
-
-	// Backup logs (last 7 days only to keep size manageable)
-	if err := backupRecentLogs(tarWriter, logDir); err != nil {
-		fmt.Printf("Warning: Failed to backup logs: %v\n", err)
-	} else {
-		fmt.Println("  ✓ Recent logs backed up")
-		manifest.LogsIncluded = true
-	}
-
-	// Backup GeoIP databases if they exist
-	geoipDir := filepath.Join(dataDir, "geoip")
-	if _, err := os.Stat(geoipDir); err == nil {
-		if err := addDirectoryToTar(tarWriter, geoipDir, "geoip"); err != nil {
-			fmt.Printf("Warning: Failed to backup GeoIP databases: %v\n", err)
-		} else {
-			fmt.Println("  ✓ GeoIP databases backed up")
-			manifest.GeoIPIncluded = true
-		}
-	}
-
-	// AI.md PART 24: Write manifest.json with backup metadata
-	manifestJSON, err := json.MarshalIndent(manifest, "", "  ")
-	if err != nil {
-		tarWriter.Close()
-		gzWriter.Close()
-		return fmt.Errorf("failed to create manifest: %w", err)
-	}
-
-	header := &tar.Header{
-		Name:    "manifest.json",
-		Size:    int64(len(manifestJSON)),
-		Mode:    0644,
-		ModTime: time.Now(),
-	}
-	if err := tarWriter.WriteHeader(header); err != nil {
-		tarWriter.Close()
-		gzWriter.Close()
-		return fmt.Errorf("failed to write manifest header: %w", err)
-	}
-	if _, err := tarWriter.Write(manifestJSON); err != nil {
-		tarWriter.Close()
-		gzWriter.Close()
-		return fmt.Errorf("failed to write manifest data: %w", err)
-	}
-	fmt.Println("  ✓ Manifest created")
-
-	// Close tar and gzip writers to flush to buffer
-	if err := tarWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close tar writer: %w", err)
-	}
-	if err := gzWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close gzip writer: %w", err)
-	}
-
-	// Get the unencrypted backup data
-	backupData := buf.Bytes()
-
-	// AI.md PART 24: Check if encryption is enabled
-	// For now, check if --password flag was provided via environment or prompt user
-	var encrypted bool
-	var password string
-
-	// Check if encryption is requested
-	fmt.Print("\n🔐 Encrypt this backup? (y/N): ")
-	var response string
-	fmt.Scanln(&response)
-
-	if response == "y" || response == "Y" || response == "yes" {
-		// Prompt for encryption password
-		fmt.Print("Enter encryption password: ")
-		fmt.Scanln(&password)
-		if password == "" {
-			return fmt.Errorf("encryption password cannot be empty")
-		}
-
-		fmt.Print("Confirm password: ")
-		var confirmPassword string
-		fmt.Scanln(&confirmPassword)
-		if password != confirmPassword {
-			return fmt.Errorf("passwords do not match")
-		}
-
-		// Encrypt the backup
-		fmt.Println("\n🔒 Encrypting backup with AES-256-GCM...")
-		encryptedData, err := encryptBackup(backupData, password)
-		if err != nil {
-			return fmt.Errorf("encryption failed: %w", err)
-		}
-
-		backupData = encryptedData
-		encrypted = true
-		manifest.Encrypted = true
-		manifest.EncryptionMethod = "AES-256-GCM"
-		fmt.Println("  ✓ Backup encrypted successfully")
-	}
-
-	// AI.md PART 24: Generate filename with correct format
-	if backupFile == "" {
-		// weather_backup_YYYY-MM-DD_HHMMSS.tar.gz[.enc]
-		timestamp := time.Now().Format("2006-01-02_150405")
-		if encrypted {
-			backupFile = fmt.Sprintf("weather_backup_%s.tar.gz.enc", timestamp)
-		} else {
-			backupFile = fmt.Sprintf("weather_backup_%s.tar.gz", timestamp)
-		}
-	}
-
-	// Write backup to disk
-	fmt.Printf("\n💾 Writing backup to: %s\n", backupFile)
-	if err := os.WriteFile(backupFile, backupData, 0600); err != nil {
-		return fmt.Errorf("failed to write backup file: %w", err)
-	}
-
-	// Display summary
-	fmt.Printf("\n✅ Backup created successfully!\n")
-	fmt.Printf("   File: %s\n", backupFile)
-	fmt.Printf("   Size: %.2f MB\n", float64(len(backupData))/(1024*1024))
-	if encrypted {
-		fmt.Printf("   Encrypted: Yes (AES-256-GCM)\n")
-		fmt.Printf("   ⚠️  Save your password! It cannot be recovered.\n")
-	} else {
-		fmt.Printf("   Encrypted: No\n")
-	}
-
-	return nil
-}
-
-// restoreBackup restores from a backup file
-func restoreBackup(backupFile string) error {
-	fmt.Printf("Restoring from backup: %s\n", backupFile)
-
-	// Read backup file into memory (AI.md PART 24: may be encrypted)
-	backupData, err := os.ReadFile(backupFile)
-	if err != nil {
-		return fmt.Errorf("failed to read backup file: %w", err)
-	}
-
-	// Check if backup is encrypted (AI.md PART 24: .enc extension)
-	encrypted := filepath.Ext(backupFile) == ".enc"
-	if encrypted {
-		fmt.Println("🔐 Encrypted backup detected")
-		fmt.Print("Enter decryption password: ")
-		var password string
-		fmt.Scanln(&password)
-		if password == "" {
-			return fmt.Errorf("password cannot be empty")
-		}
-
-		// Decrypt backup
-		decryptedData, err := decryptBackup(backupData, password)
-		if err != nil {
-			return fmt.Errorf("failed to decrypt backup: %w", err)
-		}
-		backupData = decryptedData
-		fmt.Println("✓ Backup decrypted successfully")
-	}
-
-	// Create gzip reader from decrypted/plaintext data
-	gzReader, err := gzip.NewReader(bytes.NewReader(backupData))
-	if err != nil {
-		return fmt.Errorf("failed to read gzip: %w", err)
-	}
-	defer gzReader.Close()
-
-	// Create tar reader
-	tarReader := tar.NewReader(gzReader)
-
-	// Get directory paths
-	dataDir := os.Getenv("DATA_DIR")
-	configDir := os.Getenv("CONFIG_DIR")
-	logDir := os.Getenv("LOG_DIR")
-
-	// Default paths if not set
-	if dataDir == "" {
-		dataDir = "/var/lib/apimgr/weather"
-	}
-	if configDir == "" {
-		configDir = "/etc/apimgr/weather"
-	}
-	if logDir == "" {
-		logDir = "/var/log/apimgr/weather"
-	}
-
-	// Extract files
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("failed to read tar: %w", err)
-		}
-
-		// Determine target path (TEMPLATE.md Part 31: server.db + users.db)
-		var targetPath string
-		switch {
-		case header.Name == "database/server.db":
-			targetPath = filepath.Join(dataDir, "db", "server.db")
-		case header.Name == "database/users.db":
-			targetPath = filepath.Join(dataDir, "db", "users.db")
-		case header.Name == "database/weather.db": // Legacy compatibility
-			targetPath = filepath.Join(dataDir, "db", "weather.db")
-		case header.Name == "config/server.yml":
-			targetPath = filepath.Join(configDir, "server.yml")
-		case header.Name == "manifest.json":
-			// Read manifest for information
-			var manifest BackupManifest
-			if err := json.NewDecoder(tarReader).Decode(&manifest); err == nil {
-				fmt.Printf("  📦 Backup created: %s\n", manifest.CreatedAt.Format(time.RFC3339))
-			}
-			continue
-		case filepath.HasPrefix(header.Name, "logs/"):
-			targetPath = filepath.Join(logDir, filepath.Base(header.Name))
-		case filepath.HasPrefix(header.Name, "geoip/"):
-			targetPath = filepath.Join(dataDir, header.Name)
-		default:
-			continue
-		}
-
-		// Create directory if needed
-		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
-			return fmt.Errorf("failed to create directory: %w", err)
-		}
-
-		// Extract file
-		if header.Typeflag == tar.TypeReg {
-			outFile, err := os.Create(targetPath)
-			if err != nil {
-				return fmt.Errorf("failed to create file %s: %w", targetPath, err)
-			}
-
-			if _, err := io.Copy(outFile, tarReader); err != nil {
-				outFile.Close()
-				return fmt.Errorf("failed to write file %s: %w", targetPath, err)
-			}
-			outFile.Close()
-
-			fmt.Printf("  ✓ Restored: %s\n", header.Name)
-		}
-	}
-
-	fmt.Println("\n✓ Backup restored successfully")
-	fmt.Println("⚠️  Please restart the server for changes to take effect")
-	return nil
-}
-
-// updateServerConfig reloads server configuration from database
 func updateServerConfig() error {
 	fmt.Println("Updating server configuration...")
 	fmt.Println("  This will sync the database settings to server.yml")
@@ -651,7 +333,8 @@ func hashPasswordArgon2id(password string) (string, error) {
 	// Argon2id parameters from TEMPLATE.md Part 0
 	const (
 		time    = 3
-		memory  = 64 * 1024 // 64 MB
+		// 64 MB
+		memory  = 64 * 1024
 		threads = 4
 		keyLen  = 32
 	)
@@ -858,11 +541,16 @@ func verifyAdminExists(serverDBPath string) error {
 func encryptBackup(plaintext []byte, password string) ([]byte, error) {
 	// Derive encryption key from password using Argon2id (AI.md PART 24)
 	const (
-		saltSize  = 32        // 256 bits
-		keySize   = 32        // 256 bits for AES-256
-		time      = 3         // Argon2id time parameter
-		memory    = 64 * 1024 // 64 MB
-		threads   = 4         // Parallelism
+		// 256 bits
+		saltSize  = 32
+		// 256 bits for AES-256
+		keySize   = 32
+		// Argon2id time parameter
+		time      = 3
+		// 64 MB
+		memory    = 64 * 1024
+		// Parallelism
+		threads   = 4
 	)
 
 	// Generate random salt
@@ -906,11 +594,16 @@ func encryptBackup(plaintext []byte, password string) ([]byte, error) {
 // Takes encrypted data, password, returns plaintext data
 func decryptBackup(encrypted []byte, password string) ([]byte, error) {
 	const (
-		saltSize = 32        // 256 bits
-		keySize  = 32        // 256 bits for AES-256
-		time     = 3         // Argon2id time parameter
-		memory   = 64 * 1024 // 64 MB
-		threads  = 4         // Parallelism
+		// 256 bits
+		saltSize = 32
+		// 256 bits for AES-256
+		keySize  = 32
+		// Argon2id time parameter
+		time     = 3
+		// 64 MB
+		memory   = 64 * 1024
+		// Parallelism
+		threads  = 4
 	)
 
 	// Validate minimum size (salt + nonce + tag)

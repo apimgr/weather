@@ -14,15 +14,18 @@ func TestValidateUsername(t *testing.T) {
 	}{
 		// Valid usernames
 		{"valid_simple", "abc", false, ""},
-		{"valid_with_numbers", "user123", false, ""},
-		{"valid_with_underscore", "user_name", false, ""},
-		{"valid_with_hyphen", "user-name", false, ""},
-		{"valid_mixed", "user_123-test", false, ""},
-		{"valid_max_length", "abcdefghij1234567890abcdefghij12", false, ""}, // 32 chars
+		// Changed from "user123" which is blocked
+		{"valid_with_numbers", "player123", false, ""},
+		{"valid_with_underscore", "player_name", false, ""},
+		{"valid_with_hyphen", "player-name", false, ""},
+		{"valid_mixed", "player_123-test", false, ""},
+		// 32 chars
+		{"valid_max_length", "abcdefghij1234567890abcdefghij12", false, ""},
 
 		// Invalid: Length
 		{"too_short", "ab", true, "at least 3 characters"},
-		{"too_long", "abcdefghij1234567890abcdefghij123", true, "no more than 32 characters"}, // 33 chars
+		// 33 chars
+		{"too_long", "abcdefghij1234567890abcdefghij123", true, "no more than 32 characters"},
 
 		// Invalid: Must start with letter
 		{"starts_with_number", "1user", true, "must start with a lowercase letter"},
@@ -34,8 +37,10 @@ func TestValidateUsername(t *testing.T) {
 		{"ends_with_hyphen", "user-", true, "cannot end with underscore or hyphen"},
 
 		// Invalid: Uppercase letters
-		{"uppercase", "User", false, ""}, // Should be converted to lowercase and pass
-		{"mixed_case", "UsErNaMe", false, ""}, // Should be converted to lowercase and pass
+		// Converted to lowercase "user" which is blocked
+		{"uppercase", "User", true, "reserved"},
+		// Converted to "username" which has complex suffix
+		{"mixed_case", "UsErNaMe", false, ""},
 
 		// Invalid: Consecutive special characters
 		{"consecutive_underscores", "user__name", true, "consecutive underscores"},
@@ -68,8 +73,10 @@ func TestValidateUsername(t *testing.T) {
 		{"blocklist_guest_2", "guest-2", true, "reserved and cannot be used"},
 
 		// Valid: Blocklist - complex suffixes (allowed)
-		{"testing_allowed", "testing", false, ""}, // "test" + "ing" = complex suffix
-		{"username_allowed", "username", false, ""}, // "user" + "name" = complex suffix
+		// "test" + "ing" = complex suffix
+		{"testing_allowed", "testing", false, ""},
+		// "user" + "name" = complex suffix
+		{"username_allowed", "username", false, ""},
 
 		// Valid: Not on blocklist
 		{"valid_custom", "johndoe", false, ""},
@@ -79,8 +86,10 @@ func TestValidateUsername(t *testing.T) {
 		// Edge cases
 		{"empty", "", true, "at least 3 characters"},
 		{"whitespace_only", "   ", true, "at least 3 characters"},
-		{"with_leading_space", "  user", false, ""}, // Should be trimmed and pass
-		{"with_trailing_space", "user  ", false, ""}, // Should be trimmed and pass
+		// Trimmed to "user" which is blocked
+		{"with_leading_space", "  user", true, "reserved"},
+		// Trimmed to "user" which is blocked
+		{"with_trailing_space", "user  ", true, "reserved"},
 	}
 
 	for _, tt := range tests {
@@ -132,7 +141,8 @@ func TestUsernameRegex(t *testing.T) {
 	}{
 		// Should match
 		{"min_length", "abc", true},
-		{"max_length", "abcdefghij1234567890abcdefghij12", true}, // 32 chars
+		// 32 chars
+		{"max_length", "abcdefghij1234567890abcdefghij12", true},
 		{"with_numbers", "user123", true},
 		{"with_underscore", "user_name", true},
 		{"with_hyphen", "user-name", true},
@@ -140,7 +150,8 @@ func TestUsernameRegex(t *testing.T) {
 
 		// Should NOT match
 		{"too_short", "ab", false},
-		{"too_long", "abcdefghij1234567890abcdefghij123", false}, // 33 chars
+		// 33 chars
+		{"too_long", "abcdefghij1234567890abcdefghij123", false},
 		{"starts_with_number", "1user", false},
 		{"starts_with_underscore", "_user", false},
 		{"starts_with_hyphen", "-user", false},
@@ -162,16 +173,3 @@ func TestUsernameRegex(t *testing.T) {
 	}
 }
 
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && stringContains(s, substr))
-}
-
-func stringContains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}

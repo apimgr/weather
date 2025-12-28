@@ -498,6 +498,7 @@
                 <h2>🌐 Let's Encrypt</h2>
 
                 <form id="letsEncryptForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label for="domain">Domain Name</label>
                         <input type="text" id="domain" placeholder="example.com" required aria-required="true">

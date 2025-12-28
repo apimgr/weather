@@ -13,7 +13,8 @@ var (
 	BuildDate = "unknown"
 	CommitID  = "unknown"
 	// CGOEnabled is set at build time to show CGO_ENABLED status
-	CGOEnabled = "0" // Default to 0 (static binary requirement)
+	// Default to 0 (static binary requirement)
+	CGOEnabled = "0"
 )
 
 // Command represents a CLI command

@@ -11,6 +11,7 @@
     </p>
 
     <form id="adminNotificationPreferencesForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
         <!-- Display Mode Toggles -->
         <div style="margin-bottom: 2rem;">
             <h3 style="color: var(--dracula-cyan, #8be9fd); margin-bottom: 1rem; font-size: 1.1rem;">Display Modes</h3>
@@ -98,6 +99,7 @@
 
 <!-- System-wide Notification Settings -->
 <form id="notificationSettingsForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
 <section class="card" style="margin-bottom: 2rem;"><h2>📧 Email Events</h2>
 <p class="text-comment" style="margin-bottom: 1rem;">Configure which system events trigger email notifications to administrators.</p>
 <label><input type="checkbox" name="email_startup"> Server Startup</label>

@@ -23,6 +23,7 @@
             <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
 
             <form id="admin-form" role="form" aria-label="Administrator account setup form - Step 2 of 2">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label class="form-label" for="username">Username</label>
                     <input type="text"

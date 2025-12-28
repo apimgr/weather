@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -16,11 +16,11 @@ import (
 type AdminsHandler struct {
 	DB            *sql.DB
 	AdminModel    *models.AdminModel
-	InviteService *services.AdminInviteService
+	InviteService *service.AdminInviteService
 }
 
 // NewAdminsHandler creates a new admins handler
-func NewAdminsHandler(db *sql.DB, inviteService *services.AdminInviteService) *AdminsHandler {
+func NewAdminsHandler(db *sql.DB, inviteService *service.AdminInviteService) *AdminsHandler {
 	return &AdminsHandler{
 		DB:            db,
 		AdminModel:    &models.AdminModel{DB: db},

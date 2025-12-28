@@ -3,6 +3,7 @@
 <main class="container">
 <div class="admin-header"><h1>🔐 Authentication Settings</h1></div>
 <form id="authSettingsForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
 <section class="card"><h2>OIDC Providers</h2>
 <label><input type="checkbox" name="oidc_enabled"> Enable OIDC</label>
 <div id="oidcProviders"></div>

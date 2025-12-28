@@ -27,7 +27,8 @@ func (f *Formatter) FormatWeatherCurrent(data map[string]interface{}) string {
 		return f.formatJSON(data)
 	case "plain":
 		return f.formatPlainWeather(data)
-	default: // table
+	// table
+	default:
 		return f.formatTableWeather(data)
 	}
 }
@@ -39,7 +40,8 @@ func (f *Formatter) FormatForecast(data map[string]interface{}) string {
 		return f.formatJSON(data)
 	case "plain":
 		return f.formatPlainForecast(data)
-	default: // table
+	// table
+	default:
 		return f.formatTableForecast(data)
 	}
 }
@@ -51,7 +53,8 @@ func (f *Formatter) FormatAlerts(data map[string]interface{}) string {
 		return f.formatJSON(data)
 	case "plain":
 		return f.formatPlainAlerts(data)
-	default: // table
+	// table
+	default:
 		return f.formatTableAlerts(data)
 	}
 }
@@ -63,7 +66,8 @@ func (f *Formatter) FormatMoon(data map[string]interface{}) string {
 		return f.formatJSON(data)
 	case "plain":
 		return f.formatPlainMoon(data)
-	default: // table
+	// table
+	default:
 		return f.formatTableMoon(data)
 	}
 }

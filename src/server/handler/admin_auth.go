@@ -1,5 +1,5 @@
 // Package handlers provides HTTP handlers per TEMPLATE.md PART 22
-package handlers
+package handler
 
 import (
 	"encoding/json"
@@ -22,7 +22,8 @@ const (
 type AdminLoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Remember bool   `json:"remember"` // Extend session to 30 days
+	// Extend session to 30 days
+	Remember bool   `json:"remember"`
 }
 
 // AdminLoginResponse represents a login response
@@ -78,7 +79,8 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	duration := AdminSessionDuration
 	if req.Remember {
-		duration = 30 * 24 * time.Hour // 30 days
+		// 30 days
+		duration = 30 * 24 * time.Hour
 	}
 
 	session, err := sessionModel.CreateSession(
@@ -108,7 +110,8 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  session.ExpiresAt,
 		HttpOnly: true,
-		Secure:   r.TLS != nil, // Only secure in HTTPS
+		// Only secure in HTTPS
+		Secure:   r.TLS != nil,
 		SameSite: http.SameSiteStrictMode,
 	})
 

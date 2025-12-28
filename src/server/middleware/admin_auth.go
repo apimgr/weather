@@ -95,7 +95,8 @@ func RequireAdminAuth() gin.HandlerFunc {
 // GetVersion returns the application version (helper for middleware)
 func GetVersion() string {
 	// This will be injected by main package
-	return "1.0.0" // Fallback, overridden by main.Version
+	// Fallback, overridden by main.Version
+	return "1.0.0"
 }
 
 // GetDB returns the database connection from context (helper for middleware)
@@ -200,9 +201,11 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 
 		// Calculate expiry time
 		// Remember me: 90 days, normal: 30 days per AI.md PART 18
-		maxAge := 30 * 24 * 60 * 60 // 30 days in seconds
+		// 30 days in seconds
+		maxAge := 30 * 24 * 60 * 60
 		if remember {
-			maxAge = 90 * 24 * 60 * 60 // 90 days
+			// 90 days
+			maxAge = 90 * 24 * 60 * 60
 		}
 
 		// Create session in admin_sessions table (AI.md PART 5)
@@ -233,8 +236,10 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 			maxAge,
 			"/admin",
 			"",
-			isHTTPS, // Secure flag - true if HTTPS
-			true,    // HttpOnly - prevent JavaScript access
+			// Secure flag - true if HTTPS
+			isHTTPS,
+			// HttpOnly - prevent JavaScript access
+			true,
 		)
 
 		// Update last_login timestamp
@@ -269,7 +274,8 @@ func AdminLogoutHandler() gin.HandlerFunc {
 func generateSessionToken() string {
 	// Use UUID for session token (secure random)
 	// AI.md PART 18 requirement: cryptographically random session tokens
-	return generateSecureToken(32) // 32 bytes = 256 bits
+	// 32 bytes = 256 bits
+	return generateSecureToken(32)
 }
 
 // generateSecureToken generates a secure random token of specified byte length

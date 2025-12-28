@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -21,7 +21,8 @@ func GetSwaggerUIAuto() gin.HandlerFunc {
 	// Custom Dracula theme configuration
 	// TEMPLATE.md: Swagger UI must match site theme (Dracula dark)
 	config := ginSwagger.Config{
-		URL:                      "doc.json", // Relative URL for the JSON spec
+		// Relative URL for the JSON spec
+		URL:                      "doc.json",
 		DocExpansion:         "list",
 		DeepLinking:          true,
 		PersistAuthorization: true,

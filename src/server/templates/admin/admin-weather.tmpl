@@ -3,6 +3,7 @@
 <main class="container">
 <div class="admin-header"><h1>🌤️ Weather Settings</h1></div>
 <form id="weatherSettingsForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
 <section class="card"><h2>Data Sources</h2>
 <h3>Open-Meteo</h3>
 <label><input type="checkbox" name="openmeteo_enabled" checked> Enabled</label>

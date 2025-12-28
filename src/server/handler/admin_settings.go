@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -15,7 +15,7 @@ import (
 // AdminSettingsHandler handles admin settings API
 type AdminSettingsHandler struct {
 	DB                  *sql.DB
-	NotificationService *services.NotificationService
+	NotificationService *service.NotificationService
 }
 
 // GetAllSettings returns all settings

@@ -94,6 +94,7 @@
                 <h4>Step 2: Verify Code</h4>
                 <p class="text-comment">Enter the 6-digit code from your authenticator app</p>
                 <form id="verify2FAForm" class="margin-y-md">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="form-label">Verification Code</label>
                         <input type="text" id="verificationCode" class="form-input" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
@@ -130,6 +131,7 @@
                 <p>Disabling 2FA will make your account less secure. All recovery keys will be deleted.</p>
             </div>
             <form id="disable2FAForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label class="form-label">Confirm Password</label>
                     <input type="password" id="disablePassword" class="form-input" required>

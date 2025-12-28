@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"crypto"
@@ -234,7 +234,8 @@ func NewLetsEncryptService(email, certsDir string, staging bool) (*LetsEncryptSe
 		user:        user,
 		certsDir:    certsDir,
 		autoRenew:   true,
-		renewalDays: 30, // Renew 30 days before expiry
+		// Renew 30 days before expiry
+		renewalDays: 30,
 	}
 
 	// Initialize challenge providers
@@ -389,7 +390,8 @@ func (s *LetsEncryptService) CheckRenewal(domain string) (bool, int, error) {
 // TEMPLATE.md Part 8: Auto-renewal must run automatically
 func (s *LetsEncryptService) StartAutoRenewal(domains []string, challengeType string) {
 	go func() {
-		ticker := time.NewTicker(24 * time.Hour) // Check daily
+		// Check daily
+		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()
 
 		for range ticker.C {

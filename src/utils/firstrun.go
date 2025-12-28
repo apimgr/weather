@@ -33,7 +33,8 @@ func DetectFirstRun(dataDir string) bool {
 
 // GenerateSetupToken generates a cryptographically secure one-time setup token
 func GenerateSetupToken() (string, error) {
-	bytes := make([]byte, 16) // 128 bits
+	// 128 bits
+	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
@@ -51,9 +52,12 @@ func AutoDetectSMTP() (string, int) {
 		{"localhost", 25},
 		{"localhost", 587},
 		{"127.0.0.1", 25},
-		{"172.17.0.1", 25},    // Docker bridge
-		{"host.docker.internal", 25}, // Docker Desktop
-		{"10.0.2.2", 25},      // VirtualBox NAT
+		// Docker bridge
+		{"172.17.0.1", 25},
+		// Docker Desktop
+		{"host.docker.internal", 25},
+		// VirtualBox NAT
+		{"10.0.2.2", 25},
 	}
 
 	for _, server := range smtpServers {

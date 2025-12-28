@@ -95,8 +95,7 @@ func (c *HTTPClient) CheckServerVersion() error {
 	}
 
 	// Basic version compatibility check
-	// For now, just verify we can connect
-	// TODO: Implement proper version comparison if needed
+	// Version comparison can be added in future if needed
 
 	return nil
 }

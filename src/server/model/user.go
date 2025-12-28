@@ -16,14 +16,17 @@ type User struct {
 	Username        string     `json:"username"`
 	Email           string     `json:"email"`
 	Phone           string     `json:"phone,omitempty"`
-	PasswordHash    string     `json:"-"` // Never serialize password hash
+	// Never serialize password hash
+	PasswordHash    string     `json:"-"`
 	EmailVerified   bool       `json:"email_verified"`
 	IsActive        bool       `json:"is_active"`
 	IsBanned        bool       `json:"is_banned"`
 	BanReason       string     `json:"ban_reason,omitempty"`
-	Role            string     `json:"role"` // user or admin
+	// user or admin
+	Role            string     `json:"role"`
 	TwoFactorEnabled bool      `json:"two_factor_enabled"`
-	TwoFactorSecret string     `json:"-"` // Never serialize 2FA secret
+	// Never serialize 2FA secret
+	TwoFactorSecret string     `json:"-"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 	LastLoginAt     *time.Time `json:"last_login_at,omitempty"`
@@ -35,7 +38,8 @@ type User struct {
 type UserSession struct {
 	ID         int64     `json:"id"`
 	UserID     int64     `json:"user_id"`
-	SessionID  string    `json:"session_id"` // Secure random token
+	// Secure random token
+	SessionID  string    `json:"session_id"`
 	IPAddress  string    `json:"ip_address"`
 	UserAgent  string    `json:"user_agent"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -47,13 +51,18 @@ type UserSession struct {
 type UserPreferences struct {
 	ID                   int64     `json:"id"`
 	UserID               int64     `json:"user_id"`
-	Theme                string    `json:"theme"` // light, dark, auto
+	// light, dark, auto
+	Theme                string    `json:"theme"`
 	Language             string    `json:"language"`
 	Timezone             string    `json:"timezone"`
-	TemperatureUnit      string    `json:"temperature_unit"` // celsius, fahrenheit
-	PressureUnit         string    `json:"pressure_unit"`     // hPa, inHg, mmHg
-	WindSpeedUnit        string    `json:"wind_speed_unit"`   // kmh, mph, ms, kts
-	PrecipitationUnit    string    `json:"precipitation_unit"` // mm, in
+	// celsius, fahrenheit
+	TemperatureUnit      string    `json:"temperature_unit"`
+	// hPa, inHg, mmHg
+	PressureUnit         string    `json:"pressure_unit"`
+	// kmh, mph, ms, kts
+	WindSpeedUnit        string    `json:"wind_speed_unit"`
+	// mm, in
+	PrecipitationUnit    string    `json:"precipitation_unit"`
 	NotificationsEnabled bool      `json:"notifications_enabled"`
 	EmailNotifications   bool      `json:"email_notifications"`
 	CreatedAt            time.Time `json:"created_at"`
@@ -67,7 +76,8 @@ type UserEmailVerification struct {
 	Token     string     `json:"token"`
 	Email     string     `json:"email"`
 	CreatedAt time.Time  `json:"created_at"`
-	ExpiresAt time.Time  `json:"expires_at"` // 24 hours from creation
+	// 24 hours from creation
+	ExpiresAt time.Time  `json:"expires_at"`
 	UsedAt    *time.Time `json:"used_at,omitempty"`
 }
 
@@ -77,7 +87,8 @@ type UserPasswordReset struct {
 	UserID    int64      `json:"user_id"`
 	Token     string     `json:"token"`
 	CreatedAt time.Time  `json:"created_at"`
-	ExpiresAt time.Time  `json:"expires_at"` // 1 hour from creation
+	// 1 hour from creation
+	ExpiresAt time.Time  `json:"expires_at"`
 	UsedAt    *time.Time `json:"used_at,omitempty"`
 }
 
@@ -85,7 +96,8 @@ type UserPasswordReset struct {
 type UserActivityLog struct {
 	ID           int64     `json:"id"`
 	UserID       int64     `json:"user_id"`
-	ActivityType string    `json:"activity_type"` // login, logout, password_change, etc.
+	// login, logout, password_change, etc.
+	ActivityType string    `json:"activity_type"`
 	IPAddress    string    `json:"ip_address"`
 	UserAgent    string    `json:"user_agent"`
 	Details      string    `json:"details,omitempty"`

@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -12,19 +12,19 @@ import (
 
 // TorAdminHandler handles Tor administration endpoints
 type TorAdminHandler struct {
-	torService      *services.TorService
+	torService      *service.TorService
 	settingsModel   *models.SettingsModel
-	vanityGenerator *services.VanityGenerator
-	keyManager      *services.TorKeyManager
+	vanityGenerator *service.VanityGenerator
+	keyManager      *service.TorKeyManager
 }
 
 // NewTorAdminHandler creates a new Tor admin handler
-func NewTorAdminHandler(torService *services.TorService, settingsModel *models.SettingsModel, dataDir string) *TorAdminHandler {
+func NewTorAdminHandler(torService *service.TorService, settingsModel *models.SettingsModel, dataDir string) *TorAdminHandler {
 	return &TorAdminHandler{
 		torService:      torService,
 		settingsModel:   settingsModel,
-		vanityGenerator: services.NewVanityGenerator(),
-		keyManager:      services.NewTorKeyManager(dataDir + "/tor"),
+		vanityGenerator: service.NewVanityGenerator(),
+		keyManager:      service.NewTorKeyManager(dataDir + "/tor"),
 	}
 }
 

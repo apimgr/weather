@@ -350,6 +350,7 @@
         <div class="alert alert-error" id="errorAlert" role="alert"></div>
 
         <form id="schedulerForm" method="POST" action="/admin/scheduler/config">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
             <!-- Global Settings -->
             <div class="card">
                 <h2>Global Settings</h2>

@@ -356,6 +356,7 @@
             <div class="card">
                 <h2>⏰ Automated Backups</h2>
                 <form id="scheduleForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label>
                             <input type="checkbox" id="autoBackup" checked>

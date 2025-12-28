@@ -229,9 +229,11 @@ func TestHTTPClientServerError(t *testing.T) {
 func TestHTTPClientConnectionError(t *testing.T) {
 	// Create client with invalid server URL
 	config := &Config{
-		Server:  "http://localhost:1", // Invalid port
+		// Invalid port
+		Server:  "http://localhost:1",
 		Token:   "test-token",
-		Timeout: 1, // Short timeout
+		// Short timeout
+		Timeout: 1,
 	}
 	client := NewHTTPClient(config)
 
@@ -263,7 +265,8 @@ func TestHTTPClientTimeout(t *testing.T) {
 	config := &Config{
 		Server:  server.URL,
 		Token:   "test-token",
-		Timeout: 1, // 1 second timeout
+		// 1 second timeout
+		Timeout: 1,
 	}
 	client := NewHTTPClient(config)
 
@@ -326,7 +329,8 @@ func TestHTTPClientNoToken(t *testing.T) {
 	// Create client without token
 	config := &Config{
 		Server:  server.URL,
-		Token:   "", // No token
+		// No token
+		Token:   "",
 		Timeout: 30,
 	}
 	client := NewHTTPClient(config)

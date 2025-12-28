@@ -70,7 +70,8 @@ func IsValidHost(host string, devMode bool, projectName string) bool {
 
 	// Check dynamic project-specific TLD (e.g., app.weather, dev.weather)
 	if projectName != "" && strings.HasSuffix(lower, "."+strings.ToLower(projectName)) {
-		return devMode // Project TLDs only valid in dev mode
+		// Project TLDs only valid in dev mode
+		return devMode
 	}
 
 	// Get the public suffix (TLD or eTLD like co.uk)
@@ -78,7 +79,8 @@ func IsValidHost(host string, devMode bool, projectName string) bool {
 
 	// Check if it's a dev-only TLD
 	if devOnlyTLDs[suffix] {
-		return devMode // Dev TLDs only valid in dev mode
+		// Dev TLDs only valid in dev mode
+		return devMode
 	}
 
 	// In production, require valid ICANN TLD

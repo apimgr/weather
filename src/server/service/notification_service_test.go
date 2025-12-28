@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"database/sql"
@@ -515,7 +515,8 @@ func TestNotificationService_ShouldSendEmail(t *testing.T) {
 			eventType:      "backup",
 			severity:       "info",
 			smtpConfigured: true,
-			want:           true, // User is offline (not connected to WebSocket)
+			// User is offline (not connected to WebSocket)
+			want:           true,
 		},
 	}
 

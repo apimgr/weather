@@ -1,0 +1,25 @@
+Subject: Test Email - {app_name}
+---
+TEST EMAIL
+
+This email was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Sent at: {timestamp}
+
+This is a test email from {app_name}.
+
+If you received this email, your SMTP configuration is working correctly.
+
+────────────────────────────────────────────────────────────────────────
+SMTP CONFIGURATION
+
+Server: {smtp_host}
+Port: {smtp_port}
+Encryption: {smtp_encryption}
+
+Email features are now enabled.
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

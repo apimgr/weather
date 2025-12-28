@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"bufio"
@@ -451,8 +451,8 @@ func (h *LogsHandler) GetAuditStats(c *gin.Context) {
 		"failed":            0,
 		"event_types":       make(map[string]int),
 		"users":             make(map[string]int),
-		"recent_events":     []services.AuditEvent{},
-		"recent_failures":   []services.AuditEvent{},
+		"recent_events":     []service.AuditEvent{},
+		"recent_failures":   []service.AuditEvent{},
 		"top_event_types":   []map[string]interface{}{},
 		"hourly_activity":   make(map[string]int),
 	}
@@ -488,7 +488,7 @@ func (h *LogsHandler) GetAuditStats(c *gin.Context) {
 	}
 
 	// Get recent failures
-	failures := []services.AuditEvent{}
+	failures := []service.AuditEvent{}
 	for _, event := range events {
 		if event.Result == "failure" {
 			failures = append(failures, event)
@@ -506,11 +506,11 @@ func (h *LogsHandler) GetAuditStats(c *gin.Context) {
 }
 
 // Helper: Read audit logs from file
-func (h *LogsHandler) readAuditLogs(filePath string, limit, offset int, eventType, username, startDate, endDate string) ([]services.AuditEvent, int, error) {
+func (h *LogsHandler) readAuditLogs(filePath string, limit, offset int, eventType, username, startDate, endDate string) ([]service.AuditEvent, int, error) {
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// Return empty events if file doesn't exist yet
-		return []services.AuditEvent{}, 0, nil
+		return []service.AuditEvent{}, 0, nil
 	}
 
 	file, err := os.Open(filePath)
@@ -519,7 +519,7 @@ func (h *LogsHandler) readAuditLogs(filePath string, limit, offset int, eventTyp
 	}
 	defer file.Close()
 
-	var allEvents []services.AuditEvent
+	var allEvents []service.AuditEvent
 	scanner := bufio.NewScanner(file)
 
 	// Parse start and end dates if provided
@@ -534,7 +534,7 @@ func (h *LogsHandler) readAuditLogs(filePath string, limit, offset int, eventTyp
 	}
 
 	for scanner.Scan() {
-		var event services.AuditEvent
+		var event service.AuditEvent
 		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
 			// Skip invalid lines
 			continue
@@ -581,7 +581,7 @@ func (h *LogsHandler) readAuditLogs(filePath string, limit, offset int, eventTyp
 }
 
 // Helper: Search audit logs with advanced filtering
-func (h *LogsHandler) searchAuditLogs(filePath string, req interface{}) ([]services.AuditEvent, int, error) {
+func (h *LogsHandler) searchAuditLogs(filePath string, req interface{}) ([]service.AuditEvent, int, error) {
 	// Type assert the request
 	searchReq := req.(struct {
 		EventType string
@@ -596,7 +596,7 @@ func (h *LogsHandler) searchAuditLogs(filePath string, req interface{}) ([]servi
 
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return []services.AuditEvent{}, 0, nil
+		return []service.AuditEvent{}, 0, nil
 	}
 
 	file, err := os.Open(filePath)
@@ -605,7 +605,7 @@ func (h *LogsHandler) searchAuditLogs(filePath string, req interface{}) ([]servi
 	}
 	defer file.Close()
 
-	var allEvents []services.AuditEvent
+	var allEvents []service.AuditEvent
 	scanner := bufio.NewScanner(file)
 
 	// Parse dates
@@ -619,7 +619,7 @@ func (h *LogsHandler) searchAuditLogs(filePath string, req interface{}) ([]servi
 	}
 
 	for scanner.Scan() {
-		var event services.AuditEvent
+		var event service.AuditEvent
 		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
 			continue
 		}

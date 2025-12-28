@@ -225,6 +225,7 @@
         <div class="add-domain-form">
             <h2>Add New Domain</h2>
             <form id="addDomainForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label for="domain">Domain Name:</label>
                     <input type="text" id="domain" name="domain" placeholder="example.com" required>

@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -14,12 +14,12 @@ import (
 
 // APIHandler handles JSON API routes (/api/v1/*)
 type APIHandler struct {
-	weatherService   *services.WeatherService
-	locationEnhancer *services.LocationEnhancer
+	weatherService   *service.WeatherService
+	locationEnhancer *service.LocationEnhancer
 }
 
 // NewAPIHandler creates a new API handler
-func NewAPIHandler(ws *services.WeatherService, le *services.LocationEnhancer) *APIHandler {
+func NewAPIHandler(ws *service.WeatherService, le *service.LocationEnhancer) *APIHandler {
 	return &APIHandler{
 		weatherService:   ws,
 		locationEnhancer: le,
@@ -51,8 +51,8 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 	nearest := c.Query("nearest")
 	unitsParam := c.Query("units")
 
-	var coords *services.Coordinates
-	var enhanced *services.EnhancedLocation
+	var coords *service.Coordinates
+	var enhanced *service.EnhancedLocation
 	var err error
 
 	// Priority: city_id > lat/lon > nearest > location > IP
@@ -84,7 +84,7 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 					return
 				}
 				// Convert to GeocodeResult and enhance
-				geocodeResult := &services.GeocodeResult{
+				geocodeResult := &service.GeocodeResult{
 					Latitude:    coords.Latitude,
 					Longitude:   coords.Longitude,
 					Name:        coords.Name,
@@ -104,7 +104,7 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 				return
 			}
 			// Convert to GeocodeResult and enhance
-			geocodeResult := &services.GeocodeResult{
+			geocodeResult := &service.GeocodeResult{
 				Latitude:    coords.Latitude,
 				Longitude:   coords.Longitude,
 				Name:        coords.Name,
@@ -125,7 +125,7 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 			return
 		}
 		// Convert to GeocodeResult and enhance
-		geocodeResult := &services.GeocodeResult{
+		geocodeResult := &service.GeocodeResult{
 			Latitude:    coords.Latitude,
 			Longitude:   coords.Longitude,
 			Name:        coords.Name,
@@ -146,7 +146,7 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 			return
 		}
 		// Convert to GeocodeResult and enhance
-		geocodeResult := &services.GeocodeResult{
+		geocodeResult := &service.GeocodeResult{
 			Latitude:    coords.Latitude,
 			Longitude:   coords.Longitude,
 			Name:        coords.Name,
@@ -178,7 +178,7 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 	// Get today's forecast
 	forecast, err := h.weatherService.GetForecast(enhanced.Latitude, enhanced.Longitude, 1, units)
 	if err != nil {
-		forecast = &services.Forecast{Days: []services.ForecastDay{}}
+		forecast = &service.Forecast{Days: []service.ForecastDay{}}
 	}
 
 	// Build response
@@ -334,7 +334,7 @@ func (h *APIHandler) GetForecast(c *gin.Context) {
 		}
 	}
 
-	var coords *services.Coordinates
+	var coords *service.Coordinates
 	var err error
 
 	// Parse coordinates or location
@@ -689,7 +689,7 @@ func (h *APIHandler) GetHistoricalWeather(c *gin.Context) {
 	yearsStr := c.Query("years")
 
 	// Parse coordinates
-	var coords *services.Coordinates
+	var coords *service.Coordinates
 	var err error
 
 	if lat != "" && lon != "" {
@@ -702,7 +702,7 @@ func (h *APIHandler) GetHistoricalWeather(c *gin.Context) {
 			return
 		}
 
-		coords = &services.Coordinates{
+		coords = &service.Coordinates{
 			Latitude:  latitude,
 			Longitude: longitude,
 		}

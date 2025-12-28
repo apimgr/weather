@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"net/http"
@@ -12,12 +12,12 @@ import (
 
 // MoonHandler handles moon phase API requests
 type MoonHandler struct {
-	weatherService   *services.WeatherService
-	locationEnhancer *services.LocationEnhancer
+	weatherService   *service.WeatherService
+	locationEnhancer *service.LocationEnhancer
 }
 
 // NewMoonHandler creates a new moon handler
-func NewMoonHandler(ws *services.WeatherService, le *services.LocationEnhancer) *MoonHandler {
+func NewMoonHandler(ws *service.WeatherService, le *service.LocationEnhancer) *MoonHandler {
 	return &MoonHandler{
 		weatherService:   ws,
 		locationEnhancer: le,
@@ -32,7 +32,7 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 	lon := c.Query("lon")
 	clientIP := utils.GetClientIP(c)
 
-	var coords *services.Coordinates
+	var coords *service.Coordinates
 	var err error
 
 	// Priority: lat/lon > location > cookie > IP geolocation
@@ -45,7 +45,7 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 			})
 			return
 		}
-		coords = &services.Coordinates{
+		coords = &service.Coordinates{
 			Latitude:  latFloat,
 			Longitude: lonFloat,
 		}
@@ -63,7 +63,7 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 			if lonStr, err := c.Cookie("user_lon"); err == nil {
 				if latFloat, err1 := strconv.ParseFloat(latStr, 64); err1 == nil {
 					if lonFloat, err2 := strconv.ParseFloat(lonStr, 64); err2 == nil {
-						coords = &services.Coordinates{
+						coords = &service.Coordinates{
 							Latitude:  latFloat,
 							Longitude: lonFloat,
 						}

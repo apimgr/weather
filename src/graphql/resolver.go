@@ -15,7 +15,7 @@ type Resolver struct {
 	UsersDB  *sql.DB
 
 	// Services
-	WeatherService *services.WeatherService
+	WeatherService *service.WeatherService
 
 	// Handlers (we'll use their logic in resolvers)
 	APIHandler          *handlers.APIHandler
@@ -35,7 +35,7 @@ type Resolver struct {
 // NewResolver creates a new root resolver with all dependencies
 func NewResolver(
 	serverDB, usersDB *sql.DB,
-	weatherService *services.WeatherService,
+	weatherService *service.WeatherService,
 	apiHandler *handlers.APIHandler,
 	authHandler *handlers.AuthHandler,
 	locationHandler *handlers.LocationHandler,

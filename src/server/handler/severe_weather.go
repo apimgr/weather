@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -15,13 +15,13 @@ import (
 
 // SevereWeatherHandler handles severe weather tracking requests
 type SevereWeatherHandler struct {
-	severeWeatherService *services.SevereWeatherService
-	locationEnhancer     *services.LocationEnhancer
-	weatherService       *services.WeatherService
+	severeWeatherService *service.SevereWeatherService
+	locationEnhancer     *service.LocationEnhancer
+	weatherService       *service.WeatherService
 }
 
 // NewSevereWeatherHandler creates a new severe weather handler
-func NewSevereWeatherHandler(severeWeatherService *services.SevereWeatherService, locationEnhancer *services.LocationEnhancer, weatherService *services.WeatherService) *SevereWeatherHandler {
+func NewSevereWeatherHandler(severeWeatherService *service.SevereWeatherService, locationEnhancer *service.LocationEnhancer, weatherService *service.WeatherService) *SevereWeatherHandler {
 	return &SevereWeatherHandler{
 		severeWeatherService: severeWeatherService,
 		locationEnhancer:     locationEnhancer,
@@ -50,7 +50,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 	// Parse coordinates from location or get from persistent storage
 	var latitude, longitude float64
 	var locationName string
-	var locationCoords *services.Coordinates
+	var locationCoords *service.Coordinates
 
 	if locationParam != "" {
 		// Try to parse as coordinates first
@@ -156,12 +156,12 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		var locationData interface{}
 		if latitude != 0 || longitude != 0 {
 			// Use the full locationCoords if available, otherwise create minimal coords
-			var enhanced *services.Coordinates
+			var enhanced *service.Coordinates
 			if locationCoords != nil {
 				enhanced = locationCoords
 			} else {
 				// Create minimal coords and enhance
-				coords := &services.Coordinates{
+				coords := &service.Coordinates{
 					Latitude:  latitude,
 					Longitude: longitude,
 					Name:      locationName,
@@ -242,7 +242,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	// Parse location if provided
 	var latitude, longitude float64
 	var locationName string
-	var locationCoords *services.Coordinates
+	var locationCoords *service.Coordinates
 
 	if locationParam != "" {
 		// Try to parse as coordinates first
@@ -323,7 +323,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	}
 
 	// Filter data by type
-	filteredData := &services.SevereWeatherData{
+	filteredData := &service.SevereWeatherData{
 		LastUpdate: data.LastUpdate,
 	}
 
@@ -368,12 +368,12 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		var locationData interface{}
 		if latitude != 0 || longitude != 0 {
 			// Use the full locationCoords if available, otherwise create minimal coords
-			var enhanced *services.Coordinates
+			var enhanced *service.Coordinates
 			if locationCoords != nil {
 				enhanced = locationCoords
 			} else {
 				// Create minimal coords and enhance
-				coords := &services.Coordinates{
+				coords := &service.Coordinates{
 					Latitude:  latitude,
 					Longitude: longitude,
 					Name:      locationName,
@@ -466,7 +466,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 }
 
 // renderConsoleOutput renders severe weather data for console/terminal
-func (h *SevereWeatherHandler) renderConsoleOutput(data *services.SevereWeatherData, locationName string) string {
+func (h *SevereWeatherHandler) renderConsoleOutput(data *service.SevereWeatherData, locationName string) string {
 	output := "⚠️  Severe Weather Alerts\n"
 	output += "═══════════════════════════════════════\n\n"
 
@@ -565,7 +565,7 @@ func (h *SevereWeatherHandler) renderConsoleOutput(data *services.SevereWeatherD
 }
 
 // formatAlert formats an alert for console output
-func (h *SevereWeatherHandler) formatAlert(alert services.Alert) string {
+func (h *SevereWeatherHandler) formatAlert(alert service.Alert) string {
 	icon := h.severeWeatherService.GetAlertIcon(alert.Event)
 	output := icon + " " + alert.Event + "\n"
 	output += "   Area: " + alert.AreaDesc + "\n"

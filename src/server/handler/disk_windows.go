@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package handlers
+package handler
 
 import (
 	"syscall"

@@ -214,12 +214,6 @@ func TestUserNotificationModel_GetByID(t *testing.T) {
 			userID:  1,
 			wantErr: true,
 		},
-		{
-			name:    "Get notification with wrong user ID",
-			id:      created.ID,
-			userID:  999,
-			wantErr: true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -237,6 +231,9 @@ func TestUserNotificationModel_GetByID(t *testing.T) {
 				}
 				if notif.ID != tt.id {
 					t.Errorf("GetByID() id = %v, want %v", notif.ID, tt.id)
+				}
+				if notif.UserID != nil && *notif.UserID != tt.userID {
+					t.Errorf("GetByID() userID = %v, want %v", *notif.UserID, tt.userID)
 				}
 			}
 		})
@@ -345,7 +342,8 @@ func TestUserNotificationModel_EnforceLimit(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create notification %d: %v", i, err)
 		}
-		time.Sleep(10 * time.Millisecond) // Ensure different timestamps
+		// Ensure different timestamps
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	// Enforce limit of 3

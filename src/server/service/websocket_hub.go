@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"encoding/json"
@@ -12,13 +12,15 @@ import (
 
 // WebSocketMessage represents a message sent over WebSocket
 type WebSocketMessage struct {
-	Type string      `json:"type"` // "notification", "ping", "pong"
+	// "notification", "ping", "pong"
+	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
 // WebSocketClient represents a connected WebSocket client
 type WebSocketClient struct {
-	ID       string // "user-{userID}" or "admin-{adminID}"
+	// "user-{userID}" or "admin-{adminID}"
+	ID       string
 	Conn     *websocket.Conn
 	Hub      *WebSocketHub
 	Send     chan []byte

@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"encoding/json"
@@ -14,13 +14,20 @@ import (
 type LogFormat string
 
 const (
-	LogFormatApache   LogFormat = "apache"   // Apache Combined Log Format
-	LogFormatNginx    LogFormat = "nginx"    // Nginx access log format
-	LogFormatJSON     LogFormat = "json"     // JSON structured logs
-	LogFormatFail2ban LogFormat = "fail2ban" // fail2ban-compatible format
-	LogFormatSyslog   LogFormat = "syslog"   // RFC 5424 Syslog
-	LogFormatCEF      LogFormat = "cef"      // Common Event Format (ArcSight)
-	LogFormatText     LogFormat = "text"     // Custom text format
+	// Apache Combined Log Format
+	LogFormatApache   LogFormat = "apache"
+	// Nginx access log format
+	LogFormatNginx    LogFormat = "nginx"
+	// JSON structured logs
+	LogFormatJSON     LogFormat = "json"
+	// fail2ban-compatible format
+	LogFormatFail2ban LogFormat = "fail2ban"
+	// RFC 5424 Syslog
+	LogFormatSyslog   LogFormat = "syslog"
+	// Common Event Format (ArcSight)
+	LogFormatCEF      LogFormat = "cef"
+	// Custom text format
+	LogFormatText     LogFormat = "text"
 )
 
 // LogEntry represents a single log entry with all fields
@@ -34,17 +41,27 @@ type LogEntry struct {
 	BytesSent      int
 	Referer        string
 	UserAgent      string
-	RequestTime    float64 // in seconds
+	// in seconds
+	RequestTime    float64
 	RequestID      string
-	Username       string // For authenticated requests
-	ErrorMessage   string // For error logs
-	Facility       string // For syslog
-	Severity       string // For syslog/CEF
-	DeviceVendor   string // For CEF
-	DeviceProduct  string // For CEF
-	DeviceVersion  string // For CEF
-	SignatureID    string // For CEF
-	Name           string // For CEF
+	// For authenticated requests
+	Username       string
+	// For error logs
+	ErrorMessage   string
+	// For syslog
+	Facility       string
+	// For syslog/CEF
+	Severity       string
+	// For CEF
+	DeviceVendor   string
+	// For CEF
+	DeviceProduct  string
+	// For CEF
+	DeviceVersion  string
+	// For CEF
+	SignatureID    string
+	// For CEF
+	Name           string
 }
 
 // LogFormatter handles different log output formats
@@ -83,7 +100,8 @@ func (f *LogFormatter) Format(entry *LogEntry) string {
 	case LogFormatText:
 		return f.formatText(entry)
 	default:
-		return f.formatApache(entry) // Default to Apache
+		// Default to Apache
+		return f.formatApache(entry)
 	}
 }
 
@@ -224,12 +242,16 @@ func (f *LogFormatter) formatSyslog(entry *LogEntry) string {
 	// RFC 5424 format: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID STRUCTURED-DATA MSG
 
 	// Calculate priority: facility * 8 + severity
-	facility := 16 // local0
-	severity := 6  // informational
+	// local0
+	facility := 16
+	// informational
+	severity := 6
 	if entry.StatusCode >= 500 {
-		severity = 3 // error
+		// error
+		severity = 3
 	} else if entry.StatusCode >= 400 {
-		severity = 4 // warning
+		// warning
+		severity = 4
 	}
 	priority := facility*8 + severity
 
@@ -280,20 +302,26 @@ func (f *LogFormatter) formatCEF(entry *LogEntry) string {
 	signatureID := fmt.Sprintf("HTTP_%d", entry.StatusCode)
 	name := fmt.Sprintf("HTTP %s", entry.Method)
 
-	severity := "3" // Medium
+	// Medium
+	severity := "3"
 	if entry.StatusCode >= 500 {
-		severity = "8" // High
+		// High
+		severity = "8"
 	} else if entry.StatusCode >= 400 {
-		severity = "5" // Medium-High
+		// Medium-High
+		severity = "5"
 	} else if entry.StatusCode >= 300 {
-		severity = "2" // Low
+		// Low
+		severity = "2"
 	} else if entry.StatusCode >= 200 {
-		severity = "1" // Very Low
+		// Very Low
+		severity = "1"
 	}
 
 	// Extension fields (key=value pairs)
 	extensions := []string{
-		fmt.Sprintf("rt=%d", entry.Timestamp.Unix()*1000), // milliseconds
+		// milliseconds
+		fmt.Sprintf("rt=%d", entry.Timestamp.Unix()*1000),
 		fmt.Sprintf("src=%s", entry.RemoteAddr),
 		fmt.Sprintf("request=%s %s", entry.Method, entry.Path),
 		fmt.Sprintf("requestMethod=%s", entry.Method),

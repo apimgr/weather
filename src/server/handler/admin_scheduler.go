@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
@@ -88,7 +88,8 @@ func (h *AdminHandler) ShowSchedulerConfig(c *gin.Context) {
 		Tasks: SchedulerTasks{
 			SSLRenewal: TaskConfigBasic{
 				Schedule: settingsModel.GetString("scheduler.tasks.ssl_renewal.schedule", "0 3 * * *"),
-				Enabled:  true, // Always enabled (critical)
+				// Always enabled (critical)
+				Enabled:  true,
 			},
 			GeoIPUpdate: TaskConfigBasic{
 				Schedule: settingsModel.GetString("scheduler.tasks.geoip_update.schedule", "0 3 * * 0"),

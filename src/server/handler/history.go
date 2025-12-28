@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -13,13 +13,13 @@ import (
 
 // HistoryHandler handles the historical weather page
 type HistoryHandler struct {
-	weatherService *services.WeatherService
+	weatherService *service.WeatherService
 	settingsModel  *models.SettingsModel
 	userModel      *models.UserModel
 }
 
 // NewHistoryHandler creates a new history handler
-func NewHistoryHandler(weatherService *services.WeatherService, settingsModel *models.SettingsModel, userModel *models.UserModel) *HistoryHandler {
+func NewHistoryHandler(weatherService *service.WeatherService, settingsModel *models.SettingsModel, userModel *models.UserModel) *HistoryHandler {
 	return &HistoryHandler{
 		weatherService: weatherService,
 		settingsModel:  settingsModel,
@@ -34,7 +34,7 @@ type HistoryPageData struct {
 	Location         string
 	Date             string
 	StartYear        int
-	Historical       *services.HistoricalWeather
+	Historical       *service.HistoricalWeather
 	DefaultYears     int
 	MinYears         int
 	MaxYears         int

@@ -24,32 +24,50 @@ const (
 type NotificationDisplay string
 
 const (
-	NotificationDisplayToast  NotificationDisplay = "toast"  // Toast notification (top-right, auto-dismiss)
-	NotificationDisplayBanner NotificationDisplay = "banner" // Banner notification (top of page)
-	NotificationDisplayCenter NotificationDisplay = "center" // Notification center only
+	// Toast notification (top-right, auto-dismiss)
+	NotificationDisplayToast  NotificationDisplay = "toast"
+	// Banner notification (top of page)
+	NotificationDisplayBanner NotificationDisplay = "banner"
+	// Notification center only
+	NotificationDisplayCenter NotificationDisplay = "center"
 )
 
 // Notification represents a WebUI notification (user or admin)
 type Notification struct {
-	ID         string              `json:"id"`                     // ULID
-	UserID     *int                `json:"user_id,omitempty"`      // NULL for admin notifications
-	AdminID    *int                `json:"admin_id,omitempty"`     // NULL for user notifications
-	Type       NotificationType    `json:"type"`                   // success, info, warning, error, security
-	Display    NotificationDisplay `json:"display"`                // toast, banner, center
-	Title      string              `json:"title"`                  // Notification title
-	Message    string              `json:"message"`                // Notification message
-	Action     *NotificationAction `json:"action,omitempty"`       // Optional action button
-	ActionJSON *string             `json:"-" db:"action_json"`     // JSON-encoded action (database field)
-	Read       bool                `json:"read"`                   // Whether read
-	Dismissed  bool                `json:"dismissed"`              // Whether dismissed
-	CreatedAt  time.Time           `json:"created_at"`             // When created
-	ExpiresAt  *time.Time          `json:"expires_at,omitempty"`   // When to auto-delete (default: 30 days)
+	// ULID
+	ID         string              `json:"id"`
+	// NULL for admin notifications
+	UserID     *int                `json:"user_id,omitempty"`
+	// NULL for user notifications
+	AdminID    *int                `json:"admin_id,omitempty"`
+	// success, info, warning, error, security
+	Type       NotificationType    `json:"type"`
+	// toast, banner, center
+	Display    NotificationDisplay `json:"display"`
+	// Notification title
+	Title      string              `json:"title"`
+	// Notification message
+	Message    string              `json:"message"`
+	// Optional action button
+	Action     *NotificationAction `json:"action,omitempty"`
+	// JSON-encoded action (database field)
+	ActionJSON *string             `json:"-" db:"action_json"`
+	// Whether read
+	Read       bool                `json:"read"`
+	// Whether dismissed
+	Dismissed  bool                `json:"dismissed"`
+	// When created
+	CreatedAt  time.Time           `json:"created_at"`
+	// When to auto-delete (default: 30 days)
+	ExpiresAt  *time.Time          `json:"expires_at,omitempty"`
 }
 
 // NotificationAction represents an optional action button
 type NotificationAction struct {
-	Label string `json:"label"` // Button label (e.g., "View Details")
-	URL   string `json:"url"`   // URL to navigate to
+	// Button label (e.g., "View Details")
+	Label string `json:"label"`
+	// URL to navigate to
+	URL   string `json:"url"`
 }
 
 // NotificationPreferences represents user/admin notification preferences
@@ -60,9 +78,12 @@ type NotificationPreferences struct {
 	EnableBanner        bool      `json:"enable_banner"`
 	EnableCenter        bool      `json:"enable_center"`
 	EnableSound         bool      `json:"enable_sound"`
-	ToastDurationSuccess int      `json:"toast_duration_success"` // seconds
-	ToastDurationInfo   int      `json:"toast_duration_info"`    // seconds
-	ToastDurationWarning int      `json:"toast_duration_warning"` // seconds
+	// seconds
+	ToastDurationSuccess int      `json:"toast_duration_success"`
+	// seconds
+	ToastDurationInfo   int      `json:"toast_duration_info"`
+	// seconds
+	ToastDurationWarning int      `json:"toast_duration_warning"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 

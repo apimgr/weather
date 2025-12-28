@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"net/http"
@@ -10,18 +10,26 @@ import (
 
 // APIError represents a standardized error response per AI.md PART 19
 type APIError struct {
-	Error   string                 `json:"error"`            // Human-readable error message
-	Code    string                 `json:"code"`             // Machine-readable error code
-	Status  int                    `json:"status"`           // HTTP status code
-	Details map[string]interface{} `json:"details,omitempty"` // Optional additional context
+	// Human-readable error message
+	Error   string                 `json:"error"`
+	// Machine-readable error code
+	Code    string                 `json:"code"`
+	// HTTP status code
+	Status  int                    `json:"status"`
+	// Optional additional context
+	Details map[string]interface{} `json:"details,omitempty"`
 }
 
 // APISuccess represents a standardized success response per AI.md PART 19
 type APISuccess struct {
-	Success bool                   `json:"success"`          // Always true for successful actions
-	Message string                 `json:"message,omitempty"` // Optional human-readable message
-	ID      string                 `json:"id,omitempty"`      // ID of created/affected resource
-	Data    map[string]interface{} `json:"data,omitempty"`    // Optional additional response data
+	// Always true for successful actions
+	Success bool                   `json:"success"`
+	// Optional human-readable message
+	Message string                 `json:"message,omitempty"`
+	// ID of created/affected resource
+	ID      string                 `json:"id,omitempty"`
+	// Optional additional response data
+	Data    map[string]interface{} `json:"data,omitempty"`
 }
 
 // Common error codes per AI.md PART 19

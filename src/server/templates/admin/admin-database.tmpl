@@ -166,6 +166,7 @@
                 </div>
                 <div class="card-body">
                     <form id="db-config-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="db_driver">Driver</label>
                             <select
@@ -331,6 +332,7 @@
                 </div>
                 <div class="card-body">
                     <form id="db-settings-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="db_connection_pool">Connection Pool Size</label>
                             <input

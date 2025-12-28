@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -14,14 +14,14 @@ import (
 // NotificationTemplateHandler handles notification template management
 type NotificationTemplateHandler struct {
 	DB             *sql.DB
-	TemplateEngine *services.TemplateEngine
+	TemplateEngine *service.TemplateEngine
 }
 
 // NewNotificationTemplateHandler creates a new template handler
 func NewNotificationTemplateHandler(db *sql.DB) *NotificationTemplateHandler {
 	return &NotificationTemplateHandler{
 		DB:             db,
-		TemplateEngine: services.NewTemplateEngine(db),
+		TemplateEngine: service.NewTemplateEngine(db),
 	}
 }
 

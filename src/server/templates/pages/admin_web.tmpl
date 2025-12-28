@@ -147,6 +147,7 @@
             </div>
 
             <form id="robots-form" role="form" aria-label="Edit robots.txt">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label for="robots-txt">
                         robots.txt Content
@@ -199,6 +200,7 @@
             </div>
 
             <form id="security-form" role="form" aria-label="Edit security.txt">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
                     <label for="security-txt">
                         security.txt Content

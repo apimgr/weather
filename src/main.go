@@ -282,14 +282,14 @@ func main() {
 	}
 
 	// Initialize cache manager (Valkey/Redis support, optional)
-	cacheManager := services.NewCacheManager()
+	cacheManager := service.NewCacheManager()
 	if cacheManager.IsEnabled() {
 		appLogger.Printf("Cache enabled (Redis/Valkey)")
 		fmt.Printf("✅ Cache enabled (Redis/Valkey)\n")
 	}
 
 	// Auto-detect SMTP server at 172.17.0.1 (Docker bridge) and configure defaults
-	smtpService := services.NewSMTPService(db.DB)
+	smtpService := service.NewSMTPService(db.DB)
 	if err := smtpService.LoadConfig(); err == nil {
 		// Check if SMTP is not already configured
 		smtpHost := settingsModel.GetString("smtp.host", "")
@@ -374,6 +374,9 @@ func main() {
 	// Security headers middleware
 	r.Use(middleware.SecurityHeaders())
 
+	// CSRF protection middleware (AI.md PART 0 line 994, PART 22)
+	r.Use(middleware.CSRFProtection(middleware.DefaultCSRFConfig()))
+
 	// CORS middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -420,7 +423,7 @@ func main() {
 	r.StaticFS("/static", http.FS(staticSubFS))
 
 	// Initialize i18n service (TEMPLATE.md PART 29 - NON-NEGOTIABLE)
-	i18nService, err := services.NewI18n(localesFS, "en")
+	i18nService, err := service.NewI18n(localesFS, "en")
 	if err != nil {
 		log.Fatalf("Failed to initialize i18n: %v", err)
 	}
@@ -524,35 +527,35 @@ func main() {
 	}
 
 	// Initialize location enhancer
-	locationEnhancer := services.NewLocationEnhancer(db.DB)
+	locationEnhancer := service.NewLocationEnhancer(db.DB)
 
 	// Set callback to mark initialization complete
 	locationEnhancer.SetOnInitComplete(func(countries, cities bool) {
 		// Mark weather service as always ready (no initialization needed)
-		handlers.SetInitStatus(countries, cities, true)
+		handler.SetInitStatus(countries, cities, true)
 		fmt.Printf("✅ Countries: %v, Cities: %v, zipcodes: true, airportcodes: true\n", countries, cities)
 	})
 
 	// Initialize GeoIP service (downloads database on first run, updates weekly)
-	geoipService := services.NewGeoIPService(dirPaths.Config)
+	geoipService := service.NewGeoIPService(dirPaths.Config)
 
-	weatherService := services.NewWeatherService(locationEnhancer, geoipService)
+	weatherService := service.NewWeatherService(locationEnhancer, geoipService)
 
 	// Data loads automatically in the background via loadData()
 	// Mark service as ready after 2 minute initialization timeout (keep as fallback)
 	go func() {
 		time.Sleep(2 * time.Minute)
-		if !handlers.IsInitialized() {
+		if !handler.IsInitialized() {
 			fmt.Println("⏰ Initialization timeout reached, marking service as ready (fallback)")
 			fmt.Printf("🕐 %s\n", time.Now().Format("2006-01-02 at 15:04:05"))
-			handlers.SetInitStatus(true, true, true)
+			handler.SetInitStatus(true, true, true)
 		}
 	}()
 
 	// Initialize notification system services (silent)
-	channelManager := services.NewChannelManager(db.DB)
-	templateEngine := services.NewTemplateEngine(db.DB)
-	deliverySystem := services.NewDeliverySystem(db.DB, channelManager, templateEngine)
+	channelManager := service.NewChannelManager(db.DB)
+	templateEngine := service.NewTemplateEngine(db.DB)
+	deliverySystem := service.NewDeliverySystem(db.DB, channelManager, templateEngine)
 
 	// Load delivery system settings from database
 	_ = deliverySystem.LoadSettings()
@@ -564,17 +567,17 @@ func main() {
 	_ = channelManager.InitializeChannels()
 
 	// Create weather notification service
-	weatherNotifications := services.NewWeatherNotificationService(db.DB, weatherService, deliverySystem, templateEngine)
+	weatherNotifications := service.NewWeatherNotificationService(db.DB, weatherService, deliverySystem, templateEngine)
 
 	// Initialize notification metrics service
-	notificationMetrics := services.NewNotificationMetrics(db.DB)
+	notificationMetrics := service.NewNotificationMetrics(db.DB)
 
 	// Initialize Tor hidden service (TEMPLATE.md PART 32 - NON-NEGOTIABLE)
-	torService := services.NewTorService(db, dirPaths.Data)
+	torService := service.NewTorService(db, dirPaths.Data)
 
 	// Initialize config file watcher for live reload (TEMPLATE.md PART 1)
 	configPath := filepath.Join(dirPaths.Config, "server.yml")
-	configWatcher, err := services.NewConfigWatcher(configPath, func(newCfg *config.Config) error {
+	configWatcher, err := service.NewConfigWatcher(configPath, func(newCfg *config.Config) error {
 		// Reload configuration callback - applies changes live without restart
 		log.Printf("Configuration reloaded from %s", configPath)
 		fmt.Printf("🔄 Configuration reloaded from %s\n", configPath)
@@ -681,37 +684,38 @@ func main() {
 	// Cleanup scheduled for 02:00 UTC, Limit enforcement at 03:00 UTC
 
 	// Create services
-	earthquakeService := services.NewEarthquakeService()
-	hurricaneService := services.NewHurricaneService()
-	severeWeatherService := services.NewSevereWeatherService()
+	earthquakeService := service.NewEarthquakeService()
+	hurricaneService := service.NewHurricaneService()
+	severeWeatherService := service.NewSevereWeatherService()
 
 	// Create handlers
-	weatherHandler := handlers.NewWeatherHandler(weatherService, locationEnhancer)
-	apiHandler := handlers.NewAPIHandler(weatherService, locationEnhancer)
-	webHandler := handlers.NewWebHandler(weatherService, locationEnhancer)
-	earthquakeHandler := handlers.NewEarthquakeHandler(earthquakeService, weatherService, locationEnhancer)
-	hurricaneHandler := handlers.NewHurricaneHandler(hurricaneService)
-	severeWeatherHandler := handlers.NewSevereWeatherHandler(severeWeatherService, locationEnhancer, weatherService)
-	moonHandler := handlers.NewMoonHandler(weatherService, locationEnhancer)
+	weatherHandler := handler.NewWeatherHandler(weatherService, locationEnhancer)
+	apiHandler := handler.NewAPIHandler(weatherService, locationEnhancer)
+	webHandler := handler.NewWebHandler(weatherService, locationEnhancer)
+	earthquakeHandler := handler.NewEarthquakeHandler(earthquakeService, weatherService, locationEnhancer)
+	hurricaneHandler := handler.NewHurricaneHandler(hurricaneService)
+	severeWeatherHandler := handler.NewSevereWeatherHandler(severeWeatherService, locationEnhancer, weatherService)
+	moonHandler := handler.NewMoonHandler(weatherService, locationEnhancer)
 
 	// Create auth handlers
-	authHandler := &handlers.AuthHandler{DB: db.DB}
-	twoFAHandler := &handlers.TwoFactorHandler{DB: db.DB}
-	setupHandler := &handlers.SetupHandler{DB: db.DB}
-	dashboardHandler := &handlers.DashboardHandler{DB: db.DB}
-	adminHandler := &handlers.AdminHandler{DB: db.DB}
-	locationHandler := &handlers.LocationHandler{
+	authHandler := &handler.AuthHandler{DB: db.DB}
+	twoFAHandler := &handler.TwoFactorHandler{DB: db.DB}
+	setupHandler := &handler.SetupHandler{DB: db.DB}
+	dashboardHandler := &handler.DashboardHandler{DB: db.DB}
+	adminHandler := &handler.AdminHandler{DB: db.DB}
+	locationHandler := &handler.LocationHandler{
 		DB:               db.DB,
 		WeatherService:   weatherService,
 		LocationEnhancer: locationEnhancer,
 	}
 
 	// Initialize WebSocket Hub for real-time notifications (TEMPLATE.md Part 25)
-	wsHub := services.NewWebSocketHub()
-	go wsHub.Run() // Start hub in goroutine
+	wsHub := service.NewWebSocketHub()
+	// Start hub in goroutine
+	go wsHub.Run()
 
 	// Initialize Notification Service (TEMPLATE.md Part 25 - WebUI Notifications)
-	notificationService := &services.NotificationService{
+	notificationService := &service.NotificationService{
 		UserDB:     dualDB.Users,
 		ServerDB:   dualDB.Server,
 		WSHub:      wsHub,
@@ -721,46 +725,48 @@ func main() {
 	}
 
 	// Create WebUI notification API handlers (TEMPLATE.md Part 25)
-	notificationAPIHandler := &handlers.NotificationAPIHandlers{
+	notificationAPIHandler := &handler.NotificationAPIHandlers{
 		NotificationService: notificationService,
 		WSHub:               wsHub,
 	}
 
 	// Legacy notification handler (for email notifications only)
-	notificationHandler := &handlers.NotificationHandler{DB: db.DB}
+	notificationHandler := &handler.NotificationHandler{DB: db.DB}
 
 	// Create notification system handlers
-	channelHandler := handlers.NewNotificationChannelHandler(db.DB)
-	preferencesHandler := handlers.NewNotificationPreferencesHandler(db.DB)
-	templateHandler := handlers.NewNotificationTemplateHandler(db.DB)
-	metricsHandler := handlers.NewNotificationMetricsHandler(notificationMetrics)
+	channelHandler := handler.NewNotificationChannelHandler(db.DB)
+	preferencesHandler := handler.NewNotificationPreferencesHandler(db.DB)
+	templateHandler := handler.NewNotificationTemplateHandler(db.DB)
+	metricsHandler := handler.NewNotificationMetricsHandler(notificationMetrics)
 
 	// Initialize WebUI Notification Cleanup Scheduler (TEMPLATE.md Part 25)
 	notificationCleaner := scheduler.NewNotificationCleaner(notificationService)
-	taskScheduler.ScheduleNotificationCleanup(notificationCleaner, "02:00")       // Daily at 2 AM UTC
-	taskScheduler.ScheduleNotificationLimitEnforcement(notificationCleaner, "03:00") // Daily at 3 AM UTC
+	// Daily at 2 AM UTC
+	taskScheduler.ScheduleNotificationCleanup(notificationCleaner, "02:00")
+	// Daily at 3 AM UTC
+	taskScheduler.ScheduleNotificationLimitEnforcement(notificationCleaner, "03:00")
 
 	// Create scheduler handler for task management
-	schedulerHandler := handlers.NewSchedulerHandler(taskScheduler)
+	schedulerHandler := handler.NewSchedulerHandler(taskScheduler)
 
 	// Create Tor admin handler
-	torAdminHandler := handlers.NewTorAdminHandler(torService, settingsModel, dirPaths.Data)
+	torAdminHandler := handler.NewTorAdminHandler(torService, settingsModel, dirPaths.Data)
 
 	// Create email template handler
-	emailTemplateHandler := handlers.NewEmailTemplateHandler(filepath.Join("src", "server", "templates"))
+	emailTemplateHandler := handler.NewEmailTemplateHandler(filepath.Join("src", "server", "templates"))
 
 	// Create logs handler
-	logsHandler := handlers.NewLogsHandler(dirPaths.Log)
+	logsHandler := handler.NewLogsHandler(dirPaths.Log)
 
 	// Create admin settings handlers
-	adminUsersHandler := &handlers.AdminUsersHandler{ConfigPath: configPath}
-	adminAuthHandler := &handlers.AdminAuthSettingsHandler{ConfigPath: configPath}
-	adminWeatherHandler := &handlers.AdminWeatherHandler{ConfigPath: configPath}
-	adminNotificationsHandler := &handlers.AdminNotificationsHandler{ConfigPath: configPath}
-	adminGeoIPHandler := &handlers.AdminGeoIPHandler{ConfigPath: configPath}
+	adminUsersHandler := &handler.AdminUsersHandler{ConfigPath: configPath}
+	adminAuthHandler := &handler.AdminAuthSettingsHandler{ConfigPath: configPath}
+	adminWeatherHandler := &handler.AdminWeatherHandler{ConfigPath: configPath}
+	adminNotificationsHandler := &handler.AdminNotificationsHandler{ConfigPath: configPath}
+	adminGeoIPHandler := &handler.AdminGeoIPHandler{ConfigPath: configPath}
 
 	// Create domain handler (TEMPLATE.md PART 34: Custom domain support)
-	domainHandler := handlers.NewDomainHandlers(db.DB, appLogger)
+	domainHandler := handler.NewDomainHandlers(db.DB, appLogger)
 
 	// Get port configuration using comprehensive port manager
 	// Priority: 1) Database saved ports, 2) PORT env variable, 3) Random port (64000-64999)
@@ -810,16 +816,16 @@ func main() {
 	httpsPort := httpsPortInt
 
 	// Create SSL handler
-	sslHandler := handlers.NewSSLHandler(sslCertsDir, db.DB)
+	sslHandler := handler.NewSSLHandler(sslCertsDir, db.DB)
 
 	// Create metrics handler
-	metricsConfigHandler := handlers.NewMetricsHandler()
+	metricsConfigHandler := handler.NewMetricsHandler()
 
 	// Create logging handler
-	loggingHandler := handlers.NewLoggingHandler(dirPaths.Log)
+	loggingHandler := handler.NewLoggingHandler(dirPaths.Log)
 
 	// Create admin web handler (robots.txt, security.txt)
-	adminWebHandler := handlers.NewAdminWebHandler(db)
+	adminWebHandler := handler.NewAdminWebHandler(db)
 
 	// Check for SSL configuration
 	hostname, _ := os.Hostname()
@@ -847,19 +853,19 @@ func main() {
 	// Can be enabled via CLI flag or environment variable if needed
 
 	// Set directory paths for handlers
-	handlers.SetDirectoryPaths(dirPaths.Data, dirPaths.Log)
+	handler.SetDirectoryPaths(dirPaths.Data, dirPaths.Log)
 
 	// Health check endpoints (Kubernetes standard)
-	r.GET("/healthz", handlers.ComprehensiveHealthCheck(db, port, httpsPort, sslManager))
+	r.GET("/healthz", handler.ComprehensiveHealthCheck(db, port, httpsPort, sslManager))
 	r.GET("/health", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/healthz")
 	})
-	r.GET("/readyz", handlers.ReadinessCheck)
-	r.GET("/livez", handlers.LivenessCheck)
+	r.GET("/readyz", handler.ReadinessCheck)
+	r.GET("/livez", handler.LivenessCheck)
 	r.GET("/healthz/setup", setupHandler.GetSetupStatus)
 
 	// Prometheus metrics endpoint (TEMPLATE.md required - optional auth)
-	r.GET("/metrics", handlers.PrometheusMetrics())
+	r.GET("/metrics", handler.PrometheusMetrics())
 
 	// security.txt endpoint (RFC 9116 - TEMPLATE.md PART 25)
 	r.GET("/.well-known/security.txt", adminWebHandler.ServeSecurityTxt)
@@ -887,7 +893,7 @@ func main() {
 	// Debug endpoints (only enabled when --debug flag or DEBUG=true)
 	// Per AI.md PART 6: Debug endpoints only available when debug mode enabled
 	if mode.IsDebug() {
-		debugHandlers := handlers.NewDebugHandlers(db.DB, r)
+		debugHandlers := handler.NewDebugHandlers(db.DB, r)
 		debugHandlers.RegisterDebugRoutes(r)
 
 		log.Println("🔧 Debug endpoints enabled:")
@@ -1202,7 +1208,7 @@ func main() {
 	apiV1 := r.Group("/api/v1")
 
 	// Health check endpoint (JSON) - TEMPLATE.md compliant format
-	apiV1.GET("/healthz", handlers.APIHealthCheck(db, startTime))
+	apiV1.GET("/healthz", handler.APIHealthCheck(db, startTime))
 
 	// Weather API routes (optional auth + API rate limiting)
 	weatherAPI := apiV1.Group("")
@@ -1273,7 +1279,7 @@ func main() {
 	})
 
 	// Server API endpoints (contact form)
-	apiV1.POST("/server/contact", handlers.HandleContactFormSubmission(db, cfg))
+	apiV1.POST("/server/contact", handler.HandleContactFormSubmission(db, cfg))
 
 	// User info API (requires auth)
 	apiV1.GET("/user", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), authHandler.GetCurrentUser)
@@ -1342,9 +1348,10 @@ func main() {
 		adminAPI.PUT("/settings/:key", adminHandler.UpdateSetting)
 
 		// Live settings management (SPEC Section 18)
-		adminSettingsHandler := &handlers.AdminSettingsHandler{
+		adminSettingsHandler := &handler.AdminSettingsHandler{
 			DB:                  db.DB,
-			NotificationService: notificationService, // TEMPLATE.md Part 25: Send notifications on settings changes
+			// TEMPLATE.md Part 25: Send notifications on settings changes
+			NotificationService: notificationService,
 		}
 		adminAPI.GET("/settings/all", adminSettingsHandler.GetAllSettings)
 		adminAPI.PUT("/settings/bulk", adminSettingsHandler.UpdateSettings)
@@ -1443,23 +1450,23 @@ func main() {
 		adminAPI.POST("/smtp/autodetect", channelHandler.AutoDetectSMTP)
 
 		// Admin panel settings endpoints
-		adminAPI.PUT("/settings/web", handlers.SaveWebSettings)
-		adminAPI.PUT("/settings/security", handlers.SaveSecuritySettings)
-		adminAPI.PUT("/settings/database", handlers.SaveDatabaseSettings)
+		adminAPI.PUT("/settings/web", handler.SaveWebSettings)
+		adminAPI.PUT("/settings/security", handler.SaveSecuritySettings)
+		adminAPI.PUT("/settings/database", handler.SaveDatabaseSettings)
 
 		// Database management endpoints
-		adminAPI.POST("/database/test", handlers.TestDatabaseConnection)
-		adminAPI.POST("/database/test-config", handlers.TestDatabaseConfigConnection)
-		adminAPI.POST("/database/optimize", handlers.OptimizeDatabase)
-		adminAPI.POST("/database/vacuum", handlers.VacuumDatabase)
-		adminAPI.POST("/cache/clear", handlers.ClearCache)
+		adminAPI.POST("/database/test", handler.TestDatabaseConnection)
+		adminAPI.POST("/database/test-config", handler.TestDatabaseConfigConnection)
+		adminAPI.POST("/database/optimize", handler.OptimizeDatabase)
+		adminAPI.POST("/database/vacuum", handler.VacuumDatabase)
+		adminAPI.POST("/cache/clear", handler.ClearCache)
 
 		// Backup management endpoints
-		adminAPI.POST("/backup/create", handlers.CreateBackup)
-		adminAPI.POST("/backup/restore", handlers.RestoreBackup)
-		adminAPI.GET("/backup/list", handlers.ListBackups)
-		adminAPI.GET("/backup/download/:filename", handlers.DownloadBackup)
-		adminAPI.DELETE("/backup/delete/:filename", handlers.DeleteBackup)
+		adminAPI.POST("/backup/create", handler.CreateBackup)
+		adminAPI.POST("/backup/restore", handler.RestoreBackup)
+		adminAPI.GET("/backup/list", handler.ListBackups)
+		adminAPI.GET("/backup/download/:filename", handler.DownloadBackup)
+		adminAPI.DELETE("/backup/delete/:filename", handler.DeleteBackup)
 
 		// Template management (admin only)
 		adminAPI.GET("/templates", templateHandler.ListTemplates)
@@ -1560,10 +1567,14 @@ func main() {
 		sslAPI := adminAPI.Group("/ssl")
 		{
 			sslAPI.GET("/status", sslHandler.GetStatus)
-			sslAPI.POST("/obtain", sslHandler.ObtainCertificate)        // Obtain LE certificate (HTTP-01/TLS-ALPN-01/DNS-01)
-			sslAPI.POST("/renew", sslHandler.RenewCertificate)          // Manual renewal
-			sslAPI.POST("/auto-renew", sslHandler.StartAutoRenewal)     // Start auto-renewal service
-			sslAPI.GET("/dns-records", sslHandler.GetDNSRecords)        // Get DNS records for DNS-01 challenge
+			// Obtain LE certificate (HTTP-01/TLS-ALPN-01/DNS-01)
+			sslAPI.POST("/obtain", sslHandler.ObtainCertificate)
+			// Manual renewal
+			sslAPI.POST("/renew", sslHandler.RenewCertificate)
+			// Start auto-renewal service
+			sslAPI.POST("/auto-renew", sslHandler.StartAutoRenewal)
+			// Get DNS records for DNS-01 challenge
+			sslAPI.GET("/dns-records", sslHandler.GetDNSRecords)
 			sslAPI.POST("/verify", sslHandler.VerifyCertificate)
 			sslAPI.PUT("/settings", sslHandler.UpdateSettings)
 			sslAPI.GET("/export", sslHandler.ExportCertificate)
@@ -1641,21 +1652,22 @@ func main() {
 	r.GET("/openapi", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/openapi/index.html")
 	})
-	r.GET("/openapi/*any", handlers.GetSwaggerUIAuto())  // Swagger UI + JSON spec (auto-generated)
+	// Swagger UI + JSON spec (auto-generated)
+	r.GET("/openapi/*any", handler.GetSwaggerUIAuto())
 	r.GET("/openapi.json", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/openapi/doc.json")
 	})
 
 	// GraphQL API (moved to /api/)
 	// TODO: Integrate src/graphql package once handlers are fully migrated
-	graphqlHandler, err := handlers.InitGraphQL()
+	graphqlHandler, err := handler.InitGraphQL()
 	if err != nil {
 		log.Printf("Failed to initialize GraphQL: %v", err)
 		fmt.Printf("⚠️  Failed to initialize GraphQL: %v\n", err)
 	} else {
-		r.POST("/api/graphql", handlers.GraphQLHandler(graphqlHandler))
+		r.POST("/api/graphql", handler.GraphQLHandler(graphqlHandler))
 		// GET for GraphiQL
-		r.GET("/api/graphql", handlers.GraphQLHandler(graphqlHandler))
+		r.GET("/api/graphql", handler.GraphQLHandler(graphqlHandler))
 		// Legacy redirects
 		r.GET("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/graphql") })
 		r.POST("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/api/graphql") })
@@ -1671,10 +1683,10 @@ func main() {
 	r.GET("/ws/notifications", middleware.OptionalAuth(db.DB), notificationAPIHandler.HandleWebSocketConnection)
 
 	// Standard server pages (TEMPLATE.md lines 2308-2314, 4486-4489)
-	r.GET("/server/about", handlers.ShowAboutPage(db, cfg))
-	r.GET("/server/privacy", handlers.ShowPrivacyPage(db, cfg))
-	r.GET("/server/contact", handlers.ShowContactPage(db, cfg))
-	r.GET("/server/help", handlers.ShowHelpPage(db, cfg))
+	r.GET("/server/about", handler.ShowAboutPage(db, cfg))
+	r.GET("/server/privacy", handler.ShowPrivacyPage(db, cfg))
+	r.GET("/server/contact", handler.ShowContactPage(db, cfg))
+	r.GET("/server/help", handler.ShowHelpPage(db, cfg))
 
 	// Examples endpoint
 	r.GET("/examples", func(c *gin.Context) {
@@ -1747,8 +1759,8 @@ JSON API:
 		}
 
 		// Show loading page if not initialized
-		if !handlers.IsInitialized() {
-			handlers.ServeLoadingPage(c)
+		if !handler.IsInitialized() {
+			handler.ServeLoadingPage(c)
 			c.Abort()
 			return
 		}

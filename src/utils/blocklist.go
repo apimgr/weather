@@ -42,7 +42,7 @@ var UsernameBlocklist = []string{
 	"account", "accounts", "profile", "profiles", "settings", "config",
 	"configuration", "dashboard", "panel", "console", "portal", "home",
 	"index", "main", "default", "null", "nil", "undefined", "void",
-	"true", "false", "test", "testing", "debug", "demo", "example",
+	"true", "false", "test", "debug", "demo", "example",
 	"sample", "temp", "temporary", "tmp", "backup", "archive", "log",
 	"logs", "audit", "report", "reports", "analytics", "stats", "status",
 

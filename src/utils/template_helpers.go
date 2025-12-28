@@ -43,10 +43,18 @@ func TemplateData(c *gin.Context, data gin.H) gin.H {
 		userCtx = userCtxInterface
 	}
 
+	// Get CSRF token from context (set by CSRF middleware)
+	// Per AI.md line 14803: "All forms include hidden CSRF token field"
+	csrfToken, _ := c.Get("csrf_token")
+	if csrfToken == nil {
+		csrfToken = ""
+	}
+
 	// Create enriched data
 	enriched := gin.H{
-		"server": serverCtx,
-		"user":   userCtx,
+		"server":     serverCtx,
+		"user":       userCtx,
+		"csrf_token": csrfToken,
 	}
 
 	// Merge user-provided data

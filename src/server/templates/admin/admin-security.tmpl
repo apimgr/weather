@@ -28,6 +28,7 @@
                 </div>
                 <div class="card-body">
                     <form id="headers-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="alert alert-info" role="status">
                             <strong>Security headers</strong> are automatically applied to all responses. These settings control their values.
                         </div>
@@ -129,6 +130,7 @@
                 </div>
                 <div class="card-body">
                     <form id="cors-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label class="toggle-label">
                                 <input
@@ -242,6 +244,7 @@
                 </div>
                 <div class="card-body">
                     <form id="ratelimit-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label class="toggle-label">
                                 <input
@@ -348,6 +351,7 @@
                 </div>
                 <div class="card-body">
                     <form id="auth-form" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="session_timeout">Session Timeout (seconds)</label>
                             <input

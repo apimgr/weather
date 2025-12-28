@@ -678,6 +678,7 @@
             <div class="card">
                 <h2>📧 SMTP Configuration</h2>
                 <form id="form-smtp" onsubmit="saveSettings(event, 'smtp')" role="form" aria-label="SMTP settings">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="smtp.enabled" {{if .settings.smtp_enabled}}checked{{end}}
@@ -738,6 +739,7 @@
             <div class="card">
                 <h2>🚦 Rate Limiting</h2>
                 <form id="form-ratelimit" onsubmit="saveSettings(event, 'ratelimit')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="rate_limit.enabled" {{if .settings.rate_limit_enabled}}checked{{end}}
@@ -777,6 +779,7 @@
             <div class="card">
                 <h2>🔐 SSL/TLS Configuration</h2>
                 <form id="form-ssl" onsubmit="saveSettings(event, 'ssl')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="ssl.enabled" {{if .settings.ssl_enabled}}checked{{end}}
@@ -830,6 +833,7 @@
             <div class="card">
                 <h2>🌤️ Weather Configuration</h2>
                 <form id="form-weather" onsubmit="saveSettings(event, 'weather')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label for="weather_refresh_interval">Refresh Interval (seconds)</label>
                         <input type="number" id="weather_refresh_interval" name="weather.refresh_interval"
@@ -878,6 +882,7 @@
             <div class="card">
                 <h2>🔔 Notification System</h2>
                 <form id="form-notifications" onsubmit="saveSettings(event, 'notifications')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="notifications.enabled" {{if .settings.notifications_enabled}}checked{{end}}
@@ -917,6 +922,7 @@
             <div class="card">
                 <h2>🌍 GeoIP Configuration</h2>
                 <form id="form-geoip" onsubmit="saveSettings(event, 'geoip')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="geoip.enabled" {{if .settings.geoip_enabled}}checked{{end}}
@@ -939,6 +945,7 @@
             <div class="card">
                 <h2>🌐 CORS Configuration</h2>
                 <form id="form-cors" onsubmit="saveSettings(event, 'cors')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="cors.enabled" {{if .settings.cors_enabled}}checked{{end}}
@@ -976,6 +983,7 @@
             <div class="card">
                 <h2>⏰ Scheduler Configuration</h2>
                 <form id="form-scheduler" onsubmit="saveSettings(event, 'scheduler')" role="form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="scheduler.enabled" {{if .settings.scheduler_enabled}}checked{{end}}
@@ -1013,6 +1021,7 @@
             <div class="card">
                 <h2>🧅 Tor Hidden Service</h2>
                 <form id="form-tor" onsubmit="saveSettings(event, 'tor')" role="form" aria-label="Tor hidden service settings">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" name="tor.enabled" {{if .settings.tor_enabled}}checked{{end}}

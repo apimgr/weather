@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -206,7 +206,7 @@ func ClearCache(c *gin.Context) {
 		return
 	}
 
-	cache, ok := cacheInterface.(*services.CacheManager)
+	cache, ok := cacheInterface.(*service.CacheManager)
 	if !ok || !cache.IsEnabled() {
 		c.JSON(http.StatusOK, AdminAPIResponse{
 			Success: true,

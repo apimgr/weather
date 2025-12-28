@@ -10,10 +10,14 @@ import (
 
 // Config represents the CLI client configuration
 type Config struct {
-	Server  string `yaml:"server"`  // Server URL
-	Token   string `yaml:"token"`   // API token
-	Output  string `yaml:"output"`  // Output format (json, table, plain)
-	Timeout int    `yaml:"timeout"` // Request timeout in seconds
+	// Server URL
+	Server  string `yaml:"server"`
+	// API token
+	Token   string `yaml:"token"`
+	// Output format (json, table, plain)
+	Output  string `yaml:"output"`
+	// Request timeout in seconds
+	Timeout int    `yaml:"timeout"`
 	NoColor bool   `yaml:"no_color"`// Disable colored output
 }
 

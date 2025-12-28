@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -110,7 +110,7 @@ func (h *LogFormatHandler) PreviewLogFormat(c *gin.Context) {
 	}
 
 	// Create sample log entry
-	sampleEntry := &services.LogEntry{
+	sampleEntry := &service.LogEntry{
 		Timestamp:   time.Now(),
 		RemoteAddr:  "192.168.1.100",
 		Method:      "GET",
@@ -127,18 +127,18 @@ func (h *LogFormatHandler) PreviewLogFormat(c *gin.Context) {
 
 	// Format preview for all formats
 	previews := make(map[string]string)
-	formats := []services.LogFormat{
-		services.LogFormatApache,
-		services.LogFormatNginx,
-		services.LogFormatJSON,
-		services.LogFormatFail2ban,
-		services.LogFormatSyslog,
-		services.LogFormatCEF,
-		services.LogFormatText,
+	formats := []service.LogFormat{
+		service.LogFormatApache,
+		service.LogFormatNginx,
+		service.LogFormatJSON,
+		service.LogFormatFail2ban,
+		service.LogFormatSyslog,
+		service.LogFormatCEF,
+		service.LogFormatText,
 	}
 
 	for _, fmt := range formats {
-		formatter := services.NewLogFormatter(fmt)
+		formatter := service.NewLogFormatter(fmt)
 		previews[string(fmt)] = formatter.Format(sampleEntry)
 	}
 

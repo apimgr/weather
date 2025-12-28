@@ -19,6 +19,7 @@
         {{ end }}
 
         <form method="POST" action="/auth/login" role="form" aria-label="Login form">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
             <div class="form-group">
                 <label for="identifier">Username, Email, or Phone</label>
                 <input type="text"

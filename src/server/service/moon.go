@@ -1,6 +1,7 @@
-package services
+package service
 
 import (
+	"fmt"
 	"math"
 	"time"
 )
@@ -16,16 +17,26 @@ func NewMoonService() *MoonService {
 
 // MoonData represents complete lunar information
 type MoonData struct {
-	Phase          string  `json:"phase"`           // New, Waxing Crescent, First Quarter, etc.
-	Illumination   float64 `json:"illumination"`    // 0-100%
-	Age            float64 `json:"age"`             // Days since new moon (0-29.53)
-	Icon           string  `json:"icon"`            // Unicode moon emoji
-	Rise           string  `json:"rise"`            // HH:MM format
-	Set            string  `json:"set"`             // HH:MM format
-	NextNewMoon    string  `json:"next_new_moon"`   // ISO 8601
-	NextFullMoon   string  `json:"next_full_moon"`  // ISO 8601
-	Distance       float64 `json:"distance_km"`     // Distance from Earth in km
-	AngularSize    float64 `json:"angular_size"`    // Angular diameter in degrees
+	// New, Waxing Crescent, First Quarter, etc.
+	Phase          string  `json:"phase"`
+	// 0-100%
+	Illumination   float64 `json:"illumination"`
+	// Days since new moon (0-29.53)
+	Age            float64 `json:"age"`
+	// Unicode moon emoji
+	Icon           string  `json:"icon"`
+	// HH:MM format
+	Rise           string  `json:"rise"`
+	// HH:MM format
+	Set            string  `json:"set"`
+	// ISO 8601
+	NextNewMoon    string  `json:"next_new_moon"`
+	// ISO 8601
+	NextFullMoon   string  `json:"next_full_moon"`
+	// Distance from Earth in km
+	Distance       float64 `json:"distance_km"`
+	// Angular diameter in degrees
+	AngularSize    float64 `json:"angular_size"`
 }
 
 // Calculate returns moon data for a specific location and time
@@ -130,21 +141,29 @@ func (ms *MoonService) getPhaseName(age float64) string {
 // getMoonIcon returns Unicode moon emoji for phase
 func (ms *MoonService) getMoonIcon(age float64) string {
 	if age < 1.84566 {
-		return "🌑" // New Moon
+		// New Moon
+		return "🌑"
 	} else if age < 7.38264 {
-		return "🌒" // Waxing Crescent
+		// Waxing Crescent
+		return "🌒"
 	} else if age < 9.22831 {
-		return "🌓" // First Quarter
+		// First Quarter
+		return "🌓"
 	} else if age < 14.76529 {
-		return "🌔" // Waxing Gibbous
+		// Waxing Gibbous
+		return "🌔"
 	} else if age < 16.61096 {
-		return "🌕" // Full Moon
+		// Full Moon
+		return "🌕"
 	} else if age < 22.14794 {
-		return "🌖" // Waning Gibbous
+		// Waning Gibbous
+		return "🌖"
 	} else if age < 24.99361 {
-		return "🌗" // Last Quarter
+		// Last Quarter
+		return "🌗"
 	} else {
-		return "🌘" // Waning Crescent
+		// Waning Crescent
+		return "🌘"
 	}
 }
 
@@ -156,7 +175,8 @@ func (ms *MoonService) calculateRiseSet(lat, lon float64, t time.Time) (string, 
 	age := ms.calculateMoonAge(t)
 
 	// Approximate times based on phase (moon rises ~50 minutes later each day)
-	baseRiseHour := 6.0 + (age * 0.8) // Rough approximation
+	// Rough approximation
+	baseRiseHour := 6.0 + (age * 0.8)
 	baseSetHour := 18.0 + (age * 0.8)
 
 	// Normalize to 24-hour format

@@ -3,6 +3,7 @@
 <main class="container">
 <div class="admin-header"><h1>🌍 GeoIP Settings</h1></div>
 <form id="geoipSettingsForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
 <section class="card"><h2>GeoIP Configuration</h2>
 <label><input type="checkbox" name="enabled"> Enable GeoIP</label>
 <label>Data Directory: <input type="text" name="dir" value="/var/lib/weather/geoip"></label>

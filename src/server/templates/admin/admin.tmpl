@@ -545,6 +545,7 @@
                 title: 'Edit Primary Admin Account',
                 body: `
                     <form id="editAdminForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="editAdminEmail">Email Address</label>
                             <input type="email" id="editAdminEmail" class="form-input" required value="${currentEmail}" placeholder="admin@example.com">
@@ -639,6 +640,7 @@
                 title: 'Add New User',
                 body: `
                     <form id="addUserForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="newUsername">Username</label>
                             <input type="text" id="newUsername" class="form-input" required placeholder="username" pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="50">
@@ -1010,6 +1012,7 @@
                 title: 'Generate API Token',
                 body: `
                     <form id="generateTokenForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="tokenUser">Select User</label>
                             <select id="tokenUser" class="form-input" required>
@@ -1156,6 +1159,7 @@
                 title: 'Clear Audit Logs',
                 body: `
                     <form id="clearLogsForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                         <div class="form-group">
                             <label for="logDays">Delete logs older than (days)</label>
                             <input type="number" id="logDays" class="form-input" value="30" min="1" required>

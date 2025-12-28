@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -16,13 +16,13 @@ import (
 
 // EarthquakeHandler handles earthquake-related routes
 type EarthquakeHandler struct {
-	earthquakeService *services.EarthquakeService
-	weatherService    *services.WeatherService
-	locationEnhancer  *services.LocationEnhancer
+	earthquakeService *service.EarthquakeService
+	weatherService    *service.WeatherService
+	locationEnhancer  *service.LocationEnhancer
 }
 
 // NewEarthquakeHandler creates a new earthquake handler
-func NewEarthquakeHandler(es *services.EarthquakeService, ws *services.WeatherService, le *services.LocationEnhancer) *EarthquakeHandler {
+func NewEarthquakeHandler(es *service.EarthquakeService, ws *service.WeatherService, le *service.LocationEnhancer) *EarthquakeHandler {
 	return &EarthquakeHandler{
 		earthquakeService: es,
 		weatherService:    ws,
@@ -246,7 +246,7 @@ func (h *EarthquakeHandler) HandleEarthquakeDetail(c *gin.Context) {
 	}
 
 	// Find earthquake by ID
-	var earthquake *services.Earthquake
+	var earthquake *service.Earthquake
 	for i := range earthquakes.Earthquakes {
 		if earthquakes.Earthquakes[i].ID == earthquakeID {
 			earthquake = &earthquakes.Earthquakes[i]
@@ -332,7 +332,7 @@ func (h *EarthquakeHandler) serveASCIIEarthquakes(c *gin.Context, locationPath s
 	numberStr := c.DefaultQuery("number", "0")
 	number, _ := strconv.Atoi(numberStr)
 
-	var earthquakes *services.EarthquakeCollection
+	var earthquakes *service.EarthquakeCollection
 	var err error
 	var locationName string
 
@@ -379,7 +379,7 @@ func (h *EarthquakeHandler) serveASCIIEarthquakes(c *gin.Context, locationPath s
 }
 
 // renderASCIIEarthquakes formats earthquake data as ASCII text
-func (h *EarthquakeHandler) renderASCIIEarthquakes(earthquakes *services.EarthquakeCollection, location, feedType string) string {
+func (h *EarthquakeHandler) renderASCIIEarthquakes(earthquakes *service.EarthquakeCollection, location, feedType string) string {
 	var sb strings.Builder
 
 	// ANSI color codes (Dracula theme)
@@ -476,7 +476,7 @@ func truncateString(s string, maxLen int) string {
 }
 
 // renderASCIIEarthquakeDetail renders detailed information for a single earthquake
-func (h *EarthquakeHandler) renderASCIIEarthquakeDetail(eq *services.Earthquake) string {
+func (h *EarthquakeHandler) renderASCIIEarthquakeDetail(eq *service.Earthquake) string {
 	var sb strings.Builder
 
 	// ANSI color codes (Dracula theme)

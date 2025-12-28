@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"net/http"
@@ -11,11 +11,11 @@ import (
 
 // UserNotificationHandlers handles user notification endpoints
 type UserNotificationHandlers struct {
-	NotificationService *services.NotificationService
+	NotificationService *service.NotificationService
 }
 
 // NewUserNotificationHandlers creates a new user notification handlers instance
-func NewUserNotificationHandlers(notificationService *services.NotificationService) *UserNotificationHandlers {
+func NewUserNotificationHandlers(notificationService *service.NotificationService) *UserNotificationHandlers {
 	return &UserNotificationHandlers{
 		NotificationService: notificationService,
 	}

@@ -12,7 +12,8 @@ import (
 type Domain struct {
 	ID           int64     `json:"id"`
 	Domain       string    `json:"domain"`
-	UserID       *int64    `json:"user_id,omitempty"`   // Null for server default
+	// Null for server default
+	UserID       *int64    `json:"user_id,omitempty"`
 	IsVerified   bool      `json:"is_verified"`
 	IsActive     bool      `json:"is_active"`
 	SSLEnabled   bool      `json:"ssl_enabled"`

@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"crypto/rand"
@@ -16,7 +16,8 @@ type AdminInviteService struct {
 	InviteModel *models.AdminInviteModel
 	AdminModel  *models.AdminModel
 	// EmailService  *EmailService // For sending invite emails (TODO: implement EmailService)
-	BaseURL string // Application base URL for invite links
+	// Application base URL for invite links
+	BaseURL string
 }
 
 // NewAdminInviteService creates a new admin invite service
@@ -108,7 +109,8 @@ func (s *AdminInviteService) AcceptInvite(token, username, password string) (*mo
 	// Import password hashing utility
 	// Note: In production, this would use the Argon2id implementation from utils/password.go
 	// For this placeholder, we're assuming the password is pre-hashed
-	passwordHash := password // In real implementation: utils.HashPassword(password)
+	// In real implementation: utils.HashPassword(password)
+	passwordHash := password
 
 	// Create admin account
 	admin, err := s.AdminModel.Create(username, invite.InvitedEmail, passwordHash, false)

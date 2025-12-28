@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -14,14 +14,14 @@ import (
 // NotificationChannelHandler handles notification channel management
 type NotificationChannelHandler struct {
 	DB             *sql.DB
-	ChannelManager *services.ChannelManager
-	SMTP           *services.SMTPService
+	ChannelManager *service.ChannelManager
+	SMTP           *service.SMTPService
 }
 
 // NewNotificationChannelHandler creates a new notification channel handler
 func NewNotificationChannelHandler(db *sql.DB) *NotificationChannelHandler {
-	cm := services.NewChannelManager(db)
-	smtp := services.NewSMTPService(db)
+	cm := service.NewChannelManager(db)
+	smtp := service.NewSMTPService(db)
 
 	return &NotificationChannelHandler{
 		DB:             db,
@@ -264,15 +264,15 @@ func (h *NotificationChannelHandler) GetChannelStats(c *gin.Context) {
 func (h *NotificationChannelHandler) ListSMTPProviders(c *gin.Context) {
 	category := c.Query("category")
 
-	var providers []services.SMTPProviderPreset
+	var providers []service.SMTPProviderPreset
 	if category != "" {
-		providers = services.ListProvidersByCategory(category)
+		providers = service.ListProvidersByCategory(category)
 	} else {
-		providers = services.ListProviderPresets()
+		providers = service.ListProviderPresets()
 	}
 
 	// Group by category
-	grouped := make(map[string][]services.SMTPProviderPreset)
+	grouped := make(map[string][]service.SMTPProviderPreset)
 	for _, p := range providers {
 		grouped[p.Category] = append(grouped[p.Category], p)
 	}
@@ -317,7 +317,7 @@ func (h *NotificationChannelHandler) InitializeChannels(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Channels initialized successfully",
-		"total":   len(services.ChannelRegistry),
+		"total":   len(service.ChannelRegistry),
 	})
 }
 
@@ -325,15 +325,15 @@ func (h *NotificationChannelHandler) InitializeChannels(c *gin.Context) {
 func (h *NotificationChannelHandler) GetChannelDefinitions(c *gin.Context) {
 	category := c.Query("category")
 
-	var definitions []services.ChannelDefinition
-	for _, def := range services.ChannelRegistry {
+	var definitions []service.ChannelDefinition
+	for _, def := range service.ChannelRegistry {
 		if category == "" || def.Category == category {
 			definitions = append(definitions, def)
 		}
 	}
 
 	// Group by category
-	grouped := make(map[string][]services.ChannelDefinition)
+	grouped := make(map[string][]service.ChannelDefinition)
 	for _, def := range definitions {
 		grouped[def.Category] = append(grouped[def.Category], def)
 	}

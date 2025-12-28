@@ -18,7 +18,8 @@ import (
 // CRITICAL: NEVER use bcrypt - MUST use Argon2id with these exact parameters
 const (
 	argon2Time    = 3
-	argon2Memory  = 64 * 1024 // 64 MB
+	// 64 MB
+	argon2Memory  = 64 * 1024
 	argon2Threads = 4
 	argon2KeyLen  = 32
 	saltLength    = 16
@@ -30,7 +31,8 @@ type Admin struct {
 	ID           int64      `json:"id"`
 	Username     string     `json:"username"`
 	Email        string     `json:"email"`
-	PasswordHash string     `json:"-"` // Never expose password hash
+	// Never expose password hash
+	PasswordHash string     `json:"-"`
 	APIToken     string     `json:"api_token,omitempty"`
 	IsSuperAdmin bool       `json:"is_super_admin"`
 	IsActive     bool       `json:"is_active"`
@@ -44,7 +46,8 @@ type Admin struct {
 type AdminSession struct {
 	ID         int64     `json:"id"`
 	AdminID    int64     `json:"admin_id"`
-	SessionID  string    `json:"session_id"` // Secure random token
+	// Secure random token
+	SessionID  string    `json:"session_id"`
 	IPAddress  string    `json:"ip_address"`
 	UserAgent  string    `json:"user_agent"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -56,7 +59,8 @@ type AdminSession struct {
 type AdminPreferences struct {
 	ID                   int64     `json:"id"`
 	AdminID              int64     `json:"admin_id"`
-	Theme                string    `json:"theme"` // light, dark, auto
+	// light, dark, auto
+	Theme                string    `json:"theme"`
 	Language             string    `json:"language"`
 	Timezone             string    `json:"timezone"`
 	NotificationsEnabled bool      `json:"notifications_enabled"`
@@ -69,7 +73,8 @@ type AdminPreferences struct {
 type AdminNotification struct {
 	ID        int64     `json:"id"`
 	AdminID   int64     `json:"admin_id"`
-	Type      string    `json:"type"` // success, info, warning, error, security
+	// success, info, warning, error, security
+	Type      string    `json:"type"`
 	Title     string    `json:"title"`
 	Message   string    `json:"message"`
 	Link      string    `json:"link,omitempty"`
@@ -85,7 +90,8 @@ type AdminInvite struct {
 	InvitedEmail string     `json:"invited_email"`
 	InvitedBy    int64      `json:"invited_by"`
 	CreatedAt    time.Time  `json:"created_at"`
-	ExpiresAt    time.Time  `json:"expires_at"` // MUST be 15 minutes from creation
+	// MUST be 15 minutes from creation
+	ExpiresAt    time.Time  `json:"expires_at"`
 	UsedBy       *int64     `json:"used_by,omitempty"`
 	UsedAt       *time.Time `json:"used_at,omitempty"`
 }

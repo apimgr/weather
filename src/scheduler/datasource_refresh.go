@@ -10,18 +10,18 @@ import (
 
 // DataSourceRefresher holds references to all data sources that need periodic updates
 type DataSourceRefresher struct {
-	locationEnhancer *services.LocationEnhancer
-	zipcodeService   *services.ZipcodeService
-	airportService   *services.AirportService
-	geoipService     *services.GeoIPService
+	locationEnhancer *service.LocationEnhancer
+	zipcodeService   *service.ZipcodeService
+	airportService   *service.AirportService
+	geoipService     *service.GeoIPService
 }
 
 // NewDataSourceRefresher creates a new data source refresher
 func NewDataSourceRefresher(
-	locationEnhancer *services.LocationEnhancer,
-	zipcodeService *services.ZipcodeService,
-	airportService *services.AirportService,
-	geoipService *services.GeoIPService,
+	locationEnhancer *service.LocationEnhancer,
+	zipcodeService *service.ZipcodeService,
+	airportService *service.AirportService,
+	geoipService *service.GeoIPService,
 ) *DataSourceRefresher {
 	return &DataSourceRefresher{
 		locationEnhancer: locationEnhancer,

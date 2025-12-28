@@ -17,7 +17,8 @@ import (
 type RecoveryKey struct {
 	ID        int       `json:"id"`
 	UserID    int       `json:"user_id"`
-	KeyHash   string    `json:"-"` // Never expose hash
+	// Never expose hash
+	KeyHash   string    `json:"-"`
 	UsedAt    *time.Time `json:"used_at,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }

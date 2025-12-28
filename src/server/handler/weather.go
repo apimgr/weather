@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -17,14 +17,14 @@ import (
 
 // WeatherHandler handles main weather routes (/, /:location)
 type WeatherHandler struct {
-	weatherService   *services.WeatherService
-	locationEnhancer *services.LocationEnhancer
+	weatherService   *service.WeatherService
+	locationEnhancer *service.LocationEnhancer
 	asciiRenderer    *renderers.ASCIIRenderer
 	oneLineRenderer  *renderers.OneLineRenderer
 }
 
 // NewWeatherHandler creates a new weather handler
-func NewWeatherHandler(ws *services.WeatherService, le *services.LocationEnhancer) *WeatherHandler {
+func NewWeatherHandler(ws *service.WeatherService, le *service.LocationEnhancer) *WeatherHandler {
 	return &WeatherHandler{
 		weatherService:   ws,
 		locationEnhancer: le,
@@ -53,7 +53,7 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 		return
 	}
 
-	var coords *services.Coordinates
+	var coords *service.Coordinates
 	var err error
 
 	// Priority 1: Check for saved location in cookies
@@ -68,7 +68,7 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 					}
 
 					// Create coordinates from cookies
-					coords = &services.Coordinates{
+					coords = &service.Coordinates{
 						Latitude:  lat,
 						Longitude: lon,
 						Name:      locationName,
@@ -95,7 +95,7 @@ func (h *WeatherHandler) HandleRoot(c *gin.Context) {
 	coords, err = h.weatherService.ParseAndResolveLocation(tempEnhanced.ShortName, clientIP)
 	if err != nil {
 		// Fall back to original coords if parsing fails
-		coords = &services.Coordinates{
+		coords = &service.Coordinates{
 			Latitude:    tempEnhanced.Latitude,
 			Longitude:   tempEnhanced.Longitude,
 			Name:        tempEnhanced.Name,
@@ -191,7 +191,7 @@ func (h *WeatherHandler) HandleLocation(c *gin.Context) {
 		coords, err = h.weatherService.ParseAndResolveLocation(tempEnhanced.ShortName, clientIP)
 		if err != nil {
 			// Fall back to original coords if re-parsing fails
-			coords = &services.Coordinates{
+			coords = &service.Coordinates{
 				Latitude:    tempEnhanced.Latitude,
 				Longitude:   tempEnhanced.Longitude,
 				Name:        tempEnhanced.Name,
@@ -239,7 +239,7 @@ func (h *WeatherHandler) isGPSCoordinates(location string) bool {
 }
 
 // serveHTMLWeather renders HTML weather page for browsers
-func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coordinates, units string, locationInput string) {
+func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *service.Coordinates, units string, locationInput string) {
 	// Get current weather and forecast
 	current, err := h.weatherService.GetCurrentWeather(location.Latitude, location.Longitude, units)
 	if err != nil {
@@ -254,7 +254,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 	forecast, err := h.weatherService.GetForecast(location.Latitude, location.Longitude, 16, units)
 	if err != nil {
 		// Non-fatal, continue without forecast
-		forecast = &services.Forecast{Days: []services.ForecastDay{}}
+		forecast = &service.Forecast{Days: []service.ForecastDay{}}
 	}
 
 	// Enrich current weather with icon and description
@@ -350,18 +350,18 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *services.Coo
 }
 
 // serveASCIIWeather renders ASCII weather for console clients
-func (h *WeatherHandler) serveASCIIWeather(c *gin.Context, location *services.Coordinates, units string, params *utils.RenderParams, locationInput string) {
+func (h *WeatherHandler) serveASCIIWeather(c *gin.Context, location *service.Coordinates, units string, params *utils.RenderParams, locationInput string) {
 	// Check if we need forecast (formats 1-4 don't need forecast)
 	needsForecast := params.Format == 0
 
-	var current *services.CurrentWeather
-	var forecast *services.Forecast
+	var current *service.CurrentWeather
+	var forecast *service.Forecast
 	var err error
 
 	if needsForecast {
 		// Fetch both current and forecast in parallel
-		currentChan := make(chan *services.CurrentWeather)
-		forecastChan := make(chan *services.Forecast)
+		currentChan := make(chan *service.CurrentWeather)
+		forecastChan := make(chan *service.Forecast)
 		errChan := make(chan error, 2)
 
 		go func() {
@@ -601,16 +601,20 @@ func (h *WeatherHandler) handleMoonRequest(c *gin.Context, locationInput string)
 		// Get units from query parameter
 		units := c.DefaultQuery("units", "imperial")
 
+		// Use default coordinates (can be enhanced to parse location)
+		// Default to New York
+		lat, lon := 40.7128, -74.0060
+		
+		moonService := service.NewMoonService()
+		moonData := moonService.Calculate(lat, lon, time.Now())
+
 		// Serve moon HTML page
 		c.HTML(http.StatusOK, "pages/moon.tmpl", gin.H{
 			"Title":    "Moon Phase",
 			"Location": location,
 			"Units":    units,
 			"HostInfo": hostInfo,
-			// Calculate moon data using MoonService
-			moonService := services.NewMoonService()
-			moonData := moonService.Calculate(weather.Coordinates.Latitude, weather.Coordinates.Longitude, time.Now())
-			"MoonData": nil,
+			"MoonData": moonData,
 		})
 		return
 	}

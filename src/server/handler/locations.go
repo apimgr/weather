@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"database/sql"
@@ -16,8 +16,8 @@ import (
 
 type LocationHandler struct {
 	DB               *sql.DB
-	WeatherService   *services.WeatherService
-	LocationEnhancer *services.LocationEnhancer
+	WeatherService   *service.WeatherService
+	LocationEnhancer *service.LocationEnhancer
 }
 
 // ListLocations returns all saved locations for the current user
@@ -479,7 +479,7 @@ func (h *LocationHandler) searchCities(query string, limit int) []gin.H {
 }
 
 // formatCityResult formats a city for the search results
-func (h *LocationHandler) formatCityResult(city services.City) gin.H {
+func (h *LocationHandler) formatCityResult(city service.City) gin.H {
 	// Format the display name
 	displayParts := []string{city.Name}
 	if city.State != "" {

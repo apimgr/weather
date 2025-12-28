@@ -35,7 +35,8 @@ func GetSwaggerUI() gin.HandlerFunc {
 		// Theme support note: ginSwagger.Config doesn't support custom CSS injection via API
 		// Theme will be applied via HTML template customization in future version
 		// For now, using default Swagger UI theme
-		_ = theme // Acknowledge theme variable to avoid unused error
+		// Acknowledge theme variable to avoid unused error
+		_ = theme
 
 		// Serve Swagger UI
 		ginSwagger.CustomWrapHandler(&config, swaggerFiles.Handler)(c)

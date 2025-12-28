@@ -425,6 +425,7 @@
                 </h2>
 
                 <form id="templateForm">
+    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                     <div class="form-group">
                         <label for="templateSubject">Subject Line</label>
                         <input type="text" id="templateSubject" placeholder="Email subject line" aria-required="true">

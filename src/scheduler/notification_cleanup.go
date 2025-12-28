@@ -9,11 +9,11 @@ import (
 
 // NotificationCleaner holds references to the notification service for cleanup tasks
 type NotificationCleaner struct {
-	notificationService *services.NotificationService
+	notificationService *service.NotificationService
 }
 
 // NewNotificationCleaner creates a new notification cleaner
-func NewNotificationCleaner(notificationService *services.NotificationService) *NotificationCleaner {
+func NewNotificationCleaner(notificationService *service.NotificationService) *NotificationCleaner {
 	return &NotificationCleaner{
 		notificationService: notificationService,
 	}
