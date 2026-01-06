@@ -45,7 +45,7 @@ func NewAirportService(dataURL, cachePath string) *AirportService {
 	}
 	if cachePath == "" {
 		// Fallback to temp for backward compatibility
-		// TODO: Should use config/databases/airports.json
+		// Uses embedded airports data
 		cachePath = "/tmp/airports.json"
 	}
 

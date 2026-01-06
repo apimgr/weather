@@ -42,8 +42,8 @@ func Execute() error {
 		return nil
 	}
 
-	// Load config
-	config, err := LoadConfig()
+	// Load config (from specified path or default)
+	config, err := LoadConfigFromPath(*configFlag)
 	if err != nil {
 		return err
 	}

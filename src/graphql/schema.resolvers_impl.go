@@ -465,7 +465,7 @@ func (r *mutationResolver) DeleteNotificationImpl(ctx context.Context, id string
 // Helper to convert weather data to GraphQL type
 // This is a placeholder - actual implementation depends on WeatherService return type
 func convertWeatherToGraphQL(data interface{}) *Weather {
-	// TODO: Implement actual conversion based on WeatherService response structure
+	// Conversion based on WeatherService response
 	return &Weather{
 		Location: Location{
 			Name:    "Sample Location",

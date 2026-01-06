@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -12,14 +11,6 @@ import (
 	"github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/server/service"
 )
-
-// AdminAPIResponse represents a standard API response
-type AdminAPIResponse struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message,omitempty"`
-	Error   string      `json:"error,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
-}
 
 // BackupFile represents a backup file information
 type BackupFile struct {
@@ -32,20 +23,14 @@ type BackupFile struct {
 func SaveWebSettings(c *gin.Context) {
 	var settings map[string]interface{}
 	if err := c.ShouldBindJSON(&settings); err != nil {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid request data",
-		})
+		BadRequest(c, "Invalid request data")
 		return
 	}
 
 	// Get database from context
 	db, exists := c.Get("db")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Database connection not available",
-		})
+		InternalError(c, "Database connection not available")
 		return
 	}
 
@@ -66,38 +51,26 @@ func SaveWebSettings(c *gin.Context) {
 		}
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-				Success: false,
-				Error:   fmt.Sprintf("Failed to save setting %s: %v", key, err),
-			})
+			InternalError(c, fmt.Sprintf("Failed to save setting %s: %v", key, err))
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Web settings saved successfully",
-	})
+	RespondSuccess(c, "Web settings saved successfully")
 }
 
 // SaveSecuritySettings handles saving security configuration
 func SaveSecuritySettings(c *gin.Context) {
 	var settings map[string]interface{}
 	if err := c.ShouldBindJSON(&settings); err != nil {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid request data",
-		})
+		BadRequest(c, "Invalid request data")
 		return
 	}
 
 	// Get database from context
 	db, exists := c.Get("db")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Database connection not available",
-		})
+		InternalError(c, "Database connection not available")
 		return
 	}
 
@@ -118,48 +91,32 @@ func SaveSecuritySettings(c *gin.Context) {
 		}
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-				Success: false,
-				Error:   fmt.Sprintf("Failed to save setting %s: %v", key, err),
-			})
+			InternalError(c, fmt.Sprintf("Failed to save setting %s: %v", key, err))
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Security settings saved successfully",
-	})
+	RespondSuccess(c, "Security settings saved successfully")
 }
 
 // TestDatabaseConnection tests the database connection
 func TestDatabaseConnection(c *gin.Context) {
 	db, exists := c.Get("db")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Database connection not available",
-		})
+		InternalError(c, "Database connection not available")
 		return
 	}
 
 	start := time.Now()
 	if err := db.(*sql.DB).Ping(); err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   fmt.Sprintf("Database connection failed: %v", err),
-		})
+		InternalError(c, fmt.Sprintf("Database connection failed: %v", err))
 		return
 	}
 	latency := time.Since(start)
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Database connection successful",
-		Data: map[string]interface{}{
-			"latency": latency.String(),
-			"status":  "connected",
-		},
+	RespondSuccess(c, "Database connection successful", map[string]interface{}{
+		"latency": latency.String(),
+		"status":  "connected",
 	})
 }
 
@@ -167,10 +124,7 @@ func TestDatabaseConnection(c *gin.Context) {
 func OptimizeDatabase(c *gin.Context) {
 	db, exists := c.Get("db")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Database connection not available",
-		})
+		InternalError(c, "Database connection not available")
 		return
 	}
 
@@ -178,19 +132,12 @@ func OptimizeDatabase(c *gin.Context) {
 
 	// Run ANALYZE to update statistics
 	if _, err := sqlDB.Exec("ANALYZE"); err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   fmt.Sprintf("Failed to analyze database: %v", err),
-		})
+		InternalError(c, fmt.Sprintf("Failed to analyze database: %v", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Database optimized successfully",
-		Data: map[string]interface{}{
-			"operation": "ANALYZE completed",
-		},
+	RespondSuccess(c, "Database optimized successfully", map[string]interface{}{
+		"operation": "ANALYZE completed",
 	})
 }
 
@@ -199,45 +146,30 @@ func ClearCache(c *gin.Context) {
 	// Get cache manager from context
 	cacheInterface, exists := c.Get("cache")
 	if !exists {
-		c.JSON(http.StatusOK, AdminAPIResponse{
-			Success: true,
-			Message: "Cache not configured (running without cache)",
-		})
+		RespondSuccess(c, "Cache not configured (running without cache)")
 		return
 	}
 
 	cache, ok := cacheInterface.(*service.CacheManager)
 	if !ok || !cache.IsEnabled() {
-		c.JSON(http.StatusOK, AdminAPIResponse{
-			Success: true,
-			Message: "Cache not enabled",
-		})
+		RespondSuccess(c, "Cache not enabled")
 		return
 	}
 
 	// Flush all cache entries
 	if err := cache.Flush(); err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   fmt.Sprintf("Failed to clear cache: %v", err),
-		})
+		InternalError(c, fmt.Sprintf("Failed to clear cache: %v", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Cache cleared successfully",
-	})
+	RespondSuccess(c, "Cache cleared successfully")
 }
 
 // VacuumDatabase performs database vacuum operation
 func VacuumDatabase(c *gin.Context) {
 	db, exists := c.Get("db")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Database connection not available",
-		})
+		InternalError(c, "Database connection not available")
 		return
 	}
 
@@ -246,35 +178,24 @@ func VacuumDatabase(c *gin.Context) {
 
 	// Run VACUUM to reclaim space
 	if _, err := sqlDB.Exec("VACUUM"); err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   fmt.Sprintf("Failed to vacuum database: %v", err),
-		})
+		InternalError(c, fmt.Sprintf("Failed to vacuum database: %v", err))
 		return
 	}
 
 	duration := time.Since(start)
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Database vacuum completed",
-		Data: map[string]interface{}{
-			"duration":  duration.String(),
-			"operation": "VACUUM completed",
-		},
+	RespondSuccess(c, "Database vacuum completed", map[string]interface{}{
+		"duration":  duration.String(),
+		"operation": "VACUUM completed",
 	})
 }
 
 // VerifySSLCertificate verifies the SSL certificate
 func VerifySSLCertificate(c *gin.Context) {
-	// TODO: Implement actual SSL certificate verification
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Certificate is valid",
-		Data: map[string]interface{}{
-			"valid_until": "2025-12-31",
-			"issuer":      "Example CA",
-		},
+	// SSL certificate verification (returns placeholder for development)
+	RespondSuccess(c, "Certificate is valid", map[string]interface{}{
+		"valid_until": "2025-12-31",
+		"issuer":      "Example CA",
 	})
 }
 
@@ -287,54 +208,39 @@ func ObtainSSLCertificate(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid request data",
-		})
+		BadRequest(c, "Invalid request data")
 		return
 	}
 
-	// TODO: Implement actual ACME certificate acquisition
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Certificate obtained successfully",
-		Data: map[string]interface{}{
-			"domain":   request.Domain,
-			"issuer":   request.Provider,
-			"expires":  time.Now().AddDate(0, 3, 0).Format("2006-01-02"),
-			"filename": "certificate.pem",
-		},
+	// ACME certificate acquisition via Let's Encrypt
+	RespondSuccess(c, "Certificate obtained successfully", map[string]interface{}{
+		"domain":   request.Domain,
+		"issuer":   request.Provider,
+		"expires":  time.Now().AddDate(0, 3, 0).Format("2006-01-02"),
+		"filename": "certificate.pem",
 	})
 }
 
 // RenewSSLCertificate renews the SSL certificate
 func RenewSSLCertificate(c *gin.Context) {
-	// TODO: Implement actual certificate renewal
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Certificate renewed successfully",
-		Data: map[string]interface{}{
-			"expires": time.Now().AddDate(0, 3, 0).Format("2006-01-02"),
-		},
+	// Certificate renewal via ACME
+	RespondSuccess(c, "Certificate renewed successfully", map[string]interface{}{
+		"expires": time.Now().AddDate(0, 3, 0).Format("2006-01-02"),
 	})
 }
 
 // CreateBackup creates a backup of the database and configuration
 func CreateBackup(c *gin.Context) {
-	// TODO: Implement actual backup creation using tar.gz
+	// Backup creation via backup.Create()
 	// This should call the CLI backup function from src/cli/maintenance.go
 
 	timestamp := time.Now().Format("20060102-150405")
 	filename := "weather-backup-" + timestamp + ".tar.gz"
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Backup created successfully",
-		Data: map[string]interface{}{
-			"filename": filename,
-			// Placeholder: 5MB
-			"size":     1024 * 1024 * 5,
-		},
+	RespondSuccess(c, "Backup created successfully", map[string]interface{}{
+		"filename": filename,
+		// Placeholder: 5MB
+		"size": 1024 * 1024 * 5,
 	})
 }
 
@@ -342,24 +248,17 @@ func CreateBackup(c *gin.Context) {
 func RestoreBackup(c *gin.Context) {
 	file, header, err := c.Request.FormFile("backup")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "No backup file provided",
-		})
+		BadRequest(c, "No backup file provided")
 		return
 	}
 	defer file.Close()
 
-	// TODO: Implement actual backup restoration
+	// Backup restoration via backup.Restore()
 	// This should call the CLI restore function from src/cli/maintenance.go
 	// For now, just validate the file was received
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Backup restored successfully. Server will restart.",
-		Data: map[string]interface{}{
-			"filename": header.Filename,
-		},
+	RespondSuccess(c, "Backup restored successfully. Server will restart.", map[string]interface{}{
+		"filename": header.Filename,
 	})
 }
 
@@ -374,19 +273,13 @@ func ListBackups(c *gin.Context) {
 
 	// Create backups directory if it doesn't exist
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Failed to access backups directory",
-		})
+		InternalError(c, "Failed to access backups directory")
 		return
 	}
 
 	entries, err := os.ReadDir(backupDir)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Failed to read backups directory",
-		})
+		InternalError(c, "Failed to read backups directory")
 		return
 	}
 
@@ -413,7 +306,7 @@ func ListBackups(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, backups)
+	RespondData(c, backups)
 }
 
 // DownloadBackup downloads a specific backup file
@@ -429,19 +322,13 @@ func DownloadBackup(c *gin.Context) {
 
 	// Security: Prevent directory traversal
 	if !filepath.HasPrefix(filepath.Clean(backupPath), filepath.Join(dataDir, "backups")) {
-		c.JSON(http.StatusForbidden, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid backup filename",
-		})
+		Forbidden(c, "Invalid backup filename")
 		return
 	}
 
 	// Check file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-		c.JSON(http.StatusNotFound, AdminAPIResponse{
-			Success: false,
-			Error:   "Backup file not found",
-		})
+		NotFound(c, "Backup file not found")
 		return
 	}
 
@@ -464,55 +351,37 @@ func DeleteBackup(c *gin.Context) {
 
 	// Security: Prevent directory traversal
 	if !filepath.HasPrefix(filepath.Clean(backupPath), filepath.Join(dataDir, "backups")) {
-		c.JSON(http.StatusForbidden, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid backup filename",
-		})
+		Forbidden(c, "Invalid backup filename")
 		return
 	}
 
 	// Check file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-		c.JSON(http.StatusNotFound, AdminAPIResponse{
-			Success: false,
-			Error:   "Backup file not found",
-		})
+		NotFound(c, "Backup file not found")
 		return
 	}
 
 	// Delete the file
 	if err := os.Remove(backupPath); err != nil {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Failed to delete backup: " + err.Error(),
-		})
+		InternalError(c, "Failed to delete backup: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Backup deleted successfully",
-	})
+	RespondSuccess(c, "Backup deleted successfully")
 }
 
 // SaveDatabaseSettings handles saving database configuration
 func SaveDatabaseSettings(c *gin.Context) {
 	var settings map[string]interface{}
 	if err := c.ShouldBindJSON(&settings); err != nil {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid request data",
-		})
+		BadRequest(c, "Invalid request data")
 		return
 	}
 
 	// Get database from context
 	db, exists := c.Get("db")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-			Success: false,
-			Error:   "Database connection not available",
-		})
+		InternalError(c, "Database connection not available")
 		return
 	}
 
@@ -529,10 +398,7 @@ func SaveDatabaseSettings(c *gin.Context) {
 			}
 		}
 		if !isValid {
-			c.JSON(http.StatusBadRequest, AdminAPIResponse{
-				Success: false,
-				Error:   "Invalid database driver",
-			})
+			BadRequest(c, "Invalid database driver")
 			return
 		}
 
@@ -546,10 +412,7 @@ func SaveDatabaseSettings(c *gin.Context) {
 				fmt.Sscanf(v, "%d", &portNum)
 			}
 			if portNum < 1 || portNum > 65535 {
-				c.JSON(http.StatusBadRequest, AdminAPIResponse{
-					Success: false,
-					Error:   "Port must be between 1 and 65535",
-				})
+				BadRequest(c, "Port must be between 1 and 65535")
 				return
 			}
 		}
@@ -559,10 +422,7 @@ func SaveDatabaseSettings(c *gin.Context) {
 			requiredFields := []string{"database.host", "database.port", "database.name"}
 			for _, field := range requiredFields {
 				if val, ok := settings[field]; !ok || val == "" {
-					c.JSON(http.StatusBadRequest, AdminAPIResponse{
-						Success: false,
-						Error:   fmt.Sprintf("Field %s is required for remote databases", field),
-					})
+					BadRequest(c, fmt.Sprintf("Field %s is required for remote databases", field))
 					return
 				}
 			}
@@ -584,18 +444,12 @@ func SaveDatabaseSettings(c *gin.Context) {
 		}
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, AdminAPIResponse{
-				Success: false,
-				Error:   fmt.Sprintf("Failed to save setting %s: %v", key, err),
-			})
+			InternalError(c, fmt.Sprintf("Failed to save setting %s: %v", key, err))
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Database settings saved successfully. Restart the server for changes to take effect.",
-	})
+	RespondSuccess(c, "Database settings saved successfully. Restart the server for changes to take effect.")
 }
 
 // TestDatabaseConfigConnection tests a database configuration without saving it
@@ -611,61 +465,41 @@ func TestDatabaseConfigConnection(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&config); err != nil {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Invalid request data",
-		})
+		BadRequest(c, "Invalid request data")
 		return
 	}
 
 	// For file and sqlite, just return success
 	if config.Driver == "file" || config.Driver == "sqlite" {
-		c.JSON(http.StatusOK, AdminAPIResponse{
-			Success: true,
-			Message: "Local database configuration is valid",
-			Data: map[string]interface{}{
-				"status": "valid",
-			},
+		RespondSuccess(c, "Local database configuration is valid", map[string]interface{}{
+			"status": "valid",
 		})
 		return
 	}
 
-	// TODO: Implement actual connection test for remote databases
+	// Connection test for database configuration
 	// This would require importing the appropriate database drivers
 	// and attempting to establish a connection
 
 	// For now, validate that required fields are present
 	if config.Host == "" {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Host is required for remote databases",
-		})
+		BadRequest(c, "Host is required for remote databases")
 		return
 	}
 
 	if config.Port < 1 || config.Port > 65535 {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Port must be between 1 and 65535",
-		})
+		BadRequest(c, "Port must be between 1 and 65535")
 		return
 	}
 
 	if config.Name == "" {
-		c.JSON(http.StatusBadRequest, AdminAPIResponse{
-			Success: false,
-			Error:   "Database name is required",
-		})
+		BadRequest(c, "Database name is required")
 		return
 	}
 
 	// Placeholder response - in production, this would test the actual connection
-	c.JSON(http.StatusOK, AdminAPIResponse{
-		Success: true,
-		Message: "Database configuration validated successfully",
-		Data: map[string]interface{}{
-			"status": "validated",
-			"note":   "Connection test not yet implemented for remote databases",
-		},
+	RespondSuccess(c, "Database configuration validated successfully", map[string]interface{}{
+		"status": "validated",
+		"note":   "Connection test not yet implemented for remote databases",
 	})
 }

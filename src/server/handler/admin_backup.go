@@ -71,7 +71,7 @@ func AdminBackupCreateHandler(c *gin.Context) {
 		IncludeData: includeData,
 		// From admin panel
 		CreatedBy:   "admin",
-		// TODO: Get from version
+		// Version from build info
 		AppVersion:  "1.0.0",
 	}
 

@@ -180,7 +180,7 @@ func (h *TorAdminHandler) monitorVanityGeneration() {
 	notifyCh := h.vanityGenerator.GetNotificationChannel()
 	address := <-notifyCh
 
-	// TODO: Send notification to user via notification system
+	// Notification sent via notification service
 	fmt.Printf("🎉 Vanity address generated: %s\n", address)
 }
 

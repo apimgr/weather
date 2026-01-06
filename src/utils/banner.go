@@ -6,6 +6,7 @@ import (
 )
 
 // DisplayFirstRunBanner displays the startup banner with setup information
+// AI.md: Host-specific values detected at runtime
 func DisplayFirstRunBanner(port int, setupToken string, isDockerized bool, torOnion string) {
 	hostname, _ := os.Hostname()
 	if hostname == "" {
@@ -15,7 +16,10 @@ func DisplayFirstRunBanner(port int, setupToken string, isDockerized bool, torOn
 	localURL := fmt.Sprintf("http://%s:%d", hostname, port)
 	dockerURL := ""
 	if isDockerized {
-		dockerURL = fmt.Sprintf("http://172.17.0.1:%d", port)
+		// AI.md: Detect Docker gateway at runtime, not hardcoded
+		if gwIP := GetDockerGatewayIP(); gwIP != "" {
+			dockerURL = fmt.Sprintf("http://%s:%d", gwIP, port)
+		}
 	}
 
 	// Banner width
@@ -49,6 +53,7 @@ func DisplayFirstRunBanner(port int, setupToken string, isDockerized bool, torOn
 }
 
 // DisplayNormalBanner displays the normal startup banner (not first run)
+// AI.md: Host-specific values detected at runtime
 func DisplayNormalBanner(version, buildDate string, port int, isDockerized bool, torOnion string) {
 	hostname, _ := os.Hostname()
 	if hostname == "" {
@@ -58,7 +63,10 @@ func DisplayNormalBanner(version, buildDate string, port int, isDockerized bool,
 	localURL := fmt.Sprintf("http://%s:%d", hostname, port)
 	dockerURL := ""
 	if isDockerized {
-		dockerURL = fmt.Sprintf("http://172.17.0.1:%d", port)
+		// AI.md: Detect Docker gateway at runtime, not hardcoded
+		if gwIP := GetDockerGatewayIP(); gwIP != "" {
+			dockerURL = fmt.Sprintf("http://%s:%d", gwIP, port)
+		}
 	}
 
 	width := 65

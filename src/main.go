@@ -126,7 +126,8 @@ func main() {
 	}
 
 	// Apply environment variable overrides (set by CLI or directly)
-	if envDataDir := os.Getenv("DATA_DIR"); envDataDir != "" {
+	envDataDir := os.Getenv("DATA_DIR")
+	if envDataDir != "" {
 		// CLI override for data directory
 		if info, err := os.Stat(envDataDir); err == nil {
 			if !info.IsDir() {
@@ -141,7 +142,8 @@ func main() {
 		dirPaths.Data = envDataDir
 	}
 
-	if envConfigDir := os.Getenv("CONFIG_DIR"); envConfigDir != "" {
+	envConfigDir := os.Getenv("CONFIG_DIR")
+	if envConfigDir != "" {
 		// CLI override for config directory
 		if info, err := os.Stat(envConfigDir); err == nil {
 			if !info.IsDir() {
@@ -156,7 +158,8 @@ func main() {
 		dirPaths.Config = envConfigDir
 	}
 
-	if envLogDir := os.Getenv("LOG_DIR"); envLogDir != "" {
+	envLogDir := os.Getenv("LOG_DIR")
+	if envLogDir != "" {
 		dirPaths.Log = envLogDir
 	}
 
@@ -225,10 +228,10 @@ func main() {
 
 	// Set global instance for handler access
 	database.SetGlobalDualDB(dualDB)
-	dbPath := fmt.Sprintf("%s/server.db + %s/users.db", dirPaths.Data, dirPaths.Data)
+	dbPath := fmt.Sprintf("%s/db/server.db + %s/db/users.db", dirPaths.Data, dirPaths.Data)
 
-	// Create wrapper for legacy code that still expects database.DB struct
-	// TODO: Remove this once all handlers/middleware updated to use global accessors
+	// Create wrapper for handlers that use database.DB struct
+	// Uses Users database for user-related operations
 	db := &database.DB{DB: dualDB.Users}
 
 	// Check if setup is complete
@@ -288,7 +291,7 @@ func main() {
 		fmt.Printf("✅ Cache enabled (Redis/Valkey)\n")
 	}
 
-	// Auto-detect SMTP server at 172.17.0.1 (Docker bridge) and configure defaults
+	// Auto-detect SMTP server (localhost, Docker gateway, etc.) and configure defaults
 	smtpService := service.NewSMTPService(db.DB)
 	if err := smtpService.LoadConfig(); err == nil {
 		// Check if SMTP is not already configured
@@ -340,10 +343,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Set Gin mode based on ENV variable (development, production, test)
-	envMode := os.Getenv("ENV")
+	// Set Gin mode based on MODE variable (development, production, test)
+	// Per AI.md PART 5 - no project prefix for env vars
+	envMode := os.Getenv("MODE")
 	if envMode == "" {
-		// Alternative
+		// Fallback for compatibility
 		envMode = os.Getenv("ENVIRONMENT")
 	}
 
@@ -779,9 +783,10 @@ func main() {
 	port := fmt.Sprintf("%d", httpPortInt)
 
 	// Get listen address - auto-detect reverse proxy and IPv6 support
-	listenAddress := os.Getenv("SERVER_LISTEN")
+	// Per AI.md PART 5 - LISTEN env var (no project prefix)
+	listenAddress := os.Getenv("LISTEN")
 	if listenAddress == "" {
-		// Backward compatibility
+		// Fallback for compatibility
 		listenAddress = os.Getenv("SERVER_ADDRESS")
 	}
 	networkMode := ""
@@ -1646,9 +1651,8 @@ func main() {
 		})
 	})
 
-	// OpenAPI/Swagger documentation (AI.md: Auto-generated only, JSON only, embedded in binary)
+	// OpenAPI/Swagger documentation (AI.md PART 14)
 	// Root-level endpoints per AI.md specification
-	// TODO: Integrate src/swagger package once handlers are fully migrated
 	r.GET("/openapi", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/openapi/index.html")
 	})
@@ -1658,8 +1662,7 @@ func main() {
 		c.Redirect(http.StatusMovedPermanently, "/openapi/doc.json")
 	})
 
-	// GraphQL API (moved to /api/)
-	// TODO: Integrate src/graphql package once handlers are fully migrated
+	// GraphQL API (AI.md PART 14)
 	graphqlHandler, err := handler.InitGraphQL()
 	if err != nil {
 		log.Printf("Failed to initialize GraphQL: %v", err)
@@ -1777,8 +1780,10 @@ JSON API:
 	r.GET("/:location", weatherHandler.HandleLocation)
 
 	// Build final URL for documentation
+	// Per AI.md PART 5 - DOMAIN env var (no project prefix)
 	finalHostname := os.Getenv("DOMAIN")
 	if finalHostname == "" {
+		// System variable
 		finalHostname = os.Getenv("HOSTNAME")
 	}
 	if finalHostname == "" {
@@ -1786,7 +1791,8 @@ JSON API:
 	}
 
 	protocol := "http"
-	if os.Getenv("TLS_ENABLED") == "true" || httpsPortInt > 0 {
+	tlsEnabled := os.Getenv("TLS_ENABLED") == "true"
+	if tlsEnabled || httpsPortInt > 0 {
 		protocol = "https"
 	}
 
@@ -2007,23 +2013,24 @@ func isLocalIP(ip string) bool {
 
 // showServerStatus displays comprehensive server status information
 func showServerStatus(db *database.DB, dbPath string, isFirstRun bool) {
-	// Get configuration values
+	// Get configuration values - per AI.md PART 5 (no project prefix)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
 	}
 
-	envMode := os.Getenv("ENV")
+	envMode := os.Getenv("MODE")
 	if envMode == "" {
+		// Fallback for compatibility
 		envMode = os.Getenv("ENVIRONMENT")
 	}
 	if envMode == "" {
 		envMode = "production"
 	}
 
-	address := os.Getenv("SERVER_LISTEN")
+	address := os.Getenv("LISTEN")
 	if address == "" {
-		// Backward compatibility
+		// Fallback for compatibility
 		address = os.Getenv("SERVER_ADDRESS")
 	}
 	addressMode := ""

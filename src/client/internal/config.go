@@ -18,7 +18,8 @@ type Config struct {
 	Output  string `yaml:"output"`
 	// Request timeout in seconds
 	Timeout int    `yaml:"timeout"`
-	NoColor bool   `yaml:"no_color"`// Disable colored output
+	// Disable colored output
+	NoColor bool `yaml:"no_color"`
 }
 
 // DefaultConfig returns the default configuration
@@ -44,11 +45,24 @@ func ConfigPath() (string, error) {
 	return filepath.Join(configDir, "cli.yml"), nil
 }
 
-// LoadConfig loads the configuration from the config file
+// LoadConfig loads the configuration from the default config file
 func LoadConfig() (*Config, error) {
-	configPath, err := ConfigPath()
-	if err != nil {
-		return nil, NewConfigError(fmt.Sprintf("failed to get config path: %v", err))
+	return LoadConfigFromPath("")
+}
+
+// LoadConfigFromPath loads configuration from a specific path
+// If path is empty, uses the default config path
+func LoadConfigFromPath(path string) (*Config, error) {
+	var configPath string
+	var err error
+
+	if path != "" {
+		configPath = path
+	} else {
+		configPath, err = ConfigPath()
+		if err != nil {
+			return nil, NewConfigError(fmt.Sprintf("failed to get config path: %v", err))
+		}
 	}
 
 	// If config doesn't exist, return default

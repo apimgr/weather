@@ -1,60 +1,28 @@
-# Development/Testing Docker Compose Configuration
-# Uses /tmp for ephemeral storage
-# External port: 64181:80 (random unused port in 64xxx range)
+# weather - Test compose (DEBUG=true enabled)
+# nginx proxy address - http://172.17.0.1:64581
 
-name: weather
+name: weather-test
 
 services:
   weather:
-    image: weather:dev
+    image: ghcr.io/apimgr/weather:latest
     container_name: weather-test
     restart: "no"
-
     environment:
       - MODE=development
       - DEBUG=true
       - TZ=America/New_York
-      - CONFIG_DIR=/config
-      - DATA_DIR=/data
-      - LOG_DIR=/data/logs
-      - PORT=80
-
-    volumes:
-      - /tmp/weather/rootfs/config/weather:/config
-      - /tmp/weather/rootfs/data/weather:/data
-
     ports:
-      - "64181:80"
-
+      - "64581:80"
+    volumes:
+      # TEMP DIR WORKFLOW: ./rootfs/ resolves to $TEMP_DIR/rootfs/
+      # NEVER run from project directory - always use temp dir workflow
+      - ./rootfs/config:/config
+      - ./rootfs/data:/data
     networks:
-      - weather
-
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/weather", "--healthcheck"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-
-  # Optional: PostgreSQL for testing
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: weather-postgres-test
-  #   restart: "no"
-  #
-  #   environment:
-  #     POSTGRES_DB: weather_test
-  #     POSTGRES_USER: weather
-  #     POSTGRES_PASSWORD: testpass
-  #
-  #   volumes:
-  #     - /tmp/weather/rootfs/db/postgres:/var/lib/postgresql/data
-  #
-  #   networks:
-  #     - weather
+      - weather-test
 
 networks:
-  weather:
-    name: weather
+  weather-test:
+    name: weather-test
     external: false
-    driver: bridge

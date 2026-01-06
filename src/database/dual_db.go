@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -21,13 +22,20 @@ type DualDB struct {
 }
 
 // InitDualDB initializes both server and users databases
+// AI.md: Database paths must be {data_dir}/db/server.db and {data_dir}/db/users.db
 func InitDualDB(dataDir string) (*DualDB, error) {
 	if dataDir == "" {
 		dataDir = "./data"
 	}
 
-	serverDBPath := filepath.Join(dataDir, "server.db")
-	usersDBPath := filepath.Join(dataDir, "users.db")
+	// AI.md PART 24: Databases go in {data_dir}/db/ subdirectory
+	dbDir := filepath.Join(dataDir, "db")
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create database directory: %w", err)
+	}
+
+	serverDBPath := filepath.Join(dbDir, "server.db")
+	usersDBPath := filepath.Join(dbDir, "users.db")
 
 	log.Printf("Initializing dual databases:")
 	log.Printf("  Server DB: %s", serverDBPath)

@@ -168,28 +168,41 @@ func GetClientIP(c *gin.Context) string {
 }
 
 // IsLocalhost checks if an IP is localhost or private
+// AI.md: Host-specific values detected at runtime
 func IsLocalhost(ip string) bool {
-	localIPs := []string{
-		"127.0.0.1",
-		"::1",
-		"localhost",
-		// Docker bridge
-		"172.17.0.1",
-		"172.18.0.1",
-		"172.19.0.1",
+	// Standard localhost addresses
+	if ip == "127.0.0.1" || ip == "::1" || ip == "localhost" {
+		return true
 	}
 
-	for _, localIP := range localIPs {
-		if ip == localIP {
+	// Check Docker bridge IPs (detected at runtime)
+	for _, dockerIP := range GetDockerBridgeIPs() {
+		if ip == dockerIP {
 			return true
 		}
 	}
 
-	// Check for private IP ranges
-	if len(ip) > 3 {
-		if ip[:4] == "10." || ip[:8] == "192.168." {
-			return true
-		}
+	// Check for private IP ranges (RFC 1918)
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return false
+	}
+	ip4 := parsedIP.To4()
+	if ip4 == nil {
+		return false
+	}
+
+	// 10.0.0.0/8
+	if ip4[0] == 10 {
+		return true
+	}
+	// 172.16.0.0/12
+	if ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31 {
+		return true
+	}
+	// 192.168.0.0/16
+	if ip4[0] == 192 && ip4[1] == 168 {
+		return true
 	}
 
 	return false
@@ -210,4 +223,104 @@ func IsBrowser(c *gin.Context) bool {
 
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && findSubstring(s, substr)
+}
+
+// IsDockerized checks if running inside a Docker container
+// AI.md: Detect container environment at runtime
+func IsDockerized() bool {
+	// Check for Docker-specific files
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	// Check cgroup for docker
+	if data, err := os.ReadFile("/proc/1/cgroup"); err == nil {
+		return strings.Contains(string(data), "docker") ||
+			strings.Contains(string(data), "containerd")
+	}
+	return false
+}
+
+// GetDockerGatewayIP detects the Docker gateway IP at runtime
+// AI.md: Host-specific values MUST be detected at runtime, NEVER hardcoded
+func GetDockerGatewayIP() string {
+	// Try to get default gateway from routing table
+	// This works in most Docker environments
+	data, err := os.ReadFile("/proc/net/route")
+	if err != nil {
+		return ""
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines[1:] { // Skip header
+		fields := strings.Fields(line)
+		if len(fields) >= 3 {
+			// Default route has destination 00000000
+			if fields[1] == "00000000" {
+				// Gateway is in hex, need to parse it
+				gateway := fields[2]
+				if len(gateway) == 8 {
+					// Parse little-endian hex IP
+					ip := parseHexIP(gateway)
+					if ip != "" {
+						return ip
+					}
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// parseHexIP converts a hex route IP to dotted decimal
+func parseHexIP(hex string) string {
+	if len(hex) != 8 {
+		return ""
+	}
+	// Linux stores IPs in little-endian hex
+	var bytes [4]byte
+	for i := 0; i < 4; i++ {
+		var b int
+		fmt.Sscanf(hex[i*2:i*2+2], "%02X", &b)
+		bytes[3-i] = byte(b)
+	}
+	return fmt.Sprintf("%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3])
+}
+
+// GetDockerBridgeIPs returns common Docker bridge IPs for localhost checking
+// AI.md: These are detected ranges, not hardcoded specific IPs
+func GetDockerBridgeIPs() []string {
+	ips := []string{}
+
+	// Try to detect actual gateway first
+	if gw := GetDockerGatewayIP(); gw != "" {
+		ips = append(ips, gw)
+	}
+
+	// Also check common Docker network ranges (172.16.0.0/12)
+	// These are fallbacks for environments where route parsing fails
+	addrs, err := net.InterfaceAddrs()
+	if err == nil {
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok {
+				ip := ipnet.IP.To4()
+				if ip != nil && ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31 {
+					// This is a Docker bridge network range
+					// The gateway is typically .1
+					gwIP := fmt.Sprintf("%d.%d.%d.1", ip[0], ip[1], ip[2])
+					found := false
+					for _, existing := range ips {
+						if existing == gwIP {
+							found = true
+							break
+						}
+					}
+					if !found {
+						ips = append(ips, gwIP)
+					}
+				}
+			}
+		}
+	}
+
+	return ips
 }

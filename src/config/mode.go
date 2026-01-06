@@ -39,20 +39,9 @@ type ModeConfig struct {
 }
 
 // DetectMode determines the application mode from config and environment
-// Priority: 1. Config file, 2. Environment variable, 3. Default (production)
+// Priority per AI.md PART 5: 1. CLI/Env vars, 2. Config file, 3. Default (production)
 func DetectMode(configMode string) Mode {
-	// Check config file value first
-	if configMode != "" {
-		mode := strings.ToLower(strings.TrimSpace(configMode))
-		if mode == "development" || mode == "dev" {
-			return ModeDevelopment
-		}
-		if mode == "production" || mode == "prod" {
-			return ModeProduction
-		}
-	}
-
-	// Check environment variable
+	// Priority 1: Check environment variables FIRST (CLI flags set these)
 	envMode := os.Getenv("MODE")
 	if envMode == "" {
 		envMode = os.Getenv("APP_MODE")
@@ -71,7 +60,18 @@ func DetectMode(configMode string) Mode {
 		}
 	}
 
-	// Default to production for security (TEMPLATE.md requirement)
+	// Priority 2: Check config file value
+	if configMode != "" {
+		mode := strings.ToLower(strings.TrimSpace(configMode))
+		if mode == "development" || mode == "dev" {
+			return ModeDevelopment
+		}
+		if mode == "production" || mode == "prod" {
+			return ModeProduction
+		}
+	}
+
+	// Priority 3: Default to production for security (AI.md requirement)
 	return ModeProduction
 }
 

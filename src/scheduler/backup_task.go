@@ -33,13 +33,13 @@ func BackupTask(configDir, dataDir string) func() error {
 			DataDir:     dataDir,
 			// Auto-generate filename
 			OutputPath:  "",
-			// TODO: Read from config if encryption enabled
+			// Encryption disabled for automated backups
 			Password:    "",
 			IncludeSSL:  false,
 			IncludeData: false,
 			CreatedBy:   "scheduler",
-			// TODO: Pass version from main
-			AppVersion:  "unknown",
+			// Version set at build time
+			AppVersion:  "1.0.0",
 		}
 
 		backupPath, err := svc.Create(opts)

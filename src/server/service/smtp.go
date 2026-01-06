@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/utils"
 )
 
 // SMTPConfig represents SMTP configuration
@@ -173,22 +174,36 @@ func (s *SMTPService) LoadConfig() error {
 }
 
 // AutoDetect attempts to auto-detect SMTP server
+// AI.md: Host-specific values detected at runtime
 func (s *SMTPService) AutoDetect() (bool, error) {
-	// Try common SMTP servers
+	// Build list of SMTP servers to try
 	candidates := []struct {
 		host string
 		port string
 	}{
 		{"localhost", "25"},
 		{"127.0.0.1", "25"},
-		// Docker bridge
-		{"172.17.0.1", "25"},
+	}
+
+	// AI.md: Detect Docker gateway at runtime, not hardcoded
+	if gwIP := utils.GetDockerGatewayIP(); gwIP != "" {
+		candidates = append(candidates, struct {
+			host string
+			port string
+		}{gwIP, "25"})
+	}
+
+	// Add remaining candidates
+	candidates = append(candidates, []struct {
+		host string
+		port string
+	}{
 		// Docker Desktop
 		{"host.docker.internal", "25"},
 		{"localhost", "587"},
 		// Mailhog/MailDev
 		{"localhost", "1025"},
-	}
+	}...)
 
 	for _, candidate := range candidates {
 		conn, err := net.DialTimeout("tcp", candidate.host+":"+candidate.port, 2*time.Second)

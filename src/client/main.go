@@ -1,10 +1,12 @@
+// Package main provides the CLI client entry point
+// AI.md: All source code in src/ directory
 package main
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/apimgr/weather/src/client"
+	client "github.com/apimgr/weather/src/client/internal"
 )
 
 var (

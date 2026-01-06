@@ -1,3 +1,6 @@
+# weather - Development compose (DEBUG commented)
+# nginx proxy address - http://172.17.0.1:64580
+
 name: weather-dev
 
 services:

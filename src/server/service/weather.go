@@ -1208,6 +1208,7 @@ func (ws *WeatherService) GetCoordinatesFromIP(ip string) (*Coordinates, error) 
 }
 
 // isLocalIP checks if IP is localhost or private (supports IPv4 and IPv6)
+// AI.md: Host-specific values detected at runtime
 func (ws *WeatherService) isLocalIP(ip string) bool {
 	// Parse IP address properly
 	parsedIP := net.ParseIP(ip)
@@ -1222,6 +1223,7 @@ func (ws *WeatherService) isLocalIP(ip string) bool {
 	}
 
 	// Check if private (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7, fe80::/10)
+	// This covers Docker bridge networks (172.17.0.0/16, etc.)
 	if parsedIP.IsPrivate() {
 		return true
 	}
@@ -1234,14 +1236,6 @@ func (ws *WeatherService) isLocalIP(ip string) bool {
 	// Check for unique local IPv6 (fc00::/7)
 	if len(parsedIP) == 16 && (parsedIP[0]&0xfe) == 0xfc {
 		return true
-	}
-
-	// Docker bridge IPs
-	dockerIPs := []string{"172.17.0.1", "172.18.0.1", "172.19.0.1"}
-	for _, dockerIP := range dockerIPs {
-		if ip == dockerIP {
-			return true
-		}
 	}
 
 	return false

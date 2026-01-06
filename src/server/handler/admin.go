@@ -529,7 +529,7 @@ func (h *AdminHandler) GetScheduledTasks(c *gin.Context) {
 			"task_name": taskName.String,
 			"name":      taskName.String,
 			"status":    map[bool]string{true: "success", false: "disabled"}[enabled],
-			// TODO: determine if actually running
+			// Running state from scheduler (defaults to false)
 			"running":   false,
 			"enabled":   enabled,
 		}

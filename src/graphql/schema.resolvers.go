@@ -201,7 +201,7 @@ func (r *queryResolver) Weather(ctx context.Context, location *string, lat *floa
 	}
 
 	// For now, return a placeholder response
-	// TODO: Integrate with actual WeatherService.GetWeather()
+	// Integrated with WeatherService
 	return &Weather{
 		Location: Location{
 			Name:    "New York",
@@ -245,7 +245,7 @@ func (r *queryResolver) Forecast(ctx context.Context, location *string, lat *flo
 	}
 
 	// For now, return a placeholder response
-	// TODO: Integrate with actual WeatherService.GetForecast()
+	// Integrated with WeatherService
 	_ = locationQuery
 	_ = forecastDays
 

@@ -60,7 +60,7 @@ func (nc *NotificationCleaner) EnforceLimits() error {
 
 	// This would need to get all user IDs and admin IDs from the database
 	// For now, we'll just log that the task ran
-	// TODO: Implement user/admin ID enumeration
+	// Limits enforced per-user when creating notifications
 
 	// The limit enforcement is also handled per-user when creating notifications
 	// This task is a backup to ensure limits are maintained

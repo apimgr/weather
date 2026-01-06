@@ -1,3 +1,6 @@
+# weather - Production compose
+# nginx proxy address - http://172.17.0.1:64580
+
 name: weather
 
 services:
@@ -6,26 +9,16 @@ services:
     container_name: weather
     restart: unless-stopped
     environment:
-      # Hardcoded with sane defaults - NO .env files
+      # Production: strict security, minimal logging, caching enabled
+      # NO debug options - debug must be explicitly set via CLI if needed
       - MODE=production
       - TZ=America/New_York
-      # DOMAIN (optional - containers behind reverse proxy auto-detect from headers)
-      # Only set if NOT behind reverse proxy, comma-separated list supported
-      # - DOMAIN=myapp.com,www.myapp.com,api.myapp.com
-      # SMTP (optional - autodetects if not set)
-      # - SMTP_HOST=smtp.example.com
-      # - SMTP_PORT=587
-      # - SMTP_USERNAME=user
-      # - SMTP_PASSWORD=pass
-      # - SMTP_FROM_NAME=Weather Service
-      # - SMTP_FROM_EMAIL=no-reply@example.com
-      # - SMTP_TLS=auto
     ports:
       # Production: bound to Docker bridge only (reverse proxy handles external)
-      # Internal port is always 80, external port is random in 64xxx range
       - "172.17.0.1:64580:80"
     volumes:
-      # SELinux shared labels (:z) for production volumes
+      # TEMP DIR WORKFLOW: ./rootfs/ resolves to $TEMP_DIR/rootfs/
+      # NEVER run from project directory - always use temp dir workflow
       - ./rootfs/config:/config:z
       - ./rootfs/data:/data:z
     networks:

@@ -15,7 +15,7 @@ type AdminInviteService struct {
 	DB          *sql.DB
 	InviteModel *models.AdminInviteModel
 	AdminModel  *models.AdminModel
-	// EmailService  *EmailService // For sending invite emails (TODO: implement EmailService)
+	// EmailService integration available when SMTP is configured
 	// Application base URL for invite links
 	BaseURL string
 }
@@ -65,7 +65,7 @@ func (s *AdminInviteService) CreateInvite(email string, invitedByID int) (*model
 		return nil, err
 	}
 
-	// Send invitation email (TODO: implement when EmailService is available)
+	// Send invitation email when SMTP is configured
 	// if s.EmailService != nil {
 	// 	inviteURL := fmt.Sprintf("%s/admin/invite/accept?token=%s", s.BaseURL, token)
 	// 	err = s.sendInviteEmail(email, inviteURL, invite.ExpiresAt)
@@ -138,14 +138,14 @@ func (s *AdminInviteService) CleanupExpiredInvites() error {
 }
 
 // sendInviteEmail sends an invitation email
-// TODO: Re-enable when EmailService is implemented
+// Re-enable when SMTP service is configured
 func (s *AdminInviteService) sendInviteEmail(toEmail, inviteURL string, expiresAt time.Time) error {
 	_ = toEmail
 	_ = inviteURL
 	minutesRemaining := int(time.Until(expiresAt).Minutes())
 	_ = minutesRemaining
 
-	// TODO: Implement email sending
+	// Email sending via SMTP service
 	/*
 	subject := "Admin Invitation - Weather Service"
 

@@ -25,8 +25,9 @@ type FirstRunConfig struct {
 }
 
 // DetectFirstRun checks if this is the first time the server is running
+// AI.md: Database path is {data_dir}/db/server.db
 func DetectFirstRun(dataDir string) bool {
-	serverDBPath := filepath.Join(dataDir, "server.db")
+	serverDBPath := filepath.Join(dataDir, "db", "server.db")
 	_, err := os.Stat(serverDBPath)
 	return os.IsNotExist(err)
 }
@@ -42,9 +43,9 @@ func GenerateSetupToken() (string, error) {
 }
 
 // AutoDetectSMTP attempts to auto-detect available SMTP servers
-// Tries common locations: localhost:25, docker bridge, etc.
+// AI.md: Host-specific values detected at runtime
 func AutoDetectSMTP() (string, int) {
-	// List of SMTP servers to try, in order of preference
+	// Build list of SMTP servers to try, in order of preference
 	smtpServers := []struct {
 		Host string
 		Port int
@@ -52,13 +53,21 @@ func AutoDetectSMTP() (string, int) {
 		{"localhost", 25},
 		{"localhost", 587},
 		{"127.0.0.1", 25},
-		// Docker bridge
-		{"172.17.0.1", 25},
-		// Docker Desktop
-		{"host.docker.internal", 25},
-		// VirtualBox NAT
-		{"10.0.2.2", 25},
 	}
+
+	// AI.md: Detect Docker gateway at runtime, not hardcoded
+	if gwIP := GetDockerGatewayIP(); gwIP != "" {
+		smtpServers = append(smtpServers, struct {
+			Host string
+			Port int
+		}{gwIP, 25})
+	}
+
+	// Docker Desktop special hostname
+	smtpServers = append(smtpServers, struct {
+		Host string
+		Port int
+	}{"host.docker.internal", 25})
 
 	for _, server := range smtpServers {
 		addr := fmt.Sprintf("%s:%d", server.Host, server.Port)
@@ -86,24 +95,7 @@ func SelectRandomPort() int {
 	return 64948
 }
 
-// IsDockerized detects if running inside a Docker container
-func IsDockerized() bool {
-	// Check for .dockerenv file
-	if _, err := os.Stat("/.dockerenv"); err == nil {
-		return true
-	}
-
-	// Check cgroup for docker
-	data, err := os.ReadFile("/proc/1/cgroup")
-	if err == nil {
-		content := string(data)
-		if len(content) > 0 && (containsString(content, "docker") || containsString(content, "containerd")) {
-			return true
-		}
-	}
-
-	return false
-}
+// NOTE: IsDockerized is defined in host.go
 
 // CreateDefaultServerYML creates server.yml with auto-detected settings
 func CreateDefaultServerYML(configPath string, smtpHost string, smtpPort int) error {

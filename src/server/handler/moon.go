@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,6 +15,7 @@ import (
 type MoonHandler struct {
 	weatherService   *service.WeatherService
 	locationEnhancer *service.LocationEnhancer
+	moonService      *service.MoonService
 }
 
 // NewMoonHandler creates a new moon handler
@@ -21,6 +23,7 @@ func NewMoonHandler(ws *service.WeatherService, le *service.LocationEnhancer) *M
 	return &MoonHandler{
 		weatherService:   ws,
 		locationEnhancer: le,
+		moonService:      service.NewMoonService(),
 	}
 }
 
@@ -87,8 +90,9 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 	// Enhance location
 	enhanced := h.locationEnhancer.EnhanceLocation(coords)
 
-	// TODO: Implement real moon phase calculation
-	// For now, return placeholder data matching the web interface
+	// Calculate moon data using astronomical algorithms
+	moon := h.moonService.Calculate(enhanced.Latitude, enhanced.Longitude, time.Now())
+
 	moonData := gin.H{
 		"location": gin.H{
 			"name":        enhanced.Name,
@@ -101,12 +105,16 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 			"countryCode": enhanced.CountryCode,
 		},
 		"moon": gin.H{
-			"phase":        "First Quarter",
-			"illumination": 50.0,
-			"icon":         "🌓",
-			"age":          7.0,
-			"rise":         "12:00",
-			"set":          "00:00",
+			"phase":        moon.Phase,
+			"illumination": moon.Illumination,
+			"icon":         moon.Icon,
+			"age":          moon.Age,
+			"rise":         moon.Rise,
+			"set":          moon.Set,
+			"nextNewMoon":  moon.NextNewMoon,
+			"nextFullMoon": moon.NextFullMoon,
+			"distance_km":  moon.Distance,
+			"angular_size": moon.AngularSize,
 		},
 		"sun": gin.H{
 			"sunrise":   "06:30",

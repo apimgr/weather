@@ -68,7 +68,9 @@ func (c *CLI) Parse(args []string) error {
 		mode           = c.flags.String("mode", "", "Application mode: production or development")
 		configDir      = c.flags.String("config", "", "Configuration directory")
 		dataDir        = c.flags.String("data", "", "Data directory")
+		cacheDir       = c.flags.String("cache", "", "Cache directory")
 		logDir         = c.flags.String("log", "", "Log directory")
+		backupDir      = c.flags.String("backup", "", "Backup directory")
 		pidFile        = c.flags.String("pid", "", "PID file path")
 		address        = c.flags.String("address", "", "Listen address")
 		port           = c.flags.String("port", "", "Server port (deprecated, use --address)")
@@ -143,8 +145,14 @@ func (c *CLI) Parse(args []string) error {
 	if *dataDir != "" {
 		os.Setenv("DATA_DIR", *dataDir)
 	}
+	if *cacheDir != "" {
+		os.Setenv("CACHE_DIR", *cacheDir)
+	}
 	if *logDir != "" {
 		os.Setenv("LOG_DIR", *logDir)
+	}
+	if *backupDir != "" {
+		os.Setenv("BACKUP_DIR", *backupDir)
 	}
 	if *pidFile != "" {
 		os.Setenv("PID_FILE", *pidFile)
@@ -172,11 +180,13 @@ func (c *CLI) ShowHelp() {
 	fmt.Println("  -h, --help                      Show this help message")
 	fmt.Println("  -v, --version                   Show version information")
 	fmt.Println("  --mode {production|development} Set application mode (default: production)")
-	fmt.Println("  --config {configdir}            Configuration directory")
-	fmt.Println("  --data {datadir}                Data directory")
-	fmt.Println("  --log {logdir}                  Log directory")
-	fmt.Println("  --pid {pidfile}                 PID file path")
-	fmt.Println("  --address {listen}              Listen address (default: auto-detect :: or 0.0.0.0)")
+	fmt.Println("  --config {path}                 Configuration directory")
+	fmt.Println("  --data {path}                   Data directory")
+	fmt.Println("  --cache {path}                  Cache directory")
+	fmt.Println("  --log {path}                    Log directory")
+	fmt.Println("  --backup {path}                 Backup directory")
+	fmt.Println("  --pid {path}                    PID file path")
+	fmt.Println("  --address {addr}                Listen address (default: auto-detect :: or 0.0.0.0)")
 	fmt.Println("  --port {port}                   Server port (deprecated, use --address)")
 	fmt.Println("  --debug                         Enable debug mode (NEVER in production!)")
 	fmt.Println("  --daemon                        Daemonize (detach from terminal, Unix only)")
@@ -220,7 +230,9 @@ func (c *CLI) ShowHelp() {
 	fmt.Println("  LISTEN            Listen address")
 	fmt.Println("  CONFIG_DIR        Configuration directory")
 	fmt.Println("  DATA_DIR          Data directory")
+	fmt.Println("  CACHE_DIR         Cache directory")
 	fmt.Println("  LOG_DIR           Log directory")
+	fmt.Println("  BACKUP_DIR        Backup directory")
 	fmt.Println("  PID_FILE          PID file path")
 	fmt.Println("  DAEMON            Daemonize (true/false)")
 	fmt.Println("  DATABASE_DRIVER   Database driver (file, sqlite, postgres, etc.)")
