@@ -6,87 +6,6 @@
     <title>Health Status - {{.server.app_name}}</title>
     <link rel="stylesheet" href="/static/css/dracula.css">
     <link rel="stylesheet" href="/static/css/template-overrides.css">
-    <style>
-        .health-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        .health-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .health-status {
-            font-size: 48px;
-            margin: 20px 0;
-        }
-        .status-healthy { color: #50fa7b; }
-        .status-degraded { color: #ffb86c; }
-        .status-unhealthy { color: #ff5555; }
-        .health-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .health-card {
-            background: #282a36;
-            border: 1px solid #44475a;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        .health-card h3 {
-            margin: 0 0 15px 0;
-            color: #bd93f9;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .check-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .check-ok { background: #50fa7b; color: #282a36; }
-        .check-warning { background: #ffb86c; color: #282a36; }
-        .check-error { background: #ff5555; color: #f8f8f2; }
-        .check-inactive { background: #6272a4; color: #f8f8f2; }
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #44475a;
-        }
-        .metric:last-child {
-            border-bottom: none;
-        }
-        .metric-label {
-            color: #8be9fd;
-        }
-        .metric-value {
-            color: #f8f8f2;
-            font-weight: bold;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: #44475a;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .progress-fill {
-            height: 100%;
-            transition: width 0.3s;
-        }
-        .progress-ok { background: #50fa7b; }
-        .progress-warning { background: #ffb86c; }
-        .progress-critical { background: #ff5555; }
-    </style>
 </head>
 <body>
     <div class="health-container">
@@ -234,9 +153,9 @@
         </div>
 
         <!-- Location Databases -->
-        <div class="health-card" style="margin-bottom: 20px;">
+        <div class="health-card mb-3">
             <h3>🗺️ Location Databases</h3>
-            <div class="health-grid" style="margin-top: 15px;">
+            <div class="health-grid mt-3">
                 <div>
                     <div class="metric">
                         <span class="metric-label">Countries</span>
@@ -309,8 +228,8 @@
         </div>
         {{end}}
 
-        <div style="text-align: center; margin-top: 40px; color: #6272a4;">
-            <p><a href="/" style="color: #8be9fd;">← Back to Home</a></p>
+        <div class="back-link">
+            <p><a href="/">← Back to Home</a></p>
         </div>
     </div>
 </body>

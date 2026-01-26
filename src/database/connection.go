@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -13,6 +12,7 @@ import (
 )
 
 // DatabaseConfig holds database connection configuration
+// AI.md PART 10: Connection pooling required
 type DatabaseConfig struct {
 	// sqlite, postgres, mysql, mssql, mongodb
 	Type     string
@@ -24,6 +24,8 @@ type DatabaseConfig struct {
 	// For PostgreSQL
 	SSLMode  string
 	Options  map[string]string
+	// Connection pool settings per AI.md PART 10
+	Pool     PoolConfig
 }
 
 // InitDBWithConfig initializes database connection with explicit configuration
@@ -71,13 +73,16 @@ func InitDBWithConfig(config *DatabaseConfig) (*DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Test connection with timeout
-	db.SetConnMaxLifetime(time.Minute * 3)
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(5)
+	// Apply connection pool settings per AI.md PART 10
+	// Use configured pool settings or defaults
+	poolCfg := config.Pool
+	if poolCfg.MaxOpen == 0 {
+		poolCfg = DefaultPoolConfig()
+	}
+	ApplyPoolConfig(db, poolCfg)
 
-	// Test connection
-	if err := db.Ping(); err != nil {
+	// Test connection with timeout per AI.md PART 10
+	if err := PingWithTimeout(db); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}

@@ -1,855 +1,374 @@
 {{define "admin/admin-ssl.tmpl"}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.title}}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .breadcrumb {
-            color: #95a5a6;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .breadcrumb a {
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            background: white;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .nav-link:hover {
-            background: #3498db;
-            color: white;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-
-        .alert.show {
-            display: block;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .card h2 {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-expiring {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-expired {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status-none {
-            background: #e2e3e5;
-            color: #383d41;
-        }
-
-        .info-grid {
-            display: grid;
-            gap: 0.75rem;
-            margin: 1rem 0;
-        }
-
-        .info-row {
-            display: grid;
-            grid-template-columns: 140px 1fr;
-            gap: 1rem;
-        }
-
-        .info-label {
-            font-weight: 500;
-            color: #555;
-        }
-
-        .info-value {
-            color: #333;
-            word-break: break-all;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #555;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 0.95rem;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-
-        .form-group small {
-            display: block;
-            margin-top: 0.25rem;
-            color: #666;
-            font-size: 0.85rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #229954;
-        }
-
-        .btn-warning {
-            background: #f39c12;
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #e67e22;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #3498db;
-            transition: width 0.3s ease;
-        }
-
-        .progress-fill.success {
-            background: #27ae60;
-        }
-
-        .progress-fill.warning {
-            background: #f39c12;
-        }
-
-        .progress-fill.danger {
-            background: #e74c3c;
-        }
-
-        .cert-chain {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 1rem;
-            margin: 1rem 0;
-        }
-
-        .cert-item {
-            padding: 0.75rem;
-            background: white;
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
-            border-left: 4px solid #3498db;
-        }
-
-        .cert-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .cert-subject {
-            font-weight: 500;
-            color: #2c3e50;
-        }
-
-        .cert-issuer {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 0.25rem;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 2rem;
-            margin: 1.5rem 0;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #dee2e6;
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -1.5rem;
-            top: 0.25rem;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: white;
-            border: 2px solid #3498db;
-        }
-
-        .timeline-item.completed::before {
-            background: #27ae60;
-            border-color: #27ae60;
-        }
-
-        .timeline-item.failed::before {
-            background: #e74c3c;
-            border-color: #e74c3c;
-        }
-
-        .timeline-title {
-            font-weight: 500;
-            color: #2c3e50;
-        }
-
-        .timeline-time {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .code-block {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 1rem;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-            font-size: 0.85rem;
-            margin: 1rem 0;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .renewal-schedule {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-        }
-
-        .schedule-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .schedule-item:last-child {
-            border-bottom: none;
-        }
-
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .info-row {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🔒 SSL/TLS Certificate Management</h1>
-        <div class="breadcrumb">
-            <a href="/admin">Admin</a> /
-            <span>SSL/TLS</span>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="nav-links">
-            <a href="/admin" class="nav-link">← Dashboard</a>
-            <a href="/admin/security" class="nav-link">Security Settings</a>
-        </div>
-
-        <div class="alert alert-success" id="successAlert" role="alert"></div>
-        <div class="alert alert-error" id="errorAlert" role="alert"></div>
-        <div class="alert alert-warning" id="warningAlert" role="alert"></div>
-        <div class="alert alert-info" id="infoAlert" role="alert"></div>
-
-        <div class="grid">
-            <!-- Certificate Status Card -->
-            <div class="card">
-                <h2>📜 Certificate Status</h2>
-
-                <div id="certStatus">
-                    <div style="text-align: center; padding: 2rem; color: #666;">
-                        <div class="loading"></div>
-                        <p style="margin-top: 1rem;">Loading certificate information...</p>
-                    </div>
+{{template "head" .}}
+{{template "admin_header" .}}
+{{template "admin_nav" .}}
+
+<main class="container p-4">
+    <h1>🔒 SSL/TLS Certificate Management</h1>
+    <p class="text-comment mb-4">Manage your SSL certificates and auto-renewal settings</p>
+
+    <div class="grid-2 gap-lg">
+        <!-- Certificate Status Card -->
+        <section class="card p-4">
+            <h2 class="section-title">📜 Certificate Status</h2>
+
+            <div id="certStatus">
+                <div class="text-center p-4 text-comment">
+                    <div class="loading"></div>
+                    <p class="mt-3">Loading certificate information...</p>
+                </div>
+            </div>
+
+            <div class="flex gap-sm mt-3">
+                <button class="btn btn-primary" id="refreshBtn" aria-label="Refresh certificate status">
+                    🔄 Refresh
+                </button>
+                <button class="btn btn-success" id="verifyBtn" aria-label="Verify certificate">
+                    ✓ Verify Certificate
+                </button>
+            </div>
+        </section>
+
+        <!-- Let's Encrypt Card -->
+        <section class="card p-4">
+            <h2 class="section-title">🌐 Let's Encrypt</h2>
+
+            <form id="letsEncryptForm">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+                <div class="form-group">
+                    <label for="domain" class="form-label">Domain Name</label>
+                    <input type="text" id="domain" class="form-input" placeholder="example.com" required aria-required="true">
+                    <small class="form-help">Primary domain for the certificate</small>
                 </div>
 
-                <div class="btn-group" style="margin-top: 1.5rem;">
-                    <button class="btn btn-primary" id="refreshBtn" aria-label="Refresh certificate status">
-                        🔄 Refresh
+                <div class="form-group">
+                    <label for="email" class="form-label">Contact Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="admin@example.com" required aria-required="true">
+                    <small class="form-help">For renewal and security notices</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="altNames" class="form-label">Alternative Names (Optional)</label>
+                    <textarea id="altNames" class="form-textarea" rows="3" placeholder="www.example.com&#10;api.example.com"></textarea>
+                    <small class="form-help">One domain per line</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="agreeToS" required>
+                        <span>I agree to the Let's Encrypt Terms of Service</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-sm">
+                    <button type="submit" class="btn btn-success" id="obtainBtn">
+                        🔐 Obtain Certificate
                     </button>
-                    <button class="btn btn-success" id="verifyBtn" aria-label="Verify certificate">
-                        ✓ Verify Certificate
+                    <button type="button" class="btn btn-warning" id="renewBtn">
+                        🔄 Renew Certificate
+                    </button>
+                </div>
+            </form>
+
+            <div id="obtainProgress" class="d-none mt-3">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="progressText" class="text-center text-comment mt-1"></p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Renewal Settings Card -->
+    <section class="card p-4 mt-4">
+        <h2 class="section-title">⚙️ Auto-Renewal Settings</h2>
+
+        <div class="grid-2 gap-lg">
+            <div>
+                <div class="form-group">
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="autoRenewal" checked>
+                        <span>Enable automatic renewal</span>
+                    </label>
+                    <small class="form-help">Automatically renew certificates 30 days before expiry</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="renewalDays" class="form-label">Renewal Threshold (days)</label>
+                    <input type="number" id="renewalDays" class="form-input" value="30" min="1" max="60">
+                    <small class="form-help">Renew when certificate expires in this many days</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="emailNotifications" checked>
+                        <span>Email notifications for renewals</span>
+                    </label>
+                </div>
+
+                <button class="btn btn-primary" id="saveSettingsBtn">💾 Save Settings</button>
+            </div>
+
+            <div class="renewal-schedule">
+                <h3 class="subsection-title">Renewal Schedule</h3>
+                <div id="renewalSchedule">
+                    <div class="schedule-item">
+                        <span>Next check:</span>
+                        <span id="nextCheck">-</span>
+                    </div>
+                    <div class="schedule-item">
+                        <span>Next renewal:</span>
+                        <span id="nextRenewal">-</span>
+                    </div>
+                    <div class="schedule-item">
+                        <span>Last renewal:</span>
+                        <span id="lastRenewal">Never</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Certificate History Card -->
+    <section class="card p-4 mt-4">
+        <h2 class="section-title">📋 Certificate History</h2>
+
+        <div class="timeline" id="certHistory">
+            <div class="text-center text-comment">
+                No history available
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Options Card -->
+    <section class="card p-4 mt-4">
+        <h2 class="section-title">🔧 Advanced Options</h2>
+
+        <div class="grid-2 gap-lg">
+            <div>
+                <h3 class="subsection-title">Certificate Actions</h3>
+                <div class="btn-group-vertical">
+                    <button class="btn btn-secondary" id="exportBtn">
+                        📥 Export Certificate
+                    </button>
+                    <button class="btn btn-secondary" id="importBtn">
+                        📤 Import Certificate
+                    </button>
+                    <button class="btn btn-danger" id="revokeBtn">
+                        ⚠️ Revoke Certificate
                     </button>
                 </div>
             </div>
 
-            <!-- Let's Encrypt Card -->
-            <div class="card">
-                <h2>🌐 Let's Encrypt</h2>
-
-                <form id="letsEncryptForm">
-    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
-                    <div class="form-group">
-                        <label for="domain">Domain Name</label>
-                        <input type="text" id="domain" placeholder="example.com" required aria-required="true">
-                        <small>Primary domain for the certificate</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Contact Email</label>
-                        <input type="email" id="email" placeholder="admin@example.com" required aria-required="true">
-                        <small>For renewal and security notices</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="altNames">Alternative Names (Optional)</label>
-                        <textarea id="altNames" rows="3" placeholder="www.example.com&#10;api.example.com"></textarea>
-                        <small>One domain per line</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="agreeToS" required>
-                            I agree to the Let's Encrypt Terms of Service
-                        </label>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="submit" class="btn btn-success" id="obtainBtn">
-                            🔐 Obtain Certificate
-                        </button>
-                        <button type="button" class="btn btn-warning" id="renewBtn">
-                            🔄 Renew Certificate
-                        </button>
-                    </div>
-                </form>
-
-                <div id="obtainProgress" style="display: none; margin-top: 1rem;">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                    </div>
-                    <p id="progressText" style="text-align: center; color: #666; margin-top: 0.5rem;"></p>
+            <div>
+                <h3 class="subsection-title">Testing</h3>
+                <div class="btn-group-vertical">
+                    <button class="btn btn-secondary" id="testBtn">
+                        🧪 Test SSL Configuration
+                    </button>
+                    <button class="btn btn-secondary" id="scanBtn">
+                        🔍 Security Scan
+                    </button>
                 </div>
             </div>
         </div>
+    </section>
+</main>
 
-        <!-- Renewal Settings Card -->
-        <div class="card" style="margin-top: 2rem;">
-            <h2>⚙️ Auto-Renewal Settings</h2>
+<script>
+    // Load certificate status
+    async function loadCertStatus() {
+        try {
+            const response = await fetch('/api/v1/admin/ssl/status');
+            const data = await response.json();
 
-            <div class="grid">
-                <div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="autoRenewal" checked>
-                            Enable automatic renewal
-                        </label>
-                        <small>Automatically renew certificates 30 days before expiry</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="renewalDays">Renewal Threshold (days)</label>
-                        <input type="number" id="renewalDays" value="30" min="1" max="60">
-                        <small>Renew when certificate expires in this many days</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="emailNotifications" checked>
-                            Email notifications for renewals
-                        </label>
-                    </div>
-
-                    <button class="btn btn-primary" id="saveSettingsBtn">💾 Save Settings</button>
-                </div>
-
-                <div class="renewal-schedule">
-                    <h3 style="margin-bottom: 1rem;">Renewal Schedule</h3>
-                    <div id="renewalSchedule">
-                        <div class="schedule-item">
-                            <span>Next check:</span>
-                            <span id="nextCheck">-</span>
-                        </div>
-                        <div class="schedule-item">
-                            <span>Next renewal:</span>
-                            <span id="nextRenewal">-</span>
-                        </div>
-                        <div class="schedule-item">
-                            <span>Last renewal:</span>
-                            <span id="lastRenewal">Never</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Certificate History Card -->
-        <div class="card" style="margin-top: 2rem;">
-            <h2>📋 Certificate History</h2>
-
-            <div class="timeline" id="certHistory">
-                <div style="text-align: center; color: #666;">
-                    No history available
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Options Card -->
-        <div class="card" style="margin-top: 2rem;">
-            <h2>🔧 Advanced Options</h2>
-
-            <div class="grid">
-                <div>
-                    <h3 style="margin-bottom: 1rem;">Certificate Actions</h3>
-                    <div class="btn-group" style="flex-direction: column; align-items: stretch;">
-                        <button class="btn btn-secondary" id="exportBtn">
-                            📥 Export Certificate
-                        </button>
-                        <button class="btn btn-secondary" id="importBtn">
-                            📤 Import Certificate
-                        </button>
-                        <button class="btn btn-danger" id="revokeBtn">
-                            ⚠️ Revoke Certificate
-                        </button>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 style="margin-bottom: 1rem;">Testing</h3>
-                    <div class="btn-group" style="flex-direction: column; align-items: stretch;">
-                        <button class="btn btn-secondary" id="testBtn">
-                            🧪 Test SSL Configuration
-                        </button>
-                        <button class="btn btn-secondary" id="scanBtn">
-                            🔍 Security Scan
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Load certificate status
-        async function loadCertStatus() {
-            try {
-                const response = await fetch('/api/v1/admin/ssl/status');
-                const data = await response.json();
-
-                renderCertStatus(data);
-                updateSchedule(data);
-            } catch (error) {
-                showError('Failed to load certificate status: ' + error.message);
-            }
+            renderCertStatus(data);
+            updateSchedule(data);
+        } catch (error) {
+            Toast.show('Failed to load certificate status: ' + error.message, 'error');
         }
+    }
 
-        // Render certificate status
-        function renderCertStatus(data) {
-            const container = document.getElementById('certStatus');
+    // Render certificate status
+    function renderCertStatus(data) {
+        const container = document.getElementById('certStatus');
 
-            if (!data.certificate) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem;">
-                        <div class="status-badge status-none">No Certificate</div>
-                        <p style="margin-top: 1rem; color: #666;">No SSL certificate installed</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const cert = data.certificate;
-            const daysUntilExpiry = Math.floor((new Date(cert.notAfter) - new Date()) / (1000 * 60 * 60 * 24));
-
-            let statusClass = 'status-active';
-            let statusText = 'Active';
-
-            if (daysUntilExpiry < 0) {
-                statusClass = 'status-expired';
-                statusText = 'Expired';
-            } else if (daysUntilExpiry < 30) {
-                statusClass = 'status-expiring';
-                statusText = 'Expiring Soon';
-            }
-
+        if (!data.certificate) {
             container.innerHTML = `
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <div class="status-badge ${statusClass}">${statusText}</div>
-                </div>
-
-                <div class="info-grid">
-                    <div class="info-row">
-                        <span class="info-label">Subject:</span>
-                        <span class="info-value">${cert.subject || '-'}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Issuer:</span>
-                        <span class="info-value">${cert.issuer || '-'}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Valid From:</span>
-                        <span class="info-value">${new Date(cert.notBefore).toLocaleDateString()}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Valid Until:</span>
-                        <span class="info-value">${new Date(cert.notAfter).toLocaleDateString()}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Days Remaining:</span>
-                        <span class="info-value">${daysUntilExpiry} days</span>
-                    </div>
+                <div class="text-center p-4">
+                    <div class="status-badge status-none">No Certificate</div>
+                    <p class="mt-3 text-comment">No SSL certificate installed</p>
                 </div>
             `;
+            return;
         }
 
-        // Update renewal schedule
-        function updateSchedule(data) {
-            document.getElementById('nextCheck').textContent = data.nextCheck || '-';
-            document.getElementById('nextRenewal').textContent = data.nextRenewal || '-';
-            document.getElementById('lastRenewal').textContent = data.lastRenewal || 'Never';
+        const cert = data.certificate;
+        const daysUntilExpiry = Math.floor((new Date(cert.notAfter) - new Date()) / (1000 * 60 * 60 * 24));
+
+        let statusClass = 'status-active';
+        let statusText = 'Active';
+
+        if (daysUntilExpiry < 0) {
+            statusClass = 'status-expired';
+            statusText = 'Expired';
+        } else if (daysUntilExpiry < 30) {
+            statusClass = 'status-expiring';
+            statusText = 'Expiring Soon';
         }
 
-        // Obtain certificate
-        document.getElementById('letsEncryptForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        container.innerHTML = `
+            <div class="text-center mb-3">
+                <div class="status-badge ${statusClass}">${statusText}</div>
+            </div>
 
-            const obtainBtn = document.getElementById('obtainBtn');
-            const progress = document.getElementById('obtainProgress');
-            const progressFill = document.getElementById('progressFill');
-            const progressText = document.getElementById('progressText');
+            <div class="info-grid">
+                <div class="info-row">
+                    <span class="info-label">Subject:</span>
+                    <span class="info-value">${cert.subject || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Issuer:</span>
+                    <span class="info-value">${cert.issuer || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Valid From:</span>
+                    <span class="info-value">${new Date(cert.notBefore).toLocaleDateString()}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Valid Until:</span>
+                    <span class="info-value">${new Date(cert.notAfter).toLocaleDateString()}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Days Remaining:</span>
+                    <span class="info-value">${daysUntilExpiry} days</span>
+                </div>
+            </div>
+        `;
+    }
 
-            obtainBtn.disabled = true;
-            progress.style.display = 'block';
+    // Update renewal schedule
+    function updateSchedule(data) {
+        document.getElementById('nextCheck').textContent = data.nextCheck || '-';
+        document.getElementById('nextRenewal').textContent = data.nextRenewal || '-';
+        document.getElementById('lastRenewal').textContent = data.lastRenewal || 'Never';
+    }
 
-            try {
-                const domain = document.getElementById('domain').value;
-                const email = document.getElementById('email').value;
-                const altNames = document.getElementById('altNames').value.split('\n').filter(n => n.trim());
+    // Obtain certificate
+    document.getElementById('letsEncryptForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-                updateProgress(10, 'Validating domain...');
+        const obtainBtn = document.getElementById('obtainBtn');
+        const progress = document.getElementById('obtainProgress');
 
-                const response = await fetch('/api/v1/admin/ssl/obtain', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ domain, email, altNames })
-                });
+        obtainBtn.disabled = true;
+        progress.classList.remove('d-none');
 
-                if (!response.ok) throw new Error('Failed to obtain certificate');
+        try {
+            const domain = document.getElementById('domain').value;
+            const email = document.getElementById('email').value;
+            const altNames = document.getElementById('altNames').value.split('\n').filter(n => n.trim());
 
-                updateProgress(100, 'Certificate obtained successfully!');
-                showSuccess('SSL certificate obtained and installed successfully!');
+            updateProgress(10, 'Validating domain...');
 
-                setTimeout(() => {
-                    progress.style.display = 'none';
-                    loadCertStatus();
-                }, 2000);
+            const response = await fetch('/api/v1/admin/ssl/obtain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain, email, altNames })
+            });
 
-            } catch (error) {
-                showError('Failed to obtain certificate: ' + error.message);
-                progress.style.display = 'none';
-            } finally {
-                obtainBtn.disabled = false;
-            }
-        });
+            if (!response.ok) throw new Error('Failed to obtain certificate');
 
-        // Renew certificate
-        document.getElementById('renewBtn').addEventListener('click', async () => {
-            if (!confirm('Renew the SSL certificate now?')) return;
+            updateProgress(100, 'Certificate obtained successfully!');
+            Toast.show('SSL certificate obtained and installed successfully!', 'success');
 
-            const renewBtn = document.getElementById('renewBtn');
-            renewBtn.disabled = true;
-
-            try {
-                const response = await fetch('/api/v1/admin/ssl/renew', { method: 'POST' });
-                if (!response.ok) throw new Error('Failed to renew certificate');
-
-                showSuccess('Certificate renewed successfully!');
+            setTimeout(() => {
+                progress.classList.add('d-none');
                 loadCertStatus();
-            } catch (error) {
-                showError('Failed to renew certificate: ' + error.message);
-            } finally {
-                renewBtn.disabled = false;
-            }
-        });
+            }, 2000);
 
-        // Update progress
-        function updateProgress(percent, text) {
-            document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('progressText').textContent = text;
+        } catch (error) {
+            Toast.show('Failed to obtain certificate: ' + error.message, 'error');
+            progress.classList.add('d-none');
+        } finally {
+            obtainBtn.disabled = false;
         }
+    });
 
-        // Show messages
-        function showSuccess(msg) {
-            const alert = document.getElementById('successAlert');
-            alert.textContent = msg;
-            alert.classList.add('show');
-            setTimeout(() => alert.classList.remove('show'), 5000);
+    // Renew certificate
+    document.getElementById('renewBtn').addEventListener('click', async () => {
+        if (!confirm('Renew the SSL certificate now?')) return;
+
+        const renewBtn = document.getElementById('renewBtn');
+        renewBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/v1/admin/ssl/renew', { method: 'POST' });
+            if (!response.ok) throw new Error('Failed to renew certificate');
+
+            Toast.show('Certificate renewed successfully!', 'success');
+            loadCertStatus();
+        } catch (error) {
+            Toast.show('Failed to renew certificate: ' + error.message, 'error');
+        } finally {
+            renewBtn.disabled = false;
         }
+    });
 
-        function showError(msg) {
-            const alert = document.getElementById('errorAlert');
-            alert.textContent = msg;
-            alert.classList.add('show');
-            setTimeout(() => alert.classList.remove('show'), 5000);
+    // Update progress
+    function updateProgress(percent, text) {
+        document.getElementById('progressFill').style.width = percent + '%';
+        document.getElementById('progressText').textContent = text;
+    }
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', loadCertStatus);
+
+    // Verify button
+    document.getElementById('verifyBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/v1/admin/ssl/verify', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.valid) {
+                Toast.show('Certificate is valid and properly configured!', 'success');
+            } else {
+                Toast.show('Certificate validation failed: ' + data.error, 'error');
+            }
+        } catch (error) {
+            Toast.show('Verification failed: ' + error.message, 'error');
         }
+    });
 
-        // Refresh button
-        document.getElementById('refreshBtn').addEventListener('click', loadCertStatus);
+    // Save settings
+    document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+        try {
+            const settings = {
+                autoRenewal: document.getElementById('autoRenewal').checked,
+                renewalDays: parseInt(document.getElementById('renewalDays').value),
+                emailNotifications: document.getElementById('emailNotifications').checked
+            };
 
-        // Verify button
-        document.getElementById('verifyBtn').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/api/v1/admin/ssl/verify', { method: 'POST' });
-                const data = await response.json();
+            const response = await fetch('/api/v1/admin/ssl/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
 
-                if (data.valid) {
-                    showSuccess('Certificate is valid and properly configured!');
-                } else {
-                    showError('Certificate validation failed: ' + data.error);
-                }
-            } catch (error) {
-                showError('Verification failed: ' + error.message);
-            }
-        });
+            if (!response.ok) throw new Error('Failed to save settings');
 
-        // Save settings
-        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-            try {
-                const settings = {
-                    autoRenewal: document.getElementById('autoRenewal').checked,
-                    renewalDays: parseInt(document.getElementById('renewalDays').value),
-                    emailNotifications: document.getElementById('emailNotifications').checked
-                };
+            Toast.show('Settings saved successfully!', 'success');
+        } catch (error) {
+            Toast.show('Failed to save settings: ' + error.message, 'error');
+        }
+    });
 
-                const response = await fetch('/api/v1/admin/ssl/settings', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(settings)
-                });
+    // Initial load
+    loadCertStatus();
 
-                if (!response.ok) throw new Error('Failed to save settings');
+    // Auto-refresh every 30 seconds
+    setInterval(loadCertStatus, 30000);
+</script>
 
-                showSuccess('Settings saved successfully!');
-            } catch (error) {
-                showError('Failed to save settings: ' + error.message);
-            }
-        });
-
-        // Initial load
-        loadCertStatus();
-
-        // Auto-refresh every 30 seconds
-        setInterval(loadCertStatus, 30000);
-    </script>
-</body>
-</html>
+{{template "footer" .}}
 {{end}}

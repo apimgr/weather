@@ -51,7 +51,7 @@ func AdminBackupCreateHandler(c *gin.Context) {
 	p := paths.GetDefaultPaths("weather")
 	if p == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"ok": false,
 			"error":   "Failed to get system paths",
 		})
 		return
@@ -78,7 +78,7 @@ func AdminBackupCreateHandler(c *gin.Context) {
 	backupPath, err := svc.Create(opts)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"ok": false,
 			"error":   fmt.Sprintf("Backup failed: %v", err),
 		})
 		return
@@ -93,7 +93,7 @@ func AdminBackupCreateHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
+		"ok":       true,
 		"message":  "Backup created successfully",
 		"path":     filepath.Base(backupPath),
 		"size":     fmt.Sprintf("%.2f MB", size),
@@ -114,7 +114,7 @@ func AdminBackupDownloadHandler(c *gin.Context) {
 
 	// Security: Only allow files in backup directory
 	backupPath := filepath.Join(p.DataDir, "backup", filename)
-	
+
 	// Check if file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		c.String(http.StatusNotFound, "Backup file not found")
@@ -133,7 +133,7 @@ func AdminBackupDeleteHandler(c *gin.Context) {
 	p := paths.GetDefaultPaths("weather")
 	if p == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"ok": false,
 			"error":   "Failed to get system paths",
 		})
 		return
@@ -145,7 +145,7 @@ func AdminBackupDeleteHandler(c *gin.Context) {
 	// Check if file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
+			"ok": false,
 			"error":   "Backup file not found",
 		})
 		return
@@ -154,14 +154,14 @@ func AdminBackupDeleteHandler(c *gin.Context) {
 	// Delete file
 	if err := os.Remove(backupPath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"ok": false,
 			"error":   fmt.Sprintf("Failed to delete backup: %v", err),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Backup deleted successfully",
 	})
 }

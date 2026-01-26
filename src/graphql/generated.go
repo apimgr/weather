@@ -32,6 +32,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	}
 }
 
+// Config represents GraphQL execution configuration
+// NOTE: This is GENERATED code by gqlgen. The generic name "Config" is acceptable
+// here as it's third-party generated code and changing it would break gqlgen integration.
 type Config struct {
 	Schema     *ast.Schema
 	Resolvers  ResolverRoot

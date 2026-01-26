@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,12 +45,13 @@ func NewAPIHandler(ws *service.WeatherService, le *service.LocationEnhancer) *AP
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/weather [get]
 func (h *APIHandler) GetWeather(c *gin.Context) {
-	location := c.Query("location")
-	lat := c.Query("lat")
-	lon := c.Query("lon")
-	cityID := c.Query("city_id")
-	nearest := c.Query("nearest")
-	unitsParam := c.Query("units")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	location := strings.TrimSpace(c.Query("location"))
+	lat := strings.TrimSpace(c.Query("lat"))
+	lon := strings.TrimSpace(c.Query("lon"))
+	cityID := strings.TrimSpace(c.Query("city_id"))
+	nearest := strings.TrimSpace(c.Query("nearest"))
+	unitsParam := strings.TrimSpace(c.Query("units"))
 
 	var coords *service.Coordinates
 	var enhanced *service.EnhancedLocation
@@ -240,8 +242,9 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 
 // GetWeatherByLocation returns weather for specific location (GET /api/v1/weather/:location)
 func (h *APIHandler) GetWeatherByLocation(c *gin.Context) {
-	location := c.Param("location")
-	unitsParam := c.Query("units")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	location := strings.TrimSpace(c.Param("location"))
+	unitsParam := strings.TrimSpace(c.Query("units"))
 
 	clientIP := utils.GetClientIP(c)
 	coords, err := h.weatherService.ParseAndResolveLocation(location, clientIP)
@@ -320,11 +323,12 @@ func (h *APIHandler) GetWeatherByLocation(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/forecast [get]
 func (h *APIHandler) GetForecast(c *gin.Context) {
-	location := c.Query("location")
-	lat := c.Query("lat")
-	lon := c.Query("lon")
-	daysParam := c.Query("days")
-	unitsParam := c.Query("units")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	location := strings.TrimSpace(c.Query("location"))
+	lat := strings.TrimSpace(c.Query("lat"))
+	lon := strings.TrimSpace(c.Query("lon"))
+	daysParam := strings.TrimSpace(c.Query("days"))
+	unitsParam := strings.TrimSpace(c.Query("units"))
 
 	// Parse days
 	days := 7
@@ -428,9 +432,10 @@ func (h *APIHandler) GetForecast(c *gin.Context) {
 
 // GetForecastByLocation returns forecast for specific location (GET /api/v1/forecast/:location)
 func (h *APIHandler) GetForecastByLocation(c *gin.Context) {
-	location := c.Param("location")
-	daysParam := c.Query("days")
-	unitsParam := c.Query("units")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	location := strings.TrimSpace(c.Param("location"))
+	daysParam := strings.TrimSpace(c.Query("days"))
+	unitsParam := strings.TrimSpace(c.Query("units"))
 
 	// Parse days
 	days := 7
@@ -530,7 +535,8 @@ func (h *APIHandler) GetForecastByLocation(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /api/v1/search [get]
 func (h *APIHandler) SearchLocations(c *gin.Context) {
-	query := c.Query("q")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	query := strings.TrimSpace(c.Query("q"))
 
 	if query == "" {
 		InvalidInput(c, "Query parameter 'q' is required")
@@ -539,7 +545,7 @@ func (h *APIHandler) SearchLocations(c *gin.Context) {
 
 	// Get limit from query parameter (default 50, max 100)
 	limit := 50
-	if limitStr := c.Query("limit"); limitStr != "" {
+	if limitStr := strings.TrimSpace(c.Query("limit")); limitStr != "" {
 		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
 			if l > 100 {
 				// Cap at 100
@@ -682,11 +688,12 @@ func (h *APIHandler) GetDocsJSON(c *gin.Context) {
 
 // GetHistoricalWeather returns historical weather data for a specific day across multiple years (GET /api/v1/history)
 func (h *APIHandler) GetHistoricalWeather(c *gin.Context) {
-	location := c.Query("location")
-	lat := c.Query("lat")
-	lon := c.Query("lon")
-	dateStr := c.Query("date")
-	yearsStr := c.Query("years")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	location := strings.TrimSpace(c.Query("location"))
+	lat := strings.TrimSpace(c.Query("lat"))
+	lon := strings.TrimSpace(c.Query("lon"))
+	dateStr := strings.TrimSpace(c.Query("date"))
+	yearsStr := strings.TrimSpace(c.Query("years"))
 
 	// Parse coordinates
 	var coords *service.Coordinates

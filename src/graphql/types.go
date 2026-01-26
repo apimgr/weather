@@ -2,8 +2,6 @@ package graphql
 
 import (
 	"time"
-
-	"github.com/apimgr/weather/src/server/model"
 )
 
 // =============================================================================
@@ -43,13 +41,13 @@ type UserSubscription struct {
 // =============================================================================
 
 type DatabaseConnectionTest struct {
-	Success bool    `json:"success"`
+	Success bool    `json:"ok"`
 	Latency *int    `json:"latency,omitempty"`
 	Error   *string `json:"error,omitempty"`
 }
 
 type DatabaseOptimizeResult struct {
-	Success         bool     `json:"success"`
+	Success         bool     `json:"ok"`
 	TablesOptimized int      `json:"tablesOptimized"`
 	Duration        *float64 `json:"duration,omitempty"`
 }
@@ -279,5 +277,3 @@ type GenericResponse struct {
 }
 */
 
-// Re-export AuditLog from models package for convenience
-type AuditLog = models.AuditLog

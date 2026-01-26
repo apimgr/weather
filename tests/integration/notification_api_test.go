@@ -8,14 +8,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apimgr/weather/src/database"
 	"github.com/apimgr/weather/src/server/handler"
-	"github.com/apimgr/weather/src/server/model"
+	models "github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/server/service"
 	"github.com/gin-gonic/gin"
 	_ "modernc.org/sqlite"
 )
 
-func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *services.NotificationService) {
+func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *service.NotificationService, func()) {
 	gin.SetMode(gin.TestMode)
 
 	// Create test databases
@@ -32,11 +33,18 @@ func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *ser
 	// Create tables
 	createNotificationTables(t, userDB, serverDB)
 
+	// Set global database for models that use it
+	dualDB := &database.DualDB{
+		Server: serverDB,
+		Users:  userDB,
+	}
+	database.SetGlobalDualDB(dualDB)
+
 	// Create WebSocket hub and notification service
-	wsHub := services.NewWebSocketHub()
+	wsHub := service.NewWebSocketHub()
 	go wsHub.Run()
 
-	notificationService := &services.NotificationService{
+	notificationService := &service.NotificationService{
 		UserDB:     userDB,
 		ServerDB:   serverDB,
 		WSHub:      wsHub,
@@ -46,7 +54,7 @@ func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *ser
 	}
 
 	// Create handlers
-	notificationAPIHandler := &handlers.NotificationAPIHandlers{
+	notificationAPIHandler := &handler.NotificationAPIHandlers{
 		NotificationService: notificationService,
 		WSHub:               wsHub,
 	}
@@ -87,84 +95,25 @@ func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *ser
 		admin.POST("/send", notificationAPIHandler.SendTestNotification)
 	}
 
-	return r, userDB, serverDB, notificationService
+	cleanup := func() {
+		wsHub.Stop()
+		// Note: We don't close databases here since other code might reference the global
+		// The databases use in-memory mode so they'll be garbage collected
+	}
+
+	return r, userDB, serverDB, notificationService, cleanup
 }
 
 func createNotificationTables(t *testing.T, userDB, serverDB *sql.DB) {
-	// Create user_notifications table
-	_, err := userDB.Exec(`
-		CREATE TABLE user_notifications (
-			id TEXT PRIMARY KEY,
-			user_id INTEGER NOT NULL,
-			type TEXT NOT NULL CHECK(type IN ('success', 'info', 'warning', 'error', 'security')),
-			display TEXT NOT NULL CHECK(display IN ('toast', 'banner', 'center')) DEFAULT 'toast',
-			title TEXT NOT NULL,
-			message TEXT NOT NULL,
-			action_json TEXT,
-			read BOOLEAN DEFAULT 0,
-			dismissed BOOLEAN DEFAULT 0,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			expires_at DATETIME
-		)
-	`)
+	// Use the full schemas to ensure all required tables exist
+	_, err := userDB.Exec(database.UsersSchema)
 	if err != nil {
-		t.Fatalf("Failed to create user_notifications table: %v", err)
+		t.Fatalf("Failed to create users schema: %v", err)
 	}
 
-	// Create server_admin_notifications table
-	_, err = serverDB.Exec(`
-		CREATE TABLE server_admin_notifications (
-			id TEXT PRIMARY KEY,
-			admin_id INTEGER NOT NULL,
-			type TEXT NOT NULL CHECK(type IN ('success', 'info', 'warning', 'error', 'security')),
-			display TEXT NOT NULL CHECK(display IN ('toast', 'banner', 'center')) DEFAULT 'toast',
-			title TEXT NOT NULL,
-			message TEXT NOT NULL,
-			action_json TEXT,
-			read BOOLEAN DEFAULT 0,
-			dismissed BOOLEAN DEFAULT 0,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			expires_at DATETIME
-		)
-	`)
+	_, err = serverDB.Exec(database.ServerSchema)
 	if err != nil {
-		t.Fatalf("Failed to create server_admin_notifications table: %v", err)
-	}
-
-	// Create user_notification_preferences table
-	_, err = userDB.Exec(`
-		CREATE TABLE user_notification_preferences (
-			user_id INTEGER PRIMARY KEY,
-			enable_toast BOOLEAN DEFAULT 1,
-			enable_banner BOOLEAN DEFAULT 1,
-			enable_center BOOLEAN DEFAULT 1,
-			enable_sound BOOLEAN DEFAULT 0,
-			toast_duration_success INTEGER DEFAULT 5,
-			toast_duration_info INTEGER DEFAULT 5,
-			toast_duration_warning INTEGER DEFAULT 10,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	if err != nil {
-		t.Fatalf("Failed to create user_notification_preferences table: %v", err)
-	}
-
-	// Create server_admin_notification_preferences table
-	_, err = serverDB.Exec(`
-		CREATE TABLE server_admin_notification_preferences (
-			admin_id INTEGER PRIMARY KEY,
-			enable_toast BOOLEAN DEFAULT 1,
-			enable_banner BOOLEAN DEFAULT 1,
-			enable_center BOOLEAN DEFAULT 1,
-			enable_sound BOOLEAN DEFAULT 0,
-			toast_duration_success INTEGER DEFAULT 5,
-			toast_duration_info INTEGER DEFAULT 5,
-			toast_duration_warning INTEGER DEFAULT 10,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	if err != nil {
-		t.Fatalf("Failed to create server_admin_notification_preferences table: %v", err)
+		t.Fatalf("Failed to create server schema: %v", err)
 	}
 }
 
@@ -180,13 +129,12 @@ func mockAuthMiddleware(id int, isAdmin bool) gin.HandlerFunc {
 }
 
 func TestUserNotificationAPI_GetNotifications(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notifications
-	_, _ = service.SendUserSuccess(1, "Test 1", "Message 1", nil)
-	_, _ = service.SendUserInfo(1, "Test 2", "Message 2", nil)
+	_, _ = service.SendSuccessToUser(1, "Test 1", "Message 1")
+	_, _ = service.SendInfoToUser(1, "Test 2", "Message 2")
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -194,31 +142,36 @@ func TestUserNotificationAPI_GetNotifications(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("Status code = %v, want %v", w.Code, http.StatusOK)
+		t.Errorf("Status code = %v, want %v. Body: %s", w.Code, http.StatusOK, w.Body.String())
 	}
 
-	var response []models.Notification
+	// API returns: {"notifications": [...], "limit": N, "offset": N, "count": N}
+	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	if len(response) != 2 {
-		t.Errorf("Response length = %v, want 2", len(response))
+	notifications, ok := response["notifications"].([]interface{})
+	if !ok {
+		t.Fatalf("Response missing 'notifications' array. Got: %v", response)
+	}
+
+	if len(notifications) != 2 {
+		t.Errorf("Notifications length = %v, want 2", len(notifications))
 	}
 }
 
 func TestUserNotificationAPI_GetUnreadCount(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notifications
-	notif1, _ := service.SendUserSuccess(1, "Test 1", "Message 1", nil)
-	_, _ = service.SendUserInfo(1, "Test 2", "Message 2", nil)
+	notif1, _ := service.SendSuccessToUser(1, "Test 1", "Message 1")
+	_, _ = service.SendInfoToUser(1, "Test 2", "Message 2")
 
 	// Mark one as read
-	_ = service.MarkUserNotificationRead(notif1.ID, 1)
+	_ = service.MarkUserNotificationAsRead(notif1.ID, 1)
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -226,27 +179,32 @@ func TestUserNotificationAPI_GetUnreadCount(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("Status code = %v, want %v", w.Code, http.StatusOK)
+		t.Errorf("Status code = %v, want %v. Body: %s", w.Code, http.StatusOK, w.Body.String())
 	}
 
-	var response map[string]int
+	// API returns: {"count": N}
+	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	if response["unread_count"] != 1 {
-		t.Errorf("Unread count = %v, want 1", response["unread_count"])
+	count, ok := response["count"].(float64)
+	if !ok {
+		t.Fatalf("Response missing 'count' field. Got: %v", response)
+	}
+
+	if int(count) != 1 {
+		t.Errorf("Unread count = %v, want 1", int(count))
 	}
 }
 
 func TestUserNotificationAPI_MarkAsRead(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notification
-	notif, _ := service.SendUserSuccess(1, "Test", "Message", nil)
+	notif, _ := service.SendSuccessToUser(1, "Test", "Message")
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -258,20 +216,19 @@ func TestUserNotificationAPI_MarkAsRead(t *testing.T) {
 	}
 
 	// Verify it's marked as read
-	retrieved, _ := service.UserNotif.GetByID(notif.ID, 1)
+	retrieved, _ := service.UserNotif.GetByID(notif.ID)
 	if !retrieved.Read {
 		t.Error("Notification should be marked as read")
 	}
 }
 
 func TestUserNotificationAPI_MarkAllAsRead(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notifications
-	_, _ = service.SendUserSuccess(1, "Test 1", "Message 1", nil)
-	_, _ = service.SendUserInfo(1, "Test 2", "Message 2", nil)
+	_, _ = service.SendSuccessToUser(1, "Test 1", "Message 1")
+	_, _ = service.SendInfoToUser(1, "Test 2", "Message 2")
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -290,12 +247,11 @@ func TestUserNotificationAPI_MarkAllAsRead(t *testing.T) {
 }
 
 func TestUserNotificationAPI_DismissNotification(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notification
-	notif, _ := service.SendUserSuccess(1, "Test", "Message", nil)
+	notif, _ := service.SendSuccessToUser(1, "Test", "Message")
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -307,19 +263,18 @@ func TestUserNotificationAPI_DismissNotification(t *testing.T) {
 	}
 
 	// Verify it's dismissed
-	retrieved, _ := service.UserNotif.GetByID(notif.ID, 1)
+	retrieved, _ := service.UserNotif.GetByID(notif.ID)
 	if !retrieved.Dismissed {
 		t.Error("Notification should be dismissed")
 	}
 }
 
 func TestUserNotificationAPI_DeleteNotification(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notification
-	notif, _ := service.SendUserSuccess(1, "Test", "Message", nil)
+	notif, _ := service.SendSuccessToUser(1, "Test", "Message")
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -331,16 +286,15 @@ func TestUserNotificationAPI_DeleteNotification(t *testing.T) {
 	}
 
 	// Verify it's deleted
-	_, err := service.UserNotif.GetByID(notif.ID, 1)
+	_, err := service.UserNotif.GetByID(notif.ID)
 	if err == nil {
 		t.Error("Notification should be deleted")
 	}
 }
 
 func TestUserNotificationAPI_GetPreferences(t *testing.T) {
-	r, userDB, serverDB, _ := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, _, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -367,9 +321,8 @@ func TestUserNotificationAPI_GetPreferences(t *testing.T) {
 }
 
 func TestUserNotificationAPI_UpdatePreferences(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Prepare request body
 	updateData := models.NotificationPreferences{
@@ -412,17 +365,16 @@ func TestUserNotificationAPI_UpdatePreferences(t *testing.T) {
 }
 
 func TestUserNotificationAPI_GetStatistics(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Create test notifications
-	_, _ = service.SendUserSuccess(1, "Success", "Message", nil)
-	_, _ = service.SendUserInfo(1, "Info", "Message", nil)
-	notif3, _ := service.SendUserWarning(1, "Warning", "Message", nil, models.NotificationDisplayToast)
+	_, _ = service.SendSuccessToUser(1, "Success", "Message")
+	_, _ = service.SendInfoToUser(1, "Info", "Message")
+	notif3, _ := service.SendWarningToUser(1, "Warning", "Message")
 
 	// Mark one as read
-	_ = service.MarkUserNotificationRead(notif3.ID, 1)
+	_ = service.MarkUserNotificationAsRead(notif3.ID, 1)
 
 	// Make request
 	w := httptest.NewRecorder()
@@ -451,9 +403,8 @@ func TestUserNotificationAPI_GetStatistics(t *testing.T) {
 }
 
 func TestAdminNotificationAPI_SendTestNotification(t *testing.T) {
-	r, userDB, serverDB, service := setupNotificationAPITest(t)
-	defer userDB.Close()
-	defer serverDB.Close()
+	r, _, _, service, cleanup := setupNotificationAPITest(t)
+	defer cleanup()
 
 	// Prepare request body
 	testData := map[string]interface{}{

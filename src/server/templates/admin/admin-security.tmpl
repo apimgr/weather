@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
-    <link rel="stylesheet" href="/static/css/admin.css">
-    <link rel="stylesheet" href="/static/css/template-overrides.css">
+    <link rel="stylesheet" href="/static/css/dracula.css">
 </head>
 <body>
     {{template "components/admin-header.tmpl" .}}
@@ -558,32 +557,6 @@
     }
     </script>
 
-    <style>
-    .code-editor {
-        font-family: 'Courier New', monospace;
-        font-size: 14px;
-        background-color: #f5f5f5;
-        border: 1px solid #ddd;
-    }
-
-    .cors-fields, .ratelimit-fields {
-        transition: opacity 0.3s;
-        margin-top: 15px;
-    }
-
-    .toggle-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        font-weight: 600;
-    }
-
-    .toggle-input {
-        width: 50px;
-        height: 26px;
-    }
-    </style>
 </body>
 </html>
 {{end}}

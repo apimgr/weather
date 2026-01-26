@@ -5,7 +5,7 @@
     <div class="container">
         <div class="add-location-header">
             <h1 class="text-purple">Add New Location</h1>
-            <a href="/user/dashboard" class="add-location-back-link">← Back to Dashboard</a>
+            <a href="/users/dashboard" class="add-location-back-link">← Back to Dashboard</a>
         </div>
 
         <div class="card">
@@ -177,7 +177,7 @@
                                 title="Clear the form and search for a different location">🔄 Start Over</button>
                         <button type="button"
                                 class="btn btn-ghost"
-                                onclick="window.location.href='/user/dashboard'"
+                                onclick="window.location.href='/users/dashboard'"
                                 aria-label="Cancel"
                                 title="Cancel and return to dashboard without saving">Cancel</button>
                     </div>
@@ -378,7 +378,7 @@
                 if (response.ok) {
                     Toast.success('Location saved successfully!');
                     setTimeout(() => {
-                        window.location.href = '/user/dashboard';
+                        window.location.href = '/users/dashboard';
                     }, 1500);
                 } else {
                     const error = await response.json();

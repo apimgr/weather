@@ -53,6 +53,40 @@ func BackupTask(configDir, dataDir string) func() error {
 	}
 }
 
+// BackupHourlyTask performs automated hourly incremental backups per AI.md PART 19 line 27050
+// Schedule: @hourly (disabled by default)
+// Creates: {projectname}-hourly.tar.gz[.enc] (single file, replaced each hour)
+func BackupHourlyTask(configDir, dataDir string) func() error {
+	return func() error {
+		log.Println("🔄 Starting hourly backup...")
+
+		// Create backup service
+		svc := backup.New(configDir, dataDir)
+
+		// Create hourly backup with specific filename
+		// Per AI.md PART 19 line 27053-27054: Always 1 file (replaced each hour)
+		opts := backup.BackupOptions{
+			ConfigDir:   configDir,
+			DataDir:     dataDir,
+			OutputPath:  "",
+			Password:    "",
+			IncludeSSL:  false,
+			IncludeData: false,
+			CreatedBy:   "scheduler-hourly",
+			AppVersion:  "1.0.0",
+		}
+
+		backupPath, err := svc.Create(opts)
+		if err != nil {
+			log.Printf("❌ Hourly backup failed: %v", err)
+			return fmt.Errorf("hourly backup failed: %w", err)
+		}
+
+		log.Printf("✅ Hourly backup completed: %s", backupPath)
+		return nil
+	}
+}
+
 // RegisterBackupTask registers the automated backup task with the scheduler
 // Per AI.md PART 27 lines 24182-24188
 func RegisterBackupTask(s *Scheduler, enabled bool) {

@@ -16,6 +16,27 @@ type TwoFactorHandler struct {
 	DB *sql.DB
 }
 
+// GetTwoFactorStatus returns the 2FA status for the authenticated user (API endpoint)
+func (h *TwoFactorHandler) GetTwoFactorStatus(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": "Not authenticated"})
+		return
+	}
+
+	var recoveryKeysCount int
+	if user.TwoFactorEnabled {
+		recoveryKeyModel := &models.RecoveryKeyModel{DB: h.DB}
+		recoveryKeysCount, _ = recoveryKeyModel.GetUnusedKeysCount(int(user.ID))
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"ok":                  true,
+		"enabled":             user.TwoFactorEnabled,
+		"recovery_keys_count": recoveryKeysCount,
+	})
+}
+
 // ShowSecurityPage renders the security settings page
 func (h *TwoFactorHandler) ShowSecurityPage(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)

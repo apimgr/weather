@@ -46,8 +46,8 @@ type Storm struct {
 func NewHurricaneService() *HurricaneService {
 	return &HurricaneService{
 		cache:    make(map[string]*HurricaneData),
-		// Cache for 10 minutes
-		cacheTTL: 10 * time.Minute,
+		// Cache for 15 minutes per IDEA.md
+		cacheTTL: 15 * time.Minute,
 	}
 }
 

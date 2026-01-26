@@ -135,7 +135,7 @@ func (h *SSLHandler) ObtainCertificate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"message": "Certificate obtained successfully",
 		"domain":  request.Domain,
 		"altNames": request.AltNames,
@@ -198,7 +198,7 @@ func (h *SSLHandler) RenewCertificate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"message": "Certificate renewed successfully",
 		"domain":  request.Domain,
 		"certificate": string(cert.Certificate),
@@ -330,7 +330,7 @@ func (h *SSLHandler) RevokeCertificate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"message": "Certificate revoked successfully",
 		"domain":  request.Domain,
 		"reason":  request.Reason,
@@ -360,7 +360,7 @@ func (h *SSLHandler) StartAutoRenewal(c *gin.Context) {
 	h.leService.StartAutoRenewal(request.Domains, request.ChallengeType)
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"message": "Auto-renewal started",
 		"domains": request.Domains,
 		"checkInterval": "24 hours",
@@ -380,7 +380,7 @@ func (h *SSLHandler) GetDNSRecords(c *gin.Context) {
 	// Note: For DNS-01, we'd expose dns01Provider's GetDNSRecords() method
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"message": "DNS records for manual configuration",
 		"note":    "Add these TXT records to your DNS before requesting certificate with DNS-01 challenge",
 		"records": records,

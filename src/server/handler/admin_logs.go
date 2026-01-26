@@ -347,7 +347,7 @@ func (h *LogsHandler) GetAuditLogs(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"data": gin.H{
 			"events": events,
 			"total":  total,
@@ -419,7 +419,7 @@ func (h *LogsHandler) SearchAuditLogs(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"data": gin.H{
 			"events": events,
 			"total":  total,
@@ -500,8 +500,8 @@ func (h *LogsHandler) GetAuditStats(c *gin.Context) {
 	stats["recent_failures"] = failures
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    stats,
+		"ok":   true,
+		"data": stats,
 	})
 }
 

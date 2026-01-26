@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/apimgr/weather/src/config"
 )
 
 // =============================================================================
@@ -34,12 +36,12 @@ func (r *queryResolver) AdminLogs(ctx context.Context, typeArg string, limit *in
 	return logs, nil
 }
 
-func (r *queryResolver) AdminAuditLogsSearch(ctx context.Context, query string, limit *int) ([]*models.AuditLog, error) {
+func (r *queryResolver) AdminAuditLogsSearch(ctx context.Context, query string, limit *int) ([]*AuditLog, error) {
 	if !isAdmin(ctx) {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	return []*models.AuditLog{}, nil
+	return []*AuditLog{}, nil
 }
 
 func (r *queryResolver) AdminAuditLogsStats(ctx context.Context) (*LogStats, error) {
@@ -88,8 +90,9 @@ func (r *mutationResolver) AdminDownloadLogs(ctx context.Context, typeArg string
 		return nil, fmt.Errorf("unauthorized")
 	}
 
+	cfg := config.GetGlobalConfig()
 	return &BackupDownload{
-		URL:       fmt.Sprintf("/api/v1/admin/logs/%s/download", typeArg),
+		URL:       fmt.Sprintf("%s/%s/logs/%s/download", cfg.GetAPIPath(), cfg.GetAdminPath(), typeArg),
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}, nil
 }
@@ -99,8 +102,9 @@ func (r *mutationResolver) AdminDownloadAuditLogs(ctx context.Context) (*BackupD
 		return nil, fmt.Errorf("unauthorized")
 	}
 
+	cfg := config.GetGlobalConfig()
 	return &BackupDownload{
-		URL:       "/api/v1/admin/audit-logs/download",
+		URL:       fmt.Sprintf("%s/%s/audit-logs/download", cfg.GetAPIPath(), cfg.GetAdminPath()),
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}, nil
 }
@@ -220,8 +224,9 @@ func (r *mutationResolver) AdminSSLExportCertificate(ctx context.Context) (*Back
 		return nil, fmt.Errorf("unauthorized")
 	}
 
+	cfg := config.GetGlobalConfig()
 	return &BackupDownload{
-		URL:       "/api/v1/admin/ssl/export",
+		URL:       fmt.Sprintf("%s/%s/ssl/export", cfg.GetAPIPath(), cfg.GetAdminPath()),
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}, nil
 }
@@ -359,8 +364,9 @@ func (r *mutationResolver) AdminExportMetrics(ctx context.Context) (*BackupDownl
 		return nil, fmt.Errorf("unauthorized")
 	}
 
+	cfg := config.GetGlobalConfig()
 	return &BackupDownload{
-		URL:       "/api/v1/admin/metrics/export",
+		URL:       fmt.Sprintf("%s/%s/metrics/export", cfg.GetAPIPath(), cfg.GetAdminPath()),
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}, nil
 }
@@ -491,8 +497,9 @@ func (r *mutationResolver) AdminExportLogs(ctx context.Context, typeArg string) 
 		return nil, fmt.Errorf("unauthorized")
 	}
 
+	cfg := config.GetGlobalConfig()
 	return &BackupDownload{
-		URL:       fmt.Sprintf("/api/v1/admin/logs/%s/export", typeArg),
+		URL:       fmt.Sprintf("%s/%s/logs/%s/export", cfg.GetAPIPath(), cfg.GetAdminPath(), typeArg),
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}, nil
 }

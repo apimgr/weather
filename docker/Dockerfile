@@ -70,9 +70,9 @@ RUN apk add --no-cache \
 # Copy binary from builder stage (multi-stage build)
 COPY --from=builder /build/binary/weather /usr/local/bin/weather
 
-# Copy BUILD-TIME overlay (entrypoint.sh) from docker/rootfs/ into image
-# Note: This is docker/rootfs/ (build context), NOT runtime ./rootfs/ volumes
-COPY docker/rootfs/ /
+# Copy BUILD-TIME overlay (entrypoint.sh) from docker/file_system/ into image
+# Per AI.md PART 27: file_system/ is BUILD-TIME overlay, NOT runtime volumes
+COPY docker/file_system/ /
 
 # Copy Dockerfile to image (for reference and backup)
 COPY docker/Dockerfile /root/Dockerfile

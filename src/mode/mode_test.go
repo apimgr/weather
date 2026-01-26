@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func TestSet(t *testing.T) {
+func TestSetAppMode(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected Mode
+		expected AppMode
 	}{
 		{"development", Development},
 		{"dev", Development},
@@ -21,64 +21,64 @@ func TestSet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		Set(tt.input)
+		SetAppMode(tt.input)
 		if Current() != tt.expected {
-			t.Errorf("Set(%q): got %v, want %v", tt.input, Current(), tt.expected)
+			t.Errorf("SetAppMode(%q): got %v, want %v", tt.input, Current(), tt.expected)
 		}
 	}
 }
 
-func TestIsDevelopment(t *testing.T) {
-	Set("development")
-	if !IsDevelopment() {
-		t.Error("IsDevelopment() should return true when mode is development")
+func TestIsAppModeDev(t *testing.T) {
+	SetAppMode("development")
+	if !IsAppModeDev() {
+		t.Error("IsAppModeDev() should return true when mode is development")
 	}
-	if IsProduction() {
-		t.Error("IsProduction() should return false when mode is development")
-	}
-}
-
-func TestIsProduction(t *testing.T) {
-	Set("production")
-	if !IsProduction() {
-		t.Error("IsProduction() should return true when mode is production")
-	}
-	if IsDevelopment() {
-		t.Error("IsDevelopment() should return false when mode is production")
+	if IsAppModeProd() {
+		t.Error("IsAppModeProd() should return false when mode is development")
 	}
 }
 
-func TestSetDebug(t *testing.T) {
-	SetDebug(true)
-	if !IsDebug() {
-		t.Error("IsDebug() should return true when debug is enabled")
+func TestIsAppModeProd(t *testing.T) {
+	SetAppMode("production")
+	if !IsAppModeProd() {
+		t.Error("IsAppModeProd() should return true when mode is production")
+	}
+	if IsAppModeDev() {
+		t.Error("IsAppModeDev() should return false when mode is production")
+	}
+}
+
+func TestSetDebugEnabled(t *testing.T) {
+	SetDebugEnabled(true)
+	if !IsDebugEnabled() {
+		t.Error("IsDebugEnabled() should return true when debug is enabled")
 	}
 
-	SetDebug(false)
-	if IsDebug() {
-		t.Error("IsDebug() should return false when debug is disabled")
+	SetDebugEnabled(false)
+	if IsDebugEnabled() {
+		t.Error("IsDebugEnabled() should return false when debug is disabled")
 	}
 }
 
 func TestModeString(t *testing.T) {
-	Set("production")
-	SetDebug(false)
+	SetAppMode("production")
+	SetDebugEnabled(false)
 	if ModeString() != "production" {
 		t.Errorf("ModeString() = %q, want %q", ModeString(), "production")
 	}
 
-	SetDebug(true)
+	SetDebugEnabled(true)
 	if ModeString() != "production [debugging]" {
 		t.Errorf("ModeString() = %q, want %q", ModeString(), "production [debugging]")
 	}
 
-	Set("development")
-	SetDebug(false)
+	SetAppMode("development")
+	SetDebugEnabled(false)
 	if ModeString() != "development" {
 		t.Errorf("ModeString() = %q, want %q", ModeString(), "development")
 	}
 
-	SetDebug(true)
+	SetDebugEnabled(true)
 	if ModeString() != "development [debugging]" {
 		t.Errorf("ModeString() = %q, want %q", ModeString(), "development [debugging]")
 	}
@@ -97,7 +97,7 @@ func TestFromEnv(t *testing.T) {
 	os.Setenv("MODE", "development")
 	os.Setenv("DEBUG", "")
 	FromEnv()
-	if !IsDevelopment() {
+	if !IsAppModeDev() {
 		t.Error("FromEnv() should set development mode from MODE env var")
 	}
 
@@ -105,14 +105,14 @@ func TestFromEnv(t *testing.T) {
 	os.Setenv("MODE", "production")
 	os.Setenv("DEBUG", "true")
 	FromEnv()
-	if !IsDebug() {
+	if !IsDebugEnabled() {
 		t.Error("FromEnv() should enable debug from DEBUG env var")
 	}
 }
 
-func TestModeString_String(t *testing.T) {
+func TestAppModeString(t *testing.T) {
 	tests := []struct {
-		mode Mode
+		mode AppMode
 		want string
 	}{
 		{Production, "production"},
@@ -121,7 +121,7 @@ func TestModeString_String(t *testing.T) {
 
 	for _, tt := range tests {
 		if got := tt.mode.String(); got != tt.want {
-			t.Errorf("Mode.String() = %q, want %q", got, tt.want)
+			t.Errorf("AppMode.String() = %q, want %q", got, tt.want)
 		}
 	}
 }

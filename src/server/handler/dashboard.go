@@ -52,7 +52,7 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 func (h *DashboardHandler) ShowAdminPanel(c *gin.Context) {
 	user, ok := middleware.GetCurrentUser(c)
 	if !ok || user.Role != "admin" {
-		c.Redirect(http.StatusFound, "/user/dashboard")
+		c.Redirect(http.StatusFound, "/users/dashboard")
 		return
 	}
 

@@ -32,13 +32,14 @@ func NewSevereWeatherHandler(severeWeatherService *service.SevereWeatherService,
 // HandleSevereWeatherRequest handles severe weather page requests
 func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 	// Get location from path parameter or query
-	locationParam := c.Param("location")
+	// AI.md: Strip leading/trailing whitespace from all user inputs
+	locationParam := strings.TrimSpace(c.Param("location"))
 	if locationParam == "" {
-		locationParam = c.Query("location")
+		locationParam = strings.TrimSpace(c.Query("location"))
 	}
 
 	// Get distance filter from query parameter (default 50 miles)
-	distanceParam := c.Query("distance")
+	distanceParam := strings.TrimSpace(c.Query("distance"))
 	// default
 	distance := 50.0
 	if distanceParam != "" {
@@ -463,6 +464,93 @@ func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, data)
+}
+
+// HandleAlertByIDAPI handles JSON API requests for a specific alert by ID
+// GET /{api_version}/severe-weather/:id
+func (h *SevereWeatherHandler) HandleAlertByIDAPI(c *gin.Context) {
+	alertID := c.Param("id")
+	if alertID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ok":    false,
+			"error": "Alert ID required",
+		})
+		return
+	}
+
+	// Get all severe weather data
+	data, err := h.severeWeatherService.GetSevereWeather(0, 0)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"ok":    false,
+			"error": "Failed to fetch severe weather data",
+		})
+		return
+	}
+
+	// Search through all alert categories
+	var foundAlert *service.Alert
+
+	// Check tornado warnings
+	for i := range data.TornadoWarnings {
+		if data.TornadoWarnings[i].ID == alertID {
+			foundAlert = &data.TornadoWarnings[i]
+			break
+		}
+	}
+
+	// Check severe storms
+	if foundAlert == nil {
+		for i := range data.SevereStorms {
+			if data.SevereStorms[i].ID == alertID {
+				foundAlert = &data.SevereStorms[i]
+				break
+			}
+		}
+	}
+
+	// Check winter storms
+	if foundAlert == nil {
+		for i := range data.WinterStorms {
+			if data.WinterStorms[i].ID == alertID {
+				foundAlert = &data.WinterStorms[i]
+				break
+			}
+		}
+	}
+
+	// Check flood warnings
+	if foundAlert == nil {
+		for i := range data.FloodWarnings {
+			if data.FloodWarnings[i].ID == alertID {
+				foundAlert = &data.FloodWarnings[i]
+				break
+			}
+		}
+	}
+
+	// Check other alerts
+	if foundAlert == nil {
+		for i := range data.OtherAlerts {
+			if data.OtherAlerts[i].ID == alertID {
+				foundAlert = &data.OtherAlerts[i]
+				break
+			}
+		}
+	}
+
+	if foundAlert == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"ok":    false,
+			"error": "Alert not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"ok":    true,
+		"alert": foundAlert,
+	})
 }
 
 // renderConsoleOutput renders severe weather data for console/terminal

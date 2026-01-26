@@ -132,7 +132,7 @@
 <div class="dashboard-section">
     <h2>Quick Actions</h2>
     <div class="quick-actions">
-        <a href="/admin/server/backup" class="action-card">
+        <a href="{{.admin_path}}/server/backup" class="action-card">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -141,7 +141,7 @@
             <span>Create Backup</span>
         </a>
 
-        <a href="/admin/server/logs" class="action-card">
+        <a href="{{.admin_path}}/server/logs" class="action-card">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -152,7 +152,7 @@
             <span>View Logs</span>
         </a>
 
-        <a href="/admin/users" class="action-card">
+        <a href="{{.admin_path}}/users" class="action-card">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
@@ -162,7 +162,7 @@
             <span>Manage Users</span>
         </a>
 
-        <a href="/admin/server/settings" class="action-card">
+        <a href="{{.admin_path}}/server/settings" class="action-card">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M12 1v6m0 6v6m6-12h-6m6 6h-6"></path>
@@ -171,205 +171,6 @@
         </a>
     </div>
 </div>
-
-<style>
-.dashboard-header {
-    margin-bottom: 2rem;
-}
-
-.dashboard-header h1 {
-    margin: 0 0 0.5rem 0;
-    font-size: 2rem;
-    color: var(--foreground);
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: var(--background);
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid var(--comment);
-}
-
-.stat-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.stat-icon {
-    color: var(--purple);
-}
-
-.stat-header h3 {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--comment);
-    font-weight: 500;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--foreground);
-    margin-bottom: 0.5rem;
-}
-
-.stat-value.status-ok {
-    color: var(--green);
-}
-
-.stat-value.status-warning {
-    color: var(--yellow);
-}
-
-.stat-value.status-error {
-    color: var(--red);
-}
-
-.stat-footer {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: var(--comment);
-}
-
-.dashboard-section {
-    background: var(--background);
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid var(--comment);
-    margin-bottom: 1.5rem;
-}
-
-.dashboard-section h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.25rem;
-    color: var(--foreground);
-}
-
-.resource-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.resource-card {
-    background: var(--current-line);
-    padding: 1rem;
-    border-radius: 4px;
-}
-
-.resource-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.resource-name {
-    color: var(--foreground);
-}
-
-.resource-value {
-    color: var(--purple);
-    font-weight: 600;
-}
-
-.progress-bar {
-    height: 8px;
-    background: var(--background);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--purple);
-    transition: width 0.3s;
-}
-
-.activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.activity-item {
-    display: flex;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--current-line);
-    border-radius: 4px;
-}
-
-.activity-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.activity-content {
-    flex: 1;
-}
-
-.activity-message {
-    color: var(--foreground);
-    margin-bottom: 0.25rem;
-}
-
-.activity-time {
-    font-size: 0.75rem;
-    color: var(--comment);
-}
-
-.quick-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.action-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1.5rem;
-    background: var(--current-line);
-    border: 1px solid var(--comment);
-    border-radius: 8px;
-    text-decoration: none;
-    color: var(--foreground);
-    transition: all 0.2s;
-}
-
-.action-card:hover {
-    background: var(--selection);
-    border-color: var(--purple);
-    transform: translateY(-2px);
-}
-
-.action-card svg {
-    color: var(--purple);
-}
-
-.action-card span {
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-</style>
 
 {{end}}
 

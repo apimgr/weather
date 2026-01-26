@@ -27,9 +27,10 @@ type AdminLoginRequest struct {
 }
 
 // AdminLoginResponse represents a login response
+// AI.md PART 14: Use "ok" instead of "success" for API responses
 type AdminLoginResponse struct {
-	Success bool         `json:"success"`
-	Message string       `json:"message,omitempty"`
+	Ok      bool          `json:"ok"`
+	Message string        `json:"message,omitempty"`
 	Admin   *models.Admin `json:"admin,omitempty"`
 }
 
@@ -45,7 +46,7 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("[ERROR] " + "Failed to decode login request: %v", err)
 		respondJSON(w, http.StatusBadRequest, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Invalid request format",
 		})
 		return
@@ -54,7 +55,7 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate input
 	if req.Username == "" || req.Password == "" {
 		respondJSON(w, http.StatusBadRequest, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Username and password are required",
 		})
 		return
@@ -68,7 +69,7 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[WARN] " + "Failed login attempt for user: %s from IP: %s", req.Username, r.RemoteAddr)
 		respondJSON(w, http.StatusUnauthorized, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Invalid credentials",
 		})
 		return
@@ -92,7 +93,7 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] " + "Failed to create session: %v", err)
 		respondJSON(w, http.StatusInternalServerError, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Failed to create session",
 		})
 		return
@@ -119,10 +120,10 @@ func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Don't send password hash or API token in response
 	admin.PasswordHash = ""
-	admin.APIToken = ""
+	admin.APITokenPrefix = ""
 
 	respondJSON(w, http.StatusOK, AdminLoginResponse{
-		Success: true,
+		Ok: true,
 		Message: "Login successful",
 		Admin:   admin,
 	})
@@ -140,7 +141,7 @@ func AdminLogoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(AdminSessionCookieName)
 	if err != nil {
 		respondJSON(w, http.StatusOK, AdminLoginResponse{
-			Success: true,
+			Ok: true,
 			Message: "Already logged out",
 		})
 		return
@@ -164,7 +165,7 @@ func AdminLogoutHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	respondJSON(w, http.StatusOK, AdminLoginResponse{
-		Success: true,
+		Ok: true,
 		Message: "Logout successful",
 	})
 }
@@ -188,7 +189,7 @@ func AdminLogoutAllHandler(w http.ResponseWriter, r *http.Request) {
 	if err := sessionModel.DeleteAllSessionsForAdmin(admin.ID); err != nil {
 		log.Printf("[ERROR] " + "Failed to delete all sessions: %v", err)
 		respondJSON(w, http.StatusInternalServerError, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Failed to logout all sessions",
 		})
 		return
@@ -208,7 +209,7 @@ func AdminLogoutAllHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] " + "Admin logged out of all sessions: %s (ID: %d)", admin.Username, admin.ID)
 
 	respondJSON(w, http.StatusOK, AdminLoginResponse{
-		Success: true,
+		Ok: true,
 		Message: "Logged out of all sessions",
 	})
 }
@@ -229,10 +230,10 @@ func AdminMeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Don't send password hash or API token
 	admin.PasswordHash = ""
-	admin.APIToken = ""
+	admin.APITokenPrefix = ""
 
 	respondJSON(w, http.StatusOK, AdminLoginResponse{
-		Success: true,
+		Ok: true,
 		Admin:   admin,
 	})
 }
@@ -260,7 +261,7 @@ func AdminSessionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"success":  true,
+		"ok":       true,
 		"sessions": sessions,
 	})
 }
@@ -290,7 +291,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	var req AdminChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondJSON(w, http.StatusBadRequest, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Invalid request format",
 		})
 		return
@@ -299,7 +300,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate input
 	if req.CurrentPassword == "" || req.NewPassword == "" || req.ConfirmPassword == "" {
 		respondJSON(w, http.StatusBadRequest, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "All fields are required",
 		})
 		return
@@ -307,7 +308,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	if req.NewPassword != req.ConfirmPassword {
 		respondJSON(w, http.StatusBadRequest, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Passwords do not match",
 		})
 		return
@@ -316,7 +317,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate password strength (minimum 8 characters)
 	if len(req.NewPassword) < 8 {
 		respondJSON(w, http.StatusBadRequest, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Password must be at least 8 characters long",
 		})
 		return
@@ -329,7 +330,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] " + "Failed to get admin: %v", err)
 		respondJSON(w, http.StatusInternalServerError, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Failed to verify current password",
 		})
 		return
@@ -338,7 +339,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	valid, err := models.VerifyPassword(req.CurrentPassword, fullAdmin.PasswordHash)
 	if err != nil || !valid {
 		respondJSON(w, http.StatusUnauthorized, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Current password is incorrect",
 		})
 		return
@@ -348,7 +349,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if err := adminModel.UpdatePassword(admin.ID, req.NewPassword); err != nil {
 		log.Printf("[ERROR] " + "Failed to update password: %v", err)
 		respondJSON(w, http.StatusInternalServerError, AdminLoginResponse{
-			Success: false,
+			Ok: false,
 			Message: "Failed to update password",
 		})
 		return
@@ -357,7 +358,7 @@ func AdminChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] " + "Admin password changed: %s (ID: %d)", admin.Username, admin.ID)
 
 	respondJSON(w, http.StatusOK, AdminLoginResponse{
-		Success: true,
+		Ok: true,
 		Message: "Password changed successfully",
 	})
 }
@@ -381,7 +382,7 @@ func AdminRegenerateAPITokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] " + "Failed to regenerate API token: %v", err)
 		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
-			"success": false,
+			"ok":      false,
 			"message": "Failed to regenerate API token",
 		})
 		return
@@ -390,7 +391,7 @@ func AdminRegenerateAPITokenHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] " + "Admin API token regenerated: %s (ID: %d)", admin.Username, admin.ID)
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"success": true,
+		"ok":      true,
 		"message": "API token regenerated successfully",
 		"token":   newToken,
 	})

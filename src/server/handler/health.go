@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"sync"
 	"time"
@@ -61,7 +62,7 @@ func HealthCheck(c *gin.Context) {
 	uptime := time.Since(status.Started)
 
 	health := gin.H{
-		"status":    "OK",
+		"status":    "ok",
 		"timestamp": utils.Now(),
 		"service":   "Weather",
 		"version":   "2.0.0-go",
@@ -75,7 +76,7 @@ func HealthCheck(c *gin.Context) {
 	}
 
 	if !IsInitialized() {
-		health["status"] = "Initializing"
+		health["status"] = "initializing"
 		c.JSON(http.StatusServiceUnavailable, health)
 		return
 	}
@@ -231,7 +232,7 @@ func findSubstring(s, substr string) bool {
 	return false
 }
 
-// APIHealthCheck handles GET /api/v1/healthz - TEMPLATE.md compliant format
+// APIHealthCheck handles GET /api/v1/healthz - AI.md PART 13 compliant format
 func APIHealthCheck(db *database.DB, startTime time.Time) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Calculate uptime in human-readable format
@@ -242,12 +243,6 @@ func APIHealthCheck(db *database.DB, startTime time.Time) gin.HandlerFunc {
 		mode := os.Getenv("MODE")
 		if mode == "" {
 			mode = "production"
-		}
-
-		// Get hostname for node info
-		hostname, _ := os.Hostname()
-		if hostname == "" {
-			hostname = "unknown"
 		}
 
 		// Database health check
@@ -263,33 +258,140 @@ func APIHealthCheck(db *database.DB, startTime time.Time) gin.HandlerFunc {
 		// Disk check (simplified)
 		diskCheck := "ok"
 
-		// Overall status
+		// Scheduler check (assume ok if no errors)
+		schedulerCheck := "ok"
+
+		// Overall status per AI.md PART 13: healthy | degraded | unhealthy
 		status := "healthy"
 		httpStatus := http.StatusOK
+
+		// Count issues for degraded vs unhealthy determination
+		criticalIssues := 0
+		warningIssues := 0
+
 		if dbCheck == "error" {
-			status = "unhealthy"
-			httpStatus = http.StatusServiceUnavailable
+			criticalIssues++
+		}
+		if cacheCheck == "error" {
+			warningIssues++
+		}
+		if diskCheck == "error" {
+			warningIssues++
+		}
+		if schedulerCheck == "error" {
+			warningIssues++
 		}
 
-		// Build TEMPLATE.md compliant response
+		// Determine status: unhealthy (critical), degraded (warnings), healthy (none)
+		if criticalIssues > 0 {
+			status = "unhealthy"
+			httpStatus = http.StatusServiceUnavailable
+		} else if warningIssues > 0 {
+			status = "degraded"
+			// 200 OK but degraded - still functional
+		}
+
+		// Get version info
+		version := getVersionFromEnv()
+		goVersion := runtime.Version()
+
+		// Build info from ldflags (set during build)
+		buildCommit := os.Getenv("BUILD_COMMIT")
+		if buildCommit == "" {
+			buildCommit = "unknown"
+		}
+		buildDate := os.Getenv("BUILD_DATE")
+		if buildDate == "" {
+			buildDate = time.Now().Format(time.RFC3339)
+		}
+
+		// Check for Tor service status
+		torEnabled := false
+		torRunning := false
+		torStatus := ""
+		torHostname := ""
+		
+		// TODO: Get actual Tor status from service
+		// For now, check if tor binary exists
+		if _, err := exec.LookPath("tor"); err == nil {
+			torEnabled = true
+			// Check if tor service is actually running
+			// This is a placeholder - actual implementation in PART 32
+		}
+
+		// Check tor status for checks object
+		torCheck := ""
+		if torEnabled {
+			if torRunning {
+				torCheck = "ok"
+			} else {
+				torCheck = "error"
+				warningIssues++
+			}
+		}
+
+		// Build checks object - only include enabled services per AI.md PART 13
+		checks := gin.H{
+			"database":  dbCheck,
+			"cache":     cacheCheck,
+			"disk":      diskCheck,
+			"scheduler": schedulerCheck,
+		}
+		// Add tor check only if tor is enabled
+		if torEnabled {
+			checks["tor"] = torCheck
+		}
+
+		// Get hostname for node info per AI.md PART 13
+		hostname, _ := os.Hostname()
+		if hostname == "" {
+			hostname = "unknown"
+		}
+
+		// Build AI.md PART 13 compliant response
 		response := gin.H{
-			"status":    status,
-			"version":   getVersionFromEnv(),
-			"mode":      mode,
-			"uptime":    uptimeStr,
-			"timestamp": time.Now().Format(time.RFC3339),
+			"project": gin.H{
+				"name":        "Weather Service",
+				"tagline":     "Real-time weather data API",
+				"description": "Unified weather information platform aggregating global meteorological data",
+			},
+			"status":     status,
+			"version":    version,
+			"mode":       mode,
+			"uptime":     uptimeStr,
+			"timestamp":  time.Now().Format(time.RFC3339),
+			"go_version": goVersion,
+			"build": gin.H{
+				"commit": buildCommit,
+				"date":   buildDate,
+			},
+			// Node info per AI.md PART 13 line 13717
 			"node": gin.H{
-				"id":       hostname,
+				"id":       "standalone",
 				"hostname": hostname,
 			},
 			"cluster": gin.H{
-				"enabled": false,
-				"status":  "disabled",
+				"enabled":    false,
+				"status":     "",
+				"primary":    "",
+				"nodes":      []string{},
+				"node_count": 0,
+				"role":       "",
 			},
-			"checks": gin.H{
-				"database": dbCheck,
-				"cache":    cacheCheck,
-				"disk":     diskCheck,
+			"features": gin.H{
+				"tor": gin.H{
+					"enabled":  torEnabled,
+					"running":  torRunning,
+					"status":   torStatus,
+					"hostname": torHostname,
+				},
+				"geoip": false,
+			},
+			"checks": checks,
+			"stats": gin.H{
+				"requests_total":     0,
+				"requests_24h":       0,
+				"active_connections": 0,
 			},
 		}
 

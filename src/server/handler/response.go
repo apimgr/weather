@@ -8,31 +8,46 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// APIError represents a standardized error response per AI.md PART 19
-type APIError struct {
+// APIResponse represents a standardized API response per AI.md PART 20
+// Action responses use "success" field
+type APIResponse struct {
+	// Present on success actions - always true for successful actions
+	Success bool `json:"success,omitempty"`
+	// Present on success - human-readable message
+	Message string `json:"message,omitempty"`
+	// Present on success - contains response data
+	Data interface{} `json:"data,omitempty"`
+	// Present if resource created - ID of created resource
+	ID string `json:"id,omitempty"`
+}
+
+// ErrorResponse represents a standardized error response per AI.md PART 20 line 17622
+type ErrorResponse struct {
 	// Human-readable error message
-	Error   string                 `json:"error"`
-	// Machine-readable error code
-	Code    string                 `json:"code"`
+	Error string `json:"error"`
+	// Machine-readable error code (e.g., INVALID_INPUT, NOT_FOUND)
+	Code string `json:"code"`
 	// HTTP status code
-	Status  int                    `json:"status"`
-	// Optional additional context
+	Status int `json:"status"`
+	// Additional error context (validation errors, field names)
 	Details map[string]interface{} `json:"details,omitempty"`
 }
 
-// APISuccess represents a standardized success response per AI.md PART 19
-type APISuccess struct {
-	// Always true for successful actions
-	Success bool                   `json:"success"`
-	// Optional human-readable message
-	Message string                 `json:"message,omitempty"`
-	// ID of created/affected resource
-	ID      string                 `json:"id,omitempty"`
-	// Optional additional response data
-	Data    map[string]interface{} `json:"data,omitempty"`
+// PaginatedResponse represents a paginated API response per AI.md PART 20 line 17640
+type PaginatedResponse struct {
+	Data       interface{} `json:"data"`
+	Pagination Pagination  `json:"pagination"`
 }
 
-// Common error codes per AI.md PART 19
+// Pagination contains pagination metadata per AI.md PART 14
+type Pagination struct {
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+	Total int `json:"total"`
+	Pages int `json:"pages"`
+}
+
+// Common error codes per AI.md PART 14
 const (
 	// Client errors (4xx)
 	ErrInvalidInput     = "INVALID_INPUT"
@@ -45,128 +60,121 @@ const (
 	ErrBadRequest       = "BAD_REQUEST"
 
 	// Server errors (5xx)
-	ErrInternal         = "INTERNAL_ERROR"
-	ErrServiceUnavail   = "SERVICE_UNAVAILABLE"
-	ErrDatabaseError    = "DATABASE_ERROR"
-	ErrExternalService  = "EXTERNAL_SERVICE_ERROR"
+	ErrInternal        = "INTERNAL_ERROR"
+	ErrServiceUnavail  = "SERVICE_UNAVAILABLE"
+	ErrDatabaseError   = "DATABASE_ERROR"
+	ErrExternalService = "EXTERNAL_SERVICE_ERROR"
 )
 
-// RespondError sends a standardized error response per AI.md PART 19
+// RespondError sends a standardized error response per AI.md PART 20 line 17622
+// Format: {"error": "Human readable message", "code": "ERROR_CODE", "status": 400, "details": {}}
 func RespondError(c *gin.Context, status int, code string, message string, details ...map[string]interface{}) {
-	var detailsMap map[string]interface{}
-	if len(details) > 0 {
-		detailsMap = details[0]
-	}
-
-	errResponse := APIError{
-		Error:   message,
-		Code:    code,
-		Status:  status,
-		Details: detailsMap,
-	}
-
-	// AI.md PART 19: Support .txt extension for text responses
+	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
 		c.String(status, "%s: %s\n", code, message)
 		return
 	}
 
-	c.JSON(status, errResponse)
+	response := ErrorResponse{
+		Error:  message,
+		Code:   code,
+		Status: status,
+	}
+
+	// Add details if provided
+	if len(details) > 0 {
+		response.Details = details[0]
+	}
+
+	c.JSON(status, response)
 }
 
-// RespondSuccess sends a standardized success response per AI.md PART 19
+// RespondSuccess sends a standardized action success response per AI.md PART 20 line 17605
+// Format: {"success": true, "message": "Item created successfully", "id": "item_123"}
 func RespondSuccess(c *gin.Context, message string, data ...map[string]interface{}) {
-	response := APISuccess{
-		Success: true,
-		Message: message,
-	}
-
-	// Merge optional data
-	if len(data) > 0 {
-		for key, value := range data[0] {
-			if key == "id" {
-				if id, ok := value.(string); ok {
-					response.ID = id
-				}
-			} else {
-				if response.Data == nil {
-					response.Data = make(map[string]interface{})
-				}
-				response.Data[key] = value
-			}
-		}
-	}
-
-	// AI.md PART 19: Support .txt extension for text responses
+	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
 		c.String(http.StatusOK, "%s\n", message)
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
-}
-
-// RespondCreated sends a standardized response for resource creation
-func RespondCreated(c *gin.Context, message string, id string, data ...map[string]interface{}) {
-	response := APISuccess{
+	response := APIResponse{
 		Success: true,
 		Message: message,
-		ID:      id,
 	}
 
-	// Merge optional data
+	// Merge optional data into response
 	if len(data) > 0 {
 		response.Data = data[0]
 	}
 
-	// AI.md PART 19: Support .txt extension for text responses
+	c.JSON(http.StatusOK, response)
+}
+
+// RespondCreated sends a standardized response for resource creation per AI.md PART 20 line 17605
+// Format: {"success": true, "message": "Item created successfully", "id": "item_123"}
+func RespondCreated(c *gin.Context, message string, id string, data ...map[string]interface{}) {
+	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
 		c.String(http.StatusCreated, "Created: %s (ID: %s)\n", message, id)
 		return
 	}
 
+	response := APIResponse{
+		Success: true,
+		Message: message,
+		ID:      id,
+	}
+
+	// Add optional data
+	if len(data) > 0 {
+		response.Data = data[0]
+	}
+
 	c.JSON(http.StatusCreated, response)
 }
 
-// RespondData sends a direct data response (no wrapper) per AI.md PART 19
+// RespondData sends a data response per AI.md PART 20 line 17591
+// Returns the item directly without wrapper
 func RespondData(c *gin.Context, data interface{}) {
-	// AI.md PART 19: Support .txt extension for text responses
+	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
-		// Convert data to string representation
 		c.String(http.StatusOK, "%v\n", data)
 		return
 	}
 
+	// Per AI.md PART 20 line 17601: "Returns the item directly without wrapper"
 	c.JSON(http.StatusOK, data)
 }
 
-// RespondPaginated sends a paginated response per AI.md PART 19
+// RespondPaginated sends a paginated response per AI.md PART 20 line 17640
+// Format: {"data": [...], "pagination": {"page": 1, "limit": 250, "total": 1000, "pages": 4}}
 func RespondPaginated(c *gin.Context, data interface{}, page, limit, total int) {
 	pages := total / limit
 	if total%limit != 0 {
 		pages++
 	}
 
-	response := gin.H{
-		"data": data,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-			"pages": pages,
-		},
-	}
-
-	// AI.md PART 19: Support .txt extension for text responses
+	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
 		c.String(http.StatusOK, "Page %d/%d (Total: %d items)\n", page, pages, total)
 		return
 	}
 
+	response := PaginatedResponse{
+		Data: data,
+		Pagination: Pagination{
+			Page:  page,
+			Limit: limit,
+			Total: total,
+			Pages: pages,
+		},
+	}
+
 	c.JSON(http.StatusOK, response)
 }
 
-// shouldRespondText checks if the request wants text response per AI.md PART 19
+// shouldRespondText checks if the request wants text response per AI.md PART 14
 // Supports both .txt extension and Accept: text/plain header
 func shouldRespondText(c *gin.Context) bool {
 	// Check URL extension: /api/v1/weather.txt
@@ -183,6 +191,65 @@ func shouldRespondText(c *gin.Context) bool {
 	}
 
 	return false
+}
+
+// WantsJSON checks if the request wants JSON response per AI.md PART 14
+// Content negotiation: Accept: application/json returns JSON, otherwise HTML
+func WantsJSON(c *gin.Context) bool {
+	accept := c.GetHeader("Accept")
+
+	// Explicit JSON request
+	if strings.Contains(accept, "application/json") {
+		return true
+	}
+
+	// Check query parameter ?format=json
+	if c.Query("format") == "json" {
+		return true
+	}
+
+	// Check if it's an API route (already JSON)
+	path := c.Request.URL.Path
+	if strings.HasPrefix(path, "/api/") {
+		return true
+	}
+
+	// Check common CLI tools that prefer JSON
+	userAgent := c.GetHeader("User-Agent")
+	if strings.Contains(userAgent, "curl") ||
+		strings.Contains(userAgent, "wget") ||
+		strings.Contains(userAgent, "HTTPie") {
+		// CLI tools: check if Accept header is not explicitly HTML
+		if !strings.Contains(accept, "text/html") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// NegotiateResponse returns JSON or HTML based on Accept header
+// AI.md PART 14: Content negotiation for all routes
+func NegotiateResponse(c *gin.Context, htmlTemplate string, data gin.H) {
+	if WantsJSON(c) {
+		RespondData(c, data)
+		return
+	}
+	c.HTML(http.StatusOK, htmlTemplate, data)
+}
+
+// NegotiateErrorResponse returns JSON or HTML error based on Accept header
+func NegotiateErrorResponse(c *gin.Context, status int, htmlTemplate string, errCode string, message string, data gin.H) {
+	if WantsJSON(c) {
+		RespondError(c, status, errCode, message)
+		return
+	}
+	if data == nil {
+		data = gin.H{}
+	}
+	data["Error"] = message
+	data["ErrorCode"] = errCode
+	c.HTML(status, htmlTemplate, data)
 }
 
 // Helper functions for common error scenarios

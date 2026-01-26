@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/apimgr/weather/src/config"
 )
 
 // Logger handles application logging to both stdout and files
@@ -24,12 +26,17 @@ type Logger struct {
 // NewLogger creates a new logger instance
 func NewLogger(logDir string) (*Logger, error) {
 	// Ensure log directory exists
-	if err := os.MkdirAll(logDir, 0755); err != nil {
+	// AI.md PART 7: Permissions - root: 0755, user: 0700
+	dirPerm := os.FileMode(0700)
+	if os.Geteuid() == 0 {
+		dirPerm = 0755
+	}
+	if err := os.MkdirAll(logDir, dirPerm); err != nil {
 		return nil, fmt.Errorf("failed to create log directory: %w", err)
 	}
 
-	// Check if debug mode
-	isDebug := os.Getenv("MODE") == "development" || os.Getenv("DEBUG") == "1"
+	// Check if debug mode per AI.md PART 5: Boolean Handling
+	isDebug := os.Getenv("MODE") == "development" || config.IsTruthy(os.Getenv("DEBUG"))
 
 	l := &Logger{
 		logDir:  logDir,

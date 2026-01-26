@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright (c) 2024 apimgr
+Copyright (c) 2024-2026 apimgr
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -220,8 +220,8 @@ This software includes the following open-source libraries. Full license texts a
 
 ### github.com/gin-gonic/gin v1.11.0
 
-**Copyright:** 2014 Manuel Martínez-Almeida  
-**License:** MIT License  
+**Copyright:** 2014 Manuel Martínez-Almeida
+**License:** MIT License
 **Repository:** https://github.com/gin-gonic/gin
 
 ```
@@ -252,8 +252,8 @@ SOFTWARE.
 
 ### modernc.org/sqlite v1.39.0
 
-**Copyright:** 2017 The Sqlite Authors  
-**License:** BSD-3-Clause  
+**Copyright:** 2017 The Sqlite Authors
+**License:** BSD-3-Clause
 **Repository:** https://modernc.org/sqlite
 
 ```
@@ -291,8 +291,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### gopkg.in/yaml.v3 v3.0.1
 
-**Copyright:** 2006-2011 Kirill Simonov  
-**License:** MIT License & Apache-2.0  
+**Copyright:** 2006-2011 Kirill Simonov
+**License:** MIT License & Apache-2.0
 **Repository:** https://github.com/go-yaml/yaml
 
 ```
@@ -325,8 +325,8 @@ SOFTWARE.
 
 ### golang.org/x/crypto
 
-**Copyright:** 2009 The Go Authors  
-**License:** BSD-3-Clause  
+**Copyright:** 2009 The Go Authors
+**License:** BSD-3-Clause
 **Repository:** https://go.googlesource.com/crypto
 
 ```

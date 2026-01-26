@@ -23,9 +23,9 @@ func setupIntegrationTest(t *testing.T) (*gin.Engine, *database.DB) {
 	}
 
 	r := gin.New()
-	locationEnhancer := services.NewLocationEnhancer(db.DB)
-	weatherService := services.NewWeatherService(locationEnhancer)
-	apiHandler := handlers.NewAPIHandler(weatherService, locationEnhancer)
+	locationEnhancer := service.NewLocationEnhancer(db.DB)
+	weatherService := service.NewWeatherService(locationEnhancer, nil)
+	apiHandler := handler.NewAPIHandler(weatherService, locationEnhancer)
 
 	// Setup API routes
 	api := r.Group("/api/v1")

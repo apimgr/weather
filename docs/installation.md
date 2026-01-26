@@ -216,23 +216,23 @@ Create `/Library/LaunchDaemons/com.apimgr.weather.plist`:
 <dict>
     <key>Label</key>
     <string>com.apimgr.weather</string>
-    
+
     <key>ProgramArguments</key>
     <array>
         <string>/usr/local/bin/weather</string>
         <string>--mode</string>
         <string>production</string>
     </array>
-    
+
     <key>RunAtLoad</key>
     <true/>
-    
+
     <key>KeepAlive</key>
     <true/>
-    
+
     <key>StandardOutPath</key>
     <string>/var/log/weather.log</string>
-    
+
     <key>StandardErrorPath</key>
     <string>/var/log/weather.error.log</string>
 </dict>
@@ -313,7 +313,7 @@ On first run, Weather Service will:
 
 !!! note "Setup Wizard"
     The setup wizard is a one-time process. After completion, you'll have:
-    
+
     - Admin account with username and password
     - Configured server settings
     - Active weather service ready to use

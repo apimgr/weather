@@ -10,25 +10,19 @@ import (
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := database.InitDB(":memory:")
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
 
-	// Initialize schema
-	dbWrapper := &database.DB{DB: db}
-	if err := dbWrapper.InitSchema(); err != nil {
-		t.Fatalf("Failed to initialize schema: %v", err)
-	}
-
-	return db
+	return db.DB
 }
 
 func TestLocationEnhancer_FindCityByID(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
+	enhancer := service.NewLocationEnhancer(db)
 
 	// Note: This test will only work if city data is loaded
 	// For now, we'll test the error case
@@ -51,7 +45,7 @@ func TestLocationEnhancer_FindNearestCity(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
+	enhancer := service.NewLocationEnhancer(db)
 
 	t.Run("Valid coordinates", func(t *testing.T) {
 		// New York coordinates
@@ -79,10 +73,10 @@ func TestLocationEnhancer_EnhanceLocation(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
+	enhancer := service.NewLocationEnhancer(db)
 
 	t.Run("Valid coordinates", func(t *testing.T) {
-		coords := &services.Coordinates{
+		coords := &service.Coordinates{
 			Latitude:  40.7128,
 			Longitude: -74.0060,
 		}

@@ -138,7 +138,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // MarkAllAsRead marks all notifications as read for the current user
@@ -151,7 +151,7 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // DeleteNotification deletes a notification
@@ -179,7 +179,7 @@ func (h *NotificationHandler) DeleteNotification(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // CreateNotification creates a new notification (internal use)

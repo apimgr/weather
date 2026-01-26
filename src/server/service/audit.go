@@ -1,12 +1,15 @@
 package service
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 // EventType represents the type of audit event
@@ -307,9 +310,9 @@ func (al *AuditLogger) Log(event AuditEvent) error {
 		event.Time = time.Now().UTC()
 	}
 
-	// Generate ID if not set (use timestamp-based ID instead of ULID for simplicity)
+	// Generate ID if not set (use ULID per AI.md PART 18 line 18898)
 	if event.ID == "" {
-		event.ID = fmt.Sprintf("audit_%d_%06d", event.Time.Unix(), event.Time.Nanosecond()/1000)
+		event.ID = ulid.MustNew(ulid.Timestamp(event.Time), rand.Reader).String()
 	}
 
 	// Set default severity if not provided

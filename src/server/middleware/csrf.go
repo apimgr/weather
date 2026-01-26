@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"net/http"
 
+	"github.com/apimgr/weather/src/server/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -60,6 +61,7 @@ func CSRFProtection(cfg CSRFConfig) gin.HandlerFunc {
 		// Per AI.md line 14804: "All non-GET requests validate CSRF token"
 		cookieToken, err := c.Cookie(cfg.CookieName)
 		if err != nil || cookieToken == "" {
+			logCSRFFailure(c, "CSRF token missing")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": "CSRF token missing",
 			})
@@ -77,6 +79,7 @@ func CSRFProtection(cfg CSRFConfig) gin.HandlerFunc {
 		}
 
 		if requestToken == "" {
+			logCSRFFailure(c, "CSRF token not provided")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": "CSRF token not provided",
 			})
@@ -85,6 +88,7 @@ func CSRFProtection(cfg CSRFConfig) gin.HandlerFunc {
 
 		if requestToken != cookieToken {
 			// Per AI.md line 18164: Log CSRF failures to audit
+			logCSRFFailure(c, "CSRF token validation failed")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": "CSRF token validation failed",
 			})
@@ -129,4 +133,27 @@ func RegenerateCSRFToken(c *gin.Context, cfg CSRFConfig) {
 	token := generateCSRFToken(cfg.TokenLength)
 	setCSRFCookie(c, cfg, token)
 	c.Set("csrf_token", token)
+}
+
+// logCSRFFailure logs CSRF validation failure to audit log
+// Per AI.md PART 11: All security events must be logged
+func logCSRFFailure(c *gin.Context, reason string) {
+	// Get audit logger from context
+	if auditLogger, exists := c.Get("auditLogger"); exists {
+		if logger, ok := auditLogger.(*service.AuditLogger); ok {
+			logger.LogFailure(
+				string(service.EventSecurityCSRFDetected),
+				"security",
+				"api",
+				"",
+				c.ClientIP(),
+				reason,
+				map[string]interface{}{
+					"endpoint":   c.Request.URL.Path,
+					"method":     c.Request.Method,
+					"user_agent": c.Request.UserAgent(),
+				},
+			)
+		}
+	}
 }

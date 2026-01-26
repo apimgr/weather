@@ -18,36 +18,34 @@ type Resolver struct {
 	WeatherService *service.WeatherService
 
 	// Handlers (we'll use their logic in resolvers)
-	APIHandler          *handlers.APIHandler
-	AuthHandler         *handlers.AuthHandler
-	LocationHandler     *handlers.LocationHandler
-	NotificationHandler *handlers.NotificationHandler
-	AdminHandler        *handlers.AdminHandler
-	SettingsHandler     *handlers.AdminSettingsHandler
-	SchedulerHandler    *handlers.SchedulerHandler
-	ChannelHandler      *handlers.ChannelHandler
-	EarthquakeHandler   *handlers.EarthquakeHandler
-	HurricaneHandler    *handlers.HurricaneHandler
-	SevereWeatherHandler *handlers.SevereWeatherHandler
-	MoonHandler         *handlers.MoonHandler
+	APIHandler          *handler.APIHandler
+	AuthHandler         *handler.AuthHandler
+	LocationHandler     *handler.LocationHandler
+	NotificationHandler *handler.NotificationHandler
+	AdminHandler        *handler.AdminHandler
+	SettingsHandler     *handler.AdminSettingsHandler
+	SchedulerHandler    *handler.SchedulerHandler
+	EarthquakeHandler   *handler.EarthquakeHandler
+	HurricaneHandler    *handler.HurricaneHandler
+	SevereWeatherHandler *handler.SevereWeatherHandler
+	MoonHandler         *handler.MoonHandler
 }
 
 // NewResolver creates a new root resolver with all dependencies
 func NewResolver(
 	serverDB, usersDB *sql.DB,
 	weatherService *service.WeatherService,
-	apiHandler *handlers.APIHandler,
-	authHandler *handlers.AuthHandler,
-	locationHandler *handlers.LocationHandler,
-	notificationHandler *handlers.NotificationHandler,
-	adminHandler *handlers.AdminHandler,
-	settingsHandler *handlers.AdminSettingsHandler,
-	schedulerHandler *handlers.SchedulerHandler,
-	channelHandler *handlers.ChannelHandler,
-	earthquakeHandler *handlers.EarthquakeHandler,
-	hurricaneHandler *handlers.HurricaneHandler,
-	severeWeatherHandler *handlers.SevereWeatherHandler,
-	moonHandler *handlers.MoonHandler,
+	apiHandler *handler.APIHandler,
+	authHandler *handler.AuthHandler,
+	locationHandler *handler.LocationHandler,
+	notificationHandler *handler.NotificationHandler,
+	adminHandler *handler.AdminHandler,
+	settingsHandler *handler.AdminSettingsHandler,
+	schedulerHandler *handler.SchedulerHandler,
+	earthquakeHandler *handler.EarthquakeHandler,
+	hurricaneHandler *handler.HurricaneHandler,
+	severeWeatherHandler *handler.SevereWeatherHandler,
+	moonHandler *handler.MoonHandler,
 ) *Resolver {
 	return &Resolver{
 		ServerDB:             serverDB,
@@ -60,7 +58,6 @@ func NewResolver(
 		AdminHandler:         adminHandler,
 		SettingsHandler:      settingsHandler,
 		SchedulerHandler:     schedulerHandler,
-		ChannelHandler:       channelHandler,
 		EarthquakeHandler:    earthquakeHandler,
 		HurricaneHandler:     hurricaneHandler,
 		SevereWeatherHandler: severeWeatherHandler,

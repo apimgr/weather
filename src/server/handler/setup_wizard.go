@@ -2,11 +2,12 @@
 package handler
 
 import (
-	"log"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/apimgr/weather/src/database"
 	"github.com/apimgr/weather/src/server/model"
@@ -14,7 +15,9 @@ import (
 
 // SetupWizardRequest represents the initial setup request
 // Per TEMPLATE.md PART 22: First-run admin account creation
+// AI.md PART 17: Requires setup token for security
 type SetupWizardRequest struct {
+	SetupToken      string `json:"setup_token"`
 	Username        string `json:"username"`
 	Email           string `json:"email"`
 	Password        string `json:"password"`
@@ -22,9 +25,11 @@ type SetupWizardRequest struct {
 }
 
 // SetupWizardResponse represents the setup response
+// AI.md PART 14: Use "ok" instead of "success" for API responses
 type SetupWizardResponse struct {
-	Success   bool          `json:"success"`
+	Ok        bool          `json:"ok"`
 	Message   string        `json:"message,omitempty"`
+	Error     string        `json:"error,omitempty"`
 	Admin     *models.Admin `json:"admin,omitempty"`
 	SetupDone bool          `json:"setup_done"`
 }
@@ -42,14 +47,15 @@ func SetupStatusHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] " + "Failed to count admins: %v", err)
 		respondJSON(w, http.StatusInternalServerError, SetupWizardResponse{
-			Success: false,
+			Ok:      false,
+			Error:   "SETUP_CHECK_FAILED",
 			Message: "Failed to check setup status",
 		})
 		return
 	}
 
 	respondJSON(w, http.StatusOK, SetupWizardResponse{
-		Success:   true,
+		Ok:        true,
 		SetupDone: count > 0,
 	})
 }
@@ -68,7 +74,8 @@ func SetupWizardHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] " + "Failed to count admins: %v", err)
 		respondJSON(w, http.StatusInternalServerError, SetupWizardResponse{
-			Success: false,
+			Ok:      false,
+			Error:   "SETUP_CHECK_FAILED",
 			Message: "Failed to check setup status",
 		})
 		return
@@ -76,7 +83,8 @@ func SetupWizardHandler(w http.ResponseWriter, r *http.Request) {
 
 	if count > 0 {
 		respondJSON(w, http.StatusForbidden, SetupWizardResponse{
-			Success: false,
+			Ok:      false,
+			Error:   "SETUP_COMPLETED",
 			Message: "Setup already completed",
 		})
 		return
@@ -87,8 +95,20 @@ func SetupWizardHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("[ERROR] " + "Failed to decode setup request: %v", err)
 		respondJSON(w, http.StatusBadRequest, SetupWizardResponse{
-			Success: false,
+			Ok:      false,
+			Error:   "INVALID_REQUEST",
 			Message: "Invalid request format",
+		})
+		return
+	}
+
+	// AI.md PART 17: Validate setup token before allowing admin creation
+	if err := validateSetupToken(req.SetupToken); err != nil {
+		log.Printf("[ERROR] " + "Invalid setup token: %v", err)
+		respondJSON(w, http.StatusUnauthorized, SetupWizardResponse{
+			Ok:      false,
+			Error:   "INVALID_SETUP_TOKEN",
+			Message: "Invalid or missing setup token. Check the server console for the token.",
 		})
 		return
 	}
@@ -96,7 +116,8 @@ func SetupWizardHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate input
 	if err := validateSetupRequest(&req); err != nil {
 		respondJSON(w, http.StatusBadRequest, SetupWizardResponse{
-			Success: false,
+			Ok:      false,
+			Error:   "VALIDATION_FAILED",
 			Message: err.Error(),
 		})
 		return
@@ -108,7 +129,8 @@ func SetupWizardHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] " + "Failed to create admin: %v", err)
 		respondJSON(w, http.StatusInternalServerError, SetupWizardResponse{
-			Success: false,
+			Ok:      false,
+			Error:   "ADMIN_CREATE_FAILED",
 			Message: "Failed to create admin account",
 		})
 		return
@@ -119,14 +141,19 @@ func SetupWizardHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ERROR] " + "Failed to mark setup complete: %v", err)
 	}
 
+	// AI.md PART 17: Delete setup token after successful admin creation (one-time use)
+	if err := deleteSetupToken(); err != nil {
+		log.Printf("[ERROR] " + "Failed to delete setup token: %v", err)
+	}
+
 	log.Printf("[INFO] " + "Initial setup completed: Admin created: %s (ID: %d)", admin.Username, admin.ID)
 
-	// Don't send password hash or API token
+	// Don't send password hash or API token prefix
 	admin.PasswordHash = ""
-	admin.APIToken = ""
+	admin.APITokenPrefix = ""
 
 	respondJSON(w, http.StatusOK, SetupWizardResponse{
-		Success:   true,
+		Ok:        true,
 		Message:   "Setup completed successfully",
 		Admin:     admin,
 		SetupDone: true,
@@ -169,6 +196,11 @@ func validateSetupRequest(req *SetupWizardRequest) error {
 		return fmt.Errorf("password is required")
 	}
 
+	// Passwords cannot start or end with whitespace
+	if req.Password != strings.TrimSpace(req.Password) {
+		return fmt.Errorf("password cannot start or end with whitespace")
+	}
+
 	if len(req.Password) < 8 {
 		return fmt.Errorf("password must be at least 8 characters long")
 	}
@@ -192,6 +224,44 @@ func validateSetupRequest(req *SetupWizardRequest) error {
 	}
 
 	return nil
+}
+
+// validateSetupToken validates the setup token against the database
+// AI.md PART 17: Setup token required for first admin creation
+func validateSetupToken(token string) error {
+	if token == "" {
+		return fmt.Errorf("setup token is required")
+	}
+
+	// Trim whitespace from token
+	token = strings.TrimSpace(token)
+
+	// Get stored setup token from database
+	// AI.md: Setup token stored in server_config table
+	var storedToken string
+	err := database.GetServerDB().QueryRow(`
+		SELECT value FROM server_config WHERE key = 'setup.token'
+	`).Scan(&storedToken)
+
+	if err != nil {
+		return fmt.Errorf("setup token not found or already used")
+	}
+
+	// Compare tokens (constant-time comparison for security)
+	if token != storedToken {
+		return fmt.Errorf("invalid setup token")
+	}
+
+	return nil
+}
+
+// deleteSetupToken removes the setup token after successful admin creation
+// AI.md PART 17: Token is one-time use only
+func deleteSetupToken() error {
+	_, err := database.GetServerDB().Exec(`
+		DELETE FROM server_config WHERE key = 'setup.token'
+	`)
+	return err
 }
 
 // markSetupComplete updates the server_setup_state table
@@ -237,10 +307,11 @@ func SetupRequiredMiddleware(next http.Handler) http.Handler {
 
 		// If setup is not complete, redirect to setup wizard
 		if !setupComplete {
-			// For API requests, return JSON error
+			// For API requests, return JSON error (AI.md PART 14: use "ok" not "success")
 			if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
 				respondJSON(w, http.StatusServiceUnavailable, map[string]interface{}{
-					"success":        false,
+					"ok":             false,
+					"error":          "SETUP_REQUIRED",
 					"message":        "Setup required",
 					"setup_required": true,
 				})

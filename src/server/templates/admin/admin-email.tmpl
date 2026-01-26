@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
-    <link rel="stylesheet" href="/static/css/admin.css">
-    <link rel="stylesheet" href="/static/css/template-overrides.css">
+    <link rel="stylesheet" href="/static/css/dracula.css">
 </head>
 <body>
     {{template "components/admin-header.tmpl" .}}
@@ -202,7 +201,7 @@
                                 <strong>Welcome Email</strong>
                                 <p>Sent when the application is first set up</p>
                             </div>
-                            <a href="/admin/email/templates/welcome" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/welcome" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -210,7 +209,7 @@
                                 <strong>Password Reset</strong>
                                 <p>Password reset instructions with secure link</p>
                             </div>
-                            <a href="/admin/email/templates/password_reset" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/password_reset" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -218,7 +217,7 @@
                                 <strong>Backup Complete</strong>
                                 <p>Notification when backup completes successfully</p>
                             </div>
-                            <a href="/admin/email/templates/backup_complete" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/backup_complete" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -226,7 +225,7 @@
                                 <strong>Backup Failed</strong>
                                 <p>Alert when backup process fails</p>
                             </div>
-                            <a href="/admin/email/templates/backup_failed" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/backup_failed" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -234,7 +233,7 @@
                                 <strong>SSL Certificate Expiring</strong>
                                 <p>Warning when SSL certificate is about to expire</p>
                             </div>
-                            <a href="/admin/email/templates/ssl_expiring" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/ssl_expiring" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -242,7 +241,7 @@
                                 <strong>SSL Certificate Renewed</strong>
                                 <p>Confirmation when SSL certificate is renewed</p>
                             </div>
-                            <a href="/admin/email/templates/ssl_renewed" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/ssl_renewed" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -250,7 +249,7 @@
                                 <strong>Login Alert</strong>
                                 <p>Security notification for new login</p>
                             </div>
-                            <a href="/admin/email/templates/login_alert" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/login_alert" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -258,7 +257,7 @@
                                 <strong>Security Alert</strong>
                                 <p>Critical security event notifications</p>
                             </div>
-                            <a href="/admin/email/templates/security_alert" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/security_alert" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -266,7 +265,7 @@
                                 <strong>Scheduler Error</strong>
                                 <p>Alert when scheduled task fails</p>
                             </div>
-                            <a href="/admin/email/templates/scheduler_error" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/scheduler_error" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
 
                         <div class="template-item">
@@ -274,18 +273,18 @@
                                 <strong>Test Email</strong>
                                 <p>Test message to verify SMTP configuration</p>
                             </div>
-                            <a href="/admin/email/templates/test" class="btn btn-sm btn-secondary">Edit Template</a>
+                            <a href="{{.admin_path}}/email/templates/test" class="btn btn-sm btn-secondary">Edit Template</a>
                         </div>
                     </div>
 
-                    <div class="alert alert-info" role="status" style="margin-top: 20px;">
+                    <div class="alert alert-info mt-4" role="status">
                         <strong>Template Variables:</strong> Use <code>{app_name}</code>, <code>{app_url}</code>, and other placeholders in your templates. They will be automatically replaced when emails are sent.
                     </div>
                 </div>
             </section>
 
             <!-- Test Email Result -->
-            <div id="test-result" class="alert" style="display: none;" role="status" aria-live="polite"></div>
+            <div id="test-result" class="alert d-none" role="status" aria-live="polite"></div>
         </main>
     </div>
 
@@ -457,78 +456,6 @@
     }
     </script>
 
-    <style>
-    .smtp-fields {
-        transition: opacity 0.3s;
-    }
-
-    .toggle-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        font-weight: 600;
-    }
-
-    .toggle-input {
-        width: 50px;
-        height: 26px;
-    }
-
-    .form-row {
-        display: flex;
-        gap: 15px;
-    }
-
-    .col-md-8 {
-        flex: 0 0 66.666%;
-    }
-
-    .col-md-4 {
-        flex: 0 0 33.333%;
-    }
-
-    .template-list {
-        display: grid;
-        gap: 15px;
-    }
-
-    .template-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: #f9f9f9;
-    }
-
-    .template-info strong {
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    .template-info p {
-        margin: 0;
-        color: #666;
-        font-size: 14px;
-    }
-
-    .button-group {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    .required {
-        color: #dc3545;
-    }
-
-    .btn-sm {
-        padding: 6px 12px;
-        font-size: 14px;
-    }
-    </style>
 </body>
 </html>
 {{end}}

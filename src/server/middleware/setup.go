@@ -17,7 +17,7 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 		path := c.Request.URL.Path
 
 		// Skip check for setup routes, static files, and API
-		if strings.HasPrefix(path, "/user/setup") ||
+		if strings.HasPrefix(path, "/users/setup") ||
 			strings.HasPrefix(path, "/static/") ||
 			strings.HasPrefix(path, "/api/") ||
 			strings.HasPrefix(path, "/healthz") {
@@ -42,7 +42,7 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 
 		// If no admin exists, redirect to setup
 		if count == 0 {
-			c.Redirect(http.StatusFound, "/user/setup")
+			c.Redirect(http.StatusFound, "/users/setup")
 			c.Abort()
 			return
 		}
@@ -88,7 +88,7 @@ func BlockSetupAfterAdminExists(db *sql.DB) gin.HandlerFunc {
 			if ok && user.Role == "admin" {
 				c.Redirect(http.StatusFound, "/admin")
 			} else {
-				c.Redirect(http.StatusFound, "/user/dashboard")
+				c.Redirect(http.StatusFound, "/users/dashboard")
 			}
 			c.Abort()
 			return

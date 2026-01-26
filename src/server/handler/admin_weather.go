@@ -78,5 +78,5 @@ func (h *AdminWeatherHandler) UpdateWeatherSettings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }

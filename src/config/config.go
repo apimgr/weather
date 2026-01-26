@@ -10,25 +10,40 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// WeatherConfig represents weather-specific configuration per AI.md PART 36
+// WeatherConfig represents weather-specific configuration per AI.md PART 37
 type WeatherConfig struct {
-	// Multi-user support enabled by default
-	MultiuserEnabled       bool `yaml:"multiuser_enabled"`
-	// Open registration enabled by default
-	OpenRegistration       bool `yaml:"open_registration"`
 	// Number of days for forecast
-	ForecastDays           int  `yaml:"forecast_days"`
+	ForecastDays int `yaml:"forecast_days"`
 	// Weather data update interval (seconds)
-	UpdateInterval         int  `yaml:"update_interval"`
+	UpdateInterval int `yaml:"update_interval"`
 	// Enable location-based weather queries
-	LocationSearchEnabled  bool `yaml:"location_search_enabled"`
+	LocationSearchEnabled bool `yaml:"location_search_enabled"`
 }
 
-// Config represents the application configuration from server.yml per AI.md PART 4
-type Config struct {
+// UsersConfig represents user/multi-user settings per AI.md PART 33
+type UsersConfig struct {
+	// Multi-user support enabled
+	Enabled bool `yaml:"enabled"`
+	// Registration settings
+	Registration RegistrationConfig `yaml:"registration"`
+}
+
+// RegistrationConfig represents user registration settings per AI.md PART 33
+type RegistrationConfig struct {
+	// Mode: public, private, disabled
+	// public = anyone can register
+	// private = invite only (admin creates invite links)
+	// disabled = no new users (admin creates accounts directly)
+	Mode string `yaml:"mode"`
+}
+
+// AppConfig represents the application configuration from server.yml per AI.md PART 4
+type AppConfig struct {
 	Server  ServerConfig  `yaml:"server"`
 	Web     WebConfig     `yaml:"web"`
-	// Weather-specific settings per AI.md PART 36
+	// User/Multi-user settings per AI.md PART 33
+	Users   UsersConfig   `yaml:"users"`
+	// Weather-specific settings per AI.md PART 37
 	Weather WeatherConfig `yaml:"weather"`
 }
 
@@ -42,6 +57,10 @@ type ServerConfig struct {
 	Address  string             `yaml:"address"`
 	// production or development
 	Mode     string             `yaml:"mode"`
+	// AI.md: Admin panel URL path (configurable, default: "admin")
+	AdminPath string            `yaml:"admin_path"`
+	// AI.md: API version prefix (default: "v1")
+	APIVersion string           `yaml:"api_version"`
 	Branding BrandingConfig     `yaml:"branding"`
 	SEO      SEOConfig          `yaml:"seo"`
 	User     string             `yaml:"user"`
@@ -165,9 +184,11 @@ type NotifyConfig struct {
 	OnExit  bool `yaml:"on_exit"`
 }
 
-// BackupConfig represents backup encryption settings per AI.md PART 24
+// BackupConfig represents backup settings per AI.md PART 19, PART 24
 type BackupConfig struct {
 	Encryption BackupEncryptionConfig `yaml:"encryption"`
+	// AI.md PART 19 line 24812: Enable hourly incremental backup (disabled by default)
+	HourlyEnabled bool `yaml:"hourly_enabled"`
 }
 
 // BackupEncryptionConfig represents backup encryption settings per AI.md PART 24
@@ -195,10 +216,28 @@ type BrandingConfig struct {
 	Description string `yaml:"description"`
 }
 
-// SEOConfig represents SEO configuration per AI.md PART 4
+// SEOConfig represents SEO configuration per AI.md PART 16
 type SEOConfig struct {
 	// Array of keywords
 	Keywords []string `yaml:"keywords"`
+	// Author/organization name
+	Author string `yaml:"author"`
+	// OpenGraph image URL for social sharing
+	OGImage string `yaml:"og_image"`
+	// Twitter @handle for cards
+	TwitterHandle string `yaml:"twitter_handle"`
+	// Site verification codes per AI.md PART 16
+	Verification VerificationConfig `yaml:"verification"`
+}
+
+// VerificationConfig holds site verification codes per AI.md PART 16
+type VerificationConfig struct {
+	Google    string `yaml:"google"`
+	Bing      string `yaml:"bing"`
+	Yandex    string `yaml:"yandex"`
+	Baidu     string `yaml:"baidu"`
+	Pinterest string `yaml:"pinterest"`
+	Facebook  string `yaml:"facebook"`
 }
 
 // NotificationConfig represents notification settings per AI.md PART 4
@@ -218,6 +257,8 @@ type WebConfig struct {
 	RobotsTxt   string   `yaml:"robots_txt"`
 	// Custom security.txt content
 	SecurityTxt string   `yaml:"security_txt"`
+	// Custom favicon URL (empty = use embedded default)
+	FaviconURL  string   `yaml:"favicon_url"`
 }
 
 // UIConfig represents UI configuration per AI.md PART 4
@@ -256,24 +297,59 @@ func getDefaultFQDN() string {
 	return hostname
 }
 
+// GetAdminPath returns the admin panel URL path with default fallback
+// AI.md: {admin_path} is configurable, default: "admin"
+func (c *AppConfig) GetAdminPath() string {
+	if c == nil || c.Server.AdminPath == "" {
+		return "admin"
+	}
+	return c.Server.AdminPath
+}
+
+// GetAPIVersion returns the API version prefix with default fallback
+// AI.md: {api_version} is configurable, default: "v1"
+func (c *AppConfig) GetAPIVersion() string {
+	if c == nil || c.Server.APIVersion == "" {
+		return "v1"
+	}
+	return c.Server.APIVersion
+}
+
+// GetAPIPath returns the full API path prefix (e.g., "/api/v1")
+// AI.md: Routes use /api/{api_version}/ format
+func (c *AppConfig) GetAPIPath() string {
+	return "/api/" + c.GetAPIVersion()
+}
+
+// GetAdminAPIPath returns the full admin API path prefix (e.g., "/api/v1/admin")
+// AI.md: Admin API routes use /api/{api_version}/{admin_path}/ format
+func (c *AppConfig) GetAdminAPIPath() string {
+	return c.GetAPIPath() + "/" + c.GetAdminPath()
+}
+
 // LoadConfig loads configuration from server.yml per AI.md PART 4
-func LoadConfig() (*Config, error) {
+func LoadConfig() (*AppConfig, error) {
 	// Get hostname for defaults
 	hostname := getDefaultFQDN()
 	adminEmail := fmt.Sprintf("admin@%s", hostname)
 
 	// Default config with sane defaults per AI.md PART 4
-	cfg := &Config{
+	cfg := &AppConfig{
+		// User/Multi-user defaults per AI.md PART 33
+		Users: UsersConfig{
+			Enabled: true,
+			Registration: RegistrationConfig{
+				// public = anyone can register (default)
+				Mode: "public",
+			},
+		},
+		// Weather-specific defaults per AI.md PART 37
 		Weather: WeatherConfig{
-			// Multi-user support enabled by default per AI.md PART 36
-			MultiuserEnabled:      true,
-			// Open registration enabled by default per AI.md PART 36
-			OpenRegistration:      true,
-			// 7-day forecast by default per AI.md PART 36
-			ForecastDays:          7,
-			// 3600 seconds (1 hour) update interval per AI.md PART 36
-			UpdateInterval:        3600,
-			// Location search enabled by default per AI.md PART 36
+			// 7-day forecast by default
+			ForecastDays: 7,
+			// 3600 seconds (1 hour) update interval
+			UpdateInterval: 3600,
+			// Location search enabled by default
 			LocationSearchEnabled: true,
 		},
 		Server: ServerConfig{
@@ -283,6 +359,10 @@ func LoadConfig() (*Config, error) {
 			// All interfaces IPv4/IPv6
 			Address:   "[::]",
 			Mode:      "production",
+			// AI.md: Admin panel URL path (configurable, default: "admin")
+			AdminPath: "admin",
+			// AI.md: API version prefix (default: "v1")
+			APIVersion: "v1",
 			User:      "{auto}",
 			Group:     "{auto}",
 			PIDFile:   true,
@@ -387,7 +467,8 @@ func LoadConfig() (*Config, error) {
 				Cleanup: CleanupConfig{
 					DiskThreshold:    90,
 					LogRetentionDays: 7,
-					BackupKeepCount:  5,
+					// AI.md PART 22: Keep max 4 backups (storage management)
+					BackupKeepCount:  4,
 				},
 				Notify: NotifyConfig{
 					OnEnter: true,
@@ -433,7 +514,7 @@ func LoadConfig() (*Config, error) {
 		configPath = getConfigPath()
 		if err := createDefaultConfig(cfg, configPath); err != nil {
 	// Log error but continue with defaults
-	
+
 			fmt.Fprintf(os.Stderr, "Warning: Could not create config file: %v\n", err)
 		}
 		return cfg, nil
@@ -503,7 +584,7 @@ func findConfigFile() string {
 }
 
 // createDefaultConfig creates a default server.yml file per AI.md PART 4
-func createDefaultConfig(cfg *Config, path string) error {
+func createDefaultConfig(cfg *AppConfig, path string) error {
 	// Create directory if it doesn't exist
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -537,20 +618,20 @@ func createDefaultConfig(cfg *Config, path string) error {
 }
 
 // Global config instance for handler access
-var globalConfig *Config
+var globalConfig *AppConfig
 
 // SetGlobalConfig sets the global config instance
-func SetGlobalConfig(cfg *Config) {
+func SetGlobalConfig(cfg *AppConfig) {
 	globalConfig = cfg
 }
 
 // GetGlobalConfig returns the global config instance
-func GetGlobalConfig() *Config {
+func GetGlobalConfig() *AppConfig {
 	return globalConfig
 }
 
 // SaveConfig saves the current configuration to server.yml per AI.md PART 4
-func SaveConfig(cfg *Config) error {
+func SaveConfig(cfg *AppConfig) error {
 	configPath := findConfigFile()
 	if configPath == "" {
 		configPath = getConfigPath()
@@ -596,4 +677,46 @@ func UpdateWebSecurityTxt(content string) error {
 
 	cfg.Web.SecurityTxt = content
 	return SaveConfig(cfg)
+}
+
+// IsMultiUserEnabled returns true if multi-user mode is enabled
+// Per AI.md PART 33: Check users.enabled
+func IsMultiUserEnabled() bool {
+	cfg := GetGlobalConfig()
+	if cfg == nil {
+		return false
+	}
+	return cfg.Users.Enabled
+}
+
+// GetRegistrationMode returns the current registration mode
+// Per AI.md PART 33: public, private, or disabled
+func GetRegistrationMode() string {
+	cfg := GetGlobalConfig()
+	if cfg == nil {
+		return "disabled"
+	}
+	mode := cfg.Users.Registration.Mode
+	if mode == "" {
+		return "public" // default
+	}
+	return mode
+}
+
+// IsRegistrationPublic returns true if public registration is enabled
+// Per AI.md PART 33: public mode = anyone can register
+func IsRegistrationPublic() bool {
+	return GetRegistrationMode() == "public"
+}
+
+// IsRegistrationPrivate returns true if invite-only registration is enabled
+// Per AI.md PART 33: private mode = invite only
+func IsRegistrationPrivate() bool {
+	return GetRegistrationMode() == "private"
+}
+
+// IsRegistrationDisabled returns true if registration is disabled
+// Per AI.md PART 33: disabled mode = admin creates accounts directly
+func IsRegistrationDisabled() bool {
+	return GetRegistrationMode() == "disabled"
 }

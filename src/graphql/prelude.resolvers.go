@@ -6,31 +6,37 @@ package graphql
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/99designs/gqlgen/graphql/introspection"
 )
 
 // IsDeprecated is the resolver for the isDeprecated field.
-func (r *__InputValueResolver) IsDeprecated(ctx context.Context, obj *introspection.InputValue) (bool, error) {
-	panic(fmt.Errorf("not implemented: IsDeprecated - isDeprecated"))
+func (r *inputValueResolverImpl) IsDeprecated(ctx context.Context, obj *introspection.InputValue) (bool, error) {
+	// InputValue doesn't have deprecation in gqlgen introspection
+	return false, nil
 }
 
 // DeprecationReason is the resolver for the deprecationReason field.
-func (r *__InputValueResolver) DeprecationReason(ctx context.Context, obj *introspection.InputValue) (*string, error) {
-	panic(fmt.Errorf("not implemented: DeprecationReason - deprecationReason"))
+func (r *inputValueResolverImpl) DeprecationReason(ctx context.Context, obj *introspection.InputValue) (*string, error) {
+	// InputValue doesn't have deprecation in gqlgen introspection
+	return nil, nil
 }
 
 // IsOneOf is the resolver for the isOneOf field.
-func (r *__TypeResolver) IsOneOf(ctx context.Context, obj *introspection.Type) (*bool, error) {
-	panic(fmt.Errorf("not implemented: IsOneOf - isOneOf"))
+func (r *typeResolverImpl) IsOneOf(ctx context.Context, obj *introspection.Type) (*bool, error) {
+	isOneOf := false
+	return &isOneOf, nil
 }
 
+// inputValueResolverImpl implements __InputValueResolver interface
+type inputValueResolverImpl struct{ *Resolver }
+
+// typeResolverImpl implements __TypeResolver interface
+type typeResolverImpl struct{ *Resolver }
+
 // __InputValue returns __InputValueResolver implementation.
-func (r *Resolver) __InputValue() __InputValueResolver { return &__InputValueResolver{r} }
+func (r *Resolver) __InputValue() __InputValueResolver { return &inputValueResolverImpl{r} }
 
 // __Type returns __TypeResolver implementation.
-func (r *Resolver) __Type() __TypeResolver { return &__TypeResolver{r} }
+func (r *Resolver) __Type() __TypeResolver { return &typeResolverImpl{r} }
 
-type __InputValueResolver struct{ *Resolver }
-type __TypeResolver struct{ *Resolver }

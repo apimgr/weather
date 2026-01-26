@@ -223,6 +223,54 @@ func (h *EarthquakeHandler) HandleEarthquakeAPI(c *gin.Context) {
 	c.JSON(http.StatusOK, earthquakes)
 }
 
+// HandleEarthquakeByIDAPI serves JSON data for a specific earthquake by ID
+// GET /{api_version}/earthquakes/:id
+func (h *EarthquakeHandler) HandleEarthquakeByIDAPI(c *gin.Context) {
+	earthquakeID := c.Param("id")
+	if earthquakeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ok":    false,
+			"error": "Earthquake ID required",
+		})
+		return
+	}
+
+	// Search through available feeds to find the earthquake
+	feeds := []string{"all_day", "all_week", "all_month"}
+	var earthquake *service.Earthquake
+
+	for _, feedType := range feeds {
+		earthquakes, err := h.earthquakeService.GetEarthquakes(feedType)
+		if err != nil {
+			continue
+		}
+
+		for i := range earthquakes.Earthquakes {
+			if earthquakes.Earthquakes[i].ID == earthquakeID {
+				earthquake = &earthquakes.Earthquakes[i]
+				break
+			}
+		}
+
+		if earthquake != nil {
+			break
+		}
+	}
+
+	if earthquake == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"ok":    false,
+			"error": "Earthquake not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"ok":         true,
+		"earthquake": earthquake,
+	})
+}
+
 // HandleEarthquakeDetail serves detailed information for a specific earthquake
 func (h *EarthquakeHandler) HandleEarthquakeDetail(c *gin.Context) {
 	earthquakeID := c.Param("id")

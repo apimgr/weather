@@ -41,7 +41,7 @@ func (h *AdminsHandler) ListAdmins(c *gin.Context) {
 	count, _ := h.AdminModel.GetCount()
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"count":   count,
 		"admins":  admins,
 	})
@@ -57,7 +57,7 @@ func (h *AdminsHandler) GetAdminCount(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"count":   count,
 	})
 }
@@ -92,7 +92,7 @@ func (h *AdminsHandler) CreateInvite(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":    true,
+		"ok":    true,
 		"message":    "Invitation created successfully",
 		"token":      invite.Token,
 		"email":      invite.InvitedEmail,
@@ -131,7 +131,7 @@ func (h *AdminsHandler) AcceptInvite(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Admin account created successfully",
 		"admin": gin.H{
 			"id":       admin.ID,
@@ -150,7 +150,7 @@ func (h *AdminsHandler) GetPendingInvites(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"count":   len(invites),
 		"invites": invites,
 	})
@@ -173,7 +173,7 @@ func (h *AdminsHandler) RevokeInvite(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Invite revoked successfully",
 	})
 }
@@ -206,7 +206,7 @@ func (h *AdminsHandler) UpdateAdmin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Admin updated successfully",
 	})
 }
@@ -242,7 +242,7 @@ func (h *AdminsHandler) DeleteAdmin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Admin deleted successfully",
 	})
 }
@@ -307,7 +307,7 @@ func (h *AdminsHandler) ChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Password updated successfully",
 	})
 }

@@ -68,7 +68,7 @@ func (h *AdminAuthSettingsHandler) UpdateAuthSettings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 type OIDCProvider struct {

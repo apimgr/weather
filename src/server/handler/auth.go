@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -42,7 +41,7 @@ type RegisterRequest struct {
 func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 	// Check if already authenticated
 	if middleware.IsAuthenticated(c) {
-		c.Redirect(http.StatusFound, "/user/dashboard")
+		c.Redirect(http.StatusFound, "/users/dashboard")
 		return
 	}
 
@@ -55,7 +54,7 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 	// Check if already authenticated
 	if middleware.IsAuthenticated(c) {
-		c.Redirect(http.StatusFound, "/user/dashboard")
+		c.Redirect(http.StatusFound, "/users/dashboard")
 		return
 	}
 
@@ -98,6 +97,16 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		req.Password = c.PostForm("password")
 		req.TwoFactorCode = c.PostForm("two_factor_code")
 		req.UseRecoveryKey = c.PostForm("use_recovery_key") == "true"
+	}
+
+	// Trim whitespace from non-password fields
+	req.Identifier = strings.TrimSpace(req.Identifier)
+	req.TwoFactorCode = strings.TrimSpace(req.TwoFactorCode)
+
+	// Passwords cannot start or end with whitespace
+	if req.Password != strings.TrimSpace(req.Password) {
+		respondWithError(c, http.StatusBadRequest, "Password cannot start or end with whitespace")
+		return
 	}
 
 	// Validate credentials - try username, email, or phone
@@ -174,20 +183,19 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	// Set session cookie with Secure flag in production mode
-	// Per TEMPLATE.md security requirements and OWASP guidelines
-	isProduction := os.Getenv("MODE") == "production"
-	c.SetCookie(
-		middleware.SessionCookieName,
-		session.ID,
-		sessionTimeout,
-		"/",
-		"",
-		// Secure flag: true in production (requires HTTPS)
-		isProduction,
-		// HttpOnly: always true to prevent XSS
-		true,
-	)
+	// Set session cookie with proper security settings per AI.md PART 11
+	// Secure: auto (based on TLS), HttpOnly: true, SameSite: Lax
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     middleware.SessionCookieName,
+		Value:    session.ID,
+		Path:     "/",
+		MaxAge:   sessionTimeout,
+		HttpOnly: true,
+		// Secure: auto-detect based on TLS (AI.md: secure: auto)
+		Secure:   c.Request.TLS != nil,
+		// SameSite: Lax per AI.md session configuration
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	// Respond based on request type
 	if strings.Contains(contentType, "application/json") {
@@ -201,7 +209,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 			},
 		})
 	} else {
-		c.Redirect(http.StatusFound, "/user/dashboard")
+		c.Redirect(http.StatusFound, "/users/dashboard")
 	}
 }
 
@@ -221,6 +229,16 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		req.Email = c.PostForm("email")
 		req.Password = c.PostForm("password")
 		req.ConfirmPassword = c.PostForm("confirm_password")
+	}
+
+	// Trim whitespace from non-password fields
+	req.Username = strings.TrimSpace(req.Username)
+	req.Email = strings.TrimSpace(req.Email)
+
+	// Passwords cannot start or end with whitespace
+	if req.Password != strings.TrimSpace(req.Password) {
+		respondWithError(c, http.StatusBadRequest, "Password cannot start or end with whitespace")
+		return
 	}
 
 	// Validate passwords match
@@ -279,20 +297,19 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		return
 	}
 
-	// Set session cookie with Secure flag in production mode
-	// Per TEMPLATE.md security requirements and OWASP guidelines
-	isProduction := os.Getenv("MODE") == "production"
-	c.SetCookie(
-		middleware.SessionCookieName,
-		session.ID,
-		sessionTimeout,
-		"/",
-		"",
-		// Secure flag: true in production (requires HTTPS)
-		isProduction,
-		// HttpOnly: always true to prevent XSS
-		true,
-	)
+	// Set session cookie with proper security settings per AI.md PART 11
+	// Secure: auto (based on TLS), HttpOnly: true, SameSite: Lax
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     middleware.SessionCookieName,
+		Value:    session.ID,
+		Path:     "/",
+		MaxAge:   sessionTimeout,
+		HttpOnly: true,
+		// Secure: auto-detect based on TLS (AI.md: secure: auto)
+		Secure:   c.Request.TLS != nil,
+		// SameSite: Lax per AI.md session configuration
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	// Respond based on request type
 	if strings.Contains(contentType, "application/json") {
@@ -318,7 +335,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		if isFirstUser {
 			c.Redirect(http.StatusFound, "/setup/admin/welcome")
 		} else {
-			c.Redirect(http.StatusFound, "/user/dashboard")
+			c.Redirect(http.StatusFound, "/users/dashboard")
 		}
 	}
 }

@@ -8,19 +8,19 @@ import (
 	"strings"
 )
 
-// Mode represents the application execution mode
-type Mode string
+// ModeString represents the application execution mode as a string
+type ModeString string
 
 const (
 	// ModeDevelopment is for local development (relaxed security, verbose logging)
-	ModeDevelopment Mode = "development"
+	ModeDevelopment ModeString = "development"
 	// ModeProduction is for production deployment (strict security, FQDN validation)
-	ModeProduction Mode = "production"
+	ModeProduction ModeString = "production"
 )
 
 // ModeConfig holds mode-specific configuration and validation
 type ModeConfig struct {
-	Mode         Mode
+	Mode         ModeString
 	IsProduction bool
 	IsDevelopment bool
 
@@ -40,7 +40,7 @@ type ModeConfig struct {
 
 // DetectMode determines the application mode from config and environment
 // Priority per AI.md PART 5: 1. CLI/Env vars, 2. Config file, 3. Default (production)
-func DetectMode(configMode string) Mode {
+func DetectMode(configMode string) ModeString {
 	// Priority 1: Check environment variables FIRST (CLI flags set these)
 	envMode := os.Getenv("MODE")
 	if envMode == "" {
@@ -76,7 +76,7 @@ func DetectMode(configMode string) Mode {
 }
 
 // NewModeConfig creates a new mode configuration with proper validation
-func NewModeConfig(mode Mode, host string, port int) (*ModeConfig, error) {
+func NewModeConfig(mode ModeString, host string, port int) (*ModeConfig, error) {
 	mc := &ModeConfig{
 		Mode:          mode,
 		IsProduction:  mode == ModeProduction,
@@ -277,12 +277,12 @@ func isAlpha(r rune) bool {
 }
 
 // String returns a human-readable representation of the mode
-func (m Mode) String() string {
+func (m ModeString) String() string {
 	return string(m)
 }
 
 // Validate checks if the mode is valid
-func (m Mode) Validate() error {
+func (m ModeString) Validate() error {
 	if m != ModeDevelopment && m != ModeProduction {
 		return fmt.Errorf("invalid mode: %s (must be 'development' or 'production')", m)
 	}

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/apimgr/weather/src/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,6 +11,19 @@ type ServerContext struct {
 	Tagline     string
 	Description string
 	Version     string
+	// SEO fields per AI.md PART 16
+	Keywords      string
+	Author        string
+	OGImage       string
+	TwitterHandle string
+	Lang          string
+	// Site verification per AI.md PART 16
+	VerifyGoogle    string
+	VerifyBing      string
+	VerifyYandex    string
+	VerifyBaidu     string
+	VerifyPinterest string
+	VerifyFacebook  string
 }
 
 // TemplateData enriches template data with server context and user info
@@ -25,6 +39,9 @@ func TemplateData(c *gin.Context, data gin.H) gin.H {
 			"Tagline":     "Your personal weather dashboard",
 			"Description": "Weather information service",
 			"Version":     "unknown",
+			"Keywords":    "weather, forecast, alerts, earthquakes, hurricanes",
+			"Author":      "apimgr",
+			"Lang":        "en",
 		}
 	} else {
 		serverCtx = serverCtxInterface
@@ -50,11 +67,34 @@ func TemplateData(c *gin.Context, data gin.H) gin.H {
 		csrfToken = ""
 	}
 
+	// Get current URL for OpenGraph per AI.md PART 16
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	currentURL := scheme + "://" + c.Request.Host + c.Request.URL.Path
+
+	// Get configurable paths per AI.md PART 17
+	// Templates must use these instead of hardcoded "/admin/" or "/api/v1/"
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	apiPath := "/api/v1"
+	adminAPIPath := "/api/v1/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
+		apiPath = cfg.GetAPIPath()
+		adminAPIPath = cfg.GetAdminAPIPath()
+	}
+
 	// Create enriched data
 	enriched := gin.H{
-		"server":     serverCtx,
-		"user":       userCtx,
-		"csrf_token": csrfToken,
+		"server":         serverCtx,
+		"user":           userCtx,
+		"csrf_token":     csrfToken,
+		"current_url":    currentURL,
+		"admin_path":     adminPath,
+		"api_path":       apiPath,
+		"admin_api_path": adminAPIPath,
 	}
 
 	// Merge user-provided data

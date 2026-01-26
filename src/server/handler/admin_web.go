@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/apimgr/weather/src/config"
@@ -48,7 +51,7 @@ func (h *AdminWebHandler) ShowWebSettings(c *gin.Context) {
 }
 
 // GetRobotsTxt retrieves robots.txt content
-// GET /api/v1/admin/server/web/robots
+// GET /{api_version}/admin/server/web/robots
 func (h *AdminWebHandler) GetRobotsTxt(c *gin.Context) {
 	cfg := config.GetGlobalConfig()
 	robotsTxt := ""
@@ -58,13 +61,13 @@ func (h *AdminWebHandler) GetRobotsTxt(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"content": robotsTxt,
 	})
 }
 
 // UpdateRobotsTxt updates robots.txt content
-// PATCH /api/v1/admin/server/web/robots
+// PATCH /{api_version}/admin/server/web/robots
 func (h *AdminWebHandler) UpdateRobotsTxt(c *gin.Context) {
 	var req struct {
 		Content string `json:"content" binding:"required"`
@@ -92,13 +95,13 @@ func (h *AdminWebHandler) UpdateRobotsTxt(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "robots.txt updated successfully (will auto-reload)",
 	})
 }
 
 // GetSecurityTxt retrieves security.txt content
-// GET /api/v1/admin/server/web/security
+// GET /{api_version}/admin/server/web/security
 func (h *AdminWebHandler) GetSecurityTxt(c *gin.Context) {
 	cfg := config.GetGlobalConfig()
 	securityTxt := ""
@@ -108,13 +111,13 @@ func (h *AdminWebHandler) GetSecurityTxt(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"content": securityTxt,
 	})
 }
 
 // UpdateSecurityTxt updates security.txt content
-// PATCH /api/v1/admin/server/web/security
+// PATCH /{api_version}/admin/server/web/security
 func (h *AdminWebHandler) UpdateSecurityTxt(c *gin.Context) {
 	var req struct {
 		Content string `json:"content" binding:"required"`
@@ -142,7 +145,7 @@ func (h *AdminWebHandler) UpdateSecurityTxt(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "security.txt updated successfully (will auto-reload)",
 	})
 }
@@ -203,4 +206,93 @@ Preferred-Languages: en`
 	// Cache for 24 hours
 	c.Header("Cache-Control", "public, max-age=86400")
 	c.String(http.StatusOK, securityTxt)
+}
+
+// ServeSitemap serves dynamically generated sitemap.xml
+// GET /sitemap.xml
+// Per AI.md PART 16: Include homepage, public pages, docs, API docs
+// NEVER include: admin pages, auth pages, api endpoints
+func (h *AdminWebHandler) ServeSitemap(c *gin.Context) {
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	appURL := scheme + "://" + c.Request.Host
+	lastmod := time.Now().Format("2006-01-02")
+
+	cfg := config.GetGlobalConfig()
+
+	// Build sitemap XML
+	var sb strings.Builder
+	sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
+	sb.WriteString("\n")
+	sb.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`)
+	sb.WriteString("\n")
+
+	// Homepage - priority 1.0, daily
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n", appURL, lastmod))
+
+	// Weather page - public content, priority 0.9, daily
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/weather</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n", appURL, lastmod))
+
+	// Severe weather - public content, priority 0.8, daily
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/severe-weather</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n", appURL, lastmod))
+
+	// Earthquakes - public content, priority 0.8, hourly
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/earthquakes</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>0.8</priority>\n  </url>\n", appURL, lastmod))
+
+	// Hurricanes - public content, priority 0.8, daily
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/hurricanes</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n", appURL, lastmod))
+
+	// Moon phase - public content, priority 0.7, daily
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/moon</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n", appURL, lastmod))
+
+	// OpenAPI docs - priority 0.7, weekly
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/openapi</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n", appURL, lastmod))
+
+	// GraphQL endpoint - priority 0.7, weekly
+	apiPath := "/api/v1"
+	if cfg != nil {
+		apiPath = cfg.GetAPIPath()
+	}
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s%s/graphql</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n", appURL, apiPath, lastmod))
+
+	// Health check - priority 0.5, weekly
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/healthz</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.5</priority>\n  </url>\n", appURL, lastmod))
+
+	sb.WriteString("</urlset>\n")
+
+	c.Header("Content-Type", "application/xml; charset=utf-8")
+	// Cache for 1 hour
+	c.Header("Cache-Control", "public, max-age=3600")
+	c.String(http.StatusOK, sb.String())
+}
+
+// ServeFavicon serves the favicon.ico
+// GET /favicon.ico
+// Per AI.md PART 16: Embedded default, customizable via admin panel
+func (h *AdminWebHandler) ServeFavicon(c *gin.Context) {
+	cfg := config.GetGlobalConfig()
+
+	// Check if custom favicon is configured
+	if cfg != nil && cfg.Web.FaviconURL != "" {
+		// Redirect to custom favicon URL
+		c.Redirect(http.StatusFound, cfg.Web.FaviconURL)
+		return
+	}
+
+	// Serve embedded default favicon (16x16 weather icon)
+	// Base64 encoded minimal ICO file - simple cloud/sun icon
+	faviconB64 := "AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wCRub7/kbm+/5G5vv+Rub7/////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wCRub7/tbKe/7Wynv+1sp7/kbm+/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wCRub7/tbKe/7Wynv+1sp7/tbKe/5G5vv////8A////AP///wD///8A////AP///wD///8A////AP///wCRub7/tbKe/8a7n//Gu5//xruf/7Wynv+Rub7/////AP///wD///8A////AP///wD///8A////AP///wCRub7/tbKe/7Wynv+1sp7/tbKe/7Wynv+1sp7/kbm+/////wD///8A////AP///wD///8A////AP///wCRub7/kbm+/5G5vv+Rub7/kbm+/5G5vv+Rub7/kbm+/////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD//wAA/D8AAP4/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD/fwAA/38AAP9/AAD//wAA"
+
+	faviconData, err := base64.StdEncoding.DecodeString(faviconB64)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Header("Content-Type", "image/x-icon")
+	// Cache for 7 days
+	c.Header("Cache-Control", "public, max-age=604800")
+	c.Data(http.StatusOK, "image/x-icon", faviconData)
 }

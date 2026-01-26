@@ -165,7 +165,7 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 		// Skip this middleware for /admin routes, setup routes, API routes, static files, and auth routes
 		if strings.HasPrefix(path, "/admin") ||
 			strings.HasPrefix(path, "/setup") ||
-			strings.HasPrefix(path, "/user/setup") ||
+			strings.HasPrefix(path, "/userss/setup") ||
 			strings.HasPrefix(path, "/api") ||
 			strings.HasPrefix(path, "/static") ||
 			strings.HasPrefix(path, "/login") ||
@@ -191,14 +191,14 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 	}
 }
 
-// BlockAdminFromUserRoutes blocks admin users from accessing /user routes
+// BlockAdminFromUserRoutes blocks admin users from accessing /users routes
 // Admins should only access /admin routes
 func BlockAdminFromUserRoutes() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
-		// Only apply to /user routes (but not /user/setup which is for initial setup)
-		if !strings.HasPrefix(path, "/user") || strings.HasPrefix(path, "/user/setup") {
+		// Only apply to /users routes (but not /userss/setup which is for initial setup)
+		if !strings.HasPrefix(path, "/users") || strings.HasPrefix(path, "/userss/setup") {
 			c.Next()
 			return
 		}

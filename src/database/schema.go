@@ -38,19 +38,30 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
--- API Tokens table
-CREATE TABLE IF NOT EXISTS api_tokens (
+-- Tokens table (TEMPLATE.md PART 11: supports admin, user, org tokens)
+CREATE TABLE IF NOT EXISTS tokens (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	user_id INTEGER NOT NULL,
-	token TEXT UNIQUE NOT NULL,
-	name TEXT,
-	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	owner_type TEXT NOT NULL,       -- 'admin', 'user', 'org'
+	owner_id INTEGER NOT NULL,      -- admin.id, user.id, or org.id
+	
+	-- Token identification
+	name TEXT NOT NULL,             -- User-provided label: "default", "ci-cd"
+	token_hash TEXT NOT NULL,       -- SHA-256 hash of full token
+	token_prefix TEXT NOT NULL,     -- First 8 chars: "adm_a1b2"
+	
+	-- Token properties
+	scope TEXT NOT NULL DEFAULT 'global',  -- 'global', 'read-write', 'read'
+	expires_at DATETIME,            -- NULL = never expires
+	
+	-- Tracking
 	last_used_at DATETIME,
-	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	
+	UNIQUE(owner_type, owner_id, name)  -- One token per name per owner
 );
 
-CREATE INDEX IF NOT EXISTS idx_tokens_token ON api_tokens(token);
-CREATE INDEX IF NOT EXISTS idx_tokens_user ON api_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_tokens_hash ON tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_tokens_owner ON tokens(owner_type, owner_id);
 
 -- Saved Locations table
 CREATE TABLE IF NOT EXISTS saved_locations (

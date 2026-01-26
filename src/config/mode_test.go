@@ -10,7 +10,7 @@ func TestDetectMode(t *testing.T) {
 		name       string
 		configMode string
 		envVars    map[string]string
-		want       Mode
+		want       ModeString
 	}{
 		{
 			name:       "config development",
@@ -50,10 +50,10 @@ func TestDetectMode(t *testing.T) {
 			want:       ModeProduction,
 		},
 		{
-			name:       "config takes precedence over env",
+			name:       "env takes precedence over config",
 			configMode: "production",
 			envVars:    map[string]string{"MODE": "development"},
-			want:       ModeProduction,
+			want:       ModeDevelopment,
 		},
 	}
 

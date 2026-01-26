@@ -165,6 +165,7 @@ func (pm *PortManager) GetServerPorts() (int, int, error) {
 	}
 
 	// Check environment variable PORT
+	// AI.md PART 5: Environment Variables
 	portEnv := os.Getenv("PORT")
 	if portEnv != "" {
 		return pm.ParsePortConfig(portEnv)

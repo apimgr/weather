@@ -27,7 +27,7 @@ type AuditLog struct {
 }
 
 type BulkResponse struct {
-	Success bool   `json:"success"`
+	Success bool   `json:"ok"`
 	Message string `json:"message"`
 	Updated *int   `json:"updated,omitempty"`
 	Failed  *int   `json:"failed,omitempty"`
@@ -40,7 +40,7 @@ type ChannelStats struct {
 }
 
 type ContactSubmission struct {
-	Success bool   `json:"success"`
+	Success bool   `json:"ok"`
 	Message string `json:"message"`
 }
 
@@ -118,7 +118,7 @@ type ForecastDay struct {
 }
 
 type GenericResponse struct {
-	Success bool   `json:"success"`
+	Success bool   `json:"ok"`
 	Message string `json:"message"`
 }
 
@@ -354,7 +354,7 @@ type TaskHistory struct {
 	StartedAt   time.Time  `json:"startedAt"`
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 	Duration    *float64   `json:"duration,omitempty"`
-	Success     bool       `json:"success"`
+	Success     bool       `json:"ok"`
 	Error       *string    `json:"error,omitempty"`
 }
 

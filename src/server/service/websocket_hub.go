@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -107,7 +108,9 @@ func (h *WebSocketHub) Stop() {
 	// Close all client connections
 	h.clientsMux.Lock()
 	for _, client := range h.clients {
-		client.Conn.Close()
+		if client.Conn != nil {
+			client.Conn.Close()
+		}
 	}
 	h.clientsMux.Unlock()
 }
@@ -315,12 +318,12 @@ func (h *WebSocketHub) IsAdminConnected(adminID int) bool {
 
 // ClientIDForUser generates a client ID for a user
 func ClientIDForUser(userID int) string {
-	return "user-" + string(rune(userID))
+	return "user-" + strconv.Itoa(userID)
 }
 
 // ClientIDForAdmin generates a client ID for an admin
 func ClientIDForAdmin(adminID int) string {
-	return "admin-" + string(rune(adminID))
+	return "admin-" + strconv.Itoa(adminID)
 }
 
 // ReadPump handles reading messages from the WebSocket connection

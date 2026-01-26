@@ -13,18 +13,18 @@ var (
 	debugEnabled = false
 )
 
-// Mode represents the application execution mode
-type Mode int
+// AppMode represents the application execution mode
+type AppMode int
 
 const (
 	// Production mode (default) - strict security, minimal logging
-	Production Mode = iota
+	Production AppMode = iota
 	// Development mode - relaxed security, verbose logging
 	Development
 )
 
 // String returns the string representation of the mode
-func (m Mode) String() string {
+func (m AppMode) String() string {
 	switch m {
 	case Development:
 		return "development"
@@ -33,8 +33,8 @@ func (m Mode) String() string {
 	}
 }
 
-// Set sets the application mode
-func Set(m string) {
+// SetAppMode sets the application mode
+func SetAppMode(m string) {
 	switch strings.ToLower(m) {
 	case "dev", "development":
 		currentMode = Development
@@ -44,8 +44,8 @@ func Set(m string) {
 	updateProfilingSettings()
 }
 
-// SetDebug enables or disables debug mode
-func SetDebug(enabled bool) {
+// SetDebugEnabled enables or disables debug mode
+func SetDebugEnabled(enabled bool) {
 	debugEnabled = enabled
 	updateProfilingSettings()
 }
@@ -64,22 +64,22 @@ func updateProfilingSettings() {
 }
 
 // Current returns the current mode
-func Current() Mode {
+func Current() AppMode {
 	return currentMode
 }
 
-// IsDevelopment returns true if in development mode
-func IsDevelopment() bool {
+// IsAppModeDev returns true if in development mode
+func IsAppModeDev() bool {
 	return currentMode == Development
 }
 
-// IsProduction returns true if in production mode
-func IsProduction() bool {
+// IsAppModeProd returns true if in production mode
+func IsAppModeProd() bool {
 	return currentMode == Production
 }
 
-// IsDebug returns true if debug mode is enabled (--debug or DEBUG=true)
-func IsDebug() bool {
+// IsDebugEnabled returns true if debug mode is enabled (--debug or DEBUG=true)
+func IsDebugEnabled() bool {
 	return debugEnabled
 }
 
@@ -93,11 +93,12 @@ func ModeString() string {
 }
 
 // FromEnv sets mode and debug from environment variables
+// AI.md PART 5: Environment Variables
 func FromEnv() {
 	if m := os.Getenv("MODE"); m != "" {
-		Set(m)
+		SetAppMode(m)
 	}
 	if config.IsTruthy(os.Getenv("DEBUG")) {
-		SetDebug(true)
+		SetDebugEnabled(true)
 	}
 }

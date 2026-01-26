@@ -10,25 +10,23 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   palette:
-    # Light/Dark/Auto theme toggle per AI.md PART 33
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+    # AI.md PART 16/30: Dark theme is DEFAULT (first in list)
+    - scheme: slate
       primary: deep purple
       accent: purple
       toggle:
         icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
         name: Switch to auto mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to dark mode
   features:
     - navigation.instant
     - navigation.tracking
@@ -47,7 +45,7 @@ theme:
     repo: fontawesome/brands/github
 
 extra_css:
-  - stylesheets/dracula.css
+  - stylesheets/dark.css
   - stylesheets/light.css
 
 plugins:

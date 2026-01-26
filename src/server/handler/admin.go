@@ -252,11 +252,12 @@ func (h *AdminHandler) ListTokens(c *gin.Context) {
 		return
 	}
 
-	// Get all tokens for admin view
-	rows, err = database.GetUsersDB().Query(`
-		SELECT t.id, t.user_id, u.email, t.name, t.created_at, t.last_used_at
-		FROM user_tokens t
-		JOIN user_accounts u ON t.user_id = u.id
+	// Get all tokens for admin view - uses unified tokens table with token_prefix
+	rows, err = database.GetServerDB().Query(`
+		SELECT t.id, t.owner_id, u.email, t.name, t.token_prefix, t.created_at, t.last_used_at, t.expires_at
+		FROM tokens t
+		LEFT JOIN users u ON t.owner_id = u.id AND t.owner_type = 'user'
+		WHERE t.owner_type = 'user'
 		ORDER BY t.created_at DESC
 	`)
 	if err != nil {
@@ -267,25 +268,29 @@ func (h *AdminHandler) ListTokens(c *gin.Context) {
 
 	var tokens []map[string]interface{}
 	for rows.Next() {
-		var id, userID int
-		var email, name string
+		var id, ownerID int
+		var email, name, tokenPrefix string
 		var createdAt time.Time
-		var lastUsedAt sql.NullTime
+		var lastUsedAt, expiresAt sql.NullTime
 
-		if err := rows.Scan(&id, &userID, &email, &name, &createdAt, &lastUsedAt); err != nil {
+		if err := rows.Scan(&id, &ownerID, &email, &name, &tokenPrefix, &createdAt, &lastUsedAt, &expiresAt); err != nil {
 			continue
 		}
 
 		token := map[string]interface{}{
-			"id":         id,
-			"user_id":    userID,
-			"user_email": email,
-			"name":       name,
-			"created_at": createdAt,
+			"id":           id,
+			"user_id":      ownerID,
+			"user_email":   email,
+			"name":         name,
+			"token_prefix": tokenPrefix,
+			"created_at":   createdAt,
 		}
 
 		if lastUsedAt.Valid {
 			token["last_used_at"] = lastUsedAt.Time
+		}
+		if expiresAt.Valid {
+			token["expires_at"] = expiresAt.Time
 		}
 
 		tokens = append(tokens, token)

@@ -4,18 +4,23 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/apimgr/weather/src/database"
 )
 
 // Setting represents a configuration setting
 type Setting struct {
-	Key         string `json:"key"`
-	Value       string `json:"value"`
+	ID          int64     `json:"id"`
+	Key         string    `json:"key"`
+	Value       string    `json:"value"`
 	// string, number, boolean, json
-	Type        string `json:"type"`
+	Type        string    `json:"type"`
 	// Human-readable description
-	Description string `json:"description"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // SettingsModel handles settings operations

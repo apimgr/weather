@@ -6,39 +6,39 @@
             <span class="admin-title">Admin Panel</span>
         </div>
         <div class="admin-nav-menu">
-            <a href="/admin" class="admin-nav-link {{if eq .page "dashboard"}}active{{end}}">
+            <a href="{{.admin_path}}" class="admin-nav-link {{if eq .page "dashboard"}}active{{end}}">
                 <span class="nav-icon">📊</span>
                 Dashboard
             </a>
-            <a href="/admin/users" class="admin-nav-link {{if eq .page "users"}}active{{end}}">
+            <a href="{{.admin_path}}/users" class="admin-nav-link {{if eq .page "users"}}active{{end}}">
                 <span class="nav-icon">👥</span>
                 Users
             </a>
-            <a href="/admin/settings" class="admin-nav-link {{if eq .page "settings"}}active{{end}}">
+            <a href="{{.admin_path}}/settings" class="admin-nav-link {{if eq .page "settings"}}active{{end}}">
                 <span class="nav-icon">⚙️</span>
                 Settings
             </a>
-            <a href="/admin/tokens" class="admin-nav-link {{if eq .page "tokens"}}active{{end}}">
+            <a href="{{.admin_path}}/tokens" class="admin-nav-link {{if eq .page "tokens"}}active{{end}}">
                 <span class="nav-icon">🔑</span>
                 API Tokens
             </a>
-            <a href="/admin/logs" class="admin-nav-link {{if eq .page "logs"}}active{{end}}">
+            <a href="{{.admin_path}}/logs" class="admin-nav-link {{if eq .page "logs"}}active{{end}}">
                 <span class="nav-icon">📋</span>
                 Logs
             </a>
-            <a href="/admin/tasks" class="admin-nav-link {{if eq .page "tasks"}}active{{end}}">
+            <a href="{{.admin_path}}/tasks" class="admin-nav-link {{if eq .page "tasks"}}active{{end}}">
                 <span class="nav-icon">⏱️</span>
                 Tasks
             </a>
-            <a href="/admin/backup" class="admin-nav-link {{if eq .page "backup"}}active{{end}}">
+            <a href="{{.admin_path}}/backup" class="admin-nav-link {{if eq .page "backup"}}active{{end}}">
                 <span class="nav-icon">💾</span>
                 Backup
             </a>
-            <a href="/admin/channels" class="admin-nav-link {{if eq .page "channels"}}active{{end}}">
+            <a href="{{.admin_path}}/channels" class="admin-nav-link {{if eq .page "channels"}}active{{end}}">
                 <span class="nav-icon">📢</span>
                 Channels
             </a>
-            <a href="/admin/templates" class="admin-nav-link {{if eq .page "templates"}}active{{end}}">
+            <a href="{{.admin_path}}/templates" class="admin-nav-link {{if eq .page "templates"}}active{{end}}">
                 <span class="nav-icon">📝</span>
                 Templates
             </a>

@@ -38,7 +38,7 @@ GO_DOCKER := docker run --rm \
 	-e CGO_ENABLED=0 \
 	golang:alpine
 
-.PHONY: build host release docker test dev clean
+.PHONY: build local host release docker test dev clean
 
 # =============================================================================
 # BUILD - Build all platforms + host binary (via Docker with cached modules)
@@ -57,19 +57,82 @@ build: clean
 	@$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
 		go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME) ./src"
 
-	# Build all platforms
+	# Build server for all platforms
 	@for platform in $(PLATFORMS); do \
 		OS=$${platform%/*}; \
 		ARCH=$${platform#*/}; \
 		OUTPUT=$(BINDIR)/$(PROJECTNAME)-$$OS-$$ARCH; \
 		[ "$$OS" = "windows" ] && OUTPUT=$$OUTPUT.exe; \
-		echo "Building $$OS/$$ARCH..."; \
+		echo "Building $(PROJECTNAME) $$OS/$$ARCH..."; \
 		$(GO_DOCKER) sh -c "GOOS=$$OS GOARCH=$$ARCH \
 			go build -ldflags \"$(LDFLAGS)\" \
 			-o $$OUTPUT ./src" || exit 1; \
 	done
 
+	# Build CLI client for all platforms (if src/client exists)
+	@if [ -d "src/client" ]; then \
+		echo "Building CLI client for all platforms..."; \
+		for platform in $(PLATFORMS); do \
+			OS=$${platform%/*}; \
+			ARCH=$${platform#*/}; \
+			OUTPUT=$(BINDIR)/$(PROJECTNAME)-cli-$$OS-$$ARCH; \
+			[ "$$OS" = "windows" ] && OUTPUT=$$OUTPUT.exe; \
+			echo "Building $(PROJECTNAME)-cli $$OS/$$ARCH..."; \
+			$(GO_DOCKER) sh -c "GOOS=$$OS GOARCH=$$ARCH \
+				go build -ldflags \"$(LDFLAGS)\" \
+				-o $$OUTPUT ./src/client" || exit 1; \
+		done; \
+	fi
+
+	# Build agent for all platforms (if src/agent exists)
+	@if [ -d "src/agent" ]; then \
+		echo "Building agent for all platforms..."; \
+		for platform in $(PLATFORMS); do \
+			OS=$${platform%/*}; \
+			ARCH=$${platform#*/}; \
+			OUTPUT=$(BINDIR)/$(PROJECTNAME)-agent-$$OS-$$ARCH; \
+			[ "$$OS" = "windows" ] && OUTPUT=$$OUTPUT.exe; \
+			echo "Building $(PROJECTNAME)-agent $$OS/$$ARCH..."; \
+			$(GO_DOCKER) sh -c "GOOS=$$OS GOARCH=$$ARCH \
+				go build -ldflags \"$(LDFLAGS)\" \
+				-o $$OUTPUT ./src/agent" || exit 1; \
+		done; \
+	fi
+
 	@echo "Build complete: $(BINDIR)/"
+
+# =============================================================================
+# LOCAL - Build local platform with full version info (production testing)
+# =============================================================================
+local: clean
+	@mkdir -p $(BINDIR)
+	@echo "Building local platform version $(VERSION)..."
+	@mkdir -p $(GOCACHE) $(GODIR)
+
+	# Download modules first (cached)
+	@echo "Downloading Go modules..."
+	@$(GO_DOCKER) go mod download
+
+	# Build server binary with version info
+	@echo "Building $(PROJECTNAME)..."
+	@$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
+		go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME) ./src"
+
+	# Build CLI binary (if exists)
+	@if [ -d "src/client" ]; then \
+		echo "Building $(PROJECTNAME)-cli..."; \
+		$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
+			go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME)-cli ./src/client"; \
+	fi
+
+	# Build agent binary (if exists)
+	@if [ -d "src/agent" ]; then \
+		echo "Building $(PROJECTNAME)-agent..."; \
+		$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
+			go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME)-agent ./src/agent"; \
+	fi
+
+	@echo "Local build complete: $(BINDIR)/"
 
 # =============================================================================
 # HOST - Build host binaries only (fast development builds)
@@ -114,8 +177,8 @@ release: build
 	# Create version.txt
 	@echo "$(VERSION)" > $(RELDIR)/version.txt
 
-	# Copy binaries to releases (strip if needed)
-	@for f in $(BINDIR)/$(PROJECTNAME)-*; do \
+	# Copy all binaries to releases (server, cli, agent - strip if possible)
+	@for f in $(BINDIR)/$(PROJECTNAME)*; do \
 		[ -f "$$f" ] || continue; \
 		strip "$$f" 2>/dev/null || true; \
 		cp "$$f" $(RELDIR)/; \

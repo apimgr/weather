@@ -379,6 +379,3 @@ func floatPtr(f float64) *float64 {
 	return &f
 }
 
-func intPtr(i int) *int {
-	return &i
-}

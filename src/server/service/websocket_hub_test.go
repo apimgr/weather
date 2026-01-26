@@ -33,7 +33,7 @@ func TestWebSocketHub_RegisterClient(t *testing.T) {
 		t.Error("User should be connected after registration")
 	}
 
-	count := hub.GetConnectionCount()
+	count := hub.GetConnectedCount()
 	if count != 1 {
 		t.Errorf("Connection count = %d, want 1", count)
 	}
@@ -64,7 +64,7 @@ func TestWebSocketHub_UnregisterClient(t *testing.T) {
 		t.Error("User should not be connected after unregistration")
 	}
 
-	count := hub.GetConnectionCount()
+	count := hub.GetConnectedCount()
 	if count != 0 {
 		t.Errorf("Connection count = %d, want 0", count)
 	}
@@ -251,7 +251,7 @@ func TestWebSocketHub_GetConnectionCount(t *testing.T) {
 	go hub.Run()
 	defer hub.Stop()
 
-	initialCount := hub.GetConnectionCount()
+	initialCount := hub.GetConnectedCount()
 	if initialCount != 0 {
 		t.Errorf("Initial count = %d, want 0", initialCount)
 	}
@@ -272,7 +272,7 @@ func TestWebSocketHub_GetConnectionCount(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	count := hub.GetConnectionCount()
+	count := hub.GetConnectedCount()
 	if count != 3 {
 		t.Errorf("After registering 3 clients, count = %d, want 3", count)
 	}
@@ -314,7 +314,7 @@ func TestWebSocketHub_MultipleUsersAndAdmins(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Check connection count (2 users + 2 admins = 4)
-	count := hub.GetConnectionCount()
+	count := hub.GetConnectedCount()
 	if count != 4 {
 		t.Errorf("Total connections = %d, want 4", count)
 	}

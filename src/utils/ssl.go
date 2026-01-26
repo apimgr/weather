@@ -85,8 +85,13 @@ func (sm *SSLManager) CheckExistingCerts(domain string) (bool, error) {
 // GenerateSelfSignedCert creates a self-signed certificate
 func (sm *SSLManager) GenerateSelfSignedCert(domain string) error {
 	// Create certs directory in data dir
+	// AI.md PART 7: Permissions - root: 0755, user: 0700
+	dirPerm := os.FileMode(0700)
+	if os.Geteuid() == 0 {
+		dirPerm = 0755
+	}
 	certsDir := filepath.Join(sm.dataDir, "certs")
-	if err := os.MkdirAll(certsDir, 0755); err != nil {
+	if err := os.MkdirAll(certsDir, dirPerm); err != nil {
 		return fmt.Errorf("failed to create certs directory: %w", err)
 	}
 

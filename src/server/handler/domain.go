@@ -27,8 +27,8 @@ func NewDomainHandlers(serverDB *sql.DB, logger *utils.Logger) *DomainHandlers {
 }
 
 // ListDomains returns all domains (admin) or user's domains
-// GET /api/v1/admin/domains
-// GET /api/v1/user/domains
+// GET /{api_version}/admin/domains
+// GET /{api_version}/user/domains
 func (h *DomainHandlers) ListDomains(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -62,7 +62,7 @@ func (h *DomainHandlers) ListDomains(c *gin.Context) {
 }
 
 // GetDomain returns a single domain by ID
-// GET /api/v1/admin/domains/:id
+// GET /{api_version}/admin/domains/:id
 func (h *DomainHandlers) GetDomain(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -92,8 +92,8 @@ func (h *DomainHandlers) GetDomain(c *gin.Context) {
 }
 
 // CreateDomain creates a new custom domain
-// POST /api/v1/admin/domains
-// POST /api/v1/user/domains
+// POST /{api_version}/admin/domains
+// POST /{api_version}/user/domains
 func (h *DomainHandlers) CreateDomain(c *gin.Context) {
 	var req struct {
 		Domain string `json:"domain"`
@@ -131,7 +131,7 @@ func (h *DomainHandlers) CreateDomain(c *gin.Context) {
 }
 
 // GetVerificationToken returns the verification token for a domain
-// GET /api/v1/admin/domains/:id/verification
+// GET /{api_version}/admin/domains/:id/verification
 func (h *DomainHandlers) GetVerificationToken(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -172,7 +172,7 @@ func (h *DomainHandlers) GetVerificationToken(c *gin.Context) {
 }
 
 // VerifyDomain marks a domain as verified after DNS verification
-// PUT /api/v1/admin/domains/:id/verify
+// PUT /{api_version}/admin/domains/:id/verify
 func (h *DomainHandlers) VerifyDomain(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -216,7 +216,7 @@ func (h *DomainHandlers) VerifyDomain(c *gin.Context) {
 }
 
 // ActivateDomain activates a domain (makes it live)
-// PUT /api/v1/admin/domains/:id/activate
+// PUT /{api_version}/admin/domains/:id/activate
 func (h *DomainHandlers) ActivateDomain(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -262,7 +262,7 @@ func (h *DomainHandlers) ActivateDomain(c *gin.Context) {
 }
 
 // DeactivateDomain deactivates a domain
-// PUT /api/v1/admin/domains/:id/deactivate
+// PUT /{api_version}/admin/domains/:id/deactivate
 func (h *DomainHandlers) DeactivateDomain(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -303,7 +303,7 @@ func (h *DomainHandlers) DeactivateDomain(c *gin.Context) {
 }
 
 // UpdateSSL updates SSL configuration for a domain
-// PUT /api/v1/admin/domains/:id/ssl
+// PUT /{api_version}/admin/domains/:id/ssl
 func (h *DomainHandlers) UpdateSSL(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -359,7 +359,7 @@ func (h *DomainHandlers) UpdateSSL(c *gin.Context) {
 }
 
 // DeleteDomain deletes a custom domain
-// DELETE /api/v1/admin/domains/:id
+// DELETE /{api_version}/admin/domains/:id
 func (h *DomainHandlers) DeleteDomain(c *gin.Context) {
 	idStr := c.Param("id")
 

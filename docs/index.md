@@ -36,7 +36,7 @@ Weather Service is a production-grade weather API providing global weather forec
     wget https://github.com/apimgr/weather/releases/latest/download/weather-linux-amd64
     chmod +x weather-linux-amd64
     sudo mv weather-linux-amd64 /usr/local/bin/weather
-    
+
     # Run the server
     weather
     ```

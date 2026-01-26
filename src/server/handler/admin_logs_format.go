@@ -43,7 +43,7 @@ func (h *LogFormatHandler) GetLogFormat(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"format":  logFormat,
 		"formats": []string{"apache", "nginx", "json", "fail2ban", "syslog", "cef", "text"},
 	})
@@ -95,7 +95,7 @@ func (h *LogFormatHandler) SetLogFormat(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok":      true,
 		"message": "Log format updated successfully",
 		"format":  request.Format,
 		"note":    "Restart the server for changes to take effect",
@@ -143,7 +143,7 @@ func (h *LogFormatHandler) PreviewLogFormat(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":        true,
+		"ok":             true,
 		"current_format": format,
 		"previews":       previews,
 		"sample_data": gin.H{

@@ -8,7 +8,7 @@
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
-        <a href="/admin/dashboard" class="admin-logo">
+        <a href="{{.admin_path}}/dashboard" class="admin-logo">
             <span class="admin-logo-icon">⚙️</span>
             <span class="admin-logo-text">{{ .branding.Title }}</span>
         </a>
@@ -45,7 +45,7 @@
         </div>
 
         <!-- Logout Button per AI.md PART 18 - Always visible -->
-        <a href="/admin/logout" class="btn-logout" title="Logout">
+        <a href="{{.admin_path}}/logout" class="btn-logout" title="Logout">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>

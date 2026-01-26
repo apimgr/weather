@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -32,8 +33,8 @@ type CLI struct {
 	flags    *flag.FlagSet
 }
 
-// New creates a new CLI instance
-func New() *CLI {
+// NewCLI creates a new CLI instance
+func NewCLI() *CLI {
 	return &CLI{
 		commands: make(map[string]*Command),
 		flags:    flag.NewFlagSet("weather", flag.ExitOnError),
@@ -59,12 +60,13 @@ func (c *CLI) Parse(args []string) error {
 		}
 	}
 
-	// Define standard flags (AI.md PART 7)
+	// Define standard flags (AI.md PART 8)
 	var (
 		showHelp       = c.flags.Bool("help", false, "Show this help message")
 		showVersion    = c.flags.Bool("version", false, "Show version information")
 		showStatus     = c.flags.Bool("status", false, "Show server status and health")
 		debug          = c.flags.Bool("debug", false, "Enable debug mode (verbose logging, debug endpoints)")
+		colorMode      = c.flags.String("color", "", "Color output: always, never, auto (default: auto, respects NO_COLOR)")
 		mode           = c.flags.String("mode", "", "Application mode: production or development")
 		configDir      = c.flags.String("config", "", "Configuration directory")
 		dataDir        = c.flags.String("data", "", "Data directory")
@@ -78,6 +80,7 @@ func (c *CLI) Parse(args []string) error {
 		serviceCmd     = c.flags.String("service", "", "Service management: start, stop, restart, reload, --install, --uninstall")
 		maintenanceCmd = c.flags.String("maintenance", "", "Maintenance: backup, restore, update, mode, setup")
 		updateCmd      = c.flags.String("update", "", "Update: check, yes, branch {stable|beta|daily}")
+		shellCmd       = c.flags.String("shell", "", "Shell integration: completions, init, --help")
 	)
 
 	if err := c.flags.Parse(preprocessedArgs); err != nil {
@@ -126,7 +129,12 @@ func (c *CLI) Parse(args []string) error {
 		return fmt.Errorf("update command not registered")
 	}
 
-	// Store flags for later access
+	// Handle shell command (AI.md PART 8: Shell integration)
+	if *shellCmd != "" {
+		return c.handleShellCommand(*shellCmd, c.flags.Args())
+	}
+
+	// Store flags for later access (AI.md PART 5: Environment Variables)
 	if *mode != "" {
 		os.Setenv("MODE", *mode)
 	}
@@ -160,111 +168,83 @@ func (c *CLI) Parse(args []string) error {
 	if *daemon {
 		os.Setenv("DAEMON", "true")
 	}
+	// Handle --color flag (AI.md PART 8: NO_COLOR support)
+	if *colorMode != "" {
+		os.Setenv("CLI_COLOR_MODE", *colorMode)
+	}
 
 	return nil
 }
 
-// ShowHelp displays help information
+// ShowHelp displays help information per AI.md PART 8 spec
+// AI.md PART 8: Must show actual binary name (if renamed)
 func (c *CLI) ShowHelp() {
-	fmt.Println("Weather Service - Production-grade weather API server")
-	fmt.Println()
-	fmt.Printf("Version: %s\n", Version)
-	fmt.Printf("Build Date: %s\n", BuildDate)
-	fmt.Printf("Platform: %s/%s\n\n", runtime.GOOS, runtime.GOARCH)
+	binaryName := filepath.Base(os.Args[0])
 
-	fmt.Println("USAGE:")
-	fmt.Println("  weather [flags]")
+	// AI.md PART 8 line 8558: First line format
+	fmt.Printf("%s %s - Production-grade weather API server\n", binaryName, Version)
 	fmt.Println()
 
-	fmt.Println("SERVER FLAGS:")
-	fmt.Println("  -h, --help                      Show this help message")
-	fmt.Println("  -v, --version                   Show version information")
-	fmt.Println("  --mode {production|development} Set application mode (default: production)")
-	fmt.Println("  --config {path}                 Configuration directory")
-	fmt.Println("  --data {path}                   Data directory")
-	fmt.Println("  --cache {path}                  Cache directory")
-	fmt.Println("  --log {path}                    Log directory")
-	fmt.Println("  --backup {path}                 Backup directory")
-	fmt.Println("  --pid {path}                    PID file path")
-	fmt.Println("  --address {addr}                Listen address (default: auto-detect :: or 0.0.0.0)")
-	fmt.Println("  --port {port}                   Server port (deprecated, use --address)")
-	fmt.Println("  --debug                         Enable debug mode (NEVER in production!)")
-	fmt.Println("  --daemon                        Daemonize (detach from terminal, Unix only)")
+	// Usage section
+	fmt.Println("Usage:")
+	fmt.Printf("  %s [flags]\n", binaryName)
 	fmt.Println()
 
-	fmt.Println("INFORMATION:")
-	fmt.Println("  --status                        Show server status and health")
+	// Information section
+	fmt.Println("Information:")
+	fmt.Println("  -h, --help                        Show help (--help for any command shows its help)")
+	fmt.Println("  -v, --version                     Show version")
+	fmt.Println("      --status                      Show server status and health")
 	fmt.Println()
 
-	fmt.Println("SERVICE MANAGEMENT:")
-	fmt.Println("  --service start                 Start the service")
-	fmt.Println("  --service stop                  Stop the service")
-	fmt.Println("  --service restart               Restart the service")
-	fmt.Println("  --service reload                Reload configuration")
-	fmt.Println("  --service --install             Install as system service")
-	fmt.Println("  --service --uninstall           Uninstall system service")
-	fmt.Println("  --service --disable             Disable system service")
-	fmt.Println("  --service --help                Show service management help")
+	// Shell Integration section
+	fmt.Println("Shell Integration:")
+	fmt.Println("      --shell completions [SHELL]   Print shell completions")
+	fmt.Println("      --shell init [SHELL]          Print shell init command")
+	fmt.Println("      --shell --help                Show shell help")
 	fmt.Println()
 
-	fmt.Println("MAINTENANCE:")
-	fmt.Println("  --maintenance backup [file]     Backup database and configuration")
-	fmt.Println("  --maintenance restore [file]    Restore from backup")
-	fmt.Println("  --maintenance verify            Verify system integrity")
-	fmt.Println("  --maintenance setup             Re-run setup wizard")
-	fmt.Println("  --maintenance mode {on|off}     Enable/disable maintenance mode")
+	// Server Configuration section
+	fmt.Println("Server Configuration:")
+	fmt.Println("      --mode {production|development}  Application mode (default: production)")
+	fmt.Println("      --config DIR                  Config directory")
+	fmt.Println("      --data DIR                    Data directory")
+	fmt.Println("      --cache DIR                   Cache directory")
+	fmt.Println("      --log DIR                     Log directory")
+	fmt.Println("      --backup DIR                  Backup directory")
+	fmt.Println("      --pid FILE                    PID file path")
+	fmt.Println("      --address ADDR                Listen address (default: 0.0.0.0)")
+	fmt.Println("      --port PORT                   Listen port (default: random 64xxx, 80 in container)")
+	fmt.Println("      --daemon                      Run as daemon (detach from terminal)")
+	fmt.Println("      --debug                       Enable debug mode")
+	fmt.Println("      --color {always|never|auto}   Color output (default: auto)")
 	fmt.Println()
 
-	fmt.Println("UPDATE:")
-	fmt.Println("  --update check                  Check for updates")
-	fmt.Println("  --update yes                    Update to latest stable")
-	fmt.Println("  --update branch stable          Update from stable branch")
-	fmt.Println("  --update branch beta            Update from beta branch")
-	fmt.Println("  --update branch daily           Update from daily build")
+	// Service Management section
+	fmt.Println("Service Management:")
+	fmt.Println("      --service CMD                 Service management (--service --help for details)")
+	fmt.Println("      --maintenance CMD             Maintenance operations (--maintenance --help for details)")
+	fmt.Println("      --update [CMD]                Check/perform updates (--update --help for details)")
 	fmt.Println()
 
-	fmt.Println("ENVIRONMENT VARIABLES:")
-	fmt.Println("  MODE              Application mode: production (default) or development")
-	fmt.Println("  DEBUG             Enable debug mode (NEVER in production!)")
-	fmt.Println("  PORT              Server port")
-	fmt.Println("  LISTEN            Listen address")
-	fmt.Println("  CONFIG_DIR        Configuration directory")
-	fmt.Println("  DATA_DIR          Data directory")
-	fmt.Println("  CACHE_DIR         Cache directory")
-	fmt.Println("  LOG_DIR           Log directory")
-	fmt.Println("  BACKUP_DIR        Backup directory")
-	fmt.Println("  PID_FILE          PID file path")
-	fmt.Println("  DAEMON            Daemonize (true/false)")
-	fmt.Println("  DATABASE_DRIVER   Database driver (file, sqlite, postgres, etc.)")
-	fmt.Println("  DATABASE_URL      Database connection string")
-	fmt.Println()
-
-	fmt.Println("EXAMPLES:")
-	fmt.Println("  weather                                  # Start server (production mode)")
-	fmt.Println("  weather --mode development               # Start in development mode")
-	fmt.Println("  weather --address :8080                  # Start on port 8080")
-	fmt.Println("  weather --daemon                         # Start as daemon (Unix only)")
-	fmt.Println("  weather --service --install              # Install as system service")
-	fmt.Println("  weather --maintenance backup backup.tar  # Create backup")
-	fmt.Println("  weather --maintenance setup              # Re-run setup wizard")
-	fmt.Println("  weather --update check                   # Check for updates")
-	fmt.Println("  weather --status                         # Show server status")
-	fmt.Println()
-
-	fmt.Println("DOCUMENTATION:")
-	fmt.Println("  GitHub:  https://github.com/apimgr/weather")
-	fmt.Println("  Docs:    https://weather.apimgr.us")
-	fmt.Println()
+	// Final line per spec
+	fmt.Printf("Run '%s <command> --help' for detailed help on any command.\n", binaryName)
 }
 
-// ShowVersion displays version information per AI.md PART 6
+// ShowVersion displays version information per AI.md PART 16 line 13778
+// AI.md: Must show actual binary name (if renamed)
+// Format per spec:
+//
+//	{binaryName} v{version}
+//	Built: {timestamp}
+//	Go: {go_version}
+//	OS/Arch: {os}/{arch}
 func (c *CLI) ShowVersion() {
-	fmt.Printf("Weather Service v%s\n", Version)
-	fmt.Printf("Build Date:   %s\n", BuildDate)
-	fmt.Printf("Commit ID:    %s\n", CommitID)
-	fmt.Printf("Go Version:   %s\n", runtime.Version())
-	fmt.Printf("CGO_ENABLED:  %s\n", CGOEnabled)
-	fmt.Printf("OS/Arch:      %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	binaryName := filepath.Base(os.Args[0])
+	fmt.Printf("%s v%s\n", binaryName, Version)
+	fmt.Printf("Built: %s\n", BuildDate)
+	fmt.Printf("Go: %s\n", runtime.Version())
+	fmt.Printf("OS/Arch: %s/%s\n", runtime.GOOS, runtime.GOARCH)
 }
 
 // GetFlag returns a flag value

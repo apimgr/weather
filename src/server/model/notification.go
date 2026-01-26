@@ -52,12 +52,17 @@ type Notification struct {
 	Action     *NotificationAction `json:"action,omitempty"`
 	// JSON-encoded action (database field)
 	ActionJSON *string             `json:"-" db:"action_json"`
-	// Whether read
+	// Whether read (legacy name: Read)
 	Read       bool                `json:"read"`
+	IsRead     bool                `json:"is_read"`
+	// When read
+	ReadAt     *time.Time          `json:"read_at,omitempty"`
 	// Whether dismissed
 	Dismissed  bool                `json:"dismissed"`
 	// When created
 	CreatedAt  time.Time           `json:"created_at"`
+	// When last updated
+	UpdatedAt  time.Time           `json:"updated_at"`
 	// When to auto-delete (default: 30 days)
 	ExpiresAt  *time.Time          `json:"expires_at,omitempty"`
 }

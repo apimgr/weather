@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/config"
 )
 
 // =============================================================================
@@ -366,8 +366,10 @@ func (r *mutationResolver) AdminDownloadBackup(ctx context.Context, id string) (
 		return nil, fmt.Errorf("unauthorized")
 	}
 
+	cfg := config.GetGlobalConfig()
+	adminPath := cfg.GetAdminPath()
 	return &BackupDownload{
-		URL:       fmt.Sprintf("/api/v1/admin/backups/%s/download", id),
+		URL:       fmt.Sprintf("%s/%s/backups/%s/download", cfg.GetAPIPath(), adminPath, id),
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}, nil
 }

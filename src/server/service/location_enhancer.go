@@ -490,6 +490,9 @@ func haversineDistance(lat1, lon1, lat2, lon2 float64) float64 {
 
 // EnhanceLocation enhances a Coordinates struct (wrapper for EnhanceLocationData)
 func (le *LocationEnhancer) EnhanceLocation(coords *Coordinates) *Coordinates {
+	if coords == nil {
+		return nil
+	}
 	// Convert Coordinates to GeocodeResult
 	geocodeResult := &GeocodeResult{
 		Latitude:    coords.Latitude,

@@ -29,7 +29,7 @@ func NewTorAdminHandler(torService *service.TorService, settingsModel *models.Se
 }
 
 // GetStatus returns Tor service status
-// GET /api/v1/admin/server/tor/status
+// GET /{api_version}/admin/server/tor/status
 func (h *TorAdminHandler) GetStatus(c *gin.Context) {
 	status := h.torService.GetStatus()
 
@@ -39,7 +39,7 @@ func (h *TorAdminHandler) GetStatus(c *gin.Context) {
 }
 
 // GetHealth returns Tor service health status
-// GET /api/v1/admin/server/tor/health
+// GET /{api_version}/admin/server/tor/health
 func (h *TorAdminHandler) GetHealth(c *gin.Context) {
 	health := h.torService.GetHealthStatus()
 
@@ -49,7 +49,7 @@ func (h *TorAdminHandler) GetHealth(c *gin.Context) {
 }
 
 // Enable enables the Tor service
-// POST /api/v1/admin/server/tor/enable
+// POST /{api_version}/admin/server/tor/enable
 func (h *TorAdminHandler) Enable(c *gin.Context) {
 	// Get HTTP port from settings or context
 	// Default, should be retrieved from actual server config
@@ -78,14 +78,14 @@ func (h *TorAdminHandler) Enable(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Tor service enabled and started",
 		"status":  h.torService.GetStatus(),
 	})
 }
 
 // Disable disables the Tor service
-// POST /api/v1/admin/server/tor/disable
+// POST /{api_version}/admin/server/tor/disable
 func (h *TorAdminHandler) Disable(c *gin.Context) {
 	// Update setting
 	if err := h.settingsModel.SetBool("tor.enabled", false); err != nil {
@@ -110,13 +110,13 @@ func (h *TorAdminHandler) Disable(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Tor service disabled and stopped",
 	})
 }
 
 // Regenerate regenerates the .onion address
-// POST /api/v1/admin/server/tor/regenerate
+// POST /{api_version}/admin/server/tor/regenerate
 func (h *TorAdminHandler) Regenerate(c *gin.Context) {
 	// Should be retrieved from actual server config
 	httpPort := 8080
@@ -132,14 +132,14 @@ func (h *TorAdminHandler) Regenerate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Tor address regenerated successfully",
 		"address": h.torService.GetOnionAddress(),
 	})
 }
 
 // GenerateVanity starts vanity address generation
-// POST /api/v1/admin/server/tor/vanity/generate
+// POST /{api_version}/admin/server/tor/vanity/generate
 func (h *TorAdminHandler) GenerateVanity(c *gin.Context) {
 	var req struct {
 		Prefix string `json:"prefix" binding:"required"`
@@ -169,7 +169,7 @@ func (h *TorAdminHandler) GenerateVanity(c *gin.Context) {
 	go h.monitorVanityGeneration()
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": fmt.Sprintf("Started generating vanity address with prefix: %s", req.Prefix),
 		"status":  h.vanityGenerator.GetStatus(),
 	})
@@ -185,7 +185,7 @@ func (h *TorAdminHandler) monitorVanityGeneration() {
 }
 
 // GetVanityStatus returns vanity generation status
-// GET /api/v1/admin/server/tor/vanity/status
+// GET /{api_version}/admin/server/tor/vanity/status
 func (h *TorAdminHandler) GetVanityStatus(c *gin.Context) {
 	status := h.vanityGenerator.GetStatus()
 
@@ -207,7 +207,7 @@ func (h *TorAdminHandler) GetVanityStatus(c *gin.Context) {
 }
 
 // CancelVanity cancels vanity generation
-// POST /api/v1/admin/server/tor/vanity/cancel
+// POST /{api_version}/admin/server/tor/vanity/cancel
 func (h *TorAdminHandler) CancelVanity(c *gin.Context) {
 	if err := h.vanityGenerator.Cancel(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -220,13 +220,13 @@ func (h *TorAdminHandler) CancelVanity(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Vanity generation cancelled",
 	})
 }
 
 // ApplyVanity applies the generated vanity keys
-// POST /api/v1/admin/server/tor/vanity/apply
+// POST /{api_version}/admin/server/tor/vanity/apply
 func (h *TorAdminHandler) ApplyVanity(c *gin.Context) {
 	// Get generated keys
 	publicKey, privateKey, err := h.vanityGenerator.GetKeys()
@@ -264,14 +264,14 @@ func (h *TorAdminHandler) ApplyVanity(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Vanity address applied successfully",
 		"address": h.torService.GetOnionAddress(),
 	})
 }
 
 // ImportKeys imports external Tor keys
-// POST /api/v1/admin/server/tor/keys/import
+// POST /{api_version}/admin/server/tor/keys/import
 func (h *TorAdminHandler) ImportKeys(c *gin.Context) {
 	file, err := c.FormFile("key_file")
 	if err != nil {
@@ -320,14 +320,14 @@ func (h *TorAdminHandler) ImportKeys(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"ok": true,
 		"message": "Keys imported and Tor restarted successfully",
 		"address": h.torService.GetOnionAddress(),
 	})
 }
 
 // ExportKeys exports current Tor keys
-// GET /api/v1/admin/server/tor/keys/export
+// GET /{api_version}/admin/server/tor/keys/export
 func (h *TorAdminHandler) ExportKeys(c *gin.Context) {
 	publicKey, privateKey, err := h.keyManager.ExportKeys()
 	if err != nil {

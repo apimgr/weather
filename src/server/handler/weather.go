@@ -604,7 +604,7 @@ func (h *WeatherHandler) handleMoonRequest(c *gin.Context, locationInput string)
 		// Use default coordinates (can be enhanced to parse location)
 		// Default to New York
 		lat, lon := 40.7128, -74.0060
-		
+
 		moonService := service.NewMoonService()
 		moonData := moonService.Calculate(lat, lon, time.Now())
 

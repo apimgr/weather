@@ -13,12 +13,12 @@ import (
 type ConfigWatcher struct {
 	watcher    *fsnotify.Watcher
 	configPath string
-	reloadFunc func(*config.Config) error
+	reloadFunc func(*config.AppConfig) error
 	stopChan   chan bool
 }
 
 // NewConfigWatcher creates a new config file watcher
-func NewConfigWatcher(configPath string, reloadFunc func(*config.Config) error) (*ConfigWatcher, error) {
+func NewConfigWatcher(configPath string, reloadFunc func(*config.AppConfig) error) (*ConfigWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err

@@ -1,0 +1,397 @@
+// Package models provides token management per TEMPLATE.md PART 11
+package models
+
+import (
+	"crypto/rand"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"fmt"
+	"strings"
+	"time"
+)
+
+// Token represents an API token per TEMPLATE.md PART 11
+type Token struct {
+	ID         int64      `json:"id"`
+	OwnerType  string     `json:"owner_type"`  // 'admin', 'user', 'org'
+	OwnerID    int64      `json:"owner_id"`
+	Name       string     `json:"name"`
+	TokenHash  string     `json:"-"`           // Never expose hash
+	TokenPrefix string    `json:"token_prefix"` // First 8 chars for display
+	Scope      string     `json:"scope"`       // 'global', 'read-write', 'read'
+	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
+	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+	
+	// Only populated on creation, never stored
+	Token  string     `json:"token,omitempty"`
+}
+
+// TokenScope types per TEMPLATE.md PART 11
+const (
+	ScopeGlobal    = "global"     // All permissions owner has
+	ScopeReadWrite = "read-write" // Read and write, no delete/admin
+	ScopeRead      = "read"       // Read-only
+)
+
+// Owner types per TEMPLATE.md PART 11
+const (
+	OwnerTypeAdmin = "admin"
+	OwnerTypeUser  = "user"
+	OwnerTypeOrg   = "org"
+)
+
+// Token prefixes per TEMPLATE.md PART 11 (NON-NEGOTIABLE)
+const (
+	PrefixAdmin    = "adm_"
+	PrefixUser     = "usr_"
+	PrefixOrg      = "org_"
+	PrefixAdminAgt = "adm_agt_"
+	PrefixUserAgt  = "usr_agt_"
+	PrefixOrgAgt   = "org_agt_"
+)
+
+// Expiration options per TEMPLATE.md PART 11
+var ExpirationOptions = map[string]time.Duration{
+	"never":   0,                      // NULL in database
+	"7days":   7 * 24 * time.Hour,
+	"1month":  30 * 24 * time.Hour,
+	"6months": 180 * 24 * time.Hour,
+	"1year":   365 * 24 * time.Hour,
+	// "custom" - user picks date from calendar
+}
+
+// GenerateTokenWithPrefix generates a token with proper prefix per TEMPLATE.md PART 11
+// Format: {prefix}_{random_32_alphanumeric}
+func GenerateTokenWithPrefix(prefix string) (string, error) {
+	// Generate 32 alphanumeric characters (using hex for simplicity)
+	bytes := make([]byte, 16) // 16 bytes = 32 hex chars
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+	
+	random := hex.EncodeToString(bytes)
+	return prefix + random, nil
+}
+
+// HashToken creates SHA-256 hash per TEMPLATE.md PART 11
+func HashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+// GetTokenPrefix returns first 8 chars for display per TEMPLATE.md PART 11
+// Example: "adm_a1b2..."
+func GetTokenPrefix(token string) string {
+	if len(token) < 8 {
+		return token
+	}
+	return token[:8]
+}
+
+// ValidateTokenFormat checks if token matches spec format
+// Format: {prefix}_{32_alphanumeric} or {prefix}_agt_{32_alphanumeric}
+func ValidateTokenFormat(token string) error {
+	// Check for agent tokens first (compound prefix)
+	if strings.HasPrefix(token, PrefixAdminAgt) {
+		if len(token) != len(PrefixAdminAgt)+32 {
+			return fmt.Errorf("invalid admin agent token format")
+		}
+		return nil
+	}
+	if strings.HasPrefix(token, PrefixUserAgt) {
+		if len(token) != len(PrefixUserAgt)+32 {
+			return fmt.Errorf("invalid user agent token format")
+		}
+		return nil
+	}
+	if strings.HasPrefix(token, PrefixOrgAgt) {
+		if len(token) != len(PrefixOrgAgt)+32 {
+			return fmt.Errorf("invalid org agent token format")
+		}
+		return nil
+	}
+	
+	// Standard single-prefix tokens
+	parts := strings.SplitN(token, "_", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("token must have format: {prefix}_{random}")
+	}
+	
+	prefix := parts[0] + "_"
+	random := parts[1]
+	
+	// Validate prefix
+	switch prefix {
+	case PrefixAdmin, PrefixUser, PrefixOrg:
+		// Valid prefix
+	default:
+		return fmt.Errorf("unknown token prefix: %s", prefix)
+	}
+	
+	// Validate random part is 32 chars
+	if len(random) != 32 {
+		return fmt.Errorf("token random part must be 32 characters")
+	}
+	
+	return nil
+}
+
+// TokenModelV2 handles token database operations per TEMPLATE.md PART 11
+type TokenModelV2 struct {
+	DB *sql.DB
+}
+
+// CreateToken creates a new token per TEMPLATE.md PART 11
+func (m *TokenModelV2) CreateToken(ownerType string, ownerID int64, name, scope string, expiration time.Duration) (*Token, error) {
+	// Validate owner type
+	if ownerType != OwnerTypeAdmin && ownerType != OwnerTypeUser && ownerType != OwnerTypeOrg {
+		return nil, fmt.Errorf("invalid owner type: %s", ownerType)
+	}
+	
+	// Validate scope
+	if scope != ScopeGlobal && scope != ScopeReadWrite && scope != ScopeRead {
+		return nil, fmt.Errorf("invalid scope: %s", scope)
+	}
+	
+	// Generate token with appropriate prefix
+	var prefix string
+	switch ownerType {
+	case OwnerTypeAdmin:
+		prefix = PrefixAdmin
+	case OwnerTypeUser:
+		prefix = PrefixUser
+	case OwnerTypeOrg:
+		prefix = PrefixOrg
+	}
+	
+	fullToken, err := GenerateTokenWithPrefix(prefix)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+	
+	// Hash token for storage (NEVER store plaintext)
+	tokenHash := HashToken(fullToken)
+	tokenPrefix := GetTokenPrefix(fullToken)
+	
+	// Calculate expiration
+	var expiresAt *time.Time
+	if expiration > 0 {
+		exp := time.Now().Add(expiration)
+		expiresAt = &exp
+	}
+	
+	// Insert into database
+	result, err := m.DB.Exec(`
+		INSERT INTO tokens (owner_type, owner_id, name, token_hash, token_prefix, scope, expires_at, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, ownerType, ownerID, name, tokenHash, tokenPrefix, scope, expiresAt, time.Now())
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert token: %w", err)
+	}
+	
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token id: %w", err)
+	}
+	
+	// Return token with full token value (only shown once)
+	return &Token{
+		ID:          id,
+		OwnerType:   ownerType,
+		OwnerID:     ownerID,
+		Name:        name,
+		TokenHash:   tokenHash,
+		TokenPrefix: tokenPrefix,
+		Scope:       scope,
+		ExpiresAt:   expiresAt,
+		CreatedAt:   time.Now(),
+		Token:   fullToken, // Only returned on creation
+	}, nil
+}
+
+// ValidateToken validates a token and returns token info per TEMPLATE.md PART 11
+func (m *TokenModelV2) ValidateToken(token string) (*Token, error) {
+	// Validate format
+	if err := ValidateTokenFormat(token); err != nil {
+		return nil, err
+	}
+	
+	// Hash token to look up in database
+	tokenHash := HashToken(token)
+	
+	// Look up token
+	var t Token
+	var expiresAt sql.NullTime
+	var lastUsedAt sql.NullTime
+	
+	err := m.DB.QueryRow(`
+		SELECT id, owner_type, owner_id, name, token_hash, token_prefix, scope, expires_at, last_used_at, created_at
+		FROM tokens
+		WHERE token_hash = ?
+	`, tokenHash).Scan(
+		&t.ID, &t.OwnerType, &t.OwnerID, &t.Name, &t.TokenHash, &t.TokenPrefix,
+		&t.Scope, &expiresAt, &lastUsedAt, &t.CreatedAt,
+	)
+	
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("invalid token")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+	
+	// Check expiration
+	if expiresAt.Valid {
+		t.ExpiresAt = &expiresAt.Time
+		if time.Now().After(*t.ExpiresAt) {
+			return nil, fmt.Errorf("token expired")
+		}
+	}
+	
+	if lastUsedAt.Valid {
+		t.LastUsedAt = &lastUsedAt.Time
+	}
+	
+	return &t, nil
+}
+
+// UpdateLastUsed updates the last_used_at timestamp
+func (m *TokenModelV2) UpdateLastUsed(tokenID int64) error {
+	_, err := m.DB.Exec(`
+		UPDATE tokens SET last_used_at = ?
+		WHERE id = ?
+	`, time.Now(), tokenID)
+	return err
+}
+
+// ListTokens lists all tokens for an owner per TEMPLATE.md PART 11
+func (m *TokenModelV2) ListTokens(ownerType string, ownerID int64) ([]*Token, error) {
+	rows, err := m.DB.Query(`
+		SELECT id, owner_type, owner_id, name, token_prefix, scope, expires_at, last_used_at, created_at
+		FROM tokens
+		WHERE owner_type = ? AND owner_id = ?
+		ORDER BY created_at DESC
+	`, ownerType, ownerID)
+	
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var tokens []*Token
+	for rows.Next() {
+		var t Token
+		var expiresAt sql.NullTime
+		var lastUsedAt sql.NullTime
+		
+		err := rows.Scan(
+			&t.ID, &t.OwnerType, &t.OwnerID, &t.Name, &t.TokenPrefix,
+			&t.Scope, &expiresAt, &lastUsedAt, &t.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		
+		if expiresAt.Valid {
+			t.ExpiresAt = &expiresAt.Time
+		}
+		if lastUsedAt.Valid {
+			t.LastUsedAt = &lastUsedAt.Time
+		}
+		
+		tokens = append(tokens, &t)
+	}
+	
+	return tokens, nil
+}
+
+// DeleteToken deletes a token per TEMPLATE.md PART 11
+func (m *TokenModelV2) DeleteToken(id int64, ownerType string, ownerID int64) error {
+	result, err := m.DB.Exec(`
+		DELETE FROM tokens
+		WHERE id = ? AND owner_type = ? AND owner_id = ?
+	`, id, ownerType, ownerID)
+	
+	if err != nil {
+		return err
+	}
+	
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	
+	if rows == 0 {
+		return fmt.Errorf("token not found or access denied")
+	}
+	
+	return nil
+}
+
+// RotateToken generates a new token value while keeping settings per TEMPLATE.md PART 11
+func (m *TokenModelV2) RotateToken(id int64, ownerType string, ownerID int64) (*Token, error) {
+	// Get existing token
+	var existing Token
+	var expiresAt sql.NullTime
+	
+	err := m.DB.QueryRow(`
+		SELECT id, owner_type, owner_id, name, scope, expires_at, created_at
+		FROM tokens
+		WHERE id = ? AND owner_type = ? AND owner_id = ?
+	`, id, ownerType, ownerID).Scan(
+		&existing.ID, &existing.OwnerType, &existing.OwnerID,
+		&existing.Name, &existing.Scope, &expiresAt, &existing.CreatedAt,
+	)
+	
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("token not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	
+	// Generate new token with same prefix
+	var prefix string
+	switch ownerType {
+	case OwnerTypeAdmin:
+		prefix = PrefixAdmin
+	case OwnerTypeUser:
+		prefix = PrefixUser
+	case OwnerTypeOrg:
+		prefix = PrefixOrg
+	}
+	
+	fullToken, err := GenerateTokenWithPrefix(prefix)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+	
+	tokenHash := HashToken(fullToken)
+	tokenPrefix := GetTokenPrefix(fullToken)
+	
+	// Update token
+	_, err = m.DB.Exec(`
+		UPDATE tokens
+		SET token_hash = ?, token_prefix = ?, last_used_at = NULL
+		WHERE id = ?
+	`, tokenHash, tokenPrefix, id)
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to update token: %w", err)
+	}
+	
+	// Return updated token with full token value
+	existing.TokenHash = tokenHash
+	existing.TokenPrefix = tokenPrefix
+	existing.Token = fullToken
+	existing.LastUsedAt = nil
+	
+	if expiresAt.Valid {
+		existing.ExpiresAt = &expiresAt.Time
+	}
+	
+	return &existing, nil
+}

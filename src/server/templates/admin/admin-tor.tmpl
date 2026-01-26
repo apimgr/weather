@@ -1,305 +1,179 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tor Hidden Service - Admin Panel</title>
-    <link rel="stylesheet" href="/static/css/dracula.css">
-    <script src="/static/js/app.js" defer></script>
-    <style>
-        .tor-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .status-card {
-            background: var(--dracula-current-line, #44475a);
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-        }
-        .status-connected { background: var(--dracula-green, #50fa7b); }
-        .status-disconnected { background: var(--dracula-comment, #6272a4); }
-        .status-error { background: var(--dracula-red, #ff5555); }
-        .onion-address {
-            background: var(--dracula-background, #282a36);
-            padding: 1rem;
-            border-radius: 4px;
-            font-family: monospace;
-            margin: 1rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .vanity-progress {
-            background: var(--dracula-background, #282a36);
-            padding: 1rem;
-            border-radius: 4px;
-            margin-top: 1rem;
-        }
-        .progress-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--dracula-purple, #bd93f9);
-        }
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--dracula-comment, #6272a4);
-        }
-        .help-section {
-            background: var(--dracula-background, #282a36);
-            padding: 1.5rem;
-            border-radius: 4px;
-            margin-top: 1rem;
-            border-left: 4px solid var(--dracula-cyan, #8be9fd);
-        }
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            margin-right: 0.5rem;
-        }
-        .btn-primary {
-            background: var(--dracula-green, #50fa7b);
-            color: var(--dracula-background, #282a36);
-        }
-        .btn-danger {
-            background: var(--dracula-red, #ff5555);
-            color: white;
-        }
-        .btn-secondary {
-            background: var(--dracula-current-line, #44475a);
-            color: var(--dracula-foreground, #f8f8f2);
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--dracula-purple, #bd93f9);
-        }
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 4px;
-            border: 1px solid var(--dracula-comment, #6272a4);
-            background: var(--dracula-background, #282a36);
-            color: var(--dracula-foreground, #f8f8f2);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-        }
-        .modal-content {
-            background: var(--dracula-current-line, #44475a);
-            max-width: 600px;
-            margin: 10% auto;
-            padding: 2rem;
-            border-radius: 8px;
-        }
-    </style>
-</head>
-<body>
-    {{template "admin_header" .}}
-    {{template "admin_nav" .}}
+{{template "head" .}}
+{{template "admin_header" .}}
+{{template "admin_nav" .}}
 
-    <div class="tor-container">
-        <h1>🧅 Tor Hidden Service</h1>
-        <p>Manage your Tor hidden service and .onion address</p>
+<main class="container p-4">
+    <h1>🧅 Tor Hidden Service</h1>
+    <p>Manage your Tor hidden service and .onion address</p>
 
-        <!-- Status Card -->
-        <div class="status-card" role="region" aria-labelledby="status-heading">
-            <h2 id="status-heading">Service Status</h2>
+    <!-- Status Card -->
+    <section class="card mb-4 p-4" role="region" aria-labelledby="status-heading">
+        <h2 id="status-heading">Service Status</h2>
 
-            <div style="display: flex; align-items: center; margin: 1rem 0;">
-                <span class="status-indicator {{if .TorStatus.enabled}}status-connected{{else}}status-disconnected{{end}}"
-                      role="img"
-                      aria-label="{{if .TorStatus.enabled}}Connected{{else}}Disconnected{{end}}"></span>
-                <strong id="tor-status-text">{{if .TorStatus.enabled}}Connected{{else}}Disconnected{{end}}</strong>
-            </div>
-
-            {{if .TorStatus.enabled}}
-            <div class="onion-address" role="region" aria-labelledby="address-label">
-                <div>
-                    <label id="address-label" style="margin-bottom: 0.5rem; display: block;">Your .onion Address:</label>
-                    <code id="onion-address">{{.TorStatus.onion_address}}</code>
-                </div>
-                <button class="btn btn-secondary"
-                        onclick="copyAddress()"
-                        aria-label="Copy .onion address to clipboard">
-                    📋 Copy
-                </button>
-            </div>
-            {{end}}
-
-            <div style="margin-top: 1.5rem;">
-                {{if .TorStatus.enabled}}
-                <button class="btn btn-danger"
-                        onclick="disableTor()"
-                        aria-label="Disable Tor service">
-                    Disable Tor
-                </button>
-                <button class="btn btn-secondary"
-                        onclick="showRegenerateModal()"
-                        aria-label="Regenerate .onion address">
-                    🔄 Regenerate Address
-                </button>
-                {{else}}
-                <button class="btn btn-primary"
-                        onclick="enableTor()"
-                        aria-label="Enable Tor service">
-                    Enable Tor
-                </button>
-                {{end}}
-            </div>
+        <div class="status-row">
+            <span class="status-indicator {{if .TorStatus.enabled}}status-connected{{else}}status-disconnected{{end}}"
+                  role="img"
+                  aria-label="{{if .TorStatus.enabled}}Connected{{else}}Disconnected{{end}}"></span>
+            <strong id="tor-status-text">{{if .TorStatus.enabled}}Connected{{else}}Disconnected{{end}}</strong>
         </div>
 
-        <!-- Vanity Address Generation -->
-        <div class="status-card" role="region" aria-labelledby="vanity-heading">
-            <h2 id="vanity-heading">Vanity Address Generation</h2>
-            <p>Generate a custom .onion address with your desired prefix (max 6 characters)</p>
+        {{if .TorStatus.enabled}}
+        <div class="onion-address-box" role="region" aria-labelledby="address-label">
+            <div>
+                <label id="address-label" class="d-block mb-1">Your .onion Address:</label>
+                <code id="onion-address">{{.TorStatus.onion_address}}</code>
+            </div>
+            <button class="btn btn-secondary"
+                    onclick="copyAddress()"
+                    aria-label="Copy .onion address to clipboard">
+                📋 Copy
+            </button>
+        </div>
+        {{end}}
 
+        <div class="action-row">
+            {{if .TorStatus.enabled}}
+            <button class="btn btn-danger mr-md"
+                    onclick="disableTor()"
+                    aria-label="Disable Tor service">
+                Disable Tor
+            </button>
+            <button class="btn btn-secondary"
+                    onclick="showRegenerateModal()"
+                    aria-label="Regenerate .onion address">
+                🔄 Regenerate Address
+            </button>
+            {{else}}
+            <button class="btn btn-primary"
+                    onclick="enableTor()"
+                    aria-label="Enable Tor service">
+                Enable Tor
+            </button>
+            {{end}}
+        </div>
+    </section>
+
+    <!-- Vanity Address Generation -->
+    <section class="card mb-4 p-4" role="region" aria-labelledby="vanity-heading">
+        <h2 id="vanity-heading">Vanity Address Generation</h2>
+        <p>Generate a custom .onion address with your desired prefix (max 6 characters)</p>
+
+        <div class="form-group">
+            <label for="vanity-prefix" class="form-label text-purple">
+                Desired Prefix
+                <span aria-hidden="true">*</span>
+            </label>
+            <input type="text"
+                   id="vanity-prefix"
+                   class="form-input"
+                   maxlength="6"
+                   pattern="[a-z2-7]+"
+                   placeholder="weather (example)"
+                   aria-required="true"
+                   aria-describedby="prefix-help">
+            <small id="prefix-help" class="form-help">
+                Use only lowercase letters (a-z) and numbers (2-7). Max 6 characters for reasonable generation time.
+            </small>
+        </div>
+
+        <div class="mb-3">
+            <strong>Estimated Generation Time:</strong>
+            <ul class="mt-1">
+                <li>1-4 characters: Seconds to minutes</li>
+                <li>5 characters: Minutes to hours</li>
+                <li>6 characters: Hours to days</li>
+            </ul>
+        </div>
+
+        <button class="btn btn-primary"
+                id="generate-vanity-btn"
+                onclick="generateVanity()"
+                aria-label="Start vanity address generation">
+            🎲 Generate Vanity Address
+        </button>
+
+        <!-- Vanity Progress (shown when generating) -->
+        <div id="vanity-progress" class="vanity-progress d-none" role="status" aria-live="polite">
+            <h3>⏳ Generating: "<span id="vanity-prefix-display"></span>"</h3>
+
+            <div class="progress-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="attempts-count">0</div>
+                    <div class="stat-label">Attempts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="elapsed-time">0s</div>
+                    <div class="stat-label">Elapsed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="estimated-time">Calculating...</div>
+                    <div class="stat-label">Estimated</div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-danger"
+                        onclick="cancelVanity()"
+                        aria-label="Cancel vanity generation">
+                    ⏹️ Cancel
+                </button>
+            </div>
+
+            <!-- Success message (shown when complete) -->
+            <div id="vanity-success" class="success-box d-none">
+                <strong>✅ Vanity address found!</strong>
+                <div class="mt-1">
+                    <code id="vanity-address-result"></code>
+                </div>
+                <button class="btn btn-primary mt-3"
+                        onclick="applyVanity()"
+                        aria-label="Apply vanity address">
+                    Apply This Address
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Import External Keys -->
+    <section class="card mb-4 p-4" role="region" aria-labelledby="import-heading">
+        <h2 id="import-heading">Import External Keys</h2>
+        <p>Import keys generated with external tools (for prefixes longer than 6 characters)</p>
+
+        <form id="import-form" onsubmit="importKeys(event)" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
             <div class="form-group">
-                <label for="vanity-prefix">
-                    Desired Prefix
+                <label for="key-file" class="form-label text-purple">
+                    Tor Private Key File
                     <span aria-hidden="true">*</span>
                 </label>
-                <input type="text"
-                       id="vanity-prefix"
-                       maxlength="6"
-                       pattern="[a-z2-7]+"
-                       placeholder="weather (example)"
+                <input type="file"
+                       id="key-file"
+                       name="key_file"
+                       class="form-input"
+                       accept=".key,.pem"
+                       required
                        aria-required="true"
-                       aria-describedby="prefix-help"
-                       style="max-width: 300px;">
-                <small id="prefix-help" style="display: block; margin-top: 0.5rem; color: var(--dracula-comment, #6272a4);">
-                    Use only lowercase letters (a-z) and numbers (2-7). Max 6 characters for reasonable generation time.
+                       aria-describedby="import-help">
+                <small id="import-help" class="form-help">
+                    Upload the hs_ed25519_secret_key file from mkp224o or similar tool
                 </small>
             </div>
 
-            <div style="margin-bottom: 1rem;">
-                <strong>Estimated Generation Time:</strong>
-                <ul style="margin-top: 0.5rem;">
-                    <li>1-4 characters: Seconds to minutes</li>
-                    <li>5 characters: Minutes to hours</li>
-                    <li>6 characters: Hours to days</li>
-                </ul>
-            </div>
-
-            <button class="btn btn-primary"
-                    id="generate-vanity-btn"
-                    onclick="generateVanity()"
-                    aria-label="Start vanity address generation">
-                🎲 Generate Vanity Address
+            <button type="submit" class="btn btn-primary" aria-label="Import keys">
+                📥 Import Keys
             </button>
+        </form>
 
-            <!-- Vanity Progress (shown when generating) -->
-            <div id="vanity-progress" class="vanity-progress" style="display: none;" role="status" aria-live="polite">
-                <h3>⏳ Generating: "<span id="vanity-prefix-display"></span>"</h3>
+        <div class="help-section mt-3">
+            <details>
+                <summary class="cursor-pointer font-semibold">
+                    ℹ️ Help: Generating Longer Vanity Addresses (7+ characters)
+                </summary>
+                <div class="mt-3">
+                    <p>For prefixes longer than 6 characters, use external tools with GPU acceleration:</p>
 
-                <div class="progress-stats">
-                    <div class="stat-item">
-                        <div class="stat-value" id="attempts-count">0</div>
-                        <div class="stat-label">Attempts</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="elapsed-time">0s</div>
-                        <div class="stat-label">Elapsed</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="estimated-time">Calculating...</div>
-                        <div class="stat-label">Estimated</div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 1rem;">
-                    <button class="btn btn-danger"
-                            onclick="cancelVanity()"
-                            aria-label="Cancel vanity generation">
-                        ⏹️ Cancel
-                    </button>
-                </div>
-
-                <!-- Success message (shown when complete) -->
-                <div id="vanity-success" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--dracula-green, #50fa7b); color: var(--dracula-background, #282a36); border-radius: 4px;">
-                    <strong>✅ Vanity address found!</strong>
-                    <div style="margin-top: 0.5rem;">
-                        <code id="vanity-address-result"></code>
-                    </div>
-                    <button class="btn btn-primary"
-                            style="margin-top: 1rem;"
-                            onclick="applyVanity()"
-                            aria-label="Apply vanity address">
-                        Apply This Address
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Import External Keys -->
-        <div class="status-card" role="region" aria-labelledby="import-heading">
-            <h2 id="import-heading">Import External Keys</h2>
-            <p>Import keys generated with external tools (for prefixes longer than 6 characters)</p>
-
-            <form id="import-form" onsubmit="importKeys(event)" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
-                <div class="form-group">
-                    <label for="key-file">
-                        Tor Private Key File
-                        <span aria-hidden="true">*</span>
-                    </label>
-                    <input type="file"
-                           id="key-file"
-                           name="key_file"
-                           accept=".key,.pem"
-                           required
-                           aria-required="true"
-                           aria-describedby="import-help">
-                    <small id="import-help" style="display: block; margin-top: 0.5rem; color: var(--dracula-comment, #6272a4);">
-                        Upload the hs_ed25519_secret_key file from mkp224o or similar tool
-                    </small>
-                </div>
-
-                <button type="submit" class="btn btn-primary" aria-label="Import keys">
-                    📥 Import Keys
-                </button>
-            </form>
-
-            <div class="help-section" style="margin-top: 1.5rem;">
-                <details>
-                    <summary style="cursor: pointer; font-weight: 600;">
-                        ℹ️ Help: Generating Longer Vanity Addresses (7+ characters)
-                    </summary>
-                    <div style="margin-top: 1rem;">
-                        <p>For prefixes longer than 6 characters, use external tools with GPU acceleration:</p>
-
-                        <h4 style="margin-top: 1rem;">Using mkp224o (Recommended):</h4>
-                        <pre style="background: var(--dracula-background, #282a36); padding: 1rem; border-radius: 4px; overflow-x: auto;"><code># Install
+                    <h4 class="mt-3">Using mkp224o (Recommended):</h4>
+                    <pre class="code-block"><code># Install
 git clone https://github.com/cathugger/mkp224o
 cd mkp224o && ./autogen.sh && ./configure && make
 
@@ -310,273 +184,273 @@ cd mkp224o && ./autogen.sh && ./configure && make
 #   ├─ hs_ed25519_secret_key  (upload this file)
 #   └─ hostname</code></pre>
 
-                        <h4 style="margin-top: 1rem;">Time Estimates:</h4>
-                        <table style="width: 100%; margin-top: 0.5rem;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align: left;">Prefix Length</th>
-                                    <th style="text-align: left;">CPU Time</th>
-                                    <th style="text-align: left;">GPU Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>7 chars</td>
-                                    <td>Days to weeks</td>
-                                    <td>Hours to days</td>
-                                </tr>
-                                <tr>
-                                    <td>8 chars</td>
-                                    <td>Weeks to months</td>
-                                    <td>Days to weeks</td>
-                                </tr>
-                                <tr>
-                                    <td>9+ chars</td>
-                                    <td>Months to years</td>
-                                    <td>Weeks to months</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </details>
-            </div>
+                    <h4 class="mt-3">Time Estimates:</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Prefix Length</th>
+                                <th>CPU Time</th>
+                                <th>GPU Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>7 chars</td>
+                                <td>Days to weeks</td>
+                                <td>Hours to days</td>
+                            </tr>
+                            <tr>
+                                <td>8 chars</td>
+                                <td>Weeks to months</td>
+                                <td>Days to weeks</td>
+                            </tr>
+                            <tr>
+                                <td>9+ chars</td>
+                                <td>Months to years</td>
+                                <td>Weeks to months</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
         </div>
+    </section>
 
-        <!-- Export Keys -->
-        <div class="status-card" role="region" aria-labelledby="export-heading">
-            <h2 id="export-heading">Export Current Keys</h2>
-            <p>Download your current Tor hidden service private key for backup</p>
+    <!-- Export Keys -->
+    <section class="card mb-4 p-4" role="region" aria-labelledby="export-heading">
+        <h2 id="export-heading">Export Current Keys</h2>
+        <p>Download your current Tor hidden service private key for backup</p>
 
-            <button class="btn btn-secondary"
-                    onclick="exportKeys()"
-                    aria-label="Export current keys">
-                📤 Download Private Key
+        <button class="btn btn-secondary"
+                onclick="exportKeys()"
+                aria-label="Export current keys">
+            📤 Download Private Key
+        </button>
+
+        <p class="warning-text">
+            <strong>⚠️ Security Warning:</strong> Keep your private key safe. Anyone with access to it can impersonate your .onion address.
+        </p>
+    </section>
+</main>
+
+<!-- Regenerate Confirmation Modal -->
+<div id="regenerate-modal" class="modal-overlay" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+    <div class="modal">
+        <h2 id="modal-title">⚠️ Confirm Address Regeneration</h2>
+        <p>This will delete your current .onion address and generate a new one.</p>
+        <p><strong>Your old address will stop working immediately!</strong></p>
+        <p>Current address: <code>{{.TorStatus.onion_address}}</code></p>
+
+        <div class="modal-actions">
+            <button class="btn btn-danger mr-md"
+                    onclick="confirmRegenerate()"
+                    aria-label="Confirm regeneration">
+                Yes, Regenerate Address
             </button>
-
-            <p style="margin-top: 1rem; color: var(--dracula-red, #ff5555);">
-                <strong>⚠️ Security Warning:</strong> Keep your private key safe. Anyone with access to it can impersonate your .onion address.
-            </p>
+            <button class="btn btn-secondary"
+                    onclick="closeRegenerateModal()"
+                    aria-label="Cancel regeneration">
+                Cancel
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- Regenerate Confirmation Modal -->
-    <div id="regenerate-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
-        <div class="modal-content">
-            <h2 id="modal-title">⚠️ Confirm Address Regeneration</h2>
-            <p>This will delete your current .onion address and generate a new one.</p>
-            <p><strong>Your old address will stop working immediately!</strong></p>
-            <p>Current address: <code>{{.TorStatus.onion_address}}</code></p>
-
-            <div style="margin-top: 1.5rem;">
-                <button class="btn btn-danger"
-                        onclick="confirmRegenerate()"
-                        aria-label="Confirm regeneration">
-                    Yes, Regenerate Address
-                </button>
-                <button class="btn btn-secondary"
-                        onclick="closeRegenerateModal()"
-                        aria-label="Cancel regeneration">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // API calls
-        async function enableTor() {
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/enable', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Tor enabled successfully!');
-                    location.reload();
-                } else {
-                    alert('Failed to enable Tor: ' + (data.error?.message || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function disableTor() {
-            if (!confirm('Are you sure you want to disable Tor?')) return;
-
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/disable', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Tor disabled successfully!');
-                    location.reload();
-                } else {
-                    alert('Failed to disable Tor: ' + (data.error?.message || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        function showRegenerateModal() {
-            document.getElementById('regenerate-modal').style.display = 'block';
-        }
-
-        function closeRegenerateModal() {
-            document.getElementById('regenerate-modal').style.display = 'none';
-        }
-
-        async function confirmRegenerate() {
-            closeRegenerateModal();
-
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/regenerate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Address regenerated successfully!');
-                    location.reload();
-                } else {
-                    alert('Failed to regenerate: ' + (data.error?.message || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function generateVanity() {
-            const prefix = document.getElementById('vanity-prefix').value.toLowerCase();
-            if (!prefix || prefix.length < 1 || prefix.length > 6) {
-                alert('Please enter a prefix between 1-6 characters');
-                return;
-            }
-
-            if (!/^[a-z2-7]+$/.test(prefix)) {
-                alert('Please use only lowercase letters (a-z) and numbers (2-7)');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/vanity/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prefix })
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    document.getElementById('vanity-prefix-display').textContent = prefix;
-                    document.getElementById('vanity-progress').style.display = 'block';
-                    document.getElementById('generate-vanity-btn').disabled = true;
-                    startVanityPolling();
-                } else {
-                    alert('Failed to start generation: ' + (data.error?.message || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        let vanityPolling;
-        function startVanityPolling() {
-            vanityPolling = setInterval(updateVanityStatus, 1000);
-        }
-
-        async function updateVanityStatus() {
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/vanity/status');
-                const data = await response.json();
-
-                if (data.running) {
-                    document.getElementById('attempts-count').textContent = data.attempts.toLocaleString();
-                    const elapsed = Math.floor((Date.now() - new Date(data.start_time)) / 1000);
-                    document.getElementById('elapsed-time').textContent = formatDuration(elapsed);
-                    document.getElementById('estimated-time').textContent = data.estimated_time || 'Calculating...';
-                } else if (data.address) {
-                    clearInterval(vanityPolling);
-                    document.getElementById('vanity-success').style.display = 'block';
-                    document.getElementById('vanity-address-result').textContent = data.address;
-                }
-            } catch (error) {
-                console.error('Error polling status:', error);
-            }
-        }
-
-        function formatDuration(seconds) {
-            if (seconds < 60) return seconds + 's';
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return minutes + 'm ' + (seconds % 60) + 's';
-            const hours = Math.floor(minutes / 60);
-            return hours + 'h ' + (minutes % 60) + 'm';
-        }
-
-        async function cancelVanity() {
-            try {
-                await fetch('/api/v1/admin/server/tor/vanity/cancel', { method: 'POST' });
-                clearInterval(vanityPolling);
-                document.getElementById('vanity-progress').style.display = 'none';
-                document.getElementById('generate-vanity-btn').disabled = false;
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function applyVanity() {
-            if (!confirm('Apply this vanity address? Your current address will be replaced.')) return;
-
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/vanity/apply', { method: 'POST' });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Vanity address applied successfully!');
-                    location.reload();
-                } else {
-                    alert('Failed to apply: ' + (data.error?.message || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function importKeys(event) {
-            event.preventDefault();
-
-            const formData = new FormData(event.target);
-
-            try {
-                const response = await fetch('/api/v1/admin/server/tor/keys/import', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Keys imported successfully!');
-                    location.reload();
-                } else {
-                    alert('Failed to import: ' + (data.error?.message || 'Unknown error'));
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        function exportKeys() {
-            window.location.href = '/api/v1/admin/server/tor/keys/export';
-        }
-
-        function copyAddress() {
-            const address = document.getElementById('onion-address').textContent;
-            navigator.clipboard.writeText(address).then(() => {
-                alert('Address copied to clipboard!');
+<script>
+    // API calls
+    async function enableTor() {
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/enable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
             });
+            const data = await response.json();
+            if (response.ok) {
+                Toast.show('Tor enabled successfully!', 'success');
+                location.reload();
+            } else {
+                Toast.show('Failed to enable Tor: ' + (data.error?.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
         }
-    </script>
-</body>
-</html>
+    }
+
+    async function disableTor() {
+        if (!confirm('Are you sure you want to disable Tor?')) return;
+
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/disable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                Toast.show('Tor disabled successfully!', 'success');
+                location.reload();
+            } else {
+                Toast.show('Failed to disable Tor: ' + (data.error?.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
+        }
+    }
+
+    function showRegenerateModal() {
+        document.getElementById('regenerate-modal').classList.add('active');
+    }
+
+    function closeRegenerateModal() {
+        document.getElementById('regenerate-modal').classList.remove('active');
+    }
+
+    async function confirmRegenerate() {
+        closeRegenerateModal();
+
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                Toast.show('Address regenerated successfully!', 'success');
+                location.reload();
+            } else {
+                Toast.show('Failed to regenerate: ' + (data.error?.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
+        }
+    }
+
+    async function generateVanity() {
+        const prefix = document.getElementById('vanity-prefix').value.toLowerCase();
+        if (!prefix || prefix.length < 1 || prefix.length > 6) {
+            Toast.show('Please enter a prefix between 1-6 characters', 'warning');
+            return;
+        }
+
+        if (!/^[a-z2-7]+$/.test(prefix)) {
+            Toast.show('Please use only lowercase letters (a-z) and numbers (2-7)', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/vanity/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prefix })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('vanity-prefix-display').textContent = prefix;
+                document.getElementById('vanity-progress').classList.remove('d-none');
+                document.getElementById('generate-vanity-btn').disabled = true;
+                startVanityPolling();
+            } else {
+                Toast.show('Failed to start generation: ' + (data.error?.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
+        }
+    }
+
+    let vanityPolling;
+    function startVanityPolling() {
+        vanityPolling = setInterval(updateVanityStatus, 1000);
+    }
+
+    async function updateVanityStatus() {
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/vanity/status');
+            const data = await response.json();
+
+            if (data.running) {
+                document.getElementById('attempts-count').textContent = data.attempts.toLocaleString();
+                const elapsed = Math.floor((Date.now() - new Date(data.start_time)) / 1000);
+                document.getElementById('elapsed-time').textContent = formatDuration(elapsed);
+                document.getElementById('estimated-time').textContent = data.estimated_time || 'Calculating...';
+            } else if (data.address) {
+                clearInterval(vanityPolling);
+                document.getElementById('vanity-success').classList.remove('d-none');
+                document.getElementById('vanity-address-result').textContent = data.address;
+            }
+        } catch (error) {
+            console.error('Error polling status:', error);
+        }
+    }
+
+    function formatDuration(seconds) {
+        if (seconds < 60) return seconds + 's';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + 'm ' + (seconds % 60) + 's';
+        const hours = Math.floor(minutes / 60);
+        return hours + 'h ' + (minutes % 60) + 'm';
+    }
+
+    async function cancelVanity() {
+        try {
+            await fetch('/api/v1/admin/server/tor/vanity/cancel', { method: 'POST' });
+            clearInterval(vanityPolling);
+            document.getElementById('vanity-progress').classList.add('d-none');
+            document.getElementById('generate-vanity-btn').disabled = false;
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
+        }
+    }
+
+    async function applyVanity() {
+        if (!confirm('Apply this vanity address? Your current address will be replaced.')) return;
+
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/vanity/apply', { method: 'POST' });
+            const data = await response.json();
+            if (response.ok) {
+                Toast.show('Vanity address applied successfully!', 'success');
+                location.reload();
+            } else {
+                Toast.show('Failed to apply: ' + (data.error?.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
+        }
+    }
+
+    async function importKeys(event) {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+
+        try {
+            const response = await fetch('/api/v1/admin/server/tor/keys/import', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                Toast.show('Keys imported successfully!', 'success');
+                location.reload();
+            } else {
+                Toast.show('Failed to import: ' + (data.error?.message || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            Toast.show('Error: ' + error.message, 'error');
+        }
+    }
+
+    function exportKeys() {
+        window.location.href = '/api/v1/admin/server/tor/keys/export';
+    }
+
+    function copyAddress() {
+        const address = document.getElementById('onion-address').textContent;
+        navigator.clipboard.writeText(address).then(() => {
+            Toast.show('Address copied to clipboard!', 'success');
+        });
+    }
+</script>
+
+{{template "footer" .}}

@@ -16,14 +16,15 @@ CREATE TABLE IF NOT EXISTS user_accounts (
 	phone TEXT UNIQUE,
 	display_name TEXT,
 	password_hash TEXT NOT NULL,
+	role TEXT DEFAULT 'user',
 	email_verified BOOLEAN DEFAULT 0,
 	phone_verified BOOLEAN DEFAULT 0,
+	is_active BOOLEAN DEFAULT 1,
+	is_banned BOOLEAN DEFAULT 0,
+	ban_reason TEXT,
 	two_factor_enabled BOOLEAN DEFAULT 0,
 	two_factor_secret TEXT,
 	recovery_keys_hash TEXT,
-	disabled BOOLEAN DEFAULT 0,
-	disabled_reason TEXT,
-	disabled_at DATETIME,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	last_login_at DATETIME,
@@ -33,13 +34,15 @@ CREATE TABLE IF NOT EXISTS user_accounts (
 CREATE INDEX IF NOT EXISTS idx_user_username ON user_accounts(username);
 CREATE INDEX IF NOT EXISTS idx_user_email ON user_accounts(email);
 CREATE INDEX IF NOT EXISTS idx_user_phone ON user_accounts(phone);
-CREATE INDEX IF NOT EXISTS idx_user_disabled ON user_accounts(disabled);
+CREATE INDEX IF NOT EXISTS idx_user_active ON user_accounts(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_banned ON user_accounts(is_banned);
 
--- User API Tokens table
+-- User API Tokens table (AI.md PART 11: usr_ prefix tokens, SHA-256 hashed)
 CREATE TABLE IF NOT EXISTS user_tokens (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	user_id INTEGER NOT NULL,
-	token TEXT UNIQUE NOT NULL,
+	token_hash TEXT UNIQUE NOT NULL,
+	token_prefix TEXT NOT NULL,
 	name TEXT,
 	scopes TEXT,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -49,7 +52,7 @@ CREATE TABLE IF NOT EXISTS user_tokens (
 	FOREIGN KEY (user_id) REFERENCES user_accounts(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_tokens_token ON user_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_tokens_hash ON user_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_tokens_user ON user_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_expires ON user_tokens(expires_at);
 
@@ -172,7 +175,16 @@ CREATE INDEX IF NOT EXISTS idx_recovery_used ON recovery_keys(used_at);
 -- User Preferences table (settings per user)
 CREATE TABLE IF NOT EXISTS user_preferences (
 	user_id INTEGER PRIMARY KEY,
-	preferences TEXT NOT NULL,
+	theme TEXT DEFAULT 'auto',
+	language TEXT DEFAULT 'en',
+	timezone TEXT DEFAULT 'UTC',
+	temperature_unit TEXT DEFAULT 'celsius',
+	pressure_unit TEXT DEFAULT 'hPa',
+	wind_speed_unit TEXT DEFAULT 'kmh',
+	precipitation_unit TEXT DEFAULT 'mm',
+	notifications_enabled BOOLEAN DEFAULT 1,
+	email_notifications BOOLEAN DEFAULT 1,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES user_accounts(id) ON DELETE CASCADE
 );

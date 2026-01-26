@@ -1,93 +1,98 @@
-# TODO.AI.md - Weather Service
+# Weather Service - AI.md Compliance TODO
 
-**Project:** Weather Service
-**Specification:** AI.md (fresh from TEMPLATE.md)
-**Business Logic:** IDEA.md
-**Version:** 1.0.0
-**Last Updated:** 2026-01-06
-**Status:** COMPLETE - Ready for 1.0.0 Release
-
----
-
-## Completed: Template Setup & PART Verification
-
-### Template Setup
-- [x] Copied TEMPLATE.md to AI.md
-- [x] Replaced all variables ({projectname}, {PROJECTNAME}, {projectorg}, {gitprovider})
-- [x] Updated project description (lines 1-25)
-- [x] Created .claude/rules/ directory with rule files
-- [x] Deleted HOW TO USE section from AI.md
-
-### Code Fixes Applied
-- [x] **Makefile**: Changed CLI build path from `src/cli` to `src/client` per PART 26
-- [x] **CLI Client Structure**: Restructured `src/client/` for `go build ./src/client`:
-  - Moved library code to `src/client/internal/`
-  - Moved entry point to `src/client/main.go`
-  - Removed `src/client/cmd/` directory
-- [x] **Dev target**: Fixed to output to `binaries/` (mounted in Docker)
-- [x] **CLI config flag**: Added `LoadConfigFromPath()` to use `--config` flag
-- [x] **Moon handler**: Integrated MoonService for real lunar calculations
-- [x] **All TODO comments removed**: Fixed 30+ TODO/FIXME markers throughout codebase
-
-### PART Verification Status
-
-| PART | Status | Notes |
-|------|--------|-------|
-| **PART 1: Critical Rules** | Complete | CLI structure fixed, container-only dev |
-| **PART 2: License** | Complete | MIT + 3rd party attributions in LICENSE.md |
-| **PART 3: Project Structure** | Complete | All directories present |
-| **PART 4: OS Paths** | Complete | src/paths/ exists |
-| **PART 5: Configuration** | Complete | src/config/ complete |
-| **PART 6: Application Modes** | Complete | src/mode/ exists |
-| **PART 7: Binary Requirements** | Complete | CGO_ENABLED=0 in Makefile |
-| **PART 8: Server Binary CLI** | Complete | src/cli/ for server flags |
-| **PART 9: Error Handling** | Complete | Patterns in handlers |
-| **PART 10: Database** | Complete | src/database/ with SQLite |
-| **PART 11: Security** | Complete | Middleware exists |
-| **PART 12: Server Config** | Complete | YAML config system |
-| **PART 13: Health** | Complete | /healthz endpoints |
-| **PART 14: API Structure** | Complete | /api/v1 pattern |
-| **PART 15: SSL/TLS** | Complete | Let's Encrypt in handlers |
-| **PART 16: Web Frontend** | Complete | Templates exist |
-| **PART 17: Admin Panel** | Complete | Setup wizard, admin handlers |
-| **PART 18: Email** | Complete | SMTP service |
-| **PART 19: Scheduler** | Complete | src/scheduler/ |
-| **PART 20: GeoIP** | Complete | geoip.go service |
-| **PART 21: Metrics** | Complete | /metrics handler |
-| **PART 22: Backup** | Complete | src/backup/ |
-| **PART 23: Update** | Complete | update.go in cli |
-| **PART 24: Privilege** | Complete | Handling in cli |
-| **PART 25: Service Support** | Complete | systemd in cli/service.go |
-| **PART 26: Makefile** | Complete | Build paths corrected |
-| **PART 27: Docker** | Complete | Multi-stage Dockerfile |
-| **PART 28: CI/CD** | Complete | GitHub Actions workflows |
-| **PART 29: Testing** | Complete | run_tests.sh, docker.sh, incus.sh |
-| **PART 30: ReadTheDocs** | Complete | docs/ with MkDocs |
-| **PART 31: I18N** | Complete | src/locales/ (en, es, fr) |
-| **PART 32: Tor** | Complete | Tor service files |
-| **PART 33: Multi-User** | Complete | User management handlers |
-| **PART 37: Project-Specific** | Complete | IDEA.md referenced |
+## Project Info
+- **Project Name**: weather
+- **Organization**: apimgr
+- **Template Version**: Fresh copy from TEMPLATE.md 2026-01-26
+- **AI.md Location**: /root/Projects/github/apimgr/weather/AI.md
 
 ---
 
-## Build Verification
+## CRITICAL RULES (Committed to Memory)
 
-```
-$ make dev
-Quick dev build to binaries/...
-Built: binaries/weather
-Built: binaries/weather-cli
-```
+### NEVER Do These
+1. NEVER guess or assume - always ask if unsure
+2. NEVER run Go locally - containers only (`make dev`, `make test`, `make build`)
+3. NEVER use bcrypt - use Argon2id for passwords
+4. NEVER put Dockerfile in root - use `docker/Dockerfile`
+5. NEVER use .env files
+6. NEVER use CGO - `CGO_ENABLED=0` always
+7. NEVER store plaintext passwords
+8. NEVER use inline comments - comments above code only
+9. NEVER modify AI.md PARTs 0-37 (implementation patterns are fixed)
+10. NEVER use Makefile in CI/CD (explicit commands only)
+11. NEVER create report files (AUDIT.md, COMPLIANCE.md) - fix issues directly
+12. NEVER use `strconv.ParseBool()` - use `config.ParseBool()`
+13. NEVER hardcode dev machine values - detect at runtime
 
-Both binaries compile and run successfully.
+### MUST Do These
+1. MUST re-read spec before each task
+2. MUST use containers for all builds/tests
+3. MUST use `config.ParseBool()` for ALL boolean parsing
+4. MUST use Argon2id for passwords, SHA-256 for tokens
+5. MUST use path normalization/validation (prevent traversal)
+6. MUST support all 4 OSes and 2 architectures (8 binaries)
+7. MUST use `server.yml` (not .yaml)
+8. MUST keep documentation in sync with code
+9. MUST have admin WebUI for ALL settings
+10. MUST have corresponding API endpoint for every web page
+11. MUST use single static binary (all assets embedded)
+12. MUST detect machine settings at runtime (hostname, IP, cores)
 
 ---
 
-## Notes
+## Completed Items
 
-- All source code in `src/` directory
-- CLI client at `src/client/` (builds to weather-cli)
-- Server CLI flags at `src/cli/`
-- Container-only development enforced
-- No TODO/FIXME/PLANNED comments remaining in codebase
-- Version 1.0.0 set in release.txt
+### Initial Setup (2026-01-26)
+- [x] AI.md copied from TEMPLATE.md
+- [x] Placeholders replaced (weather/apimgr)
+- [x] Read PART 0-5 of AI.md
+
+### Previous Session Work
+- [x] Fixed compilation errors (shell.go, graphql/*.go, test files)
+- [x] Build verification - `make dev` successful
+- [x] PART 16: Inline CSS cleanup completed for admin templates
+- [x] PART 19: backup_hourly task implemented
+
+---
+
+## In Progress
+
+### Fix Test Failures
+- [ ] Run `make test` and identify failures
+- [ ] Fix tests/e2e failures
+- [ ] Fix tests/integration failures
+- [ ] Fix tests/unit/handlers failures
+
+### .claude/ Directory Setup (AI.md PART 3)
+- [ ] Create/update .claude/CLAUDE.md (project memory file)
+- [ ] Create/update .claude/rules/*.md files
+
+---
+
+## Remaining Items
+
+### Verification Needed
+- [ ] Full compliance audit against AI.md spec
+- [ ] Run `make test` and fix any failures
+- [ ] Verify documentation matches code
+- [ ] Verify all API endpoints have web page counterparts
+
+### Optional Features (PART 32-36)
+- [ ] Tor hidden service support (PART 32)
+- [ ] I18N support (PART 31)
+- [ ] A11Y compliance (WCAG 2.1 AA)
+- [ ] Organizations support (PART 35)
+- [ ] Custom domains (PART 36)
+
+---
+
+## Working Notes
+
+- Read AI.md section before implementing each feature
+- Test after each major change
+- Keep TODO.AI.md updated
+- Fix NON-NEGOTIABLE items first
+- Container-only development - NEVER run go locally
+- Use `make dev` for quick builds, `make test` for tests
+- Incus preferred for full OS testing with systemd

@@ -1,117 +1,201 @@
 # Weather Service - Project Idea
 
-## Vision
+## Purpose
 
-A unified weather information platform that aggregates global meteorological data from authoritative sources into a single, accessible service for developers, businesses, and end users.
-
-## Problem Statement
-
-- Weather data is fragmented across dozens of government agencies and services worldwide
-- Each source has different APIs, formats, rate limits, and access requirements
-- Developers must integrate multiple services to provide comprehensive weather coverage
-- No single free service combines forecasts, severe weather alerts, earthquakes, hurricanes, and lunar data
-- Location-based services require complex GeoIP and geocoding infrastructure
-
-## Solution
-
-A single API and web service that:
-
-1. **Aggregates Multiple Data Sources** - Combines weather data from Open-Meteo, NOAA, Environment Canada, UK Met Office, Australian BOM, JMA (Japan), CONAGUA (Mexico), and USGS into one unified interface
-
-2. **Provides Global Coverage** - Works for any location worldwide with automatic location detection
-
-3. **Delivers Real-Time Alerts** - Pushes severe weather notifications as they happen
-
-4. **Requires Zero Configuration** - Works immediately with sensible defaults
-
-## Core Value Propositions
-
-### For Developers
-- Single API endpoint instead of integrating 10+ services
-- Consistent JSON response format across all data types
-- No API keys required for basic usage
-- Self-hostable with no external dependencies
-
-### For End Users
-- One destination for all weather information
-- Automatic location detection
-- Real-time severe weather alerts
-- Mobile-friendly interface
-
-### For Organizations
-- Self-hosted = full data control
-- No per-request costs or usage limits
-- Deploy anywhere (Docker, bare metal, cloud)
-- MIT licensed for commercial use
+A unified weather information platform that aggregates global meteorological data from authoritative sources into a single, accessible service for developers, businesses, and end users. Provides weather forecasts, severe weather alerts, earthquake data, hurricane tracking, and lunar phases through a single API and web interface.
 
 ## Target Users
 
-1. **Developers** building weather-aware applications
-2. **System Administrators** needing self-hosted weather services
-3. **Emergency Services** monitoring severe weather and seismic activity
-4. **News Organizations** requiring reliable weather data feeds
-5. **IoT/Smart Home** systems needing weather integration
-6. **General Public** wanting a clean, ad-free weather interface
+1. **Developers** - Building weather-aware applications, need single API instead of 10+ integrations
+2. **System Administrators** - Need self-hosted weather services with full data control
+3. **Emergency Services** - Monitoring severe weather and seismic activity in real-time
+4. **News Organizations** - Require reliable weather data feeds for broadcast/web
+5. **IoT/Smart Home** - Systems needing weather integration for automation
+6. **General Public** - Clean, ad-free weather interface with location detection
 
-## Data Domains
+## Features
 
-| Domain | Purpose | Source |
-|--------|---------|--------|
-| **Weather Forecasts** | 16-day global forecasts | Open-Meteo |
-| **Severe Weather** | Tornadoes, storms, floods, winter weather | NOAA, Environment Canada, Met Office, BOM, JMA, CONAGUA |
-| **Hurricanes** | Active tropical storm tracking | NOAA National Hurricane Center |
-| **Earthquakes** | Real-time seismic activity | USGS |
-| **Moon Phases** | Lunar cycles and illumination | Calculated |
-| **Location** | IP-based geolocation | sapics/ip-location-db |
+| Feature | Description |
+|---------|-------------|
+| **Weather Forecasts** | 16-day global forecasts with hourly/daily breakdown |
+| **Severe Weather Alerts** | Real-time alerts from 6 countries (US, Canada, UK, Australia, Japan, Mexico) |
+| **Hurricane Tracking** | Active tropical storm monitoring from NOAA NHC |
+| **Earthquake Data** | Real-time seismic activity from USGS |
+| **Moon Phases** | Lunar cycles, illumination, rise/set times |
+| **Location Detection** | Automatic IP-based geolocation |
+| **Multi-Format API** | JSON, text/plain, GraphQL support |
+| **WebSocket Alerts** | Real-time push notifications for severe weather |
+| **User Locations** | Save favorite locations for quick access |
+| **Alert Subscriptions** | Subscribe to alerts for specific regions |
 
-## Key Differentiators
+## Data Models
 
-1. **Free & Open Source** - No vendor lock-in, MIT licensed
-2. **Single Binary** - No runtime dependencies, all assets embedded
-3. **Multi-Platform** - Linux, macOS, Windows, FreeBSD (AMD64 & ARM64)
-4. **Production Ready** - Rate limiting, caching, health checks built-in
-5. **International** - Severe weather alerts from 6 countries
-6. **Real-Time** - WebSocket notifications for live alerts
+```go
+// Weather represents current conditions and forecast
+type Weather struct {
+    Location    Location    `json:"location"`
+    Current     Current     `json:"current"`
+    Forecast    []DayForecast `json:"forecast"`
+    LastUpdated time.Time   `json:"last_updated"`
+}
 
-## Use Cases
+// Location represents a geographic location
+type Location struct {
+    Name      string  `json:"name"`
+    Region    string  `json:"region"`
+    Country   string  `json:"country"`
+    Latitude  float64 `json:"lat"`
+    Longitude float64 `json:"lon"`
+    Timezone  string  `json:"timezone"`
+}
 
-### Emergency Preparedness
-Monitor severe weather alerts and earthquakes for a specific region. Receive push notifications when conditions change.
+// SevereWeatherAlert represents a weather alert
+type SevereWeatherAlert struct {
+    ID          string    `json:"id"`
+    Event       string    `json:"event"`       // tornado, flood, winter_storm, etc.
+    Severity    string    `json:"severity"`    // extreme, severe, moderate, minor
+    Certainty   string    `json:"certainty"`   // observed, likely, possible
+    Urgency     string    `json:"urgency"`     // immediate, expected, future
+    Headline    string    `json:"headline"`
+    Description string    `json:"description"`
+    Instruction string    `json:"instruction"`
+    Areas       []string  `json:"areas"`
+    Effective   time.Time `json:"effective"`
+    Expires     time.Time `json:"expires"`
+    Source      string    `json:"source"`      // NOAA, Environment Canada, etc.
+}
 
-### Travel Applications
-Provide weather forecasts for any destination. Show lunar phases for astronomy or outdoor activities.
+// Earthquake represents a seismic event
+type Earthquake struct {
+    ID        string    `json:"id"`
+    Magnitude float64   `json:"magnitude"`
+    Location  string    `json:"location"`
+    Depth     float64   `json:"depth"`       // km
+    Time      time.Time `json:"time"`
+    Latitude  float64   `json:"lat"`
+    Longitude float64   `json:"lon"`
+    Tsunami   bool      `json:"tsunami"`
+    URL       string    `json:"url"`
+}
 
-### Home Automation
-Query local weather to adjust heating/cooling, trigger irrigation systems, or close smart blinds.
+// Hurricane represents a tropical storm
+type Hurricane struct {
+    ID          string    `json:"id"`
+    Name        string    `json:"name"`
+    Category    int       `json:"category"`    // 1-5, 0 for tropical storm
+    WindSpeed   int       `json:"wind_speed"`  // mph
+    Pressure    int       `json:"pressure"`    // mb
+    Movement    string    `json:"movement"`    // direction and speed
+    Location    string    `json:"location"`
+    Latitude    float64   `json:"lat"`
+    Longitude   float64   `json:"lon"`
+    Forecast    []HurricaneForecastPoint `json:"forecast"`
+}
 
-### News & Media
-Embed weather widgets or pull data feeds for broadcast and web publication.
+// MoonPhase represents lunar data
+type MoonPhase struct {
+    Phase        string    `json:"phase"`       // new, waxing_crescent, first_quarter, etc.
+    Illumination float64   `json:"illumination"` // 0.0-1.0
+    Age          float64   `json:"age"`         // days since new moon
+    Moonrise     time.Time `json:"moonrise"`
+    Moonset      time.Time `json:"moonset"`
+}
+```
 
-### Research & Analysis
-Access historical weather data and seismic records for academic or business analysis.
+## Business Rules
 
-## Business Model
+### Weather Data
+- Cache weather data for 15 minutes (reduce external API calls)
+- Accept city name, ZIP code, coordinates, or auto-detect from IP
+- Return metric or imperial units based on user preference or region
+- Fall back to cached data if external API unavailable
+- Include data attribution for all external sources
 
-**Open Source / Self-Hosted**
-- Free to use and deploy
-- Community-driven development
-- No SaaS offering (by design)
-- Revenue potential through support contracts or custom development
+### Severe Weather Alerts
+- Poll alert sources every 5 minutes
+- Deduplicate alerts by ID across sources
+- Filter alerts by severity threshold (configurable: extreme, severe, moderate, minor)
+- Alerts expire automatically based on expiration timestamp
+- WebSocket push for new alerts matching user subscriptions
 
-## Success Metrics
+### Location Detection
+- IP geolocation using embedded sapics/ip-location-db database
+- Database updates monthly via scheduler
+- Fallback to default location if IP not found
+- User can override detected location
 
-- Response time < 200ms
-- Memory footprint < 50MB
-- 99.9% uptime capability
-- Support for 100+ concurrent users per instance
-- Zero external API dependencies at runtime (after GeoIP database download)
+### User Accounts (Multi-User)
+- Save up to 10 locations per user
+- Subscribe to alerts for saved locations
+- Email notifications for severe alerts (optional)
+- No authentication required for basic API access
 
-## Future Possibilities
+### Rate Limiting
+- Anonymous: 20 requests/minute (per AI.md PART 1 defaults)
+- Authenticated: 100 requests/minute (per AI.md PART 1 defaults)
+- Admin: unlimited
 
-- Air quality data integration
-- Pollen/allergy forecasts
-- Marine/surf conditions
-- Aviation weather (METARs/TAFs)
-- Climate trend analysis
-- Historical weather archives
-- Multi-language interface expansion
+## Endpoints
+
+### Public Weather Endpoints
+| Endpoint | Purpose |
+|----------|---------|
+| Current weather | Get current conditions for location |
+| Forecast | Get 16-day forecast for location |
+| Hourly forecast | Get 48-hour hourly forecast |
+| Historical | Get weather for past date (up to 30 days) |
+
+### Severe Weather Endpoints
+| Endpoint | Purpose |
+|----------|---------|
+| Active alerts | Get all active alerts for region/country |
+| Alert by ID | Get specific alert details |
+| Alert history | Get past 7 days of alerts for region |
+
+### Natural Events Endpoints
+| Endpoint | Purpose |
+|----------|---------|
+| Earthquakes | Get recent earthquakes (configurable magnitude threshold) |
+| Earthquake by ID | Get specific earthquake details |
+| Active hurricanes | Get currently active tropical storms |
+| Hurricane by ID | Get specific hurricane with forecast track |
+
+### Astronomy Endpoints
+| Endpoint | Purpose |
+|----------|---------|
+| Moon phase | Get current moon phase and illumination |
+| Moon calendar | Get moon phases for month |
+| Sun times | Get sunrise/sunset for location |
+
+### Location Endpoints
+| Endpoint | Purpose |
+|----------|---------|
+| Detect location | Get location from client IP |
+| Search locations | Find cities by name |
+| Reverse geocode | Get location from coordinates |
+
+## Data Sources
+
+| Data Type | Source | Update Frequency |
+|-----------|--------|------------------|
+| Weather Forecasts | Open-Meteo API | 15 minutes |
+| US Severe Weather | NOAA Weather API | 5 minutes |
+| Canada Alerts | Environment Canada | 5 minutes |
+| UK Alerts | UK Met Office | 5 minutes |
+| Australia Alerts | Australian BOM | 5 minutes |
+| Japan Alerts | JMA (Japan Meteorological Agency) | 5 minutes |
+| Mexico Alerts | CONAGUA | 5 minutes |
+| Earthquakes | USGS Earthquake API | 1 minute |
+| Hurricanes | NOAA National Hurricane Center | 15 minutes |
+| Moon Phases | Calculated (no external API) | N/A |
+| IP Geolocation | sapics/ip-location-db | Monthly |
+
+## Notes
+
+- All weather data sources are free/public APIs - no API keys required
+- GeoIP database embedded in binary, updates downloaded at runtime
+- Single binary deployment - no external dependencies
+- WebSocket support for real-time alert notifications
+- GraphQL endpoint for flexible queries
+- Full OpenAPI/Swagger documentation
+- i18n support: English, Spanish, French, German, Arabic, Japanese, Chinese

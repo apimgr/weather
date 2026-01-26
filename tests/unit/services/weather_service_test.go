@@ -9,8 +9,8 @@ func TestWeatherService_GetWeatherDescription(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
-	ws := services.NewWeatherService(enhancer)
+	enhancer := service.NewLocationEnhancer(db)
+	ws := service.NewWeatherService(enhancer, nil)
 
 	tests := []struct {
 		code        int
@@ -43,8 +43,8 @@ func TestWeatherService_GetWeatherIcon(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
-	ws := services.NewWeatherService(enhancer)
+	enhancer := service.NewLocationEnhancer(db)
+	ws := service.NewWeatherService(enhancer, nil)
 
 	tests := []struct {
 		name   string
@@ -76,8 +76,8 @@ func TestWeatherService_ParseLocation(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
-	ws := services.NewWeatherService(enhancer)
+	enhancer := service.NewLocationEnhancer(db)
+	ws := service.NewWeatherService(enhancer, nil)
 
 	tests := []struct {
 		name      string
@@ -115,8 +115,8 @@ func TestWeatherService_IPGeolocation(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
-	enhancer := services.NewLocationEnhancer(db)
-	ws := services.NewWeatherService(enhancer)
+	enhancer := service.NewLocationEnhancer(db)
+	ws := service.NewWeatherService(enhancer, nil)
 
 	tests := []struct {
 		name          string

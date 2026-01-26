@@ -5,354 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .breadcrumb {
-            color: #95a5a6;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .breadcrumb a {
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            background: white;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .nav-link:hover {
-            background: #3498db;
-            color: white;
-        }
-
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-
-        .card h2 {
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 0.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #2c3e50;
-        }
-
-        .form-group input[type="text"],
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-family: 'Courier New', monospace;
-        }
-
-        .form-group input[type="text"]:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        .help-text {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 0.25rem;
-        }
-
-        .help-icon {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            line-height: 16px;
-            text-align: center;
-            background: #3498db;
-            color: white;
-            border-radius: 50%;
-            font-size: 0.75rem;
-            margin-left: 0.5rem;
-            cursor: help;
-        }
-
-        .task-section {
-            background: #f8f9fa;
-            border-radius: 6px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #3498db;
-        }
-
-        .task-section.critical {
-            border-left-color: #e74c3c;
-            background: #fef5f5;
-        }
-
-        .task-section h3 {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .task-category {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 2rem 0 1rem 0;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 28px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 28px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background-color: #27ae60;
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(32px);
-        }
-
-        input:disabled + .toggle-slider {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .warning-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #fff3cd;
-            color: #856404;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #ddd;
-        }
-
-        .btn {
-            padding: 0.75rem 2rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-
-        .alert.show {
-            display: block;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .cron-preview {
-            background: #e8f4f8;
-            border-left: 3px solid #3498db;
-            padding: 0.75rem;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-            border-radius: 4px;
-        }
-
-        .cron-preview-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-        }
-
-        .cron-preview-times {
-            font-family: 'Courier New', monospace;
-            color: #555;
-        }
-
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/dracula.css">
 </head>
 <body>
-    <div class="header">
+    <div class="admin-page-header">
         <h1>Scheduler Configuration</h1>
-        <div class="breadcrumb">
+        <div class="admin-page-breadcrumb">
             <a href="/admin">Admin</a> /
-            <a href="/admin/tasks">Tasks</a> /
+            <a href="{{.admin_path}}/tasks">Tasks</a> /
             <span>Configuration</span>
         </div>
     </div>
 
-    <div class="container">
-        <div class="nav-links">
-            <a href="/admin" class="nav-link">Dashboard</a>
-            <a href="/admin/tasks" class="nav-link">Task Monitor</a>
+    <div class="admin-page-container">
+        <div class="admin-nav-links">
+            <a href="/admin" class="admin-nav-link">Dashboard</a>
+            <a href="{{.admin_path}}/tasks" class="admin-nav-link">Task Monitor</a>
         </div>
 
-        <div class="alert alert-success" id="successAlert" role="alert"></div>
-        <div class="alert alert-error" id="errorAlert" role="alert"></div>
+        <div class="admin-alert admin-alert-success" id="successAlert" role="alert"></div>
+        <div class="admin-alert admin-alert-error" id="errorAlert" role="alert"></div>
 
-        <form id="schedulerForm" method="POST" action="/admin/scheduler/config">
+        <form id="schedulerForm" method="POST" action="{{.admin_path}}/scheduler/config">
     <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
             <!-- Global Settings -->
-            <div class="card">
+            <div class="admin-page-card">
                 <h2>Global Settings</h2>
 
                 <div class="form-row">
@@ -390,7 +67,7 @@
             </div>
 
             <!-- Security Tasks -->
-            <div class="card">
+            <div class="admin-page-card">
                 <h2>Scheduled Tasks</h2>
 
                 <div class="task-category">Security & Certificates</div>
@@ -422,7 +99,7 @@
                                    placeholder="0 3 * * *"
                                    onchange="previewCron('ssl_renewal', this.value)">
                             <div class="help-text">Daily at 03:00 (after backup at 02:00)</div>
-                            <div class="cron-preview" id="ssl_renewal_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="ssl_renewal_preview" class="hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -452,7 +129,7 @@
                                    placeholder="0 3 * * 0"
                                    onchange="previewCron('geoip_update', this.value)">
                             <div class="help-text">Weekly Sunday at 03:00</div>
-                            <div class="cron-preview" id="geoip_update_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="geoip_update_preview" class="hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -484,7 +161,7 @@
                                    placeholder="0 4 * * *"
                                    onchange="previewCron('blocklist_update', this.value)">
                             <div class="help-text">Daily at 04:00</div>
-                            <div class="cron-preview" id="blocklist_update_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="blocklist_update_preview" class="hidden"></div>
                         </div>
                     </div>
 
@@ -537,7 +214,7 @@
                                    placeholder="0 5 * * *"
                                    onchange="previewCron('cve_update', this.value)">
                             <div class="help-text">Daily at 05:00</div>
-                            <div class="cron-preview" id="cve_update_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="cve_update_preview" class="hidden"></div>
                         </div>
                     </div>
 
@@ -592,7 +269,7 @@
                                    placeholder="@hourly"
                                    onchange="previewCron('session_cleanup', this.value)">
                             <div class="help-text">Every hour (@hourly or 0 * * * *)</div>
-                            <div class="cron-preview" id="session_cleanup_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="session_cleanup_preview" class="hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -622,7 +299,7 @@
                                    placeholder="0 6 * * *"
                                    onchange="previewCron('token_cleanup', this.value)">
                             <div class="help-text">Daily at 06:00</div>
-                            <div class="cron-preview" id="token_cleanup_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="token_cleanup_preview" class="hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -652,7 +329,7 @@
                                    placeholder="0 0 * * *"
                                    onchange="previewCron('log_rotation', this.value)">
                             <div class="help-text">Daily at midnight</div>
-                            <div class="cron-preview" id="log_rotation_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="log_rotation_preview" class="hidden"></div>
                         </div>
                     </div>
 
@@ -715,7 +392,7 @@
                                    placeholder="0 1 * * *"
                                    onchange="previewCron('backup_auto', this.value)">
                             <div class="help-text">Daily at 01:00</div>
-                            <div class="cron-preview" id="backup_auto_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="backup_auto_preview" class="hidden"></div>
                         </div>
                     </div>
 
@@ -757,7 +434,7 @@
                                    placeholder="@every 5m"
                                    onchange="previewCron('healthcheck_self', this.value)">
                             <div class="help-text">Every 5 minutes (@every 5m)</div>
-                            <div class="cron-preview" id="healthcheck_self_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="healthcheck_self_preview" class="hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -787,7 +464,7 @@
                                    placeholder="@every 10m"
                                    onchange="previewCron('tor_health', this.value)">
                             <div class="help-text">Every 10 minutes (only runs if Tor installed)</div>
-                            <div class="cron-preview" id="tor_health_preview" style="display: none;"></div>
+                            <div class="cron-preview" id="tor_health_preview" class="hidden"></div>
                         </div>
                     </div>
 
@@ -806,7 +483,7 @@
 
             <div class="btn-group">
                 <button type="submit" class="btn btn-primary">Save Configuration</button>
-                <a href="/admin/tasks" class="btn btn-secondary">Cancel</a>
+                <a href="{{.admin_path}}/tasks" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

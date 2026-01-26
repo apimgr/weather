@@ -48,16 +48,12 @@ Complete configuration reference with all available settings.
 server:
   # Server mode (production or development)
   mode: production
-  
   # Listen address (:80 or 0.0.0.0:80 or specific IP)
   address: ":80"
-  
   # Server name (for logging and identification)
   name: "Weather Service"
-  
   # Enable debug mode (verbose logging, no caching)
   debug: false
-  
   # Graceful shutdown timeout
   shutdown_timeout: 30s
 ```
@@ -72,7 +68,7 @@ weather:
       enabled: true
       base_url: "https://api.open-meteo.com/v1"
       timeout: 10s
-  
+
   # Severe weather alerts
   alerts:
     us_nws:
@@ -88,24 +84,24 @@ weather:
       enabled: true
     mexico:
       enabled: true
-  
+
   # Earthquake data
   earthquakes:
     enabled: true
     usgs_url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0"
     min_magnitude: 2.5
     max_age_days: 7
-  
+
   # Hurricane tracking
   hurricanes:
     enabled: true
     nhc_url: "https://www.nhc.noaa.gov"
     check_interval: 30m
-  
+
   # Moon phase data
   moon:
     enabled: true
-  
+
   # Cache settings
   cache:
     weather_ttl: 10m
@@ -120,16 +116,16 @@ weather:
 geoip:
   # Enable GeoIP location detection
   enabled: true
-  
+
   # Auto-update databases
   auto_update: true
-  
+
   # Update interval (7 days recommended)
   update_interval: "168h"
-  
+
   # Data source
   data_source: "sapics/ip-location-db"
-  
+
   # Database URLs (CDN-hosted, free)
   databases:
     - type: "city-ipv4"
@@ -150,9 +146,9 @@ geoip:
 
 ```yaml
 locations:
-  # Cookie duration for location persistence
-  cookie_duration: "720h"  # 30 days
-  
+  # Cookie duration for location persistence (30 days)
+  cookie_duration: "720h"
+
   # Default location (auto = GeoIP, or specify coords)
   default_location: "auto"
 ```
@@ -165,12 +161,12 @@ database:
   server:
     type: "sqlite"
     path: "/var/lib/weather/db/server.db"
-  
+
   # User accounts database
   users:
     type: "sqlite"
     path: "/var/lib/weather/db/users.db"
-  
+
   # Connection pool settings
   max_open_conns: 25
   max_idle_conns: 5
@@ -183,12 +179,13 @@ database:
 auth:
   # Session settings
   session:
-    duration: "168h"  # 7 days
+    # Session duration (7 days)
+    duration: "168h"
     cookie_name: "weather_session"
     secure: true
     http_only: true
     same_site: "lax"
-  
+
   # Password requirements
   password:
     min_length: 12
@@ -196,7 +193,7 @@ auth:
     require_lowercase: true
     require_numbers: true
     require_special: true
-  
+
   # Rate limiting for authentication
   rate_limit:
     login_attempts: 5
@@ -211,7 +208,7 @@ auth:
 email:
   # Enable email notifications
   enabled: false
-  
+
   # SMTP configuration
   smtp:
     host: "smtp.example.com"
@@ -220,7 +217,7 @@ email:
     password: "your-password"
     from: "Weather Service <weather@example.com>"
     use_tls: true
-  
+
   # Email templates
   templates:
     welcome: "email/welcome.tmpl"
@@ -237,7 +234,7 @@ notifications:
     enabled: true
     ping_interval: "30s"
     pong_timeout: "10s"
-  
+
   # Admin notifications
   admin:
     enable_toast: true
@@ -246,7 +243,7 @@ notifications:
     toast_duration_success: 5
     toast_duration_info: 5
     toast_duration_warning: 10
-  
+
   # User notifications
   user:
     enable_toast: true
@@ -261,11 +258,11 @@ notifications:
 ssl:
   # Enable HTTPS
   enabled: false
-  
+
   # Certificate paths
   cert_file: "/etc/weather/ssl/cert.pem"
   key_file: "/etc/weather/ssl/key.pem"
-  
+
   # Let's Encrypt automatic SSL
   letsencrypt:
     enabled: false
@@ -281,21 +278,23 @@ ssl:
 logging:
   # Log level (debug, info, warn, error)
   level: "info"
-  
+
   # Log format (json, text)
   format: "json"
-  
+
   # Log output (stdout, file, both)
   output: "both"
-  
+
   # File logging
   file:
     path: "/var/log/weather/weather.log"
-    max_size: 100  # MB
+    # Maximum log file size in MB
+    max_size: 100
     max_backups: 10
-    max_age: 30  # days
+    # Maximum log age in days
+    max_age: 30
     compress: true
-  
+
   # Access log
   access_log:
     enabled: true
@@ -311,7 +310,7 @@ security:
     enabled: true
     field_name: "csrf_token"
     cookie_name: "csrf_cookie"
-  
+
   # CORS settings
   cors:
     enabled: false
@@ -323,19 +322,22 @@ security:
     allowed_headers:
       - "Content-Type"
       - "Authorization"
-  
+
   # Rate limiting
   rate_limit:
     enabled: true
     requests_per_minute: 60
     burst: 100
-  
+
   # IP blocking
   blocklist:
     enabled: false
-    countries: []  # ISO country codes to block
-    ips: []  # IP addresses to block
-    cidrs: []  # CIDR ranges to block
+    # ISO country codes to block
+    countries: []
+    # IP addresses to block
+    ips: []
+    # CIDR ranges to block
+    cidrs: []
 ```
 
 ### Tor Hidden Service
@@ -344,10 +346,10 @@ security:
 tor:
   # Enable Tor hidden service
   enabled: false
-  
+
   # Tor data directory
   data_dir: "/var/lib/weather/tor"
-  
+
   # Hidden service port
   port: 80
 ```
@@ -413,7 +415,8 @@ logging:
 
 weather:
   cache:
-    weather_ttl: 1m  # Short cache for testing
+    # Short cache for testing
+    weather_ttl: 1m
 ```
 
 ### Production Setup

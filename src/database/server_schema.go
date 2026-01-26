@@ -9,12 +9,14 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 
 -- Admin Credentials table (admins are NOT in users table)
+-- AI.md PART 11: API tokens stored as SHA-256 hash, never plaintext
 CREATE TABLE IF NOT EXISTS server_admin_credentials (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	username TEXT UNIQUE NOT NULL,
 	email TEXT UNIQUE NOT NULL,
 	password_hash TEXT NOT NULL,
-	api_token TEXT UNIQUE,
+	api_token_hash TEXT UNIQUE,
+	api_token_prefix TEXT,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	last_login_at DATETIME
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS server_admin_credentials (
 
 CREATE INDEX IF NOT EXISTS idx_admin_username ON server_admin_credentials(username);
 CREATE INDEX IF NOT EXISTS idx_admin_email ON server_admin_credentials(email);
-CREATE INDEX IF NOT EXISTS idx_admin_token ON server_admin_credentials(api_token);
+CREATE INDEX IF NOT EXISTS idx_admin_token_hash ON server_admin_credentials(api_token_hash);
 
 -- Admin Sessions table (admin panel sessions only)
 CREATE TABLE IF NOT EXISTS server_admin_sessions (

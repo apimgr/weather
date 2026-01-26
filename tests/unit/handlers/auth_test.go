@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,23 +14,63 @@ import (
 	"github.com/apimgr/weather/src/server/handler"
 )
 
-func setupTestRouter(t *testing.T) (*gin.Engine, *database.DB) {
-	gin.SetMode(gin.TestMode)
-
-	db, err := database.InitDB(":memory:")
+// initTestDualDB creates in-memory dual databases for testing
+func initTestDualDB(t *testing.T) (*database.DualDB, func()) {
+	// Create in-memory server database
+	serverDB, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("Failed to initialize test database: %v", err)
+		t.Fatalf("Failed to open server database: %v", err)
+	}
+	if _, err := serverDB.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		t.Fatalf("Failed to enable foreign keys: %v", err)
+	}
+	if _, err := serverDB.Exec(database.ServerSchema); err != nil {
+		t.Fatalf("Failed to create server schema: %v", err)
 	}
 
+	// Create in-memory users database
+	usersDB, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open users database: %v", err)
+	}
+	if _, err := usersDB.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		t.Fatalf("Failed to enable foreign keys: %v", err)
+	}
+	if _, err := usersDB.Exec(database.UsersSchema); err != nil {
+		t.Fatalf("Failed to create users schema: %v", err)
+	}
+
+	dualDB := &database.DualDB{
+		Server: serverDB,
+		Users:  usersDB,
+	}
+
+	// Set global dual database
+	database.SetGlobalDualDB(dualDB)
+
+	cleanup := func() {
+		database.SetGlobalDualDB(nil)
+		serverDB.Close()
+		usersDB.Close()
+	}
+
+	return dualDB, cleanup
+}
+
+func setupTestRouter(t *testing.T) (*gin.Engine, *database.DualDB, func()) {
+	gin.SetMode(gin.TestMode)
+
+	dualDB, cleanup := initTestDualDB(t)
+
 	r := gin.New()
-	return r, db
+	return r, dualDB, cleanup
 }
 
 func TestAuthHandler_Register(t *testing.T) {
-	r, db := setupTestRouter(t)
-	defer db.Close()
+	r, dualDB, cleanup := setupTestRouter(t)
+	defer cleanup()
 
-	authHandler := &handlers.AuthHandler{DB: db.DB}
+	authHandler := &handler.AuthHandler{DB: dualDB.Users}
 
 	r.POST("/register", authHandler.HandleRegister)
 
@@ -41,11 +82,12 @@ func TestAuthHandler_Register(t *testing.T) {
 		{
 			name: "Valid registration",
 			payload: map[string]string{
-				"username": "testuser",
-				"email":    "test@example.com",
-				"password": "ValidPass123",
+				"username":         "testuser",
+				"email":            "test@example.com",
+				"password":         "ValidPass123",
+				"confirm_password": "ValidPass123",
 			},
-			wantStatus: http.StatusOK,
+			wantStatus: http.StatusCreated, // 201 for successful creation
 		},
 		{
 			name: "Missing username",
@@ -100,10 +142,10 @@ func TestAuthHandler_Register(t *testing.T) {
 }
 
 func TestAuthHandler_Login(t *testing.T) {
-	r, db := setupTestRouter(t)
-	defer db.Close()
+	r, dualDB, cleanup := setupTestRouter(t)
+	defer cleanup()
 
-	authHandler := &handlers.AuthHandler{DB: db.DB}
+	authHandler := &handler.AuthHandler{DB: dualDB.Users}
 
 	// Setup routes
 	r.POST("/register", authHandler.HandleRegister)
@@ -111,9 +153,10 @@ func TestAuthHandler_Login(t *testing.T) {
 
 	// First, create a user
 	registerPayload := map[string]string{
-		"username": "logintest",
-		"email":    "login@example.com",
-		"password": "ValidPass123",
+		"username":         "logintest",
+		"email":            "login@example.com",
+		"password":         "ValidPass123",
+		"confirm_password": "ValidPass123",
 	}
 	jsonData, _ := json.Marshal(registerPayload)
 	req := httptest.NewRequest("POST", "/register", bytes.NewBuffer(jsonData))
@@ -121,7 +164,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
+	if w.Code != http.StatusCreated && w.Code != http.StatusOK {
 		t.Fatalf("Failed to create test user: %s", w.Body.String())
 	}
 
@@ -133,31 +176,31 @@ func TestAuthHandler_Login(t *testing.T) {
 		{
 			name: "Valid login",
 			payload: map[string]string{
-				"username": "logintest",
-				"password": "ValidPass123",
+				"identifier": "logintest",
+				"password":   "ValidPass123",
 			},
 			wantStatus: http.StatusOK,
 		},
 		{
 			name: "Wrong password",
 			payload: map[string]string{
-				"username": "logintest",
-				"password": "WrongPassword",
+				"identifier": "logintest",
+				"password":   "WrongPassword",
 			},
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "Non-existent user",
 			payload: map[string]string{
-				"username": "nonexistent",
-				"password": "ValidPass123",
+				"identifier": "nonexistent",
+				"password":   "ValidPass123",
 			},
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
 			name: "Missing password",
 			payload: map[string]string{
-				"username": "logintest",
+				"identifier": "logintest",
 			},
 			wantStatus: http.StatusBadRequest,
 		},

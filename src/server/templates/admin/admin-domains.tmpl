@@ -5,214 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Domains - Admin - {{.AppName}}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/admin.css">
-    <style>
-        .domains-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-
-        .domain-card {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .domain-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .domain-name {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .domain-status {
-            display: flex;
-            gap: 10px;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .status-verified {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-unverified {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-active {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .domain-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .detail-label {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .detail-value {
-            font-weight: 500;
-            color: #333;
-        }
-
-        .domain-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .add-domain-form {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-
-        .verification-info {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        .verification-info h4 {
-            margin-top: 0;
-            color: #004085;
-        }
-
-        .verification-code {
-            background: white;
-            border: 1px solid #b3d9ff;
-            border-radius: 4px;
-            padding: 10px;
-            font-family: monospace;
-            margin: 10px 0;
-            word-break: break-all;
-        }
-
-        .ssl-info {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/dracula.css">
 </head>
 <body>
     {{template "admin-nav" .}}
@@ -399,14 +192,14 @@
                 });
 
                 if (response.ok) {
-                    alert('Domain added successfully!');
+                    Toast.show('Domain added successfully!', 'success');
                     window.location.reload();
                 } else {
                     const error = await response.text();
-                    alert('Failed to add domain: ' + error);
+                    Toast.show('Failed to add domain: ' + error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                Toast.show('Error: ' + error.message, 'error');
             }
         });
 
@@ -418,14 +211,14 @@
                 });
 
                 if (response.ok) {
-                    alert('Domain verified successfully!');
+                    Toast.show('Domain verified successfully!', 'success');
                     window.location.reload();
                 } else {
                     const error = await response.text();
-                    alert('Verification failed: ' + error);
+                    Toast.show('Verification failed: ' + error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                Toast.show('Error: ' + error.message, 'error');
             }
         }
 
@@ -437,14 +230,14 @@
                 });
 
                 if (response.ok) {
-                    alert('Domain activated successfully!');
+                    Toast.show('Domain activated successfully!', 'success');
                     window.location.reload();
                 } else {
                     const error = await response.text();
-                    alert('Activation failed: ' + error);
+                    Toast.show('Activation failed: ' + error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                Toast.show('Error: ' + error.message, 'error');
             }
         }
 
@@ -456,14 +249,14 @@
                 });
 
                 if (response.ok) {
-                    alert('Domain deactivated successfully!');
+                    Toast.show('Domain deactivated successfully!', 'success');
                     window.location.reload();
                 } else {
                     const error = await response.text();
-                    alert('Deactivation failed: ' + error);
+                    Toast.show('Deactivation failed: ' + error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                Toast.show('Error: ' + error.message, 'error');
             }
         }
 
@@ -479,14 +272,14 @@
                 });
 
                 if (response.ok) {
-                    alert('Domain deleted successfully!');
+                    Toast.show('Domain deleted successfully!', 'success');
                     window.location.reload();
                 } else {
                     const error = await response.text();
-                    alert('Deletion failed: ' + error);
+                    Toast.show('Deletion failed: ' + error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                Toast.show('Error: ' + error.message, 'error');
             }
         }
 
@@ -516,14 +309,14 @@
                 });
 
                 if (response.ok) {
-                    alert('SSL configuration updated successfully!');
+                    Toast.show('SSL configuration updated successfully!', 'success');
                     window.location.reload();
                 } else {
                     const error = await response.text();
-                    alert('SSL update failed: ' + error);
+                    Toast.show('SSL update failed: ' + error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                Toast.show('Error: ' + error.message, 'error');
             }
         }
     </script>

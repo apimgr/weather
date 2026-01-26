@@ -5,7 +5,7 @@
     <div class="container">
         <div class="page-header">
             <h1>Edit Location</h1>
-            <a href="/user/dashboard" class="back-link">← Back to Dashboard</a>
+            <a href="/users/dashboard" class="back-link">← Back to Dashboard</a>
         </div>
 
         <div class="form-card">
@@ -92,7 +92,7 @@
                             title="Save changes to this location">Update Location</button>
                     <button type="button"
                             class="btn btn-secondary"
-                            onclick="window.location.href='/user/dashboard'"
+                            onclick="window.location.href='/users/dashboard'"
                             aria-label="Cancel editing"
                             title="Cancel and return to dashboard without saving changes">Cancel</button>
                     <button type="button"
@@ -131,7 +131,7 @@
                 if (response.ok) {
                     showMessage('Location updated successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/user/dashboard';
+                        window.location.href = '/users/dashboard';
                     }, 1500);
                 } else {
                     const error = await response.json();
@@ -155,7 +155,7 @@
                 if (response.ok) {
                     showMessage('Location deleted successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = '/user/dashboard';
+                        window.location.href = '/users/dashboard';
                     }, 1500);
                 } else {
                     const error = await response.json();

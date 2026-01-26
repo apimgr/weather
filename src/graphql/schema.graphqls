@@ -301,6 +301,28 @@ type MoonPhase {
   nextNewMoon: Time
 }
 
+type MoonCalendar {
+  year: Int!
+  month: Int!
+  days: [MoonCalendarDay!]!
+}
+
+type MoonCalendarDay {
+  date: String!
+  phase: String!
+  illumination: Float!
+  icon: String
+  age: Float
+}
+
+type SunTimes {
+  sunrise: String
+  sunset: String
+  solarNoon: String
+  dayLength: String
+  note: String
+}
+
 # ============================================================================
 # USER TYPES
 # ============================================================================
@@ -452,7 +474,7 @@ type TaskHistory {
   startedAt: Time!
   completedAt: Time
   duration: Float
-  success: Boolean!
+  ok: Boolean!
   error: String
 }
 
@@ -524,13 +546,13 @@ type UserSubscription {
 # ============================================================================
 
 type DatabaseConnectionTest {
-  success: Boolean!
+  ok: Boolean!
   latency: Int
   error: String
 }
 
 type DatabaseOptimizeResult {
-  success: Boolean!
+  ok: Boolean!
   tablesOptimized: Int
   duration: Float
 }
@@ -745,7 +767,7 @@ type SyslogConfig {
 # ============================================================================
 
 type ContactSubmission {
-  success: Boolean!
+  ok: Boolean!
   message: String!
 }
 
@@ -754,12 +776,12 @@ type ContactSubmission {
 # ============================================================================
 
 type GenericResponse {
-  success: Boolean!
+  ok: Boolean!
   message: String!
 }
 
 type BulkResponse {
-  success: Boolean!
+  ok: Boolean!
   message: String!
   updated: Int
   failed: Int
@@ -787,9 +809,14 @@ type Query {
 
   # Natural Disasters
   earthquakes(minMagnitude: Float, limit: Int): [Earthquake!]!
+  earthquake(id: String!): Earthquake
   hurricanes(active: Boolean): [Hurricane!]!
+  hurricane(id: String!): Hurricane
   severeWeather(location: String): [SevereWeather!]!
+  severeWeatherAlert(id: String!): SevereWeather
   moonPhase(date: String): MoonPhase!
+  moonCalendar(year: Int, month: Int, location: String): MoonCalendar!
+  sunTimes(location: String, date: String): SunTimes!
 
   # User Endpoints (require authentication)
   currentUser: User!

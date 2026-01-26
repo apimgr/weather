@@ -5,352 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .breadcrumb {
-            color: #95a5a6;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .breadcrumb a {
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .container {
-            max-width: 1600px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            background: white;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .nav-link:hover {
-            background: #3498db;
-            color: white;
-        }
-
-        .controls-panel {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .control-group label {
-            font-weight: 500;
-            color: #555;
-            font-size: 0.9rem;
-        }
-
-        .control-group select,
-        .control-group input {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        .control-group select:focus,
-        .control-group input:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #229954;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .stats-bar {
-            display: flex;
-            gap: 2rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .stat {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .logs-panel {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .logs-header {
-            padding: 1rem 1.5rem;
-            background: #34495e;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logs-header h2 {
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .auto-refresh {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .auto-refresh input[type="checkbox"] {
-            width: 1rem;
-            height: 1rem;
-            cursor: pointer;
-        }
-
-        .logs-container {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-            font-size: 0.85rem;
-            height: 600px;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-
-        .log-entry {
-            padding: 0.25rem 0;
-            border-bottom: 1px solid #2d2d2d;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .log-entry:hover {
-            background: #2d2d2d;
-        }
-
-        .log-timestamp {
-            color: #808080;
-            margin-right: 0.5rem;
-        }
-
-        .log-level {
-            display: inline-block;
-            padding: 0.1rem 0.4rem;
-            border-radius: 3px;
-            font-weight: 600;
-            margin-right: 0.5rem;
-            font-size: 0.75rem;
-        }
-
-        .log-level-DEBUG {
-            background: #3498db;
-            color: white;
-        }
-
-        .log-level-INFO {
-            background: #27ae60;
-            color: white;
-        }
-
-        .log-level-WARN {
-            background: #f39c12;
-            color: white;
-        }
-
-        .log-level-ERROR {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .log-level-FATAL {
-            background: #c0392b;
-            color: white;
-        }
-
-        .log-message {
-            color: #d4d4d4;
-        }
-
-        .no-logs {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #808080;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .search-highlight {
-            background: #f39c12;
-            color: #000;
-            padding: 0 2px;
-        }
-
-        @media (max-width: 768px) {
-            .controls-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-bar {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/dracula.css">
 </head>
 <body>
-    <div class="header">
+    <div class="admin-page-header">
         <h1>System Logs</h1>
-        <div class="breadcrumb">
+        <div class="admin-page-breadcrumb">
             <a href="/admin">Admin</a> /
             <span>Logs</span>
         </div>
     </div>
 
-    <div class="container">
-        <div class="nav-links">
-            <a href="/admin" class="nav-link">← Dashboard</a>
-            <a href="/admin/system" class="nav-link">System Info</a>
+    <div class="admin-page-container wide">
+        <div class="admin-nav-links">
+            <a href="/admin" class="admin-nav-link">← Dashboard</a>
+            <a href="{{.admin_path}}/system" class="admin-nav-link">System Info</a>
         </div>
 
         <!-- Controls Panel -->
@@ -409,11 +78,11 @@
                 </div>
                 <div class="stat">
                     <span class="stat-label">Errors</span>
-                    <span class="stat-value" id="errorCount" style="color: #e74c3c;">0</span>
+                    <span class="stat-value text-danger" id="errorCount">0</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Warnings</span>
-                    <span class="stat-value" id="warnCount" style="color: #f39c12;">0</span>
+                    <span class="stat-value text-warning" id="warnCount">0</span>
                 </div>
             </div>
 
@@ -572,7 +241,7 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             } catch (error) {
-                alert('Error downloading logs: ' + error.message);
+                Toast.show('Error downloading logs: ' + error.message, 'error');
             }
         }
 
@@ -590,9 +259,9 @@
                 filteredLogs = [];
                 renderLogs();
                 updateStats();
-                alert('Logs cleared successfully');
+                Toast.show('Logs cleared successfully', 'success');
             } catch (error) {
-                alert('Error clearing logs: ' + error.message);
+                Toast.show('Error clearing logs: ' + error.message, 'error');
             }
         }
 

@@ -451,6 +451,11 @@
     </div>
 
     <script>
+        // Configurable paths per AI.md PART 17
+        const API_PATH = '{{.api_path}}';
+        const ADMIN_API_PATH = '{{.admin_api_path}}';
+        const ADMIN_PATH = '{{.admin_path}}';
+
         // Tab switching
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -481,7 +486,7 @@
         // User Management
         async function loadUsers() {
             try {
-                const response = await fetch('/api/v1/admin/users');
+                const response = await fetch(`${ADMIN_API_PATH}/users');
                 const users = await response.json();
 
                 const html = `
@@ -689,7 +694,7 @@
             }
 
             try {
-                const response = await fetch('/api/v1/admin/users', {
+                const response = await fetch(`${ADMIN_API_PATH}/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, password, role })
@@ -710,7 +715,7 @@
         // Settings Management with inline editing
         async function loadSettings() {
             try {
-                const response = await fetch('/api/v1/admin/settings');
+                const response = await fetch(`${ADMIN_API_PATH}/settings');
                 const settings = await response.json();
 
                 // Group settings by category
@@ -900,13 +905,13 @@
                     }
                 });
 
-                await fetch('/api/v1/admin/settings/bulk', {
+                await fetch(`${ADMIN_API_PATH}/settings/bulk', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ settings: updates })
                 });
 
-                await fetch('/api/v1/admin/reload', { method: 'POST' });
+                await fetch(`${ADMIN_API_PATH}/reload', { method: 'POST' });
 
                 Modal.create({
                     title: '✅ Settings Applied',
@@ -936,7 +941,7 @@
         // Token Management
         async function loadTokens() {
             try {
-                const response = await fetch('/api/v1/admin/tokens');
+                const response = await fetch(`${ADMIN_API_PATH}/tokens');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -998,7 +1003,7 @@
 
         async function showGenerateTokenModal() {
             // Load users first
-            const usersResponse = await fetch('/api/v1/admin/users');
+            const usersResponse = await fetch(`${ADMIN_API_PATH}/users');
             const users = await usersResponse.json();
 
             const userOptions = users.map(u =>
@@ -1045,7 +1050,7 @@
             }
 
             try {
-                const response = await fetch('/api/v1/admin/tokens', {
+                const response = await fetch(`${ADMIN_API_PATH}/tokens', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: parseInt(userId), name: tokenName })
@@ -1109,7 +1114,7 @@
         // Logs Management
         async function loadLogs() {
             try {
-                const response = await fetch('/api/v1/admin/logs?limit=50');
+                const response = await fetch(`${ADMIN_API_PATH}/logs?limit=50');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -1241,7 +1246,7 @@
         // Complete scheduler management (TEMPLATE.md lines 1193-1214)
         async function loadScheduledTasks() {
             try {
-                const response = await fetch('/api/v1/admin/tasks');
+                const response = await fetch(`${ADMIN_API_PATH}/tasks');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -1423,7 +1428,7 @@
             };
 
             try {
-                const response = await fetch('/api/v1/admin/settings/web', {
+                const response = await fetch(`${ADMIN_API_PATH}/settings/web', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)
@@ -1453,7 +1458,7 @@
             };
 
             try {
-                const response = await fetch('/api/v1/admin/settings/security', {
+                const response = await fetch(`${ADMIN_API_PATH}/settings/security', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)
@@ -1472,7 +1477,7 @@
         // Database Handlers
         async function testDatabaseConnection() {
             try {
-                const response = await fetch('/api/v1/admin/database/test');
+                const response = await fetch(`${ADMIN_API_PATH}/database/test');
                 const result = await response.json();
 
                 if (result.success) {
@@ -1489,7 +1494,7 @@
             if (!await showConfirm('Optimize database? This may take a few moments.')) return;
 
             try {
-                const response = await fetch('/api/v1/admin/database/optimize', { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/database/optimize', { method: 'POST' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -1506,7 +1511,7 @@
             if (!await showConfirm('Clear all cache? This will temporarily slow down requests.')) return;
 
             try {
-                const response = await fetch('/api/v1/admin/cache/clear', { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/cache/clear', { method: 'POST' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -1523,7 +1528,7 @@
             if (!await showConfirm('Vacuum database? This will compact the database file and may take several minutes.')) return;
 
             try {
-                const response = await fetch('/api/v1/admin/database/vacuum', { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/database/vacuum', { method: 'POST' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -1539,7 +1544,7 @@
         // SSL/TLS Handlers
         async function testSSLCertificate() {
             try {
-                const response = await fetch('/api/v1/admin/ssl/verify');
+                const response = await fetch(`${ADMIN_API_PATH}/ssl/verify');
                 const result = await response.json();
 
                 if (result.valid) {
@@ -1564,7 +1569,7 @@
             if (!await showConfirm(`Obtain SSL certificate for ${domain}? This requires port 80/443 to be accessible.`)) return;
 
             try {
-                const response = await fetch('/api/v1/admin/ssl/obtain', {
+                const response = await fetch(`${ADMIN_API_PATH}/ssl/obtain', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ domain, email, provider: document.getElementById('ssl-provider').value })
@@ -1586,7 +1591,7 @@
             if (!await showConfirm('Renew SSL certificate?')) return;
 
             try {
-                const response = await fetch('/api/v1/admin/ssl/renew', { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/ssl/renew', { method: 'POST' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -1604,7 +1609,7 @@
             if (!await showConfirm('Create backup now? This may take a few moments.')) return;
 
             try {
-                const response = await fetch('/api/v1/admin/backup/create', { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/backup/create', { method: 'POST' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -1632,7 +1637,7 @@
             formData.append('backup', fileInput.files[0]);
 
             try {
-                const response = await fetch('/api/v1/admin/backup/restore', {
+                const response = await fetch(`${ADMIN_API_PATH}/backup/restore', {
                     method: 'POST',
                     body: formData
                 });
@@ -1652,7 +1657,7 @@
 
         async function loadBackupList() {
             try {
-                const response = await fetch('/api/v1/admin/backup/list');
+                const response = await fetch(`${ADMIN_API_PATH}/backup/list');
                 const backups = await response.json();
 
                 const html = backups.length ? `
@@ -1672,7 +1677,7 @@
                                     <td class="admin-table-body-cell">${formatBytes(backup.size)}</td>
                                     <td class="admin-table-body-cell">${new Date(backup.created).toLocaleString()}</td>
                                     <td class="admin-table-body-cell-right">
-                                        <a href="/api/v1/admin/backup/download/${backup.filename}" class="btn btn-sm btn-primary">Download</a>
+                                        <a href="${ADMIN_API_PATH}/backup/download/${backup.filename}" class="btn btn-sm btn-primary">Download</a>
                                         <button onclick="deleteBackup('${backup.filename}')" class="btn btn-sm btn-danger">Delete</button>
                                     </td>
                                 </tr>

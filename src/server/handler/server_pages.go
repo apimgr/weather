@@ -14,8 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ShowAboutPage renders the about page
-func ShowAboutPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
+// ShowAboutPage renders the about page with content negotiation (AI.md PART 14)
+func ShowAboutPage(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := c.Get("user")
 
@@ -26,7 +26,7 @@ func ShowAboutPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
 		torEnabled := settingsModel.GetBool("tor.enabled", false)
 		onionAddress := settingsModel.GetString("tor.onion_address", "")
 
-		c.HTML(http.StatusOK, "about.tmpl", gin.H{
+		data := gin.H{
 			"user": user,
 			"page": "about",
 			"server": gin.H{
@@ -43,16 +43,19 @@ func ShowAboutPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
 				},
 			},
 			"HostInfo": utils.GetHostInfo(c),
-		})
+		}
+
+		// AI.md PART 14: Content negotiation - JSON or HTML
+		NegotiateResponse(c, "about.tmpl", data)
 	}
 }
 
-// ShowPrivacyPage renders the privacy policy page
-func ShowPrivacyPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
+// ShowPrivacyPage renders the privacy policy page with content negotiation (AI.md PART 14)
+func ShowPrivacyPage(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := c.Get("user")
 
-		c.HTML(http.StatusOK, "privacy.tmpl", gin.H{
+		data := gin.H{
 			"user": user,
 			"page": "privacy",
 			"server": gin.H{
@@ -60,16 +63,19 @@ func ShowPrivacyPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
 				"BuildDate": "",
 			},
 			"HostInfo": utils.GetHostInfo(c),
-		})
+		}
+
+		// AI.md PART 14: Content negotiation - JSON or HTML
+		NegotiateResponse(c, "privacy.tmpl", data)
 	}
 }
 
-// ShowContactPage renders the contact form page
-func ShowContactPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
+// ShowContactPage renders the contact form page with content negotiation (AI.md PART 14)
+func ShowContactPage(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := c.Get("user")
 
-		c.HTML(http.StatusOK, "contact.tmpl", gin.H{
+		data := gin.H{
 			"user": user,
 			"page": "contact",
 			"server": gin.H{
@@ -78,16 +84,19 @@ func ShowContactPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
 				"GitRepo": "weather",
 			},
 			"HostInfo": utils.GetHostInfo(c),
-		})
+		}
+
+		// AI.md PART 14: Content negotiation - JSON or HTML
+		NegotiateResponse(c, "contact.tmpl", data)
 	}
 }
 
-// ShowHelpPage renders the help & documentation page
-func ShowHelpPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
+// ShowHelpPage renders the help & documentation page with content negotiation (AI.md PART 14)
+func ShowHelpPage(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := c.Get("user")
 
-		c.HTML(http.StatusOK, "help.tmpl", gin.H{
+		data := gin.H{
 			"user": user,
 			"page": "help",
 			"server": gin.H{
@@ -96,12 +105,15 @@ func ShowHelpPage(db *database.DB, cfg *config.Config) gin.HandlerFunc {
 				"GitRepo": "weather",
 			},
 			"HostInfo": utils.GetHostInfo(c),
-		})
+		}
+
+		// AI.md PART 14: Content negotiation - JSON or HTML
+		NegotiateResponse(c, "help.tmpl", data)
 	}
 }
 
 // HandleContactFormSubmission handles the contact form POST request (API endpoint)
-func HandleContactFormSubmission(db *database.DB, cfg *config.Config) gin.HandlerFunc {
+func HandleContactFormSubmission(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var form struct {
 			Name    string `json:"name" binding:"required"`
@@ -143,20 +155,20 @@ Time: %s`, form.Name, form.Email, form.Subject, form.Message, c.ClientIP(), c.Re
 			if err != nil {
 				// Email failed - save to database as fallback
 				if err := saveContactToDB(c, form.Name, form.Email, form.Subject, form.Message); err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to send message"})
+					c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "Failed to send message"})
 					return
 				}
-				c.JSON(http.StatusOK, gin.H{"success": true, "message": "Your message has been saved. We'll respond as soon as possible."})
+				c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Your message has been saved. We'll respond as soon as possible."})
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Thank you for contacting us. We'll get back to you soon."})
+			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Thank you for contacting us. We'll get back to you soon."})
 		} else {
 			// No SMTP - save to database (AI.md PART 26)
 			if err := saveContactToDB(c, form.Name, form.Email, form.Subject, form.Message); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to save message"})
+				c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "Failed to save message"})
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Your message has been saved. We'll respond as soon as possible."})
+			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Your message has been saved. We'll respond as soon as possible."})
 		}
 	}
 }

@@ -91,8 +91,15 @@ func (p *PIDFile) Create() error {
 	}
 
 	// Create directory if it doesn't exist
+	// AI.md PART 7: Permissions - root: 0755/0644, user: 0700/0600
+	dirPerm := os.FileMode(0700)
+	filePerm := os.FileMode(0600)
+	if os.Geteuid() == 0 {
+		dirPerm = 0755
+		filePerm = 0644
+	}
 	dir := filepath.Dir(p.Path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, dirPerm); err != nil {
 		return fmt.Errorf("failed to create PID directory %s: %w", dir, err)
 	}
 
@@ -100,7 +107,7 @@ func (p *PIDFile) Create() error {
 	pid := os.Getpid()
 	content := fmt.Sprintf("%d\n", pid)
 
-	if err := os.WriteFile(p.Path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(p.Path, []byte(content), filePerm); err != nil {
 		return fmt.Errorf("failed to write PID file %s: %w", p.Path, err)
 	}
 

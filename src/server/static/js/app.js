@@ -772,4 +772,231 @@
     Notifications.startPolling();
   }
 
+  // ============================================
+  // ADMIN PANEL (AI.md PART 18)
+  // ============================================
+
+  const AdminPanel = {
+    /**
+     * Initialize admin panel
+     */
+    init: function() {
+      this.initializeSearch();
+      this.initializeKeyboardShortcuts();
+      this.initializeMobileSidebar();
+    },
+
+    /**
+     * Search functionality
+     */
+    initializeSearch: function() {
+      const searchInput = document.getElementById('admin-search');
+      if (!searchInput) return;
+
+      searchInput.addEventListener('input', Utils.debounce(function(e) {
+        const query = e.target.value.toLowerCase();
+        if (query.length < 2) return;
+
+        // Search through sidebar items
+        const navItems = document.querySelectorAll('.nav-item, .nav-subitem');
+        navItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          const match = text.includes(query);
+          item.style.display = match ? '' : 'none';
+        });
+      }, 300));
+    },
+
+    /**
+     * Keyboard shortcuts per AI.md PART 18
+     */
+    initializeKeyboardShortcuts: function() {
+      document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K: Focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          document.getElementById('admin-search')?.focus();
+        }
+
+        // Ctrl/Cmd + B: Toggle sidebar
+        if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+          e.preventDefault();
+          AdminPanel.toggleSidebar();
+        }
+      });
+    },
+
+    /**
+     * Mobile sidebar
+     */
+    initializeMobileSidebar: function() {
+      const sidebar = document.getElementById('adminSidebar');
+      const toggle = document.querySelector('.sidebar-toggle');
+
+      if (!sidebar || !toggle) return;
+
+      toggle.addEventListener('click', function() {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle('mobile-open');
+        }
+      });
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+          if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+            sidebar.classList.remove('mobile-open');
+          }
+        }
+      });
+    },
+
+    /**
+     * Toggle sidebar
+     */
+    toggleSidebar: function() {
+      const sidebar = document.getElementById('adminSidebar');
+      if (sidebar) {
+        sidebar.classList.toggle('collapsed');
+      }
+    }
+  };
+
+  /**
+   * Confirmation dialog (replaces JS alerts per AI.md PART 18)
+   */
+  window.confirmAction = function(message, callback) {
+    Modal.create({
+      title: 'Confirm Action',
+      body: `<p class="modal-body-text">${message}</p>`,
+      footer: `
+        <button class="btn btn-secondary" onclick="Modal.close(this.closest('.modal-overlay').id)">Cancel</button>
+        <button class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+      `,
+      size: 'sm',
+      onClose: function() {}
+    });
+
+    // Set up confirm button handler after modal is created
+    setTimeout(function() {
+      const confirmBtn = document.getElementById('confirmActionBtn');
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+          const overlay = this.closest('.modal-overlay');
+          if (overlay) Modal.close(overlay.id);
+          if (callback) callback();
+        });
+      }
+    }, 50);
+  };
+
+  // Expose AdminPanel
+  window.AdminPanel = AdminPanel;
+
+  // Initialize admin panel if on admin page
+  if (document.querySelector('#adminSidebar') || window.location.pathname.startsWith('/admin')) {
+    AdminPanel.init();
+  }
+
+  // ============================================
+  // THEME SYSTEM (AI.md PART 16)
+  // Dark theme is DEFAULT per AI.md spec
+  // ============================================
+
+  const Theme = {
+    // Available themes: dark (default), light, auto
+    THEMES: ['dark', 'light', 'auto'],
+
+    /**
+     * Get current theme from localStorage
+     */
+    get: function() {
+      return localStorage.getItem('theme') || 'dark';
+    },
+
+    /**
+     * Set theme and persist to localStorage
+     */
+    set: function(theme) {
+      if (!this.THEMES.includes(theme)) {
+        theme = 'dark';
+      }
+      localStorage.setItem('theme', theme);
+      this.apply(theme);
+      Utils.dispatchEvent('theme:changed', { theme });
+    },
+
+    /**
+     * Apply theme to document
+     */
+    apply: function(theme) {
+      var effectiveTheme = theme;
+      if (theme === 'auto') {
+        effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
+      // Update theme-color meta tag
+      var themeColor = effectiveTheme === 'dark' ? '#282a36' : '#ffffff';
+      var metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', themeColor);
+      }
+    },
+
+    /**
+     * Toggle between dark and light themes
+     */
+    toggle: function() {
+      var current = this.get();
+      var next = current === 'dark' ? 'light' : 'dark';
+      this.set(next);
+      return next;
+    },
+
+    /**
+     * Cycle through all themes: dark -> light -> auto -> dark
+     */
+    cycle: function() {
+      var current = this.get();
+      var index = this.THEMES.indexOf(current);
+      var next = this.THEMES[(index + 1) % this.THEMES.length];
+      this.set(next);
+      return next;
+    },
+
+    /**
+     * Initialize theme system
+     */
+    init: function() {
+      // Apply saved theme
+      this.apply(this.get());
+
+      // Listen for system preference changes when using auto theme
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (Theme.get() === 'auto') {
+          Theme.apply('auto');
+        }
+      });
+
+      // Set up theme toggle buttons
+      document.querySelectorAll('[data-theme-toggle]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          Theme.toggle();
+        });
+      });
+
+      document.querySelectorAll('[data-theme-cycle]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          Theme.cycle();
+        });
+      });
+    }
+  };
+
+  // Expose Theme globally
+  window.Theme = Theme;
+
+  // Initialize theme system
+  Theme.init();
+
 })();

@@ -60,8 +60,8 @@ return fmt.Errorf("failed to extract manifest: %w", err)
 
 // Version check per AI.md PART 25 line 22600
 // Warning shown but proceed with schema updates if needed
-fmt.Printf("Restoring backup created at %s (version %s)\n", 
-manifest.CreatedAt.Format("2006-01-02 15:04:05"), 
+fmt.Printf("Restoring backup created at %s (version %s)\n",
+manifest.CreatedAt.Format("2006-01-02 15:04:05"),
 manifest.AppVersion)
 
 // Extract archive

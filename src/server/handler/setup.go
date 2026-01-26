@@ -47,10 +47,18 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Trim whitespace from non-password fields
+	input.Username = strings.TrimSpace(input.Username)
+	input.Email = strings.TrimSpace(input.Email)
+
+	// Passwords cannot start or end with whitespace
+	if input.Password != strings.TrimSpace(input.Password) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Password cannot start or end with whitespace"})
+		return
+	}
+
 	// Normalize username
-	username := input.Username
-	// Username can be anything for first user, but normalize it
-	username = strings.ToLower(strings.TrimSpace(username))
+	username := strings.ToLower(input.Username)
 
 	// Check if user already exists
 	var count int
@@ -83,7 +91,7 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // ShowAdminSetup shows the admin creation form (step 4)
@@ -146,6 +154,11 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		// Use custom password - must be confirmed
 		if input.Password == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Password is required"})
+			return
+		}
+		// Passwords cannot start or end with whitespace
+		if input.Password != strings.TrimSpace(input.Password) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Password cannot start or end with whitespace"})
 			return
 		}
 		if len(input.Password) < 12 {
@@ -229,7 +242,7 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		true,
 	)
 
-	response := gin.H{"success": true}
+	response := gin.H{"ok": true}
 	if generatedPassword != "" {
 		// Include generated password in response (shown only once)
 		response["generated_password"] = generatedPassword
@@ -289,7 +302,7 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	if role == "admin" {
 		c.Redirect(http.StatusFound, "/setup/server/welcome")
 	} else {
-		c.Redirect(http.StatusFound, "/user/dashboard")
+		c.Redirect(http.StatusFound, "/users/dashboard")
 	}
 }
 
@@ -361,7 +374,7 @@ func (h *SetupHandler) SaveServerSettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
+		"ok":  true,
 		"redirect": "/setup/complete",
 	})
 }

@@ -86,7 +86,7 @@
             };
 
             try {
-                const response = await fetch('/user/setup/register', {
+                const response = await fetch('/users/setup/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -95,7 +95,7 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    window.location.href = '/user/setup/admin';
+                    window.location.href = '/users/setup/admin';
                 } else {
                     errorMsg.textContent = result.error || 'Failed to create account';
                     errorMsg.classList.add('setup-error-visible');

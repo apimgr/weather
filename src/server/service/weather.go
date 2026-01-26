@@ -290,7 +290,7 @@ func NewWeatherService(locationEnhancer *LocationEnhancer, geoipService *GeoIPSe
 
 	return &WeatherService{
 		client:           client,
-		cache:            cache.New(10*time.Minute, 20*time.Minute),
+		cache:            cache.New(15*time.Minute, 30*time.Minute),
 		openMeteoBaseURL: "https://api.open-meteo.com/v1",
 		geocodingURL:     "https://geocoding-api.open-meteo.com/v1",
 		locationEnhancer: locationEnhancer,
@@ -301,6 +301,17 @@ func NewWeatherService(locationEnhancer *LocationEnhancer, geoipService *GeoIPSe
 
 // GetCoordinates retrieves coordinates for a location with geocoding
 func (ws *WeatherService) GetCoordinates(location string, country string) (*Coordinates, error) {
+	// Validate location input
+	location = strings.TrimSpace(location)
+	if location == "" {
+		return nil, fmt.Errorf("location cannot be empty")
+	}
+
+	// Validate location doesn't contain only special characters
+	if !ws.isValidLocationInput(location) {
+		return nil, fmt.Errorf("invalid location format: %s", location)
+	}
+
 	cacheKey := fmt.Sprintf("coords_%s_%s", location, country)
 	if cached, found := ws.cache.Get(cacheKey); found {
 		return cached.(*Coordinates), nil
@@ -839,6 +850,27 @@ func (ws *WeatherService) GetWeatherIcon(code int, isDay bool) string {
 func (ws *WeatherService) isCoordinates(location string) bool {
 	coordRegex := regexp.MustCompile(`^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$`)
 	return coordRegex.MatchString(strings.TrimSpace(location))
+}
+
+// isValidLocationInput validates that location is a valid input format
+func (ws *WeatherService) isValidLocationInput(location string) bool {
+	if len(location) == 0 {
+		return false
+	}
+	// Location must start with a letter or digit (not special characters)
+	first := rune(location[0])
+	if !((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z') || (first >= '0' && first <= '9')) {
+		return false
+	}
+	// Must contain at least one letter or digit
+	hasAlphanumeric := false
+	for _, c := range location {
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
+			hasAlphanumeric = true
+			break
+		}
+	}
+	return hasAlphanumeric
 }
 
 // parseLocationString parses location string into parts

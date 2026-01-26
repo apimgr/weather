@@ -3,9 +3,11 @@ package models
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -27,18 +29,18 @@ const (
 
 // Admin represents a server administrator (stored in server.db)
 // Per TEMPLATE.md PART 22: Admins MUST be in server.db, NOT users.db
+// AI.md PART 11: API tokens stored as SHA-256 hash, never plaintext
 type Admin struct {
-	ID           int64      `json:"id"`
-	Username     string     `json:"username"`
-	Email        string     `json:"email"`
-	// Never expose password hash
-	PasswordHash string     `json:"-"`
-	APIToken     string     `json:"api_token,omitempty"`
-	IsSuperAdmin bool       `json:"is_super_admin"`
-	IsActive     bool       `json:"is_active"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
-	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
+	ID             int64      `json:"id"`
+	Username       string     `json:"username"`
+	Email          string     `json:"email"`
+	PasswordHash   string     `json:"-"`
+	APITokenPrefix string     `json:"api_token_prefix,omitempty"`
+	IsSuperAdmin   bool       `json:"is_super_admin"`
+	IsActive       bool       `json:"is_active"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	LastLoginAt    *time.Time `json:"last_login_at,omitempty"`
 }
 
 // AdminSession represents an active admin session
@@ -170,9 +172,28 @@ func GenerateSecureToken(length int) (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-// GenerateAPIToken generates a new API token for an admin
+// GenerateAPIToken generates a new admin API token with adm_ prefix
+// AI.md PART 11: Format is adm_{32_alphanumeric}
 func GenerateAPIToken() (string, error) {
-	return GenerateSecureToken(32)
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return "adm_" + hex.EncodeToString(bytes), nil
+}
+
+// HashAPIToken creates SHA-256 hash of API token per AI.md PART 11
+func HashAPIToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+// GetAPITokenPrefix returns first 8 chars for display per AI.md PART 11
+func GetAPITokenPrefix(token string) string {
+	if len(token) < 8 {
+		return token
+	}
+	return token[:8]
 }
 
 // GenerateInviteToken generates a new invite token
@@ -246,10 +267,10 @@ func (m *AdminModel) GetAll() ([]Admin, error) {
 func (m *AdminModel) GetByID(id int64) (*Admin, error) {
 	var admin Admin
 	var lastLoginAt sql.NullTime
-	var apiToken sql.NullString
+	var apiTokenPrefix sql.NullString
 
 	err := database.GetServerDB().QueryRow(`
-		SELECT id, username, email, password_hash, api_token, is_super_admin, is_active, created_at, updated_at, last_login_at
+		SELECT id, username, email, password_hash, api_token_prefix, is_super_admin, is_active, created_at, updated_at, last_login_at
 		FROM server_admin_credentials
 		WHERE id = ?
 	`, id).Scan(
@@ -257,7 +278,7 @@ func (m *AdminModel) GetByID(id int64) (*Admin, error) {
 		&admin.Username,
 		&admin.Email,
 		&admin.PasswordHash,
-		&apiToken,
+		&apiTokenPrefix,
 		&admin.IsSuperAdmin,
 		&admin.IsActive,
 		&admin.CreatedAt,
@@ -273,8 +294,8 @@ func (m *AdminModel) GetByID(id int64) (*Admin, error) {
 		admin.LastLoginAt = &lastLoginAt.Time
 	}
 
-	if apiToken.Valid {
-		admin.APIToken = apiToken.String
+	if apiTokenPrefix.Valid {
+		admin.APITokenPrefix = apiTokenPrefix.String
 	}
 
 	return &admin, nil
@@ -284,10 +305,10 @@ func (m *AdminModel) GetByID(id int64) (*Admin, error) {
 func (m *AdminModel) GetByEmail(email string) (*Admin, error) {
 	var admin Admin
 	var lastLoginAt sql.NullTime
-	var apiToken sql.NullString
+	var apiTokenPrefix sql.NullString
 
 	err := database.GetServerDB().QueryRow(`
-		SELECT id, username, email, password_hash, api_token, is_super_admin, is_active, created_at, updated_at, last_login_at
+		SELECT id, username, email, password_hash, api_token_prefix, is_super_admin, is_active, created_at, updated_at, last_login_at
 		FROM server_admin_credentials
 		WHERE email = ?
 	`, email).Scan(
@@ -295,7 +316,7 @@ func (m *AdminModel) GetByEmail(email string) (*Admin, error) {
 		&admin.Username,
 		&admin.Email,
 		&admin.PasswordHash,
-		&apiToken,
+		&apiTokenPrefix,
 		&admin.IsSuperAdmin,
 		&admin.IsActive,
 		&admin.CreatedAt,
@@ -311,28 +332,33 @@ func (m *AdminModel) GetByEmail(email string) (*Admin, error) {
 		admin.LastLoginAt = &lastLoginAt.Time
 	}
 
-	if apiToken.Valid {
-		admin.APIToken = apiToken.String
+	if apiTokenPrefix.Valid {
+		admin.APITokenPrefix = apiTokenPrefix.String
 	}
 
 	return &admin, nil
 }
 
-// GetByAPIToken retrieves an admin by API token
+// GetByAPIToken retrieves an admin by API token using SHA-256 hash lookup
+// AI.md PART 11: Query by hash, never store or query plaintext
 func (m *AdminModel) GetByAPIToken(token string) (*Admin, error) {
+	// Hash the provided token to look up
+	tokenHash := HashAPIToken(token)
+
 	var admin Admin
 	var lastLoginAt sql.NullTime
+	var apiTokenPrefix sql.NullString
 
 	err := database.GetServerDB().QueryRow(`
-		SELECT id, username, email, password_hash, api_token, is_super_admin, is_active, created_at, updated_at, last_login_at
+		SELECT id, username, email, password_hash, api_token_prefix, is_super_admin, is_active, created_at, updated_at, last_login_at
 		FROM server_admin_credentials
-		WHERE api_token = ? AND is_active = 1
-	`, token).Scan(
+		WHERE api_token_hash = ? AND is_active = 1
+	`, tokenHash).Scan(
 		&admin.ID,
 		&admin.Username,
 		&admin.Email,
 		&admin.PasswordHash,
-		&admin.APIToken,
+		&apiTokenPrefix,
 		&admin.IsSuperAdmin,
 		&admin.IsActive,
 		&admin.CreatedAt,
@@ -349,6 +375,9 @@ func (m *AdminModel) GetByAPIToken(token string) (*Admin, error) {
 
 	if lastLoginAt.Valid {
 		admin.LastLoginAt = &lastLoginAt.Time
+	}
+	if apiTokenPrefix.Valid {
+		admin.APITokenPrefix = apiTokenPrefix.String
 	}
 
 	return &admin, nil
@@ -371,6 +400,7 @@ func (m *AdminModel) GetCount() (int, error) {
 
 // Create creates a new admin account with Argon2id password hashing
 // Per TEMPLATE.md PART 22: Admin accounts stored in server.db
+// AI.md PART 11: API tokens stored as SHA-256 hash, never plaintext
 func (m *AdminModel) Create(username, email, password string, isSuperAdmin bool) (*Admin, error) {
 	// Hash password using Argon2id (TEMPLATE.md PART 0 requirement)
 	passwordHash, err := HashPassword(password)
@@ -384,11 +414,15 @@ func (m *AdminModel) Create(username, email, password string, isSuperAdmin bool)
 		return nil, fmt.Errorf("failed to generate API token: %w", err)
 	}
 
+	// Hash token for storage (NEVER store plaintext per AI.md PART 11)
+	tokenHash := HashAPIToken(apiToken)
+	tokenPrefix := GetAPITokenPrefix(apiToken)
+
 	// Insert admin into server.db
 	result, err := database.GetServerDB().Exec(`
-		INSERT INTO server_admin_credentials (username, email, password_hash, api_token, is_super_admin, is_active, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-	`, username, email, passwordHash, apiToken, isSuperAdmin)
+		INSERT INTO server_admin_credentials (username, email, password_hash, api_token_hash, api_token_prefix, is_super_admin, is_active, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`, username, email, passwordHash, tokenHash, tokenPrefix, isSuperAdmin)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create admin: %w", err)
@@ -466,17 +500,22 @@ func (m *AdminModel) UpdatePassword(id int64, newPassword string) error {
 }
 
 // RegenerateAPIToken generates a new API token for an admin
+// AI.md PART 11: Store SHA-256 hash, return full token only once
 func (m *AdminModel) RegenerateAPIToken(id int64) (string, error) {
 	apiToken, err := GenerateAPIToken()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate API token: %w", err)
 	}
 
+	// Hash token for storage (NEVER store plaintext per AI.md PART 11)
+	tokenHash := HashAPIToken(apiToken)
+	tokenPrefix := GetAPITokenPrefix(apiToken)
+
 	_, err = database.GetServerDB().Exec(`
 		UPDATE server_admin_credentials
-		SET api_token = ?, updated_at = CURRENT_TIMESTAMP
+		SET api_token_hash = ?, api_token_prefix = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
-	`, apiToken, id)
+	`, tokenHash, tokenPrefix, id)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to update API token: %w", err)
@@ -542,13 +581,18 @@ func (m *AdminModel) VerifyCredentials(username, password string) (*Admin, error
 	admin, err := m.GetByEmail(username)
 	if err != nil {
 		// Try username field
+		var apiTokenPrefix sql.NullString
+		admin = &Admin{}
 		err = database.GetServerDB().QueryRow(`
-			SELECT id, username, email, password_hash, api_token, is_super_admin, is_active, created_at, updated_at, last_login_at
+			SELECT id, username, email, password_hash, api_token_prefix, is_super_admin, is_active, created_at, updated_at, last_login_at
 			FROM server_admin_credentials
 			WHERE username = ? AND is_active = 1
 		`, username).Scan(&admin.ID, &admin.Username, &admin.Email, &admin.PasswordHash,
-			&admin.APIToken, &admin.IsSuperAdmin, &admin.IsActive, &admin.CreatedAt,
+			&apiTokenPrefix, &admin.IsSuperAdmin, &admin.IsActive, &admin.CreatedAt,
 			&admin.UpdatedAt, &admin.LastLoginAt)
+		if apiTokenPrefix.Valid {
+			admin.APITokenPrefix = apiTokenPrefix.String
+		}
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("invalid credentials")
 		}

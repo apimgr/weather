@@ -100,8 +100,13 @@ func SelectRandomPort() int {
 // CreateDefaultServerYML creates server.yml with auto-detected settings
 func CreateDefaultServerYML(configPath string, smtpHost string, smtpPort int) error {
 	// Ensure config directory exists
+	// AI.md PART 7: Permissions - root: 0755, user: 0700
+	dirPerm := os.FileMode(0700)
+	if os.Geteuid() == 0 {
+		dirPerm = 0755
+	}
 	configDir := filepath.Dir(configPath)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, dirPerm); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 

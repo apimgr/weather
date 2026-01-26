@@ -8,46 +8,94 @@ import (
 	"github.com/go-chi/httprate"
 )
 
+// Rate limit constants per AI.md PART 1: Security-First Design
 const (
-	// Global rate limit (all endpoints)
-	// 100 requests per second
-	GlobalRPS   = 100
-	// Burst allowance
-	GlobalBurst = 200
+	// Login attempts: 5 per 15 minutes
+	LoginRequestsPerWindow = 5
+	LoginWindowDuration    = 15 * time.Minute
 
-	// API rate limit (stricter for API)
-	// 100 requests per 15 minutes
-	APIRequestsPerWindow = 100
-	APIWindowDuration    = 15 * time.Minute
+	// Password reset: 3 per 1 hour
+	PasswordResetRequestsPerWindow = 3
+	PasswordResetWindowDuration    = 1 * time.Hour
 
-	// Admin rate limit (most restrictive)
-	// 30 requests per 15 minutes
+	// API (authenticated): 100 per 1 minute per AI.md PART 1
+	APIAuthRequestsPerWindow = 100
+	APIAuthWindowDuration    = 1 * time.Minute
+
+	// API (unauthenticated): 20 per 1 minute per AI.md PART 1
+	APIUnauthRequestsPerWindow = 20
+	APIUnauthWindowDuration    = 1 * time.Minute
+
+	// Registration: 5 per 1 hour
+	RegistrationRequestsPerWindow = 5
+	RegistrationWindowDuration    = 1 * time.Hour
+
+	// File upload: 10 per 1 hour
+	FileUploadRequestsPerWindow = 10
+	FileUploadWindowDuration    = 1 * time.Hour
+
+	// Admin: 30 per 15 minutes
 	AdminRequestsPerWindow = 30
 	AdminWindowDuration    = 15 * time.Minute
+
+	// Global rate limit (DDoS protection)
+	GlobalRPS   = 100
+	GlobalBurst = 200
 )
 
 var (
-	// Global rate limiter (applied to all routes)
-	globalLimiter *httprate.RateLimiter
-
-	// API rate limiter (applied to /api/* routes)
-	apiLimiter *httprate.RateLimiter
-
-	// Admin rate limiter (applied to /admin/* routes)
-	adminLimiter *httprate.RateLimiter
+	// Rate limiters initialized in init()
+	globalLimiter        *httprate.RateLimiter
+	loginLimiter         *httprate.RateLimiter
+	passwordResetLimiter *httprate.RateLimiter
+	apiAuthLimiter       *httprate.RateLimiter
+	apiUnauthLimiter     *httprate.RateLimiter
+	registrationLimiter  *httprate.RateLimiter
+	fileUploadLimiter    *httprate.RateLimiter
+	adminLimiter         *httprate.RateLimiter
 )
 
 func init() {
-	// Initialize rate limiters
+	// Initialize all rate limiters per AI.md PART 1 specifications
 	globalLimiter = httprate.NewRateLimiter(
 		GlobalRPS,
 		time.Second,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	)
 
-	apiLimiter = httprate.NewRateLimiter(
-		APIRequestsPerWindow,
-		APIWindowDuration,
+	loginLimiter = httprate.NewRateLimiter(
+		LoginRequestsPerWindow,
+		LoginWindowDuration,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	)
+
+	passwordResetLimiter = httprate.NewRateLimiter(
+		PasswordResetRequestsPerWindow,
+		PasswordResetWindowDuration,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	)
+
+	apiAuthLimiter = httprate.NewRateLimiter(
+		APIAuthRequestsPerWindow,
+		APIAuthWindowDuration,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	)
+
+	apiUnauthLimiter = httprate.NewRateLimiter(
+		APIUnauthRequestsPerWindow,
+		APIUnauthWindowDuration,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	)
+
+	registrationLimiter = httprate.NewRateLimiter(
+		RegistrationRequestsPerWindow,
+		RegistrationWindowDuration,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+	)
+
+	fileUploadLimiter = httprate.NewRateLimiter(
+		FileUploadRequestsPerWindow,
+		FileUploadWindowDuration,
 		httprate.WithKeyFuncs(httprate.KeyByIP),
 	)
 
@@ -63,9 +111,49 @@ func GlobalRateLimitMiddleware() gin.HandlerFunc {
 	return wrapRateLimiter(globalLimiter, GlobalRPS, time.Second)
 }
 
-// APIRateLimitMiddleware applies API rate limiting (100 req/15min)
+// LoginRateLimitMiddleware applies login rate limiting (5 req/15min)
+func LoginRateLimitMiddleware() gin.HandlerFunc {
+	return wrapRateLimiter(loginLimiter, LoginRequestsPerWindow, LoginWindowDuration)
+}
+
+// PasswordResetRateLimitMiddleware applies password reset rate limiting (3 req/1hr)
+func PasswordResetRateLimitMiddleware() gin.HandlerFunc {
+	return wrapRateLimiter(passwordResetLimiter, PasswordResetRequestsPerWindow, PasswordResetWindowDuration)
+}
+
+// APIAuthRateLimitMiddleware applies authenticated API rate limiting (100 req/1min)
+func APIAuthRateLimitMiddleware() gin.HandlerFunc {
+	return wrapRateLimiter(apiAuthLimiter, APIAuthRequestsPerWindow, APIAuthWindowDuration)
+}
+
+// APIUnauthRateLimitMiddleware applies unauthenticated API rate limiting (20 req/1min)
+func APIUnauthRateLimitMiddleware() gin.HandlerFunc {
+	return wrapRateLimiter(apiUnauthLimiter, APIUnauthRequestsPerWindow, APIUnauthWindowDuration)
+}
+
+// APIRateLimitMiddleware applies API rate limiting based on authentication status
 func APIRateLimitMiddleware() gin.HandlerFunc {
-	return wrapRateLimiter(apiLimiter, APIRequestsPerWindow, APIWindowDuration)
+	return func(c *gin.Context) {
+		// Check if user is authenticated
+		_, exists := c.Get("user_id")
+		if exists {
+			// Authenticated: 100 req/min
+			wrapRateLimiter(apiAuthLimiter, APIAuthRequestsPerWindow, APIAuthWindowDuration)(c)
+		} else {
+			// Unauthenticated: 20 req/min
+			wrapRateLimiter(apiUnauthLimiter, APIUnauthRequestsPerWindow, APIUnauthWindowDuration)(c)
+		}
+	}
+}
+
+// RegistrationRateLimitMiddleware applies registration rate limiting (5 req/1hr)
+func RegistrationRateLimitMiddleware() gin.HandlerFunc {
+	return wrapRateLimiter(registrationLimiter, RegistrationRequestsPerWindow, RegistrationWindowDuration)
+}
+
+// FileUploadRateLimitMiddleware applies file upload rate limiting (10 req/1hr)
+func FileUploadRateLimitMiddleware() gin.HandlerFunc {
+	return wrapRateLimiter(fileUploadLimiter, FileUploadRequestsPerWindow, FileUploadWindowDuration)
 }
 
 // AdminRateLimitMiddleware applies admin rate limiting (30 req/15min)

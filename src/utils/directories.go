@@ -110,6 +110,7 @@ func GetDirectoryPaths() (*DirectoryPaths, error) {
 }
 
 // CreateDirectories creates all required directories with appropriate permissions
+// AI.md PART 7: Permissions - root: 0755, user: 0700
 func CreateDirectories(paths *DirectoryPaths) error {
 	dirs := []string{
 		paths.Config,
@@ -126,9 +127,20 @@ func CreateDirectories(paths *DirectoryPaths) error {
 		GetWeatherCachePath(paths),
 	}
 
+	// Determine permissions based on privilege level
+	// Root: 0755 (world-readable), User: 0700 (private)
+	perm := os.FileMode(0700)
+	if isRoot() {
+		perm = 0755
+	}
+
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, perm); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+		// Enforce permissions even if directory already existed
+		if err := os.Chmod(dir, perm); err != nil {
+			return fmt.Errorf("failed to set permissions on %s: %w", dir, err)
 		}
 	}
 

@@ -72,7 +72,7 @@
                     </div>
                 </div>
             </div>
-            <a href="/user/security" class="btn btn-primary margin-y-md">🔒 Manage Security Settings</a>
+            <a href="/users/security" class="btn btn-primary margin-y-md">🔒 Manage Security Settings</a>
         </div>
     </div>
 
@@ -117,13 +117,13 @@
             <form id="notificationPreferencesForm">
     <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
                 <div class="form-group">
-                    <p class="text-comment" style="margin-bottom: 1.5rem;">
+                    <p class="text-comment mb-3">
                         Customize how you receive notifications from the system. Configure display modes and auto-dismiss timing.
                     </p>
 
                     <!-- Display Mode Toggles -->
-                    <div style="margin-bottom: 2rem;">
-                        <h3 style="color: var(--dracula-cyan, #8be9fd); margin-bottom: 1rem; font-size: 1.1rem;">Display Modes</h3>
+                    <div class="mb-4">
+                        <h3 class="section-title">Display Modes</h3>
 
                         <div class="form-group">
                             <label class="checkbox-label">
@@ -159,43 +159,43 @@
                     </div>
 
                     <!-- Toast Duration Settings -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <h3 style="color: var(--dracula-cyan, #8be9fd); margin-bottom: 1rem; font-size: 1.1rem;">Toast Auto-Dismiss Duration</h3>
+                    <div class="mb-3">
+                        <h3 class="section-title">Toast Auto-Dismiss Duration</h3>
 
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="toastDurationSuccess" class="form-label">Success Notifications</label>
-                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div class="d-flex align-center gap-2">
                                     <input type="range" id="toastDurationSuccess" min="1" max="60" value="5"
-                                           style="flex: 1;" oninput="updateDurationLabel('success', this.value)">
-                                    <span id="durationLabelSuccess" style="min-width: 60px; color: var(--dracula-green, #50fa7b); font-weight: bold;">5s</span>
+                                           class="flex-1" oninput="updateDurationLabel('success', this.value)">
+                                    <span id="durationLabelSuccess" class="duration-label-success">5s</span>
                                 </div>
                                 <small class="text-comment">How long success toasts remain visible (1-60 seconds)</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="toastDurationInfo" class="form-label">Info Notifications</label>
-                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div class="d-flex align-center gap-2">
                                     <input type="range" id="toastDurationInfo" min="1" max="60" value="5"
-                                           style="flex: 1;" oninput="updateDurationLabel('info', this.value)">
-                                    <span id="durationLabelInfo" style="min-width: 60px; color: var(--dracula-cyan, #8be9fd); font-weight: bold;">5s</span>
+                                           class="flex-1" oninput="updateDurationLabel('info', this.value)">
+                                    <span id="durationLabelInfo" class="duration-label-info">5s</span>
                                 </div>
                                 <small class="text-comment">How long info toasts remain visible (1-60 seconds)</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="toastDurationWarning" class="form-label">Warning Notifications</label>
-                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div class="d-flex align-center gap-2">
                                     <input type="range" id="toastDurationWarning" min="1" max="60" value="10"
-                                           style="flex: 1;" oninput="updateDurationLabel('warning', this.value)">
-                                    <span id="durationLabelWarning" style="min-width: 60px; color: var(--dracula-orange, #ffb86c); font-weight: bold;">10s</span>
+                                           class="flex-1" oninput="updateDurationLabel('warning', this.value)">
+                                    <span id="durationLabelWarning" class="duration-label-warning">10s</span>
                                 </div>
                                 <small class="text-comment">How long warning toasts remain visible (1-60 seconds)</small>
                             </div>
                         </div>
 
-                        <div class="info-box" style="background: var(--dracula-current-line, #44475a); padding: 1rem; border-radius: 4px; margin-top: 1rem; border-left: 4px solid var(--dracula-purple, #bd93f9);">
-                            <p style="margin: 0; color: var(--dracula-foreground, #f8f8f2); font-size: 0.9rem;">
+                        <div class="info-box-styled">
+                            <p>
                                 <strong>Note:</strong> Error notifications always require manual dismissal for safety.
                             </p>
                         </div>
@@ -254,7 +254,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
     };
 
     try {
-        const response = await fetch('/api/v1/user/profile', {
+        const response = await fetch('/api/v1/users/profile', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -295,7 +295,7 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
     }
 
     try {
-        const response = await fetch('/api/v1/user/password', {
+        const response = await fetch('/api/v1/users/password', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -335,7 +335,7 @@ function updateDurationLabel(type, value) {
 // Load notification preferences on page load
 async function loadNotificationPreferences() {
     try {
-        const response = await fetch('/api/v1/user/notifications/preferences');
+        const response = await fetch('/api/v1/users/notifications/preferences');
 
         if (!response.ok) {
             throw new Error('Failed to load preferences');
@@ -382,7 +382,7 @@ document.getElementById('notificationPreferencesForm').addEventListener('submit'
     };
 
     try {
-        const response = await fetch('/api/v1/user/notifications/preferences', {
+        const response = await fetch('/api/v1/users/notifications/preferences', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'

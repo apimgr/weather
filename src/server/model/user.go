@@ -10,11 +10,17 @@ import (
 )
 
 // User represents a user account (stored in users.db)
-// Per TEMPLATE.md PART 9: Users MUST be in users.db, NOT server.db
+// Per AI.md PART 9: Users MUST be in users.db, NOT server.db
 type User struct {
 	ID              int64      `json:"id"`
 	Username        string     `json:"username"`
+	DisplayName     string     `json:"display_name,omitempty"`
+	// Account email - used for security & account recovery
+	// Per AI.md PART 33: Password reset, 2FA recovery, security alerts
 	Email           string     `json:"email"`
+	// Notification email - used for non-security communications
+	// Per AI.md PART 33: Newsletters, updates, marketing, general notifications
+	NotificationEmail string   `json:"notification_email,omitempty"`
 	Phone           string     `json:"phone,omitempty"`
 	// Never serialize password hash
 	PasswordHash    string     `json:"-"`
@@ -24,9 +30,15 @@ type User struct {
 	BanReason       string     `json:"ban_reason,omitempty"`
 	// user or admin
 	Role            string     `json:"role"`
+	// Profile visibility: public or private
+	// Per AI.md PART 33: Private profiles hidden from search/listings/public pages
+	Visibility      string     `json:"visibility"`
 	TwoFactorEnabled bool      `json:"two_factor_enabled"`
 	// Never serialize 2FA secret
 	TwoFactorSecret string     `json:"-"`
+	// Avatar settings per AI.md PART 33
+	AvatarType      string     `json:"avatar_type,omitempty"`  // gravatar, upload, url
+	AvatarURL       string     `json:"avatar_url,omitempty"`   // URL or path
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 	LastLoginAt     *time.Time `json:"last_login_at,omitempty"`
@@ -1089,4 +1101,158 @@ func (m *UserActivityLogModel) DeleteOldActivities(days int) error {
 	}
 
 	return nil
+}
+
+// UserInvite represents a user registration invite per AI.md PART 33
+type UserInvite struct {
+	ID        int64      `json:"id"`
+	Token     string     `json:"token"`
+	Username  string     `json:"username"`
+	CreatedBy int64      `json:"created_by"`
+	CreatedAt time.Time  `json:"created_at"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	UsedAt    *time.Time `json:"used_at,omitempty"`
+}
+
+// UserInviteModel handles user invite operations per AI.md PART 33
+type UserInviteModel struct {
+	DB *sql.DB
+}
+
+// CreateInvite creates a new user invite
+func (m *UserInviteModel) CreateInvite(username string, createdBy int64, expiresInHours int) (*UserInvite, error) {
+	// Generate random token
+	token, err := GenerateSecureToken(32)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	expiresAt := time.Now().Add(time.Duration(expiresInHours) * time.Hour)
+
+	result, err := database.GetUsersDB().Exec(`
+		INSERT INTO user_invites (token, username, created_by, created_at, expires_at)
+		VALUES (?, ?, ?, datetime('now'), ?)
+	`, token, username, createdBy, expiresAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create invite: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get invite id: %w", err)
+	}
+
+	return &UserInvite{
+		ID:        id,
+		Token:     token,
+		Username:  username,
+		CreatedBy: createdBy,
+		CreatedAt: time.Now(),
+		ExpiresAt: expiresAt,
+	}, nil
+}
+
+// GetByToken retrieves invite by token
+func (m *UserInviteModel) GetByToken(token string) (*UserInvite, error) {
+	var invite UserInvite
+	var usedAt sql.NullTime
+
+	err := database.GetUsersDB().QueryRow(`
+		SELECT id, token, username, created_by, created_at, expires_at, used_at
+		FROM user_invites
+		WHERE token = ?
+	`, token).Scan(
+		&invite.ID,
+		&invite.Token,
+		&invite.Username,
+		&invite.CreatedBy,
+		&invite.CreatedAt,
+		&invite.ExpiresAt,
+		&usedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get invite: %w", err)
+	}
+
+	if usedAt.Valid {
+		invite.UsedAt = &usedAt.Time
+	}
+
+	return &invite, nil
+}
+
+// MarkUsed marks invite as used
+func (m *UserInviteModel) MarkUsed(token string) error {
+	_, err := database.GetUsersDB().Exec(`
+		UPDATE user_invites
+		SET used_at = datetime('now')
+		WHERE token = ?
+	`, token)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark invite used: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteExpiredInvites removes expired invites
+func (m *UserInviteModel) DeleteExpiredInvites() error {
+	_, err := database.GetUsersDB().Exec(`
+		DELETE FROM user_invites
+		WHERE expires_at < datetime('now') AND used_at IS NULL
+	`)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete expired invites: %w", err)
+	}
+
+	return nil
+}
+
+// GetPendingInvites returns all pending (unused, non-expired) invites
+func (m *UserInviteModel) GetPendingInvites() ([]UserInvite, error) {
+	rows, err := database.GetUsersDB().Query(`
+		SELECT id, token, username, created_by, created_at, expires_at, used_at
+		FROM user_invites
+		WHERE used_at IS NULL AND expires_at > datetime('now')
+		ORDER BY created_at DESC
+	`)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to query invites: %w", err)
+	}
+	defer rows.Close()
+
+	var invites []UserInvite
+	for rows.Next() {
+		var invite UserInvite
+		var usedAt sql.NullTime
+
+		err := rows.Scan(
+			&invite.ID,
+			&invite.Token,
+			&invite.Username,
+			&invite.CreatedBy,
+			&invite.CreatedAt,
+			&invite.ExpiresAt,
+			&usedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan invite: %w", err)
+		}
+
+		if usedAt.Valid {
+			invite.UsedAt = &usedAt.Time
+		}
+
+		invites = append(invites, invite)
+	}
+
+	return invites, nil
 }

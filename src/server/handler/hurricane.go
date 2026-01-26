@@ -75,6 +75,51 @@ func (h *HurricaneHandler) HandleHurricaneAPI(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+// HandleHurricaneByIDAPI handles JSON API requests for a specific hurricane by ID
+// GET /{api_version}/hurricanes/:id
+func (h *HurricaneHandler) HandleHurricaneByIDAPI(c *gin.Context) {
+	hurricaneID := c.Param("id")
+	if hurricaneID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"ok":    false,
+			"error": "Hurricane ID required",
+		})
+		return
+	}
+
+	data, err := h.hurricaneService.GetActiveStorms()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"ok":    false,
+			"error": "Failed to fetch hurricane data",
+		})
+		return
+	}
+
+	// Find hurricane by ID or name (case-insensitive)
+	var hurricane *service.Storm
+	for i := range data.ActiveStorms {
+		if data.ActiveStorms[i].ID == hurricaneID ||
+			strings.EqualFold(data.ActiveStorms[i].Name, hurricaneID) {
+			hurricane = &data.ActiveStorms[i]
+			break
+		}
+	}
+
+	if hurricane == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"ok":    false,
+			"error": "Hurricane not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"ok":        true,
+		"hurricane": hurricane,
+	})
+}
+
 // renderConsoleOutput renders hurricane data for console/terminal
 func (h *HurricaneHandler) renderConsoleOutput(data *service.HurricaneData) string {
 	if len(data.ActiveStorms) == 0 {

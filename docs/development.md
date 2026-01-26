@@ -257,16 +257,16 @@ func CalculateWindChill(temp, windSpeed float64) float64 {
 		windCoefficient   = 35.75
 		windPowerFactor   = 0.16
 	)
-	
+
 	if windSpeed < 3 || temp > 50 {
 		return temp
 	}
-	
+
 	windChill := windChillConstant +
 		(tempCoefficient * temp) -
 		(windCoefficient * math.Pow(windSpeed, windPowerFactor)) +
 		(0.4275 * temp * math.Pow(windSpeed, windPowerFactor))
-	
+
 	return windChill
 }
 ```

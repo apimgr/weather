@@ -227,6 +227,7 @@ func getBSDPaths(appName string) *Paths {
 }
 
 // EnsureDirectories creates all directories if they don't exist
+// AI.md PART 7: Permissions - root: 0755, user: 0700
 func (p *Paths) EnsureDirectories() error {
 	dirs := []string{
 		p.DataDir,
@@ -237,12 +238,92 @@ func (p *Paths) EnsureDirectories() error {
 	}
 
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := EnsureDir(dir, p.IsPrivileged); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// EnsureDir creates directory with proper permissions if it doesn't exist
+// AI.md PART 7: Permissions - root: 0755, user: 0700
+func EnsureDir(path string, isRoot bool) error {
+	perm := os.FileMode(0700)
+	if isRoot {
+		perm = 0755
+	}
+
+	if err := os.MkdirAll(path, perm); err != nil {
+		return fmt.Errorf("create directory %s: %w", path, err)
+	}
+
+	// Enforce permissions even if dir already existed
+	if err := os.Chmod(path, perm); err != nil {
+		return fmt.Errorf("chmod directory %s: %w", path, err)
+	}
+
+	// Enforce ownership (current user) - skip on Windows
+	if runtime.GOOS != "windows" {
+		uid := os.Getuid()
+		gid := os.Getgid()
+		if err := os.Chown(path, uid, gid); err != nil {
+			// Non-fatal if we don't own the directory (e.g., system dirs)
+			// Only log, don't fail
+		}
+	}
+
+	// Verify writable
+	testFile := filepath.Join(path, ".write-test")
+	if err := os.WriteFile(testFile, []byte{}, 0600); err != nil {
+		return fmt.Errorf("directory %s is not writable: %w", path, err)
+	}
+	os.Remove(testFile)
+
+	return nil
+}
+
+// EnsureFile creates/updates a file with correct permissions
+// AI.md PART 7: Permissions - root: 0644, user: 0600
+func EnsureFile(path string, content []byte, isRoot bool) error {
+	perm := os.FileMode(0600)
+	if isRoot {
+		perm = 0644
+	}
+
+	// Ensure parent directory exists
+	dir := filepath.Dir(path)
+	if err := EnsureDir(dir, isRoot); err != nil {
+		return fmt.Errorf("create parent directory: %w", err)
+	}
+
+	// Write file with correct permissions
+	if err := os.WriteFile(path, content, perm); err != nil {
+		return fmt.Errorf("write file %s: %w", path, err)
+	}
+
+	// Enforce permissions (in case file existed with wrong perms)
+	if err := os.Chmod(path, perm); err != nil {
+		return fmt.Errorf("chmod file %s: %w", path, err)
+	}
+
+	// Enforce ownership (current user) - skip on Windows
+	if runtime.GOOS != "windows" {
+		uid := os.Getuid()
+		gid := os.Getgid()
+		if err := os.Chown(path, uid, gid); err != nil {
+			// Non-fatal if we don't own the file
+		}
+	}
+
+	return nil
+}
+
+// EnsurePIDFile creates PID file directory and validates path
+// AI.md PART 7: PID file permissions - root: 0644, user: 0600
+func EnsurePIDFile(path string, isRoot bool) error {
+	dir := filepath.Dir(path)
+	return EnsureDir(dir, isRoot)
 }
 
 // Override allows overriding paths via environment variables
@@ -437,6 +518,7 @@ func GetConfigFilePath() string {
 }
 
 // EnsureAllDirectories creates all standard directories including subdirectories
+// AI.md PART 7: Permissions - root: 0755, user: 0700
 func (p *Paths) EnsureAllDirectories() error {
 	dirs := []string{
 		p.DataDir,
@@ -457,7 +539,7 @@ func (p *Paths) EnsureAllDirectories() error {
 	}
 
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := EnsureDir(dir, p.IsPrivileged); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}

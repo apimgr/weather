@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/apimgr/weather/src/database"
-	"github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/utils"
 )
 
@@ -36,15 +35,11 @@ func handlePlatformSignal(sig os.Signal, db *database.DB, appLogger *utils.Logge
 		}
 		return false
 
-	case syscall.SIGHUP:
-		log.Println("🔄 Received SIGHUP, reloading configuration...")
-		settingsModel := &models.SettingsModel{DB: db.DB}
-		if err := settingsModel.InitializeDefaults(utils.GetBackupPath(dirPaths)); err != nil {
-			log.Printf("⚠️  Failed to reload settings: %v", err)
-		} else {
-			log.Println("✅ Configuration reloaded")
-		}
-		return false
+	case sigRTMIN3:
+		// Docker STOPSIGNAL (SIGRTMIN+3 = 37) per AI.md PART 27 line 6462
+		// Treat as graceful shutdown signal (same as SIGTERM)
+		log.Println("🐳 Received SIGRTMIN+3 (Docker STOPSIGNAL), initiating graceful shutdown...")
+		return true
 	}
 	return false
 }

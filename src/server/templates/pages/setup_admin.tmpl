@@ -122,7 +122,7 @@
             };
 
             try {
-                const response = await fetch('/user/setup/admin', {
+                const response = await fetch('/users/setup/admin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -131,8 +131,8 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Use the redirect URL from server response, fallback to /user/setup/complete
-                    window.location.href = result.redirect || '/user/setup/complete';
+                    // Use the redirect URL from server response, fallback to /users/setup/complete
+                    window.location.href = result.redirect || '/users/setup/complete';
                 } else {
                     errorMsg.textContent = result.error || 'Failed to create administrator';
                     errorMsg.classList.add('edit-error-message');

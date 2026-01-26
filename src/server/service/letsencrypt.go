@@ -234,8 +234,8 @@ func NewLetsEncryptService(email, certsDir string, staging bool) (*LetsEncryptSe
 		user:        user,
 		certsDir:    certsDir,
 		autoRenew:   true,
-		// Renew 30 days before expiry
-		renewalDays: 30,
+		// AI.md PART 21 line 5227: Renew 7 days before expiry
+		renewalDays: 7,
 	}
 
 	// Initialize challenge providers

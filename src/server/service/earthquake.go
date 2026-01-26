@@ -120,7 +120,7 @@ func NewEarthquakeService() *EarthquakeService {
 
 	return &EarthquakeService{
 		client:     client,
-		cache:      cache.New(5*time.Minute, 10*time.Minute),
+		cache:      cache.New(1*time.Minute, 2*time.Minute), // IDEA.md: 1 minute update frequency
 		usgsAPIURL: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary",
 	}
 }

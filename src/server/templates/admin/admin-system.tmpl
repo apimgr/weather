@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.title}}</title>
-    <link rel="stylesheet" href="/static/css/admin.css">
-    <link rel="stylesheet" href="/static/css/template-overrides.css">
+    <link rel="stylesheet" href="/static/css/dracula.css">
 </head>
 <body>
     {{template "components/admin-header.tmpl" .}}
@@ -120,7 +119,7 @@
                         </div>
                     </div>
 
-                    <div class="alert alert-info" role="status" style="margin-top: 20px;">
+                    <div class="alert alert-info mt-4" role="status">
                         <strong>Note:</strong> Memory usage is automatically managed by Go's garbage collector. High values are normal for busy servers.
                     </div>
 
@@ -230,7 +229,7 @@
                         </button>
                     </div>
 
-                    <div id="action-result" class="alert" style="display: none; margin-top: 20px;" role="status" aria-live="polite"></div>
+                    <div id="action-result" class="alert d-none mt-4" role="status" aria-live="polite"></div>
                 </div>
             </section>
         </main>
@@ -426,90 +425,6 @@
     }
     </script>
 
-    <style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .stat-item {
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 4px;
-        border: 1px solid #dee2e6;
-    }
-
-    .stat-label {
-        font-size: 12px;
-        color: #6c757d;
-        text-transform: uppercase;
-        margin-bottom: 5px;
-    }
-
-    .stat-value {
-        font-size: 24px;
-        font-weight: 600;
-        color: #212529;
-    }
-
-    .info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-    }
-
-    .info-item {
-        padding: 12px;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .info-label {
-        font-size: 13px;
-        color: #6c757d;
-        margin-bottom: 5px;
-    }
-
-    .info-value {
-        font-size: 15px;
-        color: #212529;
-        font-weight: 500;
-        word-break: break-all;
-    }
-
-    .loading {
-        font-size: 14px;
-        color: #6c757d;
-    }
-
-    .badge {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .badge-success {
-        background: #28a745;
-        color: white;
-    }
-
-    .badge-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .button-group, .action-buttons {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .action-buttons {
-        margin-top: 15px;
-    }
-    </style>
 </body>
 </html>
 {{end}}
