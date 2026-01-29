@@ -70,10 +70,36 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 			NotFound(c, fmt.Sprintf("City ID %d not found", id))
 			return
 		}
-	} else if lat != "" && lon != "" {
+	} else if lat != "" || lon != "" {
+		// Validate that both lat and lon are provided
+		if lat == "" || lon == "" {
+			InvalidInput(c, "Both 'lat' and 'lon' parameters are required")
+			return
+		}
+
 		// Use coordinates
-		latitude, _ := strconv.ParseFloat(lat, 64)
-		longitude, _ := strconv.ParseFloat(lon, 64)
+		latitude, latErr := strconv.ParseFloat(lat, 64)
+		longitude, lonErr := strconv.ParseFloat(lon, 64)
+
+		// Validate coordinate parsing
+		if latErr != nil {
+			InvalidInput(c, "Invalid latitude format")
+			return
+		}
+		if lonErr != nil {
+			InvalidInput(c, "Invalid longitude format")
+			return
+		}
+
+		// Validate coordinate ranges
+		if latitude < -90 || latitude > 90 {
+			InvalidInput(c, "Latitude must be between -90 and 90")
+			return
+		}
+		if longitude < -180 || longitude > 180 {
+			InvalidInput(c, "Longitude must be between -180 and 180")
+			return
+		}
 
 		if nearest == "true" || nearest == "1" {
 			// Find nearest city to coordinates
@@ -342,9 +368,36 @@ func (h *APIHandler) GetForecast(c *gin.Context) {
 	var err error
 
 	// Parse coordinates or location
-	if lat != "" && lon != "" {
-		latitude, _ := strconv.ParseFloat(lat, 64)
-		longitude, _ := strconv.ParseFloat(lon, 64)
+	if lat != "" || lon != "" {
+		// Validate that both lat and lon are provided
+		if lat == "" || lon == "" {
+			InvalidInput(c, "Both 'lat' and 'lon' parameters are required")
+			return
+		}
+
+		latitude, latErr := strconv.ParseFloat(lat, 64)
+		longitude, lonErr := strconv.ParseFloat(lon, 64)
+
+		// Validate coordinate parsing
+		if latErr != nil {
+			InvalidInput(c, "Invalid latitude format")
+			return
+		}
+		if lonErr != nil {
+			InvalidInput(c, "Invalid longitude format")
+			return
+		}
+
+		// Validate coordinate ranges
+		if latitude < -90 || latitude > 90 {
+			InvalidInput(c, "Latitude must be between -90 and 90")
+			return
+		}
+		if longitude < -180 || longitude > 180 {
+			InvalidInput(c, "Longitude must be between -180 and 180")
+			return
+		}
+
 		coords, err = h.weatherService.GetCoordinates(fmt.Sprintf("%f,%f", latitude, longitude), "")
 	} else if location != "" {
 		clientIP := utils.GetClientIP(c)

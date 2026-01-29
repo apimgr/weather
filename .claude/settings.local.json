@@ -12,7 +12,9 @@
       "Bash([ -f \"Dockerfile\" ])",
       "Bash([ -f \"docker-compose.yml\" ])",
       "Bash(bash scripts/audit_non_negotiables.sh)",
-      "Bash(source ~/.bashrc)"
+      "Bash(source ~/.bashrc)",
+      "Bash(tee:*)",
+      "Bash(GODIR=/root/.local/share/go GOCACHE=/root/.local/share/go/build make test:*)"
     ]
   }
 }

@@ -164,13 +164,17 @@ func TestAPI_Forecast(t *testing.T) {
 					t.Errorf("Failed to parse JSON response: %v", err)
 				}
 
-				// Check for forecast array
-				if forecast, ok := response["forecast"].([]interface{}); ok {
-					if len(forecast) == 0 {
-						t.Error("Forecast array is empty")
+				// Check for forecast object with days array
+				if forecastObj, ok := response["forecast"].(map[string]interface{}); ok {
+					if days, ok := forecastObj["days"].([]interface{}); ok {
+						if len(days) == 0 {
+							t.Error("Forecast days array is empty")
+						}
+					} else {
+						t.Error("Forecast object missing 'days' array")
 					}
 				} else {
-					t.Error("Response missing 'forecast' array")
+					t.Error("Response missing 'forecast' object")
 				}
 			}
 		})
