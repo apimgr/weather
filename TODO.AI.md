@@ -3,87 +3,71 @@
 ## Project Info
 - **Project Name**: weather
 - **Organization**: apimgr
-- **Template Version**: Fresh copy from TEMPLATE.md 2026-01-26
+- **Template Version**: Fresh copy from TEMPLATE.md 2026-01-29
 - **AI.md Location**: /root/Projects/github/apimgr/weather/AI.md
 
 ---
 
 ## CRITICAL RULES (Committed to Memory)
 
-### NEVER Do These
-1. NEVER guess or assume - always ask if unsure
-2. NEVER run Go locally - containers only (`make dev`, `make test`, `make build`)
-3. NEVER use bcrypt - use Argon2id for passwords
-4. NEVER put Dockerfile in root - use `docker/Dockerfile`
-5. NEVER use .env files
-6. NEVER use CGO - `CGO_ENABLED=0` always
-7. NEVER store plaintext passwords
-8. NEVER use inline comments - comments above code only
-9. NEVER modify AI.md PARTs 0-37 (implementation patterns are fixed)
-10. NEVER use Makefile in CI/CD (explicit commands only)
-11. NEVER create report files (AUDIT.md, COMPLIANCE.md) - fix issues directly
-12. NEVER use `strconv.ParseBool()` - use `config.ParseBool()`
-13. NEVER hardcode dev machine values - detect at runtime
+### NEVER Do These (13 Rules)
+1. Use bcrypt → Use Argon2id
+2. Put Dockerfile in root → `docker/Dockerfile`
+3. Use CGO → CGO_ENABLED=0 always
+4. Hardcode dev values → Detect at runtime
+5. Use external cron → Internal scheduler (PART 19)
+6. Store passwords plaintext → Argon2id (tokens use SHA-256)
+7. Create premium tiers → All features free
+8. Use Makefile in CI/CD → Explicit commands
+9. Guess or assume → Read spec or ask
+10. Skip platforms → Build all 8
+11. Use inline comments → Comments above code only
+12. Use strconv.ParseBool() → Use config.ParseBool()
+13. Run Go locally → Use containers only (make dev/test/build)
 
-### MUST Do These
-1. MUST re-read spec before each task
-2. MUST use containers for all builds/tests
-3. MUST use `config.ParseBool()` for ALL boolean parsing
-4. MUST use Argon2id for passwords, SHA-256 for tokens
-5. MUST use path normalization/validation (prevent traversal)
-6. MUST support all 4 OSes and 2 architectures (8 binaries)
-7. MUST use `server.yml` (not .yaml)
-8. MUST keep documentation in sync with code
-9. MUST have admin WebUI for ALL settings
-10. MUST have corresponding API endpoint for every web page
-11. MUST use single static binary (all assets embedded)
-12. MUST detect machine settings at runtime (hostname, IP, cores)
+### MUST Do These (12 Rules)
+1. Re-read spec before each task
+2. Use containers for all builds/tests
+3. Use config.ParseBool() for ALL boolean parsing
+4. Use Argon2id for passwords, SHA-256 for tokens
+5. Use path normalization/validation (prevent traversal)
+6. Support all 4 OSes and 2 architectures (8 binaries)
+7. Use server.yml (not .yaml)
+8. Keep documentation in sync with code
+9. Have admin WebUI for ALL settings
+10. Have corresponding API endpoint for every web page
+11. Use single static binary (all assets embedded)
+12. Detect machine settings at runtime
 
 ---
 
 ## Completed Items
 
-### Initial Setup (2026-01-26)
-- [x] AI.md copied from TEMPLATE.md
+### Initial Setup (2026-01-29)
+- [x] AI.md copied fresh from TEMPLATE.md
 - [x] Placeholders replaced (weather/apimgr)
 - [x] Read PART 0-5 of AI.md
 
-### Previous Session Work
+### Previous Work
 - [x] Fixed compilation errors (shell.go, graphql/*.go, test files)
 - [x] Build verification - `make dev` successful
 - [x] PART 16: Inline CSS cleanup completed for admin templates
 - [x] PART 19: backup_hourly task implemented
+- [x] Service support: All platforms (systemd, launchd, runit, rc.d, Windows)
+- [x] Tor hidden service: Implemented (PART 32)
+- [x] Docker configuration: Per PART 27
+- [x] .claude/ directory setup complete
 
 ---
 
-## In Progress
+## Current Status
 
-### Fix Test Failures
-- [ ] Run `make test` and identify failures
-- [ ] Fix tests/e2e failures
-- [ ] Fix tests/integration failures
-- [ ] Fix tests/unit/handlers failures
+The project compiles successfully. Some runtime test failures exist (not compilation issues).
 
-### .claude/ Directory Setup (AI.md PART 3)
-- [ ] Create/update .claude/CLAUDE.md (project memory file)
-- [ ] Create/update .claude/rules/*.md files
-
----
-
-## Remaining Items
-
-### Verification Needed
-- [ ] Full compliance audit against AI.md spec
-- [ ] Run `make test` and fix any failures
-- [ ] Verify documentation matches code
-- [ ] Verify all API endpoints have web page counterparts
-
-### Optional Features (PART 32-36)
-- [ ] Tor hidden service support (PART 32)
-- [ ] I18N support (PART 31)
-- [ ] A11Y compliance (WCAG 2.1 AA)
-- [ ] Organizations support (PART 35)
-- [ ] Custom domains (PART 36)
+### Ready For
+- Compliance verification against fresh AI.md
+- Test fixes
+- Documentation sync
 
 ---
 
@@ -91,8 +75,6 @@
 
 - Read AI.md section before implementing each feature
 - Test after each major change
-- Keep TODO.AI.md updated
-- Fix NON-NEGOTIABLE items first
 - Container-only development - NEVER run go locally
 - Use `make dev` for quick builds, `make test` for tests
 - Incus preferred for full OS testing with systemd
