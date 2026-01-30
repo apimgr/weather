@@ -33,12 +33,9 @@ func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *ser
 	// Create tables
 	createNotificationTables(t, userDB, serverDB)
 
-	// Set global database for models that use it
-	dualDB := &database.DualDB{
-		Server: serverDB,
-		Users:  userDB,
-	}
-	database.SetGlobalDualDB(dualDB)
+	// Note: We don't set global database here to avoid test isolation issues
+	// when tests run in parallel. The handler uses the explicitly provided
+	// NotificationService which has its own DB references.
 
 	// Create WebSocket hub and notification service
 	wsHub := service.NewWebSocketHub()
@@ -369,9 +366,20 @@ func TestUserNotificationAPI_GetStatistics(t *testing.T) {
 	defer cleanup()
 
 	// Create test notifications
-	_, _ = service.SendSuccessToUser(1, "Success", "Message")
-	_, _ = service.SendInfoToUser(1, "Info", "Message")
-	notif3, _ := service.SendWarningToUser(1, "Warning", "Message")
+	notif1, err1 := service.SendSuccessToUser(1, "Success", "Message")
+	notif2, err2 := service.SendInfoToUser(1, "Info", "Message")
+	notif3, err3 := service.SendWarningToUser(1, "Warning", "Message")
+
+	// Check for creation errors
+	if err1 != nil || notif1 == nil {
+		t.Fatalf("Failed to create success notification: %v", err1)
+	}
+	if err2 != nil || notif2 == nil {
+		t.Fatalf("Failed to create info notification: %v", err2)
+	}
+	if err3 != nil || notif3 == nil {
+		t.Fatalf("Failed to create warning notification: %v", err3)
+	}
 
 	// Mark one as read
 	_ = service.MarkUserNotificationAsRead(notif3.ID, 1)
