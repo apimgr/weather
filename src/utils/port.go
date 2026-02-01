@@ -153,8 +153,14 @@ func (pm *PortManager) GetSavedPort(portType string) (int, error) {
 
 // GetServerPorts determines which ports to use for HTTP and HTTPS
 // Returns (httpPort, httpsPort, error)
-// Follows priority: 1) Database saved ports, 2) PORT env variable, 3) Random port
+// Follows priority: 1) Database saved ports, 2) Config file port, 3) PORT env variable, 4) Random port
 func (pm *PortManager) GetServerPorts() (int, int, error) {
+	return pm.GetServerPortsWithConfig(0)
+}
+
+// GetServerPortsWithConfig allows passing a config file port
+// Priority: 1) Database saved ports, 2) configPort (if > 0), 3) PORT env variable, 4) Random port
+func (pm *PortManager) GetServerPortsWithConfig(configPort int) (int, int, error) {
 	// Check for saved ports in database first
 	httpPort := pm.getIntSetting("server.http_port", 0)
 	httpsPort := pm.getIntSetting("server.https_port", 0)
@@ -162,6 +168,13 @@ func (pm *PortManager) GetServerPorts() (int, int, error) {
 	// If HTTP port is saved and available, use it
 	if httpPort > 0 && IsPortAvailable(httpPort) {
 		return httpPort, httpsPort, nil
+	}
+
+	// Check config file port (passed from loaded server.yml)
+	if configPort > 0 && IsPortAvailable(configPort) {
+		// Save to database for future use
+		pm.setIntSetting("server.http_port", configPort)
+		return configPort, 0, nil
 	}
 
 	// Check environment variable PORT

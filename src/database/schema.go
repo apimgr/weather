@@ -648,10 +648,17 @@ func InitDBFromConnectionString(connString string) (*DB, error) {
 	return InitDBWithConfig(config)
 }
 
-// IsFirstRun checks if this is the first run (no users exist)
+// IsFirstRun checks if this is the first run (no server admins exist)
+// Per AI.md: Server Admins are in server_admin_credentials table (server DB)
 func (db *DB) IsFirstRun() (bool, error) {
+	// Server admin credentials are in the server database, not users database
+	serverDB := GetServerDB()
+	if serverDB == nil {
+		return false, fmt.Errorf("server database not initialized")
+	}
+
 	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	err := serverDB.QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&count)
 	if err != nil {
 		return false, err
 	}

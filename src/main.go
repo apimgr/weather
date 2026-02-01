@@ -884,9 +884,25 @@ func main() {
 	domainHandler := handler.NewDomainHandlers(db.DB, appLogger)
 
 	// Get port configuration using comprehensive port manager
-	// Priority: 1) Database saved ports, 2) PORT env variable, 3) Random port (64000-64999)
+	// Priority: 1) Database saved ports, 2) Config file port, 3) PORT env variable, 4) Random port
 	portManager := utils.NewPortManager(db.DB)
-	httpPortInt, httpsPortInt, err := portManager.GetServerPorts()
+
+	// Extract port from config (can be int or string)
+	configPort := 0
+	if cfg != nil && cfg.Server.Port != nil {
+		switch p := cfg.Server.Port.(type) {
+		case int:
+			configPort = p
+		case float64:
+			configPort = int(p)
+		case string:
+			if parsed, err := strconv.Atoi(p); err == nil {
+				configPort = parsed
+			}
+		}
+	}
+
+	httpPortInt, httpsPortInt, err := portManager.GetServerPortsWithConfig(configPort)
 	if err != nil {
 		log.Fatalf("Failed to configure server ports: %v", err)
 	}
@@ -934,8 +950,13 @@ func main() {
 	}
 
 	// Print startup messages
-	appLogger.Printf("Starting Weather%s on %s:%s", networkMode, listenAddress, port)
-	fmt.Printf("🚀 Starting Weather%s on %s:%s\n", networkMode, listenAddress, port)
+	// Format display address correctly for IPv6
+	displayAddr := listenAddress
+	if listenAddress == "::" {
+		displayAddr = "[::]"
+	}
+	appLogger.Printf("Starting Weather%s on %s:%s", networkMode, displayAddr, port)
+	fmt.Printf("🚀 Starting Weather%s on %s:%s\n", networkMode, displayAddr, port)
 	appLogger.Info("Data directory: %s", dirPaths.Data)
 	appLogger.Info("Config directory: %s", dirPaths.Config)
 	appLogger.Info("Log directory: %s", dirPaths.Log)
@@ -1478,20 +1499,11 @@ func main() {
 		usersAPI.GET("/security/2fa/setup", twoFAHandler.SetupTwoFactor)
 		usersAPI.POST("/security/2fa/enable", twoFAHandler.EnableTwoFactor)
 		usersAPI.POST("/security/2fa/disable", twoFAHandler.DisableTwoFactor)
+		usersAPI.POST("/security/2fa/verify", twoFAHandler.VerifyTwoFactorCode)
 		usersAPI.POST("/security/recovery/regenerate", twoFAHandler.RegenerateRecoveryKeys)
 	}
 
-	// Two-Factor Authentication API (per AI.md PART 14: /users/ is plural)
-	usersSecurityAPI := apiV1.Group("/users/security")
-	usersSecurityAPI.Use(middleware.RequireAuth(db.DB))
-	usersSecurityAPI.Use(middleware.BlockAdminFromUserRoutes())
-	{
-		usersSecurityAPI.GET("/2fa/setup", twoFAHandler.SetupTwoFactor)
-		usersSecurityAPI.POST("/2fa/enable", twoFAHandler.EnableTwoFactor)
-		usersSecurityAPI.POST("/2fa/disable", twoFAHandler.DisableTwoFactor)
-		usersSecurityAPI.POST("/2fa/verify", twoFAHandler.VerifyTwoFactorCode)
-		usersSecurityAPI.POST("/2fa/recovery/regenerate", twoFAHandler.RegenerateRecoveryKeys)
-	}
+	// Note: 2FA routes already registered under usersAPI (/users/security/2fa/*)
 
 	// Location API routes (require auth)
 	// Public location endpoints (no auth required)
@@ -2012,24 +2024,25 @@ JSON API:
 
 	// Create HTTP server with graceful shutdown
 	// Format address properly - check if port is already included
-	serverAddr := listenAddress
-	if strings.Contains(listenAddress, ":") {
-		// Address already includes port (e.g., "127.0.0.1:8080" or "::1:8080")
-		// For IPv6 without brackets, wrap it
-		if strings.Count(listenAddress, ":") > 1 && !strings.HasPrefix(listenAddress, "[") {
-			// IPv6 address, add brackets
-			host, portPart, _ := net.SplitHostPort(listenAddress)
-			if portPart != "" {
-				serverAddr = "[" + host + "]:" + portPart
-			}
+	var serverAddr string
+	if listenAddress == "::" {
+		// IPv6 dual-stack: must be formatted as [::]:port
+		serverAddr = "[::]:" + port
+	} else if listenAddress == "0.0.0.0" || !strings.Contains(listenAddress, ":") {
+		// IPv4 or hostname without port: append port
+		serverAddr = listenAddress + ":" + port
+	} else if strings.Count(listenAddress, ":") > 1 && !strings.HasPrefix(listenAddress, "[") {
+		// IPv6 address without brackets (e.g., "::1")
+		host, portPart, err := net.SplitHostPort(listenAddress)
+		if err != nil || portPart == "" {
+			// No port in address, add brackets and port
+			serverAddr = "[" + listenAddress + "]:" + port
+		} else {
+			serverAddr = "[" + host + "]:" + portPart
 		}
 	} else {
-		// No port in address, append it
-		if listenAddress == "::" {
-			serverAddr = "[::]:" + port
-		} else {
-			serverAddr = listenAddress + ":" + port
-		}
+		// Already has port (e.g., "127.0.0.1:8080" or "[::1]:8080")
+		serverAddr = listenAddress
 	}
 
 	// Server configuration per AI.md PART 18 lines 15697-15702

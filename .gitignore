@@ -231,7 +231,7 @@ vendor/
 
 # Ignore docker mounts
 data
-rootfs
+rootfs/
 
 # Testing and debugging
 tmp/
@@ -244,4 +244,17 @@ cookies.txt
 
 # Ignore the TODO.md
 TODO.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI config directories (regenerated from AI.md rules, not committed)
+.claude/
+.cursor/
+.aider/
+.ai/
+.windsurf/
 

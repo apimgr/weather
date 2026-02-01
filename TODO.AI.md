@@ -49,32 +49,39 @@
 - [x] Read PART 0-5 of AI.md
 
 ### Previous Work
-- [x] Fixed compilation errors (shell.go, graphql/*.go, test files)
+- [x] Fixed compilation errors
 - [x] Build verification - `make dev` successful
-- [x] PART 16: Inline CSS cleanup completed for admin templates
+- [x] PART 16: Inline CSS cleanup completed
 - [x] PART 19: backup_hourly task implemented
-- [x] Service support: All platforms (systemd, launchd, runit, rc.d, Windows)
+- [x] Service support: All platforms
 - [x] Tor hidden service: Implemented (PART 32)
 - [x] Docker configuration: Per PART 27
-- [x] .claude/ directory setup complete
+
+### Audit (2026-01-29)
+- [x] .gitignore: Added AI config dirs, IDE dirs, fixed rootfs/
+- [x] .claude/: Untracked from git (now gitignored per spec)
+- [x] .gitea/workflows/: Created with CI workflows
+- [x] docs/Makefile: Deleted (misplaced)
+- [x] IDEA.md: Verified all features implemented, added missing
+
+### Verification (2026-01-29)
+- [x] `make dev` - builds successfully
+- [x] `make test` - all tests pass
+- [x] Binary --help works in container
+- [x] CLI --help works in container
 
 ---
 
 ## Current Status
 
-The project compiles successfully. Some runtime test failures exist (not compilation issues).
+**READY TO COMMIT**
 
-### Ready For
-- Compliance verification against fresh AI.md
-- Test fixes
-- Documentation sync
+All audit items complete. Build and tests pass.
 
 ---
 
 ## Working Notes
 
-- Read AI.md section before implementing each feature
-- Test after each major change
 - Container-only development - NEVER run go locally
 - Use `make dev` for quick builds, `make test` for tests
-- Incus preferred for full OS testing with systemd
+- Test binaries in Docker/Incus, never on host

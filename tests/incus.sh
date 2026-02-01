@@ -21,9 +21,10 @@ trap "rm -rf $BUILD_DIR; incus delete $CONTAINER_NAME --force 2>/dev/null || tru
 echo "Building binary in Docker..."
 docker run --rm \
   -v "$(pwd):/build" \
+  -v "$BUILD_DIR:/output" \
   -w /build \
   -e CGO_ENABLED=0 \
-  golang:alpine go build -o "$BUILD_DIR/$PROJECTNAME" ./src
+  golang:alpine go build -o "/output/$PROJECTNAME" ./src
 
 echo "Launching Incus container (Debian + systemd)..."
 incus launch images:debian/12 "$CONTAINER_NAME"
@@ -31,9 +32,9 @@ incus launch images:debian/12 "$CONTAINER_NAME"
 # Wait for container to be ready
 sleep 3
 
-echo "Installing curl in container..."
+echo "Installing dependencies in container..."
 incus exec "$CONTAINER_NAME" -- apt-get update -qq
-incus exec "$CONTAINER_NAME" -- apt-get install -y -qq curl >/dev/null
+incus exec "$CONTAINER_NAME" -- apt-get install -y -qq curl file >/dev/null
 
 echo "Copying binary to container..."
 incus file push "$BUILD_DIR/$PROJECTNAME" "$CONTAINER_NAME/usr/local/bin/"
@@ -53,6 +54,13 @@ incus exec "$CONTAINER_NAME" -- bash -c "
     ls -lh /usr/local/bin/$PROJECTNAME
     file /usr/local/bin/$PROJECTNAME
 
+    echo '=== Pre-configure Port 80 ==='
+    # Create config dir and minimal config with port 80 BEFORE service install
+    mkdir -p /etc/apimgr/$PROJECTNAME
+    echo 'server:
+  port: 80
+  listen: \"::\"' > /etc/apimgr/$PROJECTNAME/server.yml
+
     echo '=== Service Install Test ==='
     $PROJECTNAME --service --install
 
@@ -61,7 +69,7 @@ incus exec "$CONTAINER_NAME" -- bash -c "
 
     echo '=== Service Start Test ==='
     systemctl start $PROJECTNAME
-    sleep 3
+    sleep 8
     systemctl status $PROJECTNAME
 
     echo '=== API Endpoint Tests ==='

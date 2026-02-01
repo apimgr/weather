@@ -114,6 +114,8 @@ func CreateDefaultServerYML(configPath string, smtpHost string, smtpPort int) er
 	config := map[string]interface{}{
 		"mode": "production",
 		"server": map[string]interface{}{
+			"port":    80,
+			"address": "::",
 			"branding": map[string]interface{}{
 				"title":       "Weather Service",
 				"description": "Professional weather tracking and forecasting service with real-time updates, severe weather alerts, earthquake monitoring, and moon phase tracking",
@@ -122,7 +124,7 @@ func CreateDefaultServerYML(configPath string, smtpHost string, smtpPort int) er
 				"favicon_url": "",
 			},
 			"seo": map[string]interface{}{
-				"keywords":      "weather, forecast, alerts, tracking, severe weather, earthquakes, moon phases",
+				"keywords":      []string{"weather", "forecast", "alerts", "tracking", "severe weather", "earthquakes", "moon phases"},
 				"author":        "Weather Service",
 				"canonical_url": "",
 				"og_image":      "",

@@ -24,6 +24,8 @@ A unified weather information platform that aggregates global meteorological dat
 | **Moon Phases** | Lunar cycles, illumination, rise/set times |
 | **Location Detection** | Automatic IP-based geolocation |
 | **Multi-Format API** | JSON, text/plain, GraphQL support |
+| **Terminal Output** | ASCII/ANSI colored weather for curl/terminal |
+| **Bash Integration** | Shell function for terminal weather (/:bash.function) |
 | **WebSocket Alerts** | Real-time push notifications for severe weather |
 | **User Locations** | Save favorite locations for quick access |
 | **Alert Subscriptions** | Subscribe to alerts for specific regions |
@@ -106,7 +108,8 @@ type MoonPhase struct {
 
 ### Weather Data
 - Cache weather data for 15 minutes (reduce external API calls)
-- Accept city name, ZIP code, coordinates, or auto-detect from IP
+- Accept city name, ZIP/postal code, coordinates, or auto-detect from IP
+- ZIP code lookup service for US postal codes
 - Return metric or imperial units based on user preference or region
 - Fall back to cached data if external API unavailable
 - Include data attribution for all external sources
