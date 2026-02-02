@@ -10,12 +10,17 @@ import (
 
 // setupTestDB creates an in-memory SQLite database for testing
 func setupNotificationTestDB(t *testing.T) (*sql.DB, *sql.DB) {
-	userDB, err := sql.Open("sqlite", ":memory:")
+	// Using file:NAME?mode=memory&cache=shared ensures all connections share the same in-memory database
+	// This is required because sql.DB uses connection pooling, and with plain :memory:
+	// each connection would get its own separate database
+	// We use unique names per test to ensure test isolation
+	testName := t.Name()
+	userDB, err := sql.Open("sqlite", "file:"+testName+"_user?mode=memory&cache=shared")
 	if err != nil {
 		t.Fatalf("Failed to open user test database: %v", err)
 	}
 
-	serverDB, err := sql.Open("sqlite", ":memory:")
+	serverDB, err := sql.Open("sqlite", "file:"+testName+"_server?mode=memory&cache=shared")
 	if err != nil {
 		t.Fatalf("Failed to open server test database: %v", err)
 	}

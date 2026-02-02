@@ -19,13 +19,18 @@ import (
 func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *service.NotificationService, func()) {
 	gin.SetMode(gin.TestMode)
 
-	// Create test databases
-	userDB, err := sql.Open("sqlite", ":memory:")
+	// Create test databases with shared cache mode
+	// Using file:NAME?mode=memory&cache=shared ensures all connections share the same in-memory database
+	// This is required because sql.DB uses connection pooling, and with plain :memory:
+	// each connection would get its own separate database
+	// We use unique names per test to ensure test isolation
+	testName := t.Name()
+	userDB, err := sql.Open("sqlite", "file:"+testName+"_user?mode=memory&cache=shared")
 	if err != nil {
 		t.Fatalf("Failed to open user database: %v", err)
 	}
 
-	serverDB, err := sql.Open("sqlite", ":memory:")
+	serverDB, err := sql.Open("sqlite", "file:"+testName+"_server?mode=memory&cache=shared")
 	if err != nil {
 		t.Fatalf("Failed to open server database: %v", err)
 	}

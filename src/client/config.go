@@ -10,52 +10,99 @@ import (
 )
 
 // CLIConfig represents the CLI client configuration
-// Per AI.md PART 33: CLI configuration with cluster support
+// Per AI.md PART 33 lines 45267-45326: Nested YAML structure
 type CLIConfig struct {
-	// Server URL (deprecated, use ServerPrimary)
-	Server string `yaml:"server"`
-	// Primary server URL
-	// Per AI.md PART 33: server.primary in cli.yml
-	ServerPrimary string `yaml:"server_primary,omitempty"`
-	// Cluster node URLs for failover
-	// Per AI.md PART 33: server.cluster in cli.yml
-	ServerCluster []string `yaml:"server_cluster,omitempty"`
-	// API token
-	Token string `yaml:"token"`
-	// Output format (json, table, plain)
-	Output string `yaml:"output"`
-	// Request timeout in seconds
-	Timeout int `yaml:"timeout"`
-	// Disable colored output
-	NoColor bool `yaml:"no_color"`
+	// Server connection settings
+	Server ServerConfig `yaml:"server,omitempty"`
+	// Authentication
+	Auth AuthConfig `yaml:"auth,omitempty"`
+	// Output preferences
+	Output OutputConfig `yaml:"output,omitempty"`
+	// TUI preferences
+	TUI TUIConfig `yaml:"tui,omitempty"`
+	// Logging
+	Logging LoggingConfig `yaml:"logging,omitempty"`
+	// Cache
+	Cache CacheConfig `yaml:"cache,omitempty"`
+	// Debug mode
+	Debug bool `yaml:"debug,omitempty"`
+	// Default location for weather queries
+	Location string `yaml:"location,omitempty"`
 	// User/org context (--user flag value)
 	User string `yaml:"user,omitempty"`
-	// API base path (e.g., /api/v1)
-	// Per AI.md PART 14: configurable API version
-	APIBasePath string `yaml:"api_base_path,omitempty"`
+}
+
+// ServerConfig holds server connection settings
+// Per AI.md line 45269-45279
+type ServerConfig struct {
+	Primary    string   `yaml:"primary,omitempty"`
+	Cluster    []string `yaml:"cluster,omitempty"`
+	APIVersion string   `yaml:"api_version,omitempty"`
+	AdminPath  string   `yaml:"admin_path,omitempty"`
+	Timeout    string   `yaml:"timeout,omitempty"`
+	Retry      int      `yaml:"retry,omitempty"`
+	RetryDelay string   `yaml:"retry_delay,omitempty"`
+}
+
+// AuthConfig holds authentication settings
+// Per AI.md line 45282-45285
+type AuthConfig struct {
+	Token     string `yaml:"token,omitempty"`
+	TokenFile string `yaml:"token_file,omitempty"`
+}
+
+// OutputConfig holds output preferences
+// Per AI.md line 45288-45294
+type OutputConfig struct {
+	Format  string `yaml:"format,omitempty"`
+	Color   string `yaml:"color,omitempty"`
+	Pager   string `yaml:"pager,omitempty"`
+	Quiet   bool   `yaml:"quiet,omitempty"`
+	Verbose bool   `yaml:"verbose,omitempty"`
+}
+
+// TUIConfig holds TUI preferences
+// Per AI.md line 45297-45302
+type TUIConfig struct {
+	Enabled bool   `yaml:"enabled,omitempty"`
+	Theme   string `yaml:"theme,omitempty"`
+	Mouse   bool   `yaml:"mouse,omitempty"`
+	Unicode bool   `yaml:"unicode,omitempty"`
+}
+
+// LoggingConfig holds logging settings
+// Per AI.md line 45305-45310
+type LoggingConfig struct {
+	Level    string `yaml:"level,omitempty"`
+	File     string `yaml:"file,omitempty"`
+	MaxSize  string `yaml:"max_size,omitempty"`
+	MaxFiles int    `yaml:"max_files,omitempty"`
+}
+
+// CacheConfig holds cache settings
+// Per AI.md line 45313-45316
+type CacheConfig struct {
+	Enabled bool   `yaml:"enabled,omitempty"`
+	TTL     string `yaml:"ttl,omitempty"`
+	MaxSize string `yaml:"max_size,omitempty"`
 }
 
 // GetAPIPath returns the API base path (default: /api/v1)
 func (c *CLIConfig) GetAPIPath() string {
-	if c.APIBasePath == "" {
-		return "/api/v1"
+	version := c.Server.APIVersion
+	if version == "" {
+		version = "v1"
 	}
-	return c.APIBasePath
+	return "/api/" + version
 }
 
 // GetPrimaryServer returns the primary server URL
-// Per AI.md PART 33: Priority order for server resolution
+// Per AI.md PART 33 line 45376-45395: Priority order for server resolution
 func (c *CLIConfig) GetPrimaryServer() string {
-	// 1. ServerPrimary (new field)
-	if c.ServerPrimary != "" {
-		return c.ServerPrimary
+	if c.Server.Primary != "" {
+		return c.Server.Primary
 	}
-	// 2. Server (legacy/backwards compatibility)
-	if c.Server != "" {
-		return c.Server
-	}
-	// 3. Default
-	return "http://localhost:64948"
+	return OfficialSite
 }
 
 // GetAllServers returns all available servers (primary + cluster) for failover
@@ -63,14 +110,12 @@ func (c *CLIConfig) GetPrimaryServer() string {
 func (c *CLIConfig) GetAllServers() []string {
 	servers := []string{}
 
-	// Add primary server first
 	primary := c.GetPrimaryServer()
 	if primary != "" {
 		servers = append(servers, primary)
 	}
 
-	// Add cluster nodes
-	for _, node := range c.ServerCluster {
+	for _, node := range c.Server.Cluster {
 		if node != "" && node != primary {
 			servers = append(servers, node)
 		}
@@ -79,73 +124,95 @@ func (c *CLIConfig) GetAllServers() []string {
 	return servers
 }
 
-// Hardcoded project name for internal use (paths, env vars)
-// Per AI.md PART 36: Internal uses hardcoded project name
-const projectName = "weather"
+// GetDefaultLocation returns the default location from config or environment variables
+// Priority: 1. config location, 2. MYLOCATION_NAME, 3. MYLOCATION_ZIP
+func (c *CLIConfig) GetDefaultLocation() string {
+	if c.Location != "" {
+		return c.Location
+	}
+	if loc := os.Getenv("MYLOCATION_NAME"); loc != "" {
+		return loc
+	}
+	if zip := os.Getenv("MYLOCATION_ZIP"); zip != "" {
+		return zip
+	}
+	return ""
+}
+
+// projectName is defined in paths.go
 
 // DefaultConfig returns the default configuration
+// Per AI.md line 45267-45326
 func DefaultConfig() *CLIConfig {
 	return &CLIConfig{
-		Server:  "http://localhost:64948",
-		Token:   "",
-		Output:  "table",
-		Timeout: 30,
-		NoColor: false,
-		User:    "",
+		Server: ServerConfig{
+			Primary:    OfficialSite,
+			APIVersion: "v1",
+			AdminPath:  "admin",
+			Timeout:    "30s",
+			Retry:      3,
+			RetryDelay: "1s",
+		},
+		Output: OutputConfig{
+			Format: "table",
+			Color:  "auto",
+			Pager:  "auto",
+		},
+		TUI: TUIConfig{
+			Enabled: true,
+			Theme:   "dark",
+			Mouse:   true,
+			Unicode: true,
+		},
+		Logging: LoggingConfig{
+			Level:    "warn",
+			MaxSize:  "10MB",
+			MaxFiles: 5,
+		},
+		Cache: CacheConfig{
+			Enabled: true,
+			TTL:     "5m",
+			MaxSize: "100MB",
+		},
 	}
 }
 
 // ConfigDir returns the config directory path
-// Per AI.md PART 36: ~/.config/apimgr/weather/
 func ConfigDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	return filepath.Join(home, ".config", "apimgr", projectName), nil
+	return CLIConfigDir(), nil
 }
 
 // ConfigPath returns the path to the config file
-// Per AI.md PART 36: ~/.config/apimgr/weather/cli.yml
 func ConfigPath() (string, error) {
-	configDir, err := ConfigDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(configDir, "cli.yml"), nil
+	return CLIConfigFile(), nil
 }
 
 // TokenPath returns the path to the token file
-// Per AI.md PART 36: ~/.config/apimgr/weather/token
 func TokenPath() (string, error) {
-	configDir, err := ConfigDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(configDir, "token"), nil
+	return CLITokenFile(), nil
 }
 
 // LoadConfig loads the configuration from the default config file
 func LoadConfig() (*CLIConfig, error) {
-	return LoadConfigFromPath("")
+	return LoadConfigFromProfile("")
 }
 
-// LoadConfigFromPath loads configuration from a specific path
-// If path is empty, uses the default config path
-func LoadConfigFromPath(path string) (*CLIConfig, error) {
-	var configPath string
-	var err error
+// LoadConfigFromProfile loads configuration from a named profile or default
+// Per AI.md PART 33 line 45181-45195: --config NAME resolves to {config_dir}/{name}.yml
+func LoadConfigFromProfile(profile string) (*CLIConfig, error) {
+	configPath, err := ConfigPath()
+	if err != nil {
+		return nil, NewConfigError(fmt.Sprintf("failed to get config path: %v", err))
+	}
 
-	if path != "" {
-		configPath = path
-	} else {
-		configPath, err = ConfigPath()
-		if err != nil {
-			return nil, NewConfigError(fmt.Sprintf("failed to get config path: %v", err))
+	// If profile specified, use profile-specific config
+	if profile != "" {
+		configDir := filepath.Dir(configPath)
+		// Handle extension per line 45193-45195
+		if !strings.HasSuffix(profile, ".yml") && !strings.HasSuffix(profile, ".yaml") {
+			profile = profile + ".yml"
 		}
+		configPath = filepath.Join(configDir, profile)
 	}
 
 	// Start with defaults
@@ -163,10 +230,25 @@ func LoadConfigFromPath(path string) (*CLIConfig, error) {
 		}
 	}
 
+	// Apply environment variable overrides per AI.md line 45338-45345
+	// Pattern: WEATHER_{SECTION}_{KEY}
+	if v := os.Getenv("WEATHER_SERVER_PRIMARY"); v != "" {
+		config.Server.Primary = v
+	}
+	if v := os.Getenv("WEATHER_TOKEN"); v != "" {
+		config.Auth.Token = v
+	}
+	if v := os.Getenv("WEATHER_OUTPUT_FORMAT"); v != "" {
+		config.Output.Format = v
+	}
+	if os.Getenv("WEATHER_DEBUG") != "" {
+		config.Debug = true
+	}
+
 	return config, nil
 }
 
-// GetToken returns the API token using priority order per AI.md PART 36
+// GetToken returns the API token using priority order per AI.md line 43367-43372
 // Priority: 1. explicit flag, 2. token-file flag, 3. env var, 4. config, 5. token file
 func GetToken(flagToken, flagTokenFile string, config *CLIConfig) string {
 	// 1. Explicit --token flag
@@ -182,18 +264,16 @@ func GetToken(flagToken, flagTokenFile string, config *CLIConfig) string {
 	}
 
 	// 3. Environment variable: WEATHER_TOKEN
-	// Per AI.md PART 36: os.Getenv(strings.ToUpper(projectName) + "_TOKEN")
-	envKey := strings.ToUpper(projectName) + "_TOKEN"
-	if token := os.Getenv(envKey); token != "" {
+	if token := os.Getenv("WEATHER_TOKEN"); token != "" {
 		return token
 	}
 
-	// 4. CLIConfig file token
-	if config.Token != "" {
-		return config.Token
+	// 4. Config file auth.token
+	if config.Auth.Token != "" {
+		return config.Auth.Token
 	}
 
-	// 5. Default token file
+	// 5. Default token file: {config_dir}/token
 	tokenPath, err := TokenPath()
 	if err == nil {
 		if data, err := os.ReadFile(tokenPath); err == nil {
@@ -211,7 +291,6 @@ func SaveConfig(config *CLIConfig) error {
 		return NewConfigError(fmt.Sprintf("failed to get config path: %v", err))
 	}
 
-	// Create config directory if it doesn't exist
 	configDir := filepath.Dir(configPath)
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return NewConfigError(fmt.Sprintf("failed to create config directory: %v", err))
@@ -230,20 +309,17 @@ func SaveConfig(config *CLIConfig) error {
 }
 
 // SaveToken saves the token to the token file
-// Per AI.md PART 36: weather-cli login saves to ~/.config/apimgr/weather/token
 func SaveToken(token string) error {
 	tokenPath, err := TokenPath()
 	if err != nil {
 		return NewConfigError(fmt.Sprintf("failed to get token path: %v", err))
 	}
 
-	// Create config directory if it doesn't exist
 	configDir := filepath.Dir(tokenPath)
 	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return NewConfigError(fmt.Sprintf("failed to create config directory: %v", err))
 	}
 
-	// Write token with restrictive permissions
 	if err := os.WriteFile(tokenPath, []byte(token+"\n"), 0600); err != nil {
 		return NewConfigError(fmt.Sprintf("failed to write token: %v", err))
 	}
@@ -258,12 +334,10 @@ func InitConfig() error {
 		return NewConfigError(fmt.Sprintf("failed to get config path: %v", err))
 	}
 
-	// Check if config already exists
 	if _, err := os.Stat(configPath); err == nil {
 		return NewConfigError("config file already exists")
 	}
 
-	// Create default config
 	config := DefaultConfig()
 	if err := SaveConfig(config); err != nil {
 		return err
@@ -274,6 +348,7 @@ func InitConfig() error {
 }
 
 // GetConfigValue returns a specific configuration value
+// Supports dot notation: server.primary, output.format, etc.
 func GetConfigValue(key string) (string, error) {
 	config, err := LoadConfig()
 	if err != nil {
@@ -281,24 +356,33 @@ func GetConfigValue(key string) (string, error) {
 	}
 
 	switch key {
-	case "server":
-		return config.Server, nil
-	case "token":
-		return config.Token, nil
-	case "output":
-		return config.Output, nil
-	case "timeout":
-		return fmt.Sprintf("%d", config.Timeout), nil
-	case "no_color":
-		return fmt.Sprintf("%t", config.NoColor), nil
+	case "server.primary":
+		return config.Server.Primary, nil
+	case "server.api_version":
+		return config.Server.APIVersion, nil
+	case "server.timeout":
+		return config.Server.Timeout, nil
+	case "auth.token":
+		return config.Auth.Token, nil
+	case "output.format":
+		return config.Output.Format, nil
+	case "output.color":
+		return config.Output.Color, nil
+	case "tui.theme":
+		return config.TUI.Theme, nil
+	case "location":
+		return config.Location, nil
 	case "user":
 		return config.User, nil
+	case "debug":
+		return fmt.Sprintf("%t", config.Debug), nil
 	default:
 		return "", NewConfigError(fmt.Sprintf("unknown config key: %s", key))
 	}
 }
 
 // SetConfigValue sets a specific configuration value
+// Supports dot notation: server.primary, output.format, etc.
 func SetConfigValue(key, value string) error {
 	config, err := LoadConfig()
 	if err != nil {
@@ -306,35 +390,35 @@ func SetConfigValue(key, value string) error {
 	}
 
 	switch key {
-	case "server":
-		config.Server = value
-	case "token":
-		config.Token = value
-	case "output":
-		if value != "json" && value != "table" && value != "plain" {
-			return NewConfigError("output must be json, table, or plain")
+	case "server.primary":
+		config.Server.Primary = value
+	case "server.api_version":
+		config.Server.APIVersion = value
+	case "server.timeout":
+		config.Server.Timeout = value
+	case "auth.token":
+		config.Auth.Token = value
+	case "output.format":
+		if value != "json" && value != "table" && value != "plain" && value != "yaml" && value != "csv" {
+			return NewConfigError("output.format must be json, table, plain, yaml, or csv")
 		}
-		config.Output = value
-	case "timeout":
-		var timeout int
-		if _, err := fmt.Sscanf(value, "%d", &timeout); err != nil {
-			return NewConfigError("timeout must be a number")
+		config.Output.Format = value
+	case "output.color":
+		if value != "auto" && value != "always" && value != "never" {
+			return NewConfigError("output.color must be auto, always, or never")
 		}
-		if timeout < 1 || timeout > 300 {
-			return NewConfigError("timeout must be between 1 and 300 seconds")
+		config.Output.Color = value
+	case "tui.theme":
+		if value != "dark" && value != "light" && value != "system" {
+			return NewConfigError("tui.theme must be dark, light, or system")
 		}
-		config.Timeout = timeout
-	case "no_color":
-		switch strings.ToLower(value) {
-		case "true", "1", "yes":
-			config.NoColor = true
-		case "false", "0", "no":
-			config.NoColor = false
-		default:
-			return NewConfigError("no_color must be true or false")
-		}
+		config.TUI.Theme = value
+	case "location":
+		config.Location = value
 	case "user":
 		config.User = value
+	case "debug":
+		config.Debug = value == "true" || value == "1" || value == "yes"
 	default:
 		return NewConfigError(fmt.Sprintf("unknown config key: %s", key))
 	}

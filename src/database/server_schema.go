@@ -359,6 +359,53 @@ CREATE INDEX IF NOT EXISTS idx_domains_domain ON custom_domains(domain);
 CREATE INDEX IF NOT EXISTS idx_domains_user ON custom_domains(user_id);
 CREATE INDEX IF NOT EXISTS idx_domains_verified ON custom_domains(is_verified);
 CREATE INDEX IF NOT EXISTS idx_domains_active ON custom_domains(is_active);
+
+-- Notification Queue table (server-level delivery queue)
+CREATE TABLE IF NOT EXISTS notification_queue (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER,
+	channel_type TEXT NOT NULL,
+	template_id INTEGER,
+	priority INTEGER DEFAULT 5,
+	state TEXT DEFAULT 'created' CHECK(state IN ('created', 'queued', 'sending', 'delivered', 'failed', 'dead_letter')),
+	subject TEXT,
+	body TEXT NOT NULL,
+	variables TEXT,
+	retry_count INTEGER DEFAULT 0,
+	max_retries INTEGER DEFAULT 3,
+	next_retry_at DATETIME,
+	delivered_at DATETIME,
+	failed_at DATETIME,
+	error_message TEXT,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_nq_user ON notification_queue(user_id);
+CREATE INDEX IF NOT EXISTS idx_nq_channel ON notification_queue(channel_type);
+CREATE INDEX IF NOT EXISTS idx_nq_state ON notification_queue(state);
+CREATE INDEX IF NOT EXISTS idx_nq_priority ON notification_queue(priority);
+CREATE INDEX IF NOT EXISTS idx_nq_retry ON notification_queue(next_retry_at);
+CREATE INDEX IF NOT EXISTS idx_nq_created ON notification_queue(created_at);
+
+-- Notification History table (audit trail)
+CREATE TABLE IF NOT EXISTS notification_history (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	queue_id INTEGER,
+	user_id INTEGER,
+	channel_type TEXT NOT NULL,
+	status TEXT NOT NULL,
+	subject TEXT,
+	body TEXT,
+	delivered_at DATETIME,
+	error_message TEXT,
+	metadata TEXT,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_nh_queue ON notification_history(queue_id);
+CREATE INDEX IF NOT EXISTS idx_nh_user ON notification_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_nh_status ON notification_history(status);
 `
 
-const ServerSchemaVersion = 5
+const ServerSchemaVersion = 6

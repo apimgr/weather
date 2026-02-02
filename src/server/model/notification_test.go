@@ -2,15 +2,27 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
 
+// dbCounter ensures unique database names when a test calls setupTestDB multiple times
+var dbCounter int64
+
 // setupTestDB creates an in-memory SQLite database for testing
 func setupTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlite", ":memory:")
+	// Using file:NAME?mode=memory&cache=shared ensures all connections share the same in-memory database
+	// This is required because sql.DB uses connection pooling, and with plain :memory:
+	// each connection would get its own separate database
+	// We use unique names per test + counter to ensure test isolation even when called multiple times
+	testName := t.Name()
+	counter := atomic.AddInt64(&dbCounter, 1)
+	dbName := fmt.Sprintf("file:%s_model_%d?mode=memory&cache=shared", testName, counter)
+	db, err := sql.Open("sqlite", dbName)
 	if err != nil {
 		t.Fatalf("Failed to open test database: %v", err)
 	}

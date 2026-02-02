@@ -16,8 +16,11 @@ import (
 
 // initTestDualDB creates in-memory dual databases for testing
 func initTestDualDB(t *testing.T) (*database.DualDB, func()) {
-	// Create in-memory server database
-	serverDB, err := sql.Open("sqlite", ":memory:")
+	// Create in-memory server database with shared cache mode
+	// Using file::memory:?cache=shared ensures all connections share the same in-memory database
+	// This is required because sql.DB uses connection pooling, and with plain :memory:
+	// each connection would get its own separate database
+	serverDB, err := sql.Open("sqlite", "file:e2etest_server?mode=memory&cache=shared")
 	if err != nil {
 		t.Fatalf("Failed to open server database: %v", err)
 	}
@@ -28,8 +31,8 @@ func initTestDualDB(t *testing.T) (*database.DualDB, func()) {
 		t.Fatalf("Failed to create server schema: %v", err)
 	}
 
-	// Create in-memory users database
-	usersDB, err := sql.Open("sqlite", ":memory:")
+	// Create in-memory users database with shared cache mode
+	usersDB, err := sql.Open("sqlite", "file:e2etest_users?mode=memory&cache=shared")
 	if err != nil {
 		t.Fatalf("Failed to open users database: %v", err)
 	}

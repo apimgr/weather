@@ -3,6 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
 )
 
 // handleCurrentCommand handles the current weather command
@@ -19,15 +23,9 @@ func handleCurrentCommand(config *CLIConfig, args []string) error {
 
 	// Build query parameters
 	apiPath := config.GetAPIPath()
-	var path string
-	if *zip != "" {
-		path = fmt.Sprintf("%s/weather?zip=%s", apiPath, *zip)
-	} else if *location != "" {
-		path = fmt.Sprintf("%s/weather?location=%s", apiPath, *location)
-	} else if *lat != 0 && *lon != 0 {
-		path = fmt.Sprintf("%s/weather?lat=%f&lon=%f", apiPath, *lat, *lon)
-	} else {
-		return NewUsageError("must specify --lat/--lon, --zip, or --location")
+	path := buildWeatherPath(apiPath, "/weather", *lat, *lon, *zip, *location, config)
+	if path == "" {
+		return NewUsageError("must specify --lat/--lon, --zip, or --location (or set MYLOCATION_NAME, MYLOCATION_ZIP, or MYLOCATION_CITY_ID)")
 	}
 
 	// Make API request
@@ -38,7 +36,7 @@ func handleCurrentCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Format and print output
-	formatter := NewFormatter(config.Output, config.NoColor)
+	formatter := NewFormatter(config.Output.Format, config.Output.Color == "never")
 	fmt.Println(formatter.FormatWeatherCurrent(result))
 
 	return nil
@@ -58,17 +56,13 @@ func handleForecastCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Build query parameters
+	// Use /forecasts endpoint (alias for /weather/forecast)
 	apiPath := config.GetAPIPath()
-	var path string
-	if *zip != "" {
-		path = fmt.Sprintf("%s/weather/forecast?zip=%s&days=%d", apiPath, *zip, *days)
-	} else if *location != "" {
-		path = fmt.Sprintf("%s/weather/forecast?location=%s&days=%d", apiPath, *location, *days)
-	} else if *lat != 0 && *lon != 0 {
-		path = fmt.Sprintf("%s/weather/forecast?lat=%f&lon=%f&days=%d", apiPath, *lat, *lon, *days)
-	} else {
-		return NewUsageError("must specify --lat/--lon, --zip, or --location")
+	path := buildWeatherPath(apiPath, "/forecasts", *lat, *lon, *zip, *location, config)
+	if path == "" {
+		return NewUsageError("must specify --lat/--lon, --zip, or --location (or set MYLOCATION_NAME, MYLOCATION_ZIP, or MYLOCATION_CITY_ID)")
 	}
+	path += fmt.Sprintf("&days=%d", *days)
 
 	// Make API request
 	client := NewHTTPClient(config)
@@ -78,7 +72,7 @@ func handleForecastCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Format and print output
-	formatter := NewFormatter(config.Output, config.NoColor)
+	formatter := NewFormatter(config.Output.Format, config.Output.Color == "never")
 	fmt.Println(formatter.FormatForecast(result))
 
 	return nil
@@ -98,15 +92,9 @@ func handleAlertsCommand(config *CLIConfig, args []string) error {
 
 	// Build query parameters
 	apiPath := config.GetAPIPath()
-	var path string
-	if *zip != "" {
-		path = fmt.Sprintf("%s/weather/alerts?zip=%s", apiPath, *zip)
-	} else if *location != "" {
-		path = fmt.Sprintf("%s/weather/alerts?location=%s", apiPath, *location)
-	} else if *lat != 0 && *lon != 0 {
-		path = fmt.Sprintf("%s/weather/alerts?lat=%f&lon=%f", apiPath, *lat, *lon)
-	} else {
-		return NewUsageError("must specify --lat/--lon, --zip, or --location")
+	path := buildWeatherPath(apiPath, "/weather/alerts", *lat, *lon, *zip, *location, config)
+	if path == "" {
+		return NewUsageError("must specify --lat/--lon, --zip, or --location (or set MYLOCATION_NAME, MYLOCATION_ZIP, or MYLOCATION_CITY_ID)")
 	}
 
 	// Make API request
@@ -117,7 +105,7 @@ func handleAlertsCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Format and print output
-	formatter := NewFormatter(config.Output, config.NoColor)
+	formatter := NewFormatter(config.Output.Format, config.Output.Color == "never")
 	fmt.Println(formatter.FormatAlerts(result))
 
 	return nil
@@ -147,7 +135,7 @@ func handleMoonCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Format and print output
-	formatter := NewFormatter(config.Output, config.NoColor)
+	formatter := NewFormatter(config.Output.Format, config.Output.Color == "never")
 	fmt.Println(formatter.FormatMoon(result))
 
 	return nil
@@ -171,17 +159,13 @@ func handleHistoryCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Build query parameters
+	// Use /weather/history endpoint
 	apiPath := config.GetAPIPath()
-	var path string
-	if *zip != "" {
-		path = fmt.Sprintf("%s/weather/history?zip=%s&date=%s", apiPath, *zip, *date)
-	} else if *location != "" {
-		path = fmt.Sprintf("%s/weather/history?location=%s&date=%s", apiPath, *location, *date)
-	} else if *lat != 0 && *lon != 0 {
-		path = fmt.Sprintf("%s/weather/history?lat=%f&lon=%f&date=%s", apiPath, *lat, *lon, *date)
-	} else {
-		return NewUsageError("must specify --lat/--lon, --zip, or --location")
+	path := buildWeatherPath(apiPath, "/weather/history", *lat, *lon, *zip, *location, config)
+	if path == "" {
+		return NewUsageError("must specify --lat/--lon, --zip, or --location (or set MYLOCATION_NAME, MYLOCATION_ZIP, or MYLOCATION_CITY_ID)")
 	}
+	path += fmt.Sprintf("&date=%s", url.QueryEscape(*date))
 
 	// Make API request
 	client := NewHTTPClient(config)
@@ -191,8 +175,54 @@ func handleHistoryCommand(config *CLIConfig, args []string) error {
 	}
 
 	// Format and print output (reuse current weather formatter for historical data)
-	formatter := NewFormatter(config.Output, config.NoColor)
+	formatter := NewFormatter(config.Output.Format, config.Output.Color == "never")
 	fmt.Println(formatter.FormatWeatherCurrent(result))
 
 	return nil
+}
+
+// buildWeatherPath builds a URL path with proper URL encoding
+// Priority: lat/lon > zip > location > city_id (from env) > location (from config/env)
+func buildWeatherPath(apiPath, endpoint string, lat, lon float64, zip, location string, config *CLIConfig) string {
+	if lat != 0 && lon != 0 {
+		return fmt.Sprintf("%s%s?lat=%f&lon=%f", apiPath, endpoint, lat, lon)
+	}
+	if zip != "" {
+		return fmt.Sprintf("%s%s?zip=%s", apiPath, endpoint, url.QueryEscape(zip))
+	}
+	if location != "" {
+		return fmt.Sprintf("%s%s?location=%s", apiPath, endpoint, url.QueryEscape(location))
+	}
+
+	// Check for default location from config/env vars
+	// Priority per AI.md: config.Location > MYLOCATION_NAME > MYLOCATION_ZIP > MYLOCATION_CITY_ID
+	if config.Location != "" {
+		return fmt.Sprintf("%s%s?location=%s", apiPath, endpoint, url.QueryEscape(config.Location))
+	}
+
+	// Check MYLOCATION_NAME env var
+	if loc := getEnv("MYLOCATION_NAME"); loc != "" {
+		return fmt.Sprintf("%s%s?location=%s", apiPath, endpoint, url.QueryEscape(loc))
+	}
+
+	// Check MYLOCATION_ZIP env var
+	if zipCode := getEnv("MYLOCATION_ZIP"); zipCode != "" {
+		return fmt.Sprintf("%s%s?zip=%s", apiPath, endpoint, url.QueryEscape(zipCode))
+	}
+
+	// Check MYLOCATION_CITY_ID env var - use city_id parameter
+	if cityID := getEnv("MYLOCATION_CITY_ID"); cityID != "" {
+		// Validate it's a number
+		if _, err := strconv.Atoi(cityID); err == nil {
+			return fmt.Sprintf("%s%s?city_id=%s", apiPath, endpoint, cityID)
+		}
+	}
+
+	return ""
+}
+
+// getEnv is a helper to get environment variables
+// Wraps os.Getenv for easier testing
+func getEnv(key string) string {
+	return strings.TrimSpace(os.Getenv(key))
 }

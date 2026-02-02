@@ -2,167 +2,615 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Dracula theme colors per AI.md lines 27377-27390
-var (
-	Background = lipgloss.Color("#282a36")
-	Foreground = lipgloss.Color("#f8f8f2")
-	Selection  = lipgloss.Color("#44475a")
-	Comment    = lipgloss.Color("#6272a4")
-	Cyan       = lipgloss.Color("#8be9fd")
-	Green      = lipgloss.Color("#50fa7b")
-	Orange     = lipgloss.Color("#ffb86c")
-	Pink       = lipgloss.Color("#ff79c6")
-	Purple     = lipgloss.Color("#bd93f9")
-	Red        = lipgloss.Color("#ff5555")
-	Yellow     = lipgloss.Color("#f1fa8c")
+// Terminal size breakpoints per AI.md PART 33 line 46318
+type sizeMode int
+
+const (
+	sizeModeMicro     sizeMode = iota // <40 cols, <10 rows
+	sizeModeMinimal                   // 40-59 cols, 10-15 rows
+	sizeModeCompact                   // 60-79 cols, 16-23 rows
+	sizeModeStandard                  // 80-119 cols, 24-39 rows
+	sizeModeWide                      // 120-199 cols, 40-59 rows
+	sizeModeUltrawide                 // 200-399 cols, 60-79 rows
+	sizeModeMassive                   // ≥400 cols, ≥80 rows
 )
 
-// TUI styles per AI.md line 27374
+// Dracula theme colors per AI.md PART 16
 var (
-	titleStyle = lipgloss.NewStyle().
-			Foreground(Purple).
-			Bold(true).
-			Padding(1, 2)
-
-	helpStyle = lipgloss.NewStyle().
-			Foreground(Comment).
-			Padding(1, 2)
-
-	errorStyle = lipgloss.NewStyle().
-			Foreground(Red).
-			Bold(true).
-			Padding(1, 2)
+	colorBackground = lipgloss.Color("#282a36")
+	colorForeground = lipgloss.Color("#f8f8f2")
+	colorSelection  = lipgloss.Color("#44475a")
+	colorComment    = lipgloss.Color("#6272a4")
+	colorCyan       = lipgloss.Color("#8be9fd")
+	colorGreen      = lipgloss.Color("#50fa7b")
+	colorOrange     = lipgloss.Color("#ffb86c")
+	colorPink       = lipgloss.Color("#ff79c6")
+	colorPurple     = lipgloss.Color("#bd93f9")
+	colorRed        = lipgloss.Color("#ff5555")
+	colorYellow     = lipgloss.Color("#f1fa8c")
 )
 
-// tuiModel represents the TUI state per AI.md line 26952
-type tuiModel struct {
-	config   *CLIConfig
-	choices  []string
-	cursor   int
-	selected map[int]struct{}
-	err      error
+// TUI view types
+type tuiView int
+
+const (
+	viewMenu tuiView = iota
+	viewInput
+	viewResult
+	viewHelp
+)
+
+// Menu item
+type menuItem struct {
+	label   string
+	command string
+	icon    string
 }
 
-// Init initializes the model
+// tuiModel represents the TUI state
+// Per AI.md PART 33: TUI must have 100% feature coverage and be responsive
+type tuiModel struct {
+	config       *CLIConfig
+	view         tuiView
+	previousView tuiView
+	cursor       int
+	menuItems    []menuItem
+	input        string
+	inputLabel   string
+	inputPrompt  string
+	result       string
+	resultTitle  string
+	loading      bool
+	err          error
+	width        int
+	height       int
+	sizeMode     sizeMode
+	scrollOffset int
+}
+
+// apiResultMsg is returned when an API call completes
+type apiResultMsg struct {
+	title  string
+	result string
+	err    error
+}
+
+// newTUIModel creates a new TUI model
+func newTUIModel(config *CLIConfig) tuiModel {
+	return tuiModel{
+		config: config,
+		view:   viewMenu,
+		cursor: 0,
+		menuItems: []menuItem{
+			{label: "Current Weather", command: "current", icon: "☀"},
+			{label: "Forecast", command: "forecast", icon: "📅"},
+			{label: "Alerts", command: "alerts", icon: "⚠"},
+			{label: "Moon Phase", command: "moon", icon: "🌙"},
+			{label: "Historical", command: "history", icon: "📜"},
+			{label: "Earthquakes", command: "earthquakes", icon: "🌍"},
+			{label: "Hurricanes", command: "hurricanes", icon: "🌀"},
+		},
+		width:    80,
+		height:   24,
+		sizeMode: sizeModeStandard,
+	}
+}
+
+// Init initializes the TUI
 func (m tuiModel) Init() tea.Cmd {
 	return nil
 }
 
-// Update handles messages per AI.md line 27353
+// Update handles messages
 func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		// Quit per AI.md line 27360
-		case "q", "ctrl+c":
-			return m, tea.Quit
-
-		// Help per AI.md line 27359
-		case "?":
-			m.showHelp()
-			return m, nil
-
-		// Navigation per AI.md line 27357
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// Selection
-		case "enter", " ":
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = struct{}{}
-			}
+		return m.handleKeyPress(msg)
+	case tea.WindowSizeMsg:
+		// Per AI.md PART 33 line 46286-46316: Window awareness
+		m.width = msg.Width
+		m.height = msg.Height
+		m.sizeMode = m.calculateSizeMode()
+		return m, nil
+	case apiResultMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			m.result = ""
+		} else {
+			m.err = nil
+			m.result = msg.result
+			m.resultTitle = msg.title
 		}
+		m.view = viewResult
+		return m, nil
 	}
-
 	return m, nil
 }
 
-// View renders the TUI per AI.md line 27361
+// calculateSizeMode determines the size mode based on terminal dimensions
+// Per AI.md PART 33 line 46318-46352
+func (m tuiModel) calculateSizeMode() sizeMode {
+	w, h := m.width, m.height
+	if w < 40 || h < 10 {
+		return sizeModeMicro
+	}
+	if w < 60 || h < 16 {
+		return sizeModeMinimal
+	}
+	if w < 80 || h < 24 {
+		return sizeModeCompact
+	}
+	if w < 120 || h < 40 {
+		return sizeModeStandard
+	}
+	if w < 200 || h < 60 {
+		return sizeModeWide
+	}
+	if w < 400 || h < 80 {
+		return sizeModeUltrawide
+	}
+	return sizeModeMassive
+}
+
+// handleKeyPress handles keyboard input
+// Per AI.md PART 33 line 46564-46580: Vim-style navigation
+func (m tuiModel) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch m.view {
+	case viewMenu:
+		return m.handleMenuKeys(msg)
+	case viewInput:
+		return m.handleInputKeys(msg)
+	case viewResult:
+		return m.handleResultKeys(msg)
+	case viewHelp:
+		return m.handleHelpKeys(msg)
+	}
+	return m, nil
+}
+
+func (m tuiModel) handleMenuKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		return m, tea.Quit
+	case "?":
+		m.previousView = m.view
+		m.view = viewHelp
+		return m, nil
+	case "up", "k":
+		if m.cursor > 0 {
+			m.cursor--
+		}
+	case "down", "j":
+		if m.cursor < len(m.menuItems)-1 {
+			m.cursor++
+		}
+	case "home", "g":
+		m.cursor = 0
+	case "end", "G":
+		m.cursor = len(m.menuItems) - 1
+	case "enter", "l":
+		return m.selectMenuItem()
+	}
+	return m, nil
+}
+
+func (m tuiModel) handleInputKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "ctrl+c":
+		return m, tea.Quit
+	case "escape", "ctrl+[":
+		m.view = viewMenu
+		m.input = ""
+		return m, nil
+	case "enter":
+		return m.submitInput()
+	case "backspace", "ctrl+h":
+		if len(m.input) > 0 {
+			m.input = m.input[:len(m.input)-1]
+		}
+	default:
+		if len(msg.String()) == 1 {
+			m.input += msg.String()
+		}
+	}
+	return m, nil
+}
+
+func (m tuiModel) handleResultKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		return m, tea.Quit
+	case "escape", "b", "h", "ctrl+[":
+		m.view = viewMenu
+		m.result = ""
+		m.err = nil
+		return m, nil
+	case "?":
+		m.previousView = m.view
+		m.view = viewHelp
+		return m, nil
+	case "up", "k":
+		if m.scrollOffset > 0 {
+			m.scrollOffset--
+		}
+	case "down", "j":
+		m.scrollOffset++
+	case "home", "g":
+		m.scrollOffset = 0
+	}
+	return m, nil
+}
+
+func (m tuiModel) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		return m, tea.Quit
+	case "escape", "?", "enter", "ctrl+[":
+		m.view = m.previousView
+		return m, nil
+	}
+	return m, nil
+}
+
+func (m tuiModel) selectMenuItem() (tea.Model, tea.Cmd) {
+	item := m.menuItems[m.cursor]
+
+	switch item.command {
+	case "current", "forecast", "alerts":
+		m.inputLabel = "Location"
+		m.inputPrompt = "Enter city name or ZIP code"
+		m.view = viewInput
+		m.input = m.config.GetDefaultLocation()
+	case "history":
+		m.inputLabel = "Location,Date"
+		m.inputPrompt = "Enter location,date (e.g., NYC,2024-01-15)"
+		m.view = viewInput
+		m.input = ""
+	case "moon":
+		m.inputLabel = "Date"
+		m.inputPrompt = "Enter date (YYYY-MM-DD) or press Enter for today"
+		m.view = viewInput
+		m.input = ""
+	case "earthquakes", "hurricanes":
+		// No input needed, fetch directly
+		m.loading = true
+		return m, m.fetchData(item.command, "")
+	}
+	return m, nil
+}
+
+func (m tuiModel) submitInput() (tea.Model, tea.Cmd) {
+	item := m.menuItems[m.cursor]
+	m.loading = true
+	return m, m.fetchData(item.command, m.input)
+}
+
+func (m tuiModel) fetchData(command, input string) tea.Cmd {
+	return func() tea.Msg {
+		client := NewHTTPClient(m.config)
+		apiPath := m.config.GetAPIPath()
+		var path string
+		var result map[string]interface{}
+		var title string
+
+		switch command {
+		case "current":
+			loc := input
+			if loc == "" {
+				loc = m.config.GetDefaultLocation()
+			}
+			if loc == "" {
+				return apiResultMsg{err: fmt.Errorf("please enter a location")}
+			}
+			path = fmt.Sprintf("%s/weather?location=%s", apiPath, url.QueryEscape(loc))
+			title = "Current Weather"
+		case "forecast":
+			loc := input
+			if loc == "" {
+				loc = m.config.GetDefaultLocation()
+			}
+			if loc == "" {
+				return apiResultMsg{err: fmt.Errorf("please enter a location")}
+			}
+			path = fmt.Sprintf("%s/forecasts?location=%s&days=7", apiPath, url.QueryEscape(loc))
+			title = "7-Day Forecast"
+		case "alerts":
+			loc := input
+			if loc == "" {
+				loc = m.config.GetDefaultLocation()
+			}
+			if loc == "" {
+				return apiResultMsg{err: fmt.Errorf("please enter a location")}
+			}
+			path = fmt.Sprintf("%s/weather/alerts?location=%s", apiPath, url.QueryEscape(loc))
+			title = "Weather Alerts"
+		case "history":
+			parts := strings.SplitN(input, ",", 2)
+			if len(parts) < 2 {
+				return apiResultMsg{err: fmt.Errorf("enter location,date (e.g., NYC,2024-01-15)")}
+			}
+			loc := strings.TrimSpace(parts[0])
+			date := strings.TrimSpace(parts[1])
+			path = fmt.Sprintf("%s/weather/history?location=%s&date=%s", apiPath, url.QueryEscape(loc), url.QueryEscape(date))
+			title = fmt.Sprintf("Historical Weather - %s", date)
+		case "moon":
+			path = fmt.Sprintf("%s/weather/moon", apiPath)
+			if input != "" {
+				path += "?date=" + url.QueryEscape(input)
+			}
+			title = "Moon Phase"
+		case "earthquakes":
+			path = fmt.Sprintf("%s/earthquakes?limit=10", apiPath)
+			title = "Recent Earthquakes"
+		case "hurricanes":
+			path = fmt.Sprintf("%s/hurricanes?active=true", apiPath)
+			title = "Active Hurricanes"
+		}
+
+		if err := client.GetJSON(path, &result); err != nil {
+			return apiResultMsg{err: err}
+		}
+
+		formatter := NewFormatter("table", false)
+		var formatted string
+		switch command {
+		case "current", "history":
+			formatted = formatter.FormatWeatherCurrent(result)
+		case "forecast":
+			formatted = formatter.FormatForecast(result)
+		case "alerts":
+			formatted = formatter.FormatAlerts(result)
+		case "moon":
+			formatted = formatter.FormatMoon(result)
+		default:
+			formatted = formatter.FormatJSON(result)
+		}
+
+		return apiResultMsg{title: title, result: formatted}
+	}
+}
+
+// View renders the TUI
 func (m tuiModel) View() string {
-	var b strings.Builder
+	switch m.view {
+	case viewMenu:
+		return m.renderMenu()
+	case viewInput:
+		return m.renderInput()
+	case viewResult:
+		return m.renderResult()
+	case viewHelp:
+		return m.renderHelp()
+	}
+	return ""
+}
 
-	// Title
-	b.WriteString(titleStyle.Render("Weather CLI - Interactive Mode"))
-	b.WriteString("\n\n")
+func (m tuiModel) renderMenu() string {
+	var s strings.Builder
 
-	// Error display per AI.md line 27362
-	if m.err != nil {
-		b.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.err)))
-		b.WriteString("\n\n")
+	// Styles based on size mode
+	titleStyle := lipgloss.NewStyle().
+		Foreground(colorCyan).
+		Bold(true)
+
+	itemStyle := lipgloss.NewStyle().
+		Foreground(colorForeground)
+
+	selectedStyle := lipgloss.NewStyle().
+		Foreground(colorGreen).
+		Bold(true)
+
+	helpStyle := lipgloss.NewStyle().
+		Foreground(colorComment)
+
+	// Header
+	if m.sizeMode >= sizeModeCompact {
+		s.WriteString(titleStyle.Render("Weather CLI"))
+		s.WriteString("\n")
+		s.WriteString(helpStyle.Render(m.config.Server.Primary))
+		s.WriteString("\n\n")
 	}
 
 	// Menu items
-	for i, choice := range m.choices {
-		cursor := " "
-		if m.cursor == i {
-			cursor = ">"
+	for i, item := range m.menuItems {
+		var line string
+		if m.sizeMode >= sizeModeStandard {
+			// Full display with icon
+			if i == m.cursor {
+				line = selectedStyle.Render(fmt.Sprintf(" → %s %s", item.icon, item.label))
+			} else {
+				line = itemStyle.Render(fmt.Sprintf("   %s %s", item.icon, item.label))
+			}
+		} else if m.sizeMode >= sizeModeMinimal {
+			// Compact display without icon
+			if i == m.cursor {
+				line = selectedStyle.Render(fmt.Sprintf("> %s", item.label))
+			} else {
+				line = itemStyle.Render(fmt.Sprintf("  %s", item.label))
+			}
+		} else {
+			// Micro display - abbreviated
+			if i == m.cursor {
+				line = selectedStyle.Render(fmt.Sprintf(">%s", item.command[:3]))
+			} else {
+				line = itemStyle.Render(fmt.Sprintf(" %s", item.command[:3]))
+			}
 		}
-
-		checked := " "
-		if _, ok := m.selected[i]; ok {
-			checked = "✓"
-		}
-
-		style := lipgloss.NewStyle().Foreground(Foreground)
-		if m.cursor == i {
-			style = lipgloss.NewStyle().Foreground(Cyan).Bold(true)
-		}
-
-		b.WriteString(style.Render(fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)))
+		s.WriteString(line)
+		s.WriteString("\n")
 	}
 
-	// Help text
-	b.WriteString("\n")
-	b.WriteString(helpStyle.Render("↑/k: up • ↓/j: down • enter: select • q: quit • ?: help"))
+	// Help footer per AI.md PART 33 line 46383-46394
+	s.WriteString("\n")
+	s.WriteString(helpStyle.Render(m.getHelpText()))
 
-	return b.String()
+	return s.String()
 }
 
-// showHelp displays help screen per AI.md line 27359
-func (m *tuiModel) showHelp() {
-	// Help display would go here
+func (m tuiModel) renderInput() string {
+	var s strings.Builder
+
+	titleStyle := lipgloss.NewStyle().
+		Foreground(colorCyan).
+		Bold(true)
+
+	promptStyle := lipgloss.NewStyle().
+		Foreground(colorComment)
+
+	inputStyle := lipgloss.NewStyle().
+		Foreground(colorYellow)
+
+	helpStyle := lipgloss.NewStyle().
+		Foreground(colorComment)
+
+	s.WriteString(titleStyle.Render(m.inputLabel))
+	s.WriteString("\n")
+	if m.sizeMode >= sizeModeCompact {
+		s.WriteString(promptStyle.Render(m.inputPrompt))
+		s.WriteString("\n")
+	}
+	s.WriteString("\n")
+	s.WriteString(inputStyle.Render("> " + m.input + "█"))
+	s.WriteString("\n\n")
+	s.WriteString(helpStyle.Render("Enter: submit │ Esc: back"))
+
+	return s.String()
 }
 
-// runTUI launches the interactive TUI mode per AI.md lines 26952-27390
+func (m tuiModel) renderResult() string {
+	var s strings.Builder
+
+	titleStyle := lipgloss.NewStyle().
+		Foreground(colorCyan).
+		Bold(true)
+
+	errorStyle := lipgloss.NewStyle().
+		Foreground(colorRed)
+
+	helpStyle := lipgloss.NewStyle().
+		Foreground(colorComment)
+
+	if m.loading {
+		s.WriteString(titleStyle.Render("Loading..."))
+		return s.String()
+	}
+
+	if m.err != nil {
+		s.WriteString(errorStyle.Render("Error: " + m.err.Error()))
+		s.WriteString("\n\n")
+		s.WriteString(helpStyle.Render("Esc/b: back │ q: quit"))
+		return s.String()
+	}
+
+	s.WriteString(titleStyle.Render(m.resultTitle))
+	s.WriteString("\n\n")
+
+	// Scroll the result if needed
+	lines := strings.Split(m.result, "\n")
+	viewHeight := m.height - 6 // Reserve space for header and footer
+	if viewHeight < 3 {
+		viewHeight = 3
+	}
+
+	start := m.scrollOffset
+	if start > len(lines)-viewHeight {
+		start = len(lines) - viewHeight
+	}
+	if start < 0 {
+		start = 0
+	}
+	end := start + viewHeight
+	if end > len(lines) {
+		end = len(lines)
+	}
+
+	for _, line := range lines[start:end] {
+		// Truncate long lines
+		if len(line) > m.width-2 {
+			line = line[:m.width-5] + "..."
+		}
+		s.WriteString(line)
+		s.WriteString("\n")
+	}
+
+	s.WriteString("\n")
+	if len(lines) > viewHeight {
+		s.WriteString(helpStyle.Render(fmt.Sprintf("j/k: scroll │ %d/%d", start+1, len(lines))))
+	}
+	s.WriteString(helpStyle.Render(" │ b: back │ q: quit"))
+
+	return s.String()
+}
+
+func (m tuiModel) renderHelp() string {
+	var s strings.Builder
+
+	titleStyle := lipgloss.NewStyle().
+		Foreground(colorCyan).
+		Bold(true)
+
+	keyStyle := lipgloss.NewStyle().
+		Foreground(colorYellow)
+
+	descStyle := lipgloss.NewStyle().
+		Foreground(colorForeground)
+
+	helpStyle := lipgloss.NewStyle().
+		Foreground(colorComment)
+
+	s.WriteString(titleStyle.Render("Keyboard Shortcuts"))
+	s.WriteString("\n\n")
+
+	keys := []struct{ key, desc string }{
+		{"j / ↓", "Move down"},
+		{"k / ↑", "Move up"},
+		{"g", "Go to top"},
+		{"G", "Go to bottom"},
+		{"Enter / l", "Select"},
+		{"Esc / b / h", "Back"},
+		{"?", "Show help"},
+		{"q", "Quit"},
+	}
+
+	for _, k := range keys {
+		s.WriteString(keyStyle.Render(fmt.Sprintf("  %-12s", k.key)))
+		s.WriteString(descStyle.Render(k.desc))
+		s.WriteString("\n")
+	}
+
+	s.WriteString("\n")
+	s.WriteString(helpStyle.Render("Press Esc or ? to close"))
+
+	return s.String()
+}
+
+// getHelpText returns help text appropriate for terminal size
+// Per AI.md PART 33 line 46383-46394
+func (m tuiModel) getHelpText() string {
+	switch m.sizeMode {
+	case sizeModeMicro:
+		return "?:help q:quit"
+	case sizeModeMinimal:
+		return "j/k:nav │ Enter:select │ ?:help │ q:quit"
+	default:
+		return "↑/↓ or j/k: Navigate │ Enter: Select │ ?: Help │ q: Quit"
+	}
+}
+
+// runTUI starts the TUI
 func runTUI(config *CLIConfig) error {
-	// Initialize TUI model
-	m := tuiModel{
-		config: config,
-		choices: []string{
-			"Current Weather",
-			"Forecast",
-			"Alerts",
-			"Severe Weather",
-			"Settings",
-			"Exit",
-		},
-		selected: make(map[int]struct{}),
-	}
-
-	// Create program per AI.md line 27368
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
-	// Run TUI
-	if _, err := p.Run(); err != nil {
-		return fmt.Errorf("TUI error: %w", err)
-	}
-
-	return nil
+	p := tea.NewProgram(
+		newTUIModel(config),
+		tea.WithAltScreen(),
+	)
+	_, err := p.Run()
+	return err
 }
-

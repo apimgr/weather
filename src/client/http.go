@@ -18,12 +18,15 @@ type HTTPClient struct {
 	failedServers  map[string]bool
 }
 
+// DefaultTimeout is the default HTTP request timeout
+const DefaultTimeout = 30 * time.Second
+
 // NewHTTPClient creates a new HTTP client
 func NewHTTPClient(config *CLIConfig) *HTTPClient {
 	return &HTTPClient{
 		CLIConfig: config,
 		HTTPClient: &http.Client{
-			Timeout: time.Duration(config.Timeout) * time.Second,
+			Timeout: DefaultTimeout,
 		},
 		currentServer: config.GetPrimaryServer(),
 		failedServers: make(map[string]bool),
@@ -114,8 +117,8 @@ func (c *HTTPClient) setHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", UserAgent())
 	req.Header.Set("Accept", "application/json")
 
-	if c.CLIConfig.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.CLIConfig.Token)
+	if c.CLIConfig.Auth.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.CLIConfig.Auth.Token)
 	}
 
 	// Add user context header if specified
