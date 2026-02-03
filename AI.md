@@ -1,18 +1,18 @@
-# {PROJECTNAME} Specification
+# WEATHER Specification
 
-**Name**: {projectname}
+**Name**: weather
 
 ---
 
 # 🆕 FIRST-TIME AI.md SETUP
 
-**If you see `{projectname}` or `{PROJECTNAME}` placeholders in this file, this is a fresh template that needs configuration.**
+**If you see `weather` or `WEATHER` placeholders in this file, this is a fresh template that needs configuration.**
 
 ## Detecting Fresh Template
 
 ```bash
 # Check if placeholders exist (fresh template)
-grep -q '{projectname}' AI.md && echo "FRESH TEMPLATE - needs setup"
+grep -q 'weather' AI.md && echo "FRESH TEMPLATE - needs setup"
 ```
 
 ## Auto-Detecting Project Values
@@ -21,8 +21,8 @@ grep -q '{projectname}' AI.md && echo "FRESH TEMPLATE - needs setup"
 
 | Value | Primary Source | Fallback |
 |-------|----------------|----------|
-| `{projectname}` | IDEA.md (if exists) | `basename "$PWD"` |
-| `{projectorg}` | IDEA.md (if exists) | `basename "$(dirname "$PWD")"` |
+| `weather` | IDEA.md (if exists) | `basename "$PWD"` |
+| `apimgr` | IDEA.md (if exists) | `basename "$(dirname "$PWD")"` |
 
 **Detection commands:**
 ```bash
@@ -42,7 +42,7 @@ projectorg=$(basename "$(dirname "$PWD")")
 ```
 AI reads AI.md for the first time
 │
-├─► Check: Does AI.md contain literal "{projectname}"?
+├─► Check: Does AI.md contain literal "weather"?
 │   │
 │   ├─► YES (fresh template)
 │   │   │
@@ -50,13 +50,13 @@ AI reads AI.md for the first time
 │   │   │   ├─► YES: Extract projectname/projectorg from IDEA.md
 │   │   │   └─► NO: Infer from directory structure
 │   │   │
-│   │   ├─► 2. Confirm with user: "Project: {projectname}, Org: {projectorg} - correct?"
+│   │   ├─► 2. Confirm with user: "Project: weather, Org: apimgr - correct?"
 │   │   │
 │   │   ├─► 3. Replace ALL placeholders in AI.md:
-│   │   │   - {projectname} → actual project name (lowercase)
-│   │   │   - {PROJECTNAME} → actual project name (UPPERCASE)
-│   │   │   - {projectorg} → actual org name (lowercase)
-│   │   │   - {PROJECTORG} → actual org name (UPPERCASE)
+│   │   │   - weather → actual project name (lowercase)
+│   │   │   - WEATHER → actual project name (UPPERCASE)
+│   │   │   - apimgr → actual org name (lowercase)
+│   │   │   - APIMGR → actual org name (UPPERCASE)
 │   │   │
 │   │   └─► 4. Create IDEA.md if it doesn't exist (from template or ask user)
 │   │
@@ -68,10 +68,10 @@ AI reads AI.md for the first time
 
 | Placeholder | Case | Example |
 |-------------|------|---------|
-| `{projectname}` | lowercase | `myapp` |
-| `{PROJECTNAME}` | UPPERCASE | `MYAPP` |
-| `{projectorg}` | lowercase | `myorg` |
-| `{PROJECTORG}` | UPPERCASE | `MYORG` |
+| `weather` | lowercase | `myapp` |
+| `WEATHER` | UPPERCASE | `MYAPP` |
+| `apimgr` | lowercase | `myorg` |
+| `APIMGR` | UPPERCASE | `MYORG` |
 
 **After setup, this section becomes reference-only. The placeholders above will show actual values.**
 
@@ -201,7 +201,7 @@ IDEA.md is the project PLAN. AI.md (this file) is the SOURCE OF TRUTH.
 | **CGO_ENABLED=0** | ALWAYS. No exceptions. Pure Go only. |
 | **Single static binary** | All assets embedded with Go `embed` package |
 | **8 platforms required** | linux, darwin, windows, freebsd × amd64, arm64 |
-| **Binary naming** | `{projectname}-{os}-{arch}` (windows adds `.exe`) |
+| **Binary naming** | `weather-{os}-{arch}` (windows adds `.exe`) |
 | **NEVER use -musl suffix** | Alpine builds are NOT musl-specific |
 | **Build source** | ALWAYS `./src` directory |
 
@@ -213,7 +213,7 @@ IDEA.md is the project PLAN. AI.md (this file) is the SOURCE OF TRUTH.
 
 | Command | Purpose | Output Location | When to Use |
 |---------|---------|-----------------|-------------|
-| `make dev` | **Development & Debugging** | `${TMPDIR}/${PROJECTORG}/${PROJECTNAME}-XXXXXX/` | Active coding, quick tests |
+| `make dev` | **Development & Debugging** | `${TMPDIR}/$APIMGR/$WEATHER-XXXXXX/` | Active coding, quick tests |
 | `make local` | **Production Testing** | `binaries/` (with version) | Test prod builds locally |
 | `make build` | **Full Release** | `binaries/` (all 8 platforms) | Before release |
 | `make test` | **Unit Tests** | Coverage report | After code changes |
@@ -232,11 +232,11 @@ IDEA.md is the project PLAN. AI.md (this file) is the SOURCE OF TRUTH.
 
 ```bash
 # After make dev, debug in Docker with tools
-BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-*/ 2>/dev/null | head -1)
+BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/$APIMGR/$WEATHER-*/ 2>/dev/null | head -1)
 docker run --rm -it -v "$BUILD_DIR:/app" alpine:latest sh -c "
   apk add --no-cache curl bash file jq  # Required debug tools
-  /app/{projectname} --help
-  /app/{projectname} --version
+  /app/weather --help
+  /app/weather --version
   # Interactive debugging...
 "
 ```
@@ -278,10 +278,10 @@ docker run --rm -it -v "$BUILD_DIR:/app" alpine:latest sh -c "
 make dev                # Quick build to temp dir
 
 # 2. Debug in Docker (with tools)
-BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-*/ 2>/dev/null | head -1)
+BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/$APIMGR/$WEATHER-*/ 2>/dev/null | head -1)
 docker run --rm -it -v "$BUILD_DIR:/app" alpine:latest sh -c "
   apk add --no-cache curl bash file jq
-  /app/{projectname} --help
+  /app/weather --help
 "
 
 # 3. Unit tests
@@ -722,7 +722,7 @@ Quick reference: Accept `yes/no`, `true/false`, `1/0`, `on/off`, `enable/disable
 | **Config files** | lowercase, dot-extension | `server.yml`, `mkdocs.yml` | `SERVER.yml` |
 | **Documentation** | UPPERCASE.md | `README.md`, `LICENSE.md` | `readme.md` |
 | **Scripts** | lowercase, snake_case | `run_tests.sh` | `RunTests.sh` |
-| **Binaries** | `{projectname}-{os}-{arch}` | `echoip-linux-amd64` | `echoip_linux_amd64` |
+| **Binaries** | `weather-{os}-{arch}` | `echoip-linux-amd64` | `echoip_linux_amd64` |
 
 ### NEVER Create These Files
 
@@ -751,7 +751,7 @@ Quick reference: Accept `yes/no`, `true/false`, `1/0`, `on/off`, `enable/disable
 | `config/` in root | Config is embedded, runtime-generated in OS dirs |
 | `data/` in root | Data goes to OS data directory at runtime |
 | `logs/` in root | Logs go to OS log directory at runtime |
-| `tmp/`, `temp/` in root | Use `/tmp/{projectorg}/{projectname}-XXXXXX/` |
+| `tmp/`, `temp/` in root | Use `/tmp/apimgr/weather-XXXXXX/` |
 | `test-data/` in root | Test data goes to temp directories |
 | `build/`, `dist/`, `out/` | Use `binaries/` (gitignored) |
 | `vendor/` | Use Go modules, not vendoring |
@@ -893,9 +893,9 @@ paths:
 ## TERMINOLOGY
 | Term | Meaning |
 |------|---------|
-| server | Main binary `{projectname}` - runs as service |
-| client | CLI binary `{projectname}-cli` - REQUIRED |
-| agent | Optional binary `{projectname}-agent` |
+| server | Main binary `weather` - runs as service |
+| client | CLI binary `weather-cli` - REQUIRED |
+| agent | Optional binary `weather-agent` |
 | Server Admin | App administrator (NOT OS root) |
 | Regular User | End-user (PART 34, optional feature) |
 
@@ -1058,7 +1058,7 @@ Each AI tool directory MUST have a project memory file containing critical rules
 **Required Content Structure (~50-100 lines max):**
 
 ```markdown
-# {PROJECTNAME} - AI Quick Reference
+# WEATHER - AI Quick Reference
 
 ⚠️ **THIS FILE IS AUTO-LOADED EVERY CONVERSATION. FOLLOW IT EXACTLY.** ⚠️
 
@@ -1087,13 +1087,13 @@ On EVERY new conversation or after "context compacted" message:
 **WHEN IN DOUBT: READ THE SPEC. DO NOT GUESS.**
 
 ## Binary Terminology
-- **server** = `{projectname}` (main binary, runs as service)
-- **client** = `{projectname}-cli` (REQUIRED companion, CLI/TUI/GUI)
-- **agent** = `{projectname}-agent` (optional, runs on remote machines)
+- **server** = `weather` (main binary, runs as service)
+- **client** = `weather-cli` (REQUIRED companion, CLI/TUI/GUI)
+- **agent** = `weather-agent` (optional, runs on remote machines)
 
 ## Key Placeholders
-- `{projectname}` = [actual project name]
-- `{projectorg}` = [organization name]
+- `weather` = [actual project name]
+- `apimgr` = [organization name]
 - `{admin_path}` = [admin URL path, default: admin]
 
 ## Account Types (CRITICAL)
@@ -1562,10 +1562,10 @@ Instructions for how this agent should behave...
 
 | Placeholder | Description | Example |
 |-------------|-------------|---------|
-| `{projectname}` | Project name (lowercase, no spaces/hyphens) | `jokes`, `echoip`, `pastebin` |
-| `{projectorg}` | Organization/owner name (lowercase) | `sneak`, `acme`, `mycompany` |
+| `weather` | Project name (lowercase, no spaces/hyphens) | `jokes`, `echoip`, `pastebin` |
+| `apimgr` | Organization/owner name (lowercase) | `sneak`, `acme`, `mycompany` |
 | `{projectversion}` | Current version (semver format) | `1.0.0`, `2.3.1` |
-| `{PROJECTNAME}` | Uppercase project name (for constants, env vars) | `JOKES`, `ECHOIP` |
+| `WEATHER` | Uppercase project name (for constants, env vars) | `JOKES`, `ECHOIP` |
 | `{officialsite}` | Official project website | `https://jokes.example.com` |
 | `{fqdn}` | Fully qualified domain name | `api.example.com` |
 | `{admin_path}` | Admin panel URL path (configurable, default: `admin`) | `admin`, `manage`, `control` |
@@ -1575,13 +1575,13 @@ Instructions for how this agent should behave...
 
 | Placeholder | Linux/BSD Default | macOS Default | Windows Default |
 |-------------|-------------------|---------------|-----------------|
-| `{config_dir}` | `/etc/{projectorg}/{projectname}` | `/Library/Application Support/{projectorg}/{projectname}` | `%PROGRAMDATA%\{projectorg}\{projectname}` |
-| `{data_dir}` | `/var/lib/{projectorg}/{projectname}` | `/Library/Application Support/{projectorg}/{projectname}` | `%PROGRAMDATA%\{projectorg}\{projectname}` |
+| `{config_dir}` | `/etc/apimgr/weather` | `/Library/Application Support/apimgr/weather` | `%PROGRAMDATA%\apimgr\weather` |
+| `{data_dir}` | `/var/lib/apimgr/weather` | `/Library/Application Support/apimgr/weather` | `%PROGRAMDATA%\apimgr\weather` |
 | `{db_dir}` | `{data_dir}/db/` | `{data_dir}/db/` | `{data_dir}\db\` |
-| `{log_dir}` | `/var/log/{projectorg}/{projectname}` | `/Library/Logs/{projectorg}/{projectname}` | `%PROGRAMDATA%\{projectorg}\{projectname}\logs` |
-| `{cache_dir}` | `/var/cache/{projectorg}/{projectname}` | `/Library/Caches/{projectorg}/{projectname}` | `%PROGRAMDATA%\{projectorg}\{projectname}\cache` |
-| `{backup_dir}` | `/mnt/Backups/{projectorg}/{projectname}` | `/Library/Application Support/{projectorg}/{projectname}/backups` | `%PROGRAMDATA%\{projectorg}\{projectname}\backups` |
-| `{pid_file}` | `/var/run/{projectorg}/{projectname}.pid` | `/var/run/{projectorg}/{projectname}.pid` | N/A (Windows uses SCM) |
+| `{log_dir}` | `/var/log/apimgr/weather` | `/Library/Logs/apimgr/weather` | `%PROGRAMDATA%\apimgr\weather\logs` |
+| `{cache_dir}` | `/var/cache/apimgr/weather` | `/Library/Caches/apimgr/weather` | `%PROGRAMDATA%\apimgr\weather\cache` |
+| `{backup_dir}` | `/mnt/Backups/apimgr/weather` | `/Library/Application Support/apimgr/weather/backups` | `%PROGRAMDATA%\apimgr\weather\backups` |
+| `{pid_file}` | `/var/run/apimgr/weather.pid` | `/var/run/apimgr/weather.pid` | N/A (Windows uses SCM) |
 
 **Note:** In Docker containers, `{db_dir}` is `/data/db/sqlite` (see Docker paths section).
 
@@ -1591,9 +1591,9 @@ Instructions for how this agent should behave...
 
 | Term | Default Binary Name | Description |
 |------|---------------------|-------------|
-| **server** | `{projectname}` | The main application binary - runs as service/daemon, serves API/WebUI |
-| **client** | `{projectname}-cli` | Required companion binary - terminal interface with CLI/TUI/GUI modes |
-| **agent** | `{projectname}-agent` | Optional companion binary - runs on remote machines, reports to server |
+| **server** | `weather` | The main application binary - runs as service/daemon, serves API/WebUI |
+| **client** | `weather-cli` | Required companion binary - terminal interface with CLI/TUI/GUI modes |
+| **agent** | `weather-agent` | Optional companion binary - runs on remote machines, reports to server |
 
 **Renaming behavior:**
 - Renaming a binary (e.g., `cp jokes myjokes`) changes user-visible output (help text, banners, User-Agent)
@@ -3322,8 +3322,8 @@ Enter choice [a-d]:
 # AI should run these checks and report results:
 
 # 1. Verify CLI
-./binaries/{projectname} --help
-./binaries/{projectname} --version
+./binaries/weather --help
+./binaries/weather --version
 
 # 2. Verify build
 make clean && make build
@@ -3691,7 +3691,7 @@ Every feature MUST work via:
 | **Browser** | Chrome, Firefox, Safari | HTML (pretty UI) |
 | **PWA** | Installed web app (desktop/mobile) | HTML (same as browser) |
 | **API/Automation** | curl, wget, scripts, integrations | JSON |
-| **CLI tool** | `{projectname}-cli` | Text/JSON (configurable) |
+| **CLI tool** | `weather-cli` | Text/JSON (configurable) |
 
 **Endpoint Pattern (applies to ENTIRE app):**
 | Web Route (HTML) | API Route (JSON) | Purpose |
@@ -3753,7 +3753,7 @@ When working on this project, the following roles are assumed based on the task:
 
 ```bash
 # CORRECT - Use Makefile targets
-make dev                    # Quick build to {tempdir}/{projectorg}/{projectname}-XXXXXX/
+make dev                    # Quick build to {tempdir}/apimgr/weather-XXXXXX/
 make local                   # Build with version info to binaries/
 make build                  # Full cross-platform build to binaries/
 make test                   # Run unit tests
@@ -3763,7 +3763,7 @@ make test                   # Run unit tests
 ./tests/incus.sh            # Full OS test with systemd (PREFERRED)
 
 # WRONG - Never run go directly on local machine
-go build -o binary/{projectname} ./src
+go build -o binary/weather ./src
 ```
 
 **See PART 29: TESTING & DEVELOPMENT for full containerized build/test procedures.**
@@ -4202,39 +4202,39 @@ Detect platform by checking for workflow files in this order:
 
 ```markdown
 # GitHub Actions
-[![Build](https://github.com/{projectorg}/{projectname}/actions/workflows/build.yml/badge.svg)](https://github.com/{projectorg}/{projectname}/actions/workflows/build.yml)
+[![Build](https://github.com/apimgr/weather/actions/workflows/build.yml/badge.svg)](https://github.com/apimgr/weather/actions/workflows/build.yml)
 
 # Gitea/Forgejo Actions
-[![Build](https://git.example.com/{projectorg}/{projectname}/actions/workflows/build.yml/badge.svg)](https://git.example.com/{projectorg}/{projectname}/actions)
+[![Build](https://git.example.com/apimgr/weather/actions/workflows/build.yml/badge.svg)](https://git.example.com/apimgr/weather/actions)
 
 # GitLab CI
-[![Build](https://gitlab.com/{projectorg}/{projectname}/badges/main/pipeline.svg)](https://gitlab.com/{projectorg}/{projectname}/-/pipelines)
+[![Build](https://gitlab.com/apimgr/weather/badges/main/pipeline.svg)](https://gitlab.com/apimgr/weather/-/pipelines)
 
 # Jenkins
-[![Build](https://jenkins.example.com/buildStatus/icon?job={projectorg}/{projectname})](https://jenkins.example.com/job/{projectorg}/job/{projectname}/)
+[![Build](https://jenkins.example.com/buildStatus/icon?job=apimgr/weather)](https://jenkins.example.com/job/apimgr/job/weather/)
 ```
 
 **Release/License/Docs badges also adapt to platform:**
 
 ```markdown
 # GitHub
-[![Release](https://img.shields.io/github/v/release/{projectorg}/{projectname})](https://github.com/{projectorg}/{projectname}/releases)
-[![License](https://img.shields.io/github/license/{projectorg}/{projectname})](LICENSE.md)
+[![Release](https://img.shields.io/github/v/release/apimgr/weather)](https://github.com/apimgr/weather/releases)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 [![Docs](https://readthedocs.org/projects/{RTD_PROJECT}/badge/?version=latest)](https://{RTD_URL})
 
 # GitLab
-[![Release](https://gitlab.com/{projectorg}/{projectname}/-/badges/release.svg)](https://gitlab.com/{projectorg}/{projectname}/-/releases)
-[![License](https://img.shields.io/github/license/{projectorg}/{projectname})](LICENSE.md)
+[![Release](https://gitlab.com/apimgr/weather/-/badges/release.svg)](https://gitlab.com/apimgr/weather/-/releases)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 [![Docs](https://readthedocs.org/projects/{RTD_PROJECT}/badge/?version=latest)](https://{RTD_URL})
 
 # Gitea/Forgejo (use shields.io with custom endpoint or static badge)
-[![Release](https://img.shields.io/badge/dynamic/json?url=https://git.example.com/api/{api_version}/repos/{projectorg}/{projectname}/releases/latest&query=$.tag_name&label=release)](https://git.example.com/{projectorg}/{projectname}/releases)
-[![License](https://img.shields.io/github/license/{projectorg}/{projectname})](LICENSE.md)
+[![Release](https://img.shields.io/badge/dynamic/json?url=https://git.example.com/api/{api_version}/repos/apimgr/weather/releases/latest&query=$.tag_name&label=release)](https://git.example.com/apimgr/weather/releases)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 [![Docs](https://readthedocs.org/projects/{RTD_PROJECT}/badge/?version=latest)](https://{RTD_URL})
 
 # {RTD_PROJECT} and {RTD_URL} - Use one of:
-#   {projectorg}-{projectname} / {projectorg}-{projectname}.readthedocs.io
-#   {projectname} / {projectname}.readthedocs.io
+#   apimgr-weather / apimgr-weather.readthedocs.io
+#   weather / weather.readthedocs.io
 #   Custom project name / {custom_rtd_address}
 ```
 
@@ -4246,7 +4246,7 @@ Detect platform by checking for workflow files in this order:
 
 ```markdown
 # ✅ CORRECT - GitHub can detect license
-[![License](https://img.shields.io/github/license/{projectorg}/{projectname})](LICENSE.md)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 
 # ❌ WRONG - Static badge, GitHub cannot detect
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
@@ -4259,7 +4259,7 @@ Detect platform by checking for workflow files in this order:
 
 **Verify detection:**
 - Go to repo page → Look at right sidebar → Should show "MIT License" (not just "View license")
-- API check: `curl -q -LSsf https://api.github.com/repos/{projectorg}/{projectname}/license`
+- API check: `curl -q -LSsf https://api.github.com/repos/apimgr/weather/license`
 
 #### Docs Badge - Avoid "unknown"
 
@@ -4270,8 +4270,8 @@ Detect platform by checking for workflow files in this order:
 | Docs Platform | Badge | Condition |
 |---------------|-------|-----------|
 | ReadTheDocs | See ReadTheDocs URL formats below | RTD project exists |
-| GitHub Pages | `[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://{projectorg}.github.io/{projectname})` | gh-pages branch exists |
-| GitBook | `[![Docs](https://img.shields.io/badge/docs-GitBook-blue)](https://{projectorg}.gitbook.io/{projectname})` | GitBook project exists |
+| GitHub Pages | `[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://apimgr.github.io/weather)` | gh-pages branch exists |
+| GitBook | `[![Docs](https://img.shields.io/badge/docs-GitBook-blue)](https://apimgr.gitbook.io/weather)` | GitBook project exists |
 | Self-hosted | `[![Docs](https://img.shields.io/badge/docs-online-blue)]({docs_url})` | Docs site is live |
 | None | **Do not add docs badge** | No docs deployed |
 
@@ -4286,18 +4286,18 @@ Detect platform by checking for workflow files in this order:
 
 | Format | URL Pattern | When to Use |
 |--------|-------------|-------------|
-| **Org-Project** | `https://{projectorg}-{projectname}.readthedocs.io` | Default for organization projects |
-| **Project Only** | `https://{projectname}.readthedocs.io` | When project name is unique enough |
+| **Org-Project** | `https://apimgr-weather.readthedocs.io` | Default for organization projects |
+| **Project Only** | `https://weather.readthedocs.io` | When project name is unique enough |
 | **Custom Domain** | `https://{custom_rtd_address}` | When custom domain is configured in RTD |
 
 **Badge formats:**
 
 ```markdown
 # Option 1: Org-Project format (most common)
-[![Docs](https://readthedocs.org/projects/{projectorg}-{projectname}/badge/?version=latest)](https://{projectorg}-{projectname}.readthedocs.io)
+[![Docs](https://readthedocs.org/projects/apimgr-weather/badge/?version=latest)](https://apimgr-weather.readthedocs.io)
 
 # Option 2: Project only format
-[![Docs](https://readthedocs.org/projects/{projectname}/badge/?version=latest)](https://{projectname}.readthedocs.io)
+[![Docs](https://readthedocs.org/projects/weather/badge/?version=latest)](https://weather.readthedocs.io)
 
 # Option 3: Custom domain
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://{custom_rtd_address})
@@ -4305,16 +4305,16 @@ Detect platform by checking for workflow files in this order:
 
 **Determining which format to use:**
 1. Check your ReadTheDocs project settings for the actual URL
-2. If using organization account → likely `{projectorg}-{projectname}`
-3. If standalone project → likely just `{projectname}`
+2. If using organization account → likely `apimgr-weather`
+3. If standalone project → likely just `weather`
 4. If custom domain configured → use that
 
 **mkdocs.yml site_url must match:**
 ```yaml
 # Must match whichever RTD URL format you're using
-site_url: https://{projectorg}-{projectname}.readthedocs.io
+site_url: https://apimgr-weather.readthedocs.io
 # OR
-site_url: https://{projectname}.readthedocs.io
+site_url: https://weather.readthedocs.io
 # OR
 site_url: https://{custom_rtd_address}
 ```
@@ -4536,11 +4536,11 @@ router.GET("/healthz", handleHealth)
 **Use the appropriate badges and URLs for your platform (see above).**
 
 ```markdown
-# {projectname}
+# weather
 
 {PLATFORM_BUILD_BADGE}
 {PLATFORM_RELEASE_BADGE}
-[![License](https://img.shields.io/github/license/{projectorg}/{projectname})](LICENSE.md)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 {PLATFORM_DOCS_BADGE}  <!-- Only include if docs are deployed -->
 
 ## About
@@ -4563,11 +4563,11 @@ router.GET("/healthz", handleHealth)
 
 ```bash
 docker run -d \
-  --name {projectname} \
+  --name weather \
   -p 64580:80 \
   -v ./rootfs/config:/config:z \
   -v ./rootfs/data:/data:z \
-  {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
+  {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
 ```
 
 ### Docker Compose
@@ -4581,11 +4581,11 @@ docker compose up -d
 
 ```bash
 # Download latest release
-curl -q -LSsf -O {PLATFORM_RELEASE_URL}/{projectname}-linux-amd64
+curl -q -LSsf -O {PLATFORM_RELEASE_URL}/weather-linux-amd64
 
 # Make executable and run
-chmod +x {projectname}-linux-amd64
-./{projectname}-linux-amd64
+chmod +x weather-linux-amd64
+./weather-linux-amd64
 ```
 
 ## Client
@@ -4596,23 +4596,23 @@ A companion client is available for interacting with the server API.
 
 ```bash
 # Download latest release
-curl -q -LSsf -O {PLATFORM_RELEASE_URL}/{projectname}-cli-linux-amd64
-chmod +x {projectname}-cli-linux-amd64
-sudo mv {projectname}-cli-linux-amd64 /usr/local/bin/{projectname}-cli
+curl -q -LSsf -O {PLATFORM_RELEASE_URL}/weather-cli-linux-amd64
+chmod +x weather-cli-linux-amd64
+sudo mv weather-cli-linux-amd64 /usr/local/bin/weather-cli
 ```
 
 ### Configure
 
 ```bash
-# Connect to official server (creates ~/.config/{projectorg}/{projectname}/cli.yml)
-{projectname}-cli --server {officialsite} --token YOUR_API_TOKEN
+# Connect to official server (creates ~/.config/apimgr/weather/cli.yml)
+weather-cli --server {officialsite} --token YOUR_API_TOKEN
 ```
 
 ### Usage
 
 ```bash
-{projectname}-cli --help
-{projectname}-cli [command] --help
+weather-cli --help
+weather-cli [command] --help
 ```
 
 ## Configuration
@@ -4646,7 +4646,7 @@ curl -q -LSsf -H "Authorization: Bearer TOKEN" {officialsite}/api/{api_version}/
 
 ### Troubleshooting
 
-- Check logs: `docker logs {projectname}`
+- Check logs: `docker logs weather`
 - Health check: `curl -q -LSsf {officialsite}/healthz`
 
 ## Development
@@ -4663,7 +4663,7 @@ curl -q -LSsf -H "Authorization: Bearer TOKEN" {officialsite}/api/{api_version}/
 ```bash
 # Clone
 git clone {PLATFORM_REPO_URL}
-cd {projectname}
+cd weather
 
 # Quick dev build (outputs to OS temp dir)
 make dev
@@ -4935,7 +4935,7 @@ Before proceeding, confirm you understand:
 |-------------|-------|
 | License type | MIT License |
 | License file | `LICENSE.md` (REQUIRED in project root) |
-| Copyright holder | `{projectorg}` or individual/organization name |
+| Copyright holder | `apimgr` or individual/organization name |
 | Year | Current year or year of first publication |
 
 ## LICENSE.md Structure
@@ -4943,7 +4943,7 @@ Before proceeding, confirm you understand:
 ```markdown
 MIT License
 
-Copyright (c) {YEAR} {projectorg}
+Copyright (c) {YEAR} apimgr
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -5191,7 +5191,7 @@ echo "3. Commit the changes"
 **Every README.md MUST include a license badge:**
 
 ```markdown
-[![License](https://img.shields.io/github/license/{projectorg}/{projectname})](LICENSE.md)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 ```
 
 This badge should appear in the badges section near the top of README.md.
@@ -5265,9 +5265,9 @@ package main
 
 | Field | Value |
 |-------|-------|
-| **Name** | {projectname} |
-| **Organization** | {projectorg} |
-| **Official Site** | https://{projectname}.{projectorg}.us |
+| **Name** | weather |
+| **Organization** | apimgr |
+| **Official Site** | https://weather.apimgr.us |
 | **Repository** | {PLATFORM_REPO_URL} |
 | **README** | README.md |
 | **License** | MIT > LICENSE.md |
@@ -5287,17 +5287,17 @@ package main
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `{projectname}` | Project name (inferred from path) | `jokes` |
-| `{projectorg}` | Organization name (inferred from path) | `apimgr` |
+| `weather` | Project name (inferred from path) | `jokes` |
+| `apimgr` | Organization name (inferred from path) | `apimgr` |
 | `{gitprovider}` | Git hosting provider | `github`, `gitlab`, `private` |
 | **Rule** | Anything in `{}` is a variable | |
 | **Rule** | Anything NOT in `{}` is literal | `/etc/letsencrypt/live` is a real path |
 
 ### Inferring Variables from Path
 
-**NEVER hardcode `{projectname}` or `{projectorg}` - always infer from git remote or directory path.**
+**NEVER hardcode `weather` or `apimgr` - always infer from git remote or directory path.**
 
-**Recommended path structure:** `~/Projects/{gitprovider}/{projectorg}/{projectname}` (but works with any location)
+**Recommended path structure:** `~/Projects/{gitprovider}/apimgr/weather` (but works with any location)
 
 ```bash
 # Method 1: Infer from git remote (PREFERRED - works regardless of directory location)
@@ -5315,16 +5315,16 @@ PROJECTNAME=$(git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)(\.git
 PROJECTORG=$(git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)/[^/]+(\.git)?$|\1|' || basename "$(dirname "$PWD")")
 ```
 
-**Note:** When using path-based inference, `PROJECTORG` will be the parent directory name, which may not match the git organization unless you follow the recommended `~/Projects/{gitprovider}/{projectorg}/{projectname}` structure. Git remote inference is always more reliable.
+**Note:** When using path-based inference, `PROJECTORG` will be the parent directory name, which may not match the git organization unless you follow the recommended `~/Projects/{gitprovider}/apimgr/weather` structure. Git remote inference is always more reliable.
 
 ### Variable Capitalization
 
 | Format | Use Case | Example |
 |--------|----------|---------|
-| `{projectname}` | Lowercase (filenames, paths, commands) | `jokes`, `/etc/apimgr/jokes/` |
+| `weather` | Lowercase (filenames, paths, commands) | `jokes`, `/etc/apimgr/jokes/` |
 | `{projectName}` | camelCase (Go variables, JSON keys) | `projectName := "jokes"` |
 | `{Projectname}` | PascalCase (Go types, display names) | `type JokesServer struct` |
-| `{PROJECTNAME}` | UPPERCASE (env vars, Makefile vars) | `PROJECTNAME=jokes` |
+| `WEATHER` | UPPERCASE (env vars, Makefile vars) | `PROJECTNAME=jokes` |
 
 **Examples (assuming no git remote, inferred from path):**
 
@@ -5342,14 +5342,14 @@ PROJECTORG=$(git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)/[^/]+(
 
 **IMPORTANT: Project root can be located ANYWHERE on your system. This section describes a RECOMMENDED organizational structure, not a requirement.**
 
-**Recommended Format:** `~/Projects/{gitprovider}/{projectorg}/{projectname}`
+**Recommended Format:** `~/Projects/{gitprovider}/apimgr/weather`
 
 | Component | Description | Examples |
 |-----------|-------------|----------|
 | `~/Projects/` | Base projects directory (recommended) | Can be `~/Projects/`, `~/Documents/`, `/opt/`, etc. |
 | `{gitprovider}` | Git hosting provider or `local` | `github`, `gitlab`, `bitbucket`, `private`, `local` |
-| `{projectorg}` | Organization/username (inferred) | `apimgr`, `casjay`, `myorg` |
-| `{projectname}` | Project name (inferred) | `jokes`, `icons`, `myproject` |
+| `apimgr` | Organization/username (inferred) | `apimgr`, `casjay`, `myorg` |
+| `weather` | Project name (inferred) | `jokes`, `icons`, `myproject` |
 
 **Examples of recommended structure:**
 ```
@@ -5370,7 +5370,7 @@ PROJECTORG=$(git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)/[^/]+(
 
 ### Special: `local` Provider
 
-`~/Projects/local/{projectorg}/{projectname}` (or any other location) is used for:
+`~/Projects/local/apimgr/weather` (or any other location) is used for:
 - **Prototyping** - Quick experiments and proof-of-concept
 - **Bootstrapping** - Initial project setup before pushing to VCS
 - **Local-only development** - Projects not intended for remote hosting
@@ -5823,7 +5823,7 @@ cd /path/to/project && docker build -f docker/Dockerfile .
 
 **go.mod Example:**
 ```
-module github.com/{projectorg}/{projectname}
+module github.com/apimgr/weather
 
 go 1.xx  // Use current latest stable version
 
@@ -6065,7 +6065,7 @@ require github.com/tursodatabase/libsql-client-go v0.0.0-20240902231107-85af5b9d
 ### Example go.mod
 
 ```go
-module github.com/{projectorg}/{projectname}
+module github.com/apimgr/weather
 
 go 1.xx  // Use current latest stable version
 
@@ -6227,36 +6227,36 @@ Before proceeding, confirm you understand:
 
 | Type | Path |
 |------|------|
-| Binary | `/usr/local/bin/{projectname}` |
-| Config | `/etc/{projectorg}/{projectname}/` |
-| Config File | `/etc/{projectorg}/{projectname}/server.yml` |
-| Data | `/var/lib/{projectorg}/{projectname}/` |
-| Cache | `/var/cache/{projectorg}/{projectname}/` |
-| Logs | `/var/log/{projectorg}/{projectname}/` |
-| Log File | `/var/log/{projectorg}/{projectname}/server.log` |
-| Backup | `/mnt/Backups/{projectorg}/{projectname}/` |
-| PID File | `/var/run/{projectorg}/{projectname}.pid` |
-| SSL | `/etc/{projectorg}/{projectname}/ssl/` (letsencrypt/, local/) |
-| Security | `/etc/{projectorg}/{projectname}/security/` (geoip/, blocklists/, cve/, trivy/) |
-| SQLite DB | `/var/lib/{projectorg}/{projectname}/db/` (server.db, users.db) |
-| Service | `/etc/systemd/system/{projectname}.service` |
+| Binary | `/usr/local/bin/weather` |
+| Config | `/etc/apimgr/weather/` |
+| Config File | `/etc/apimgr/weather/server.yml` |
+| Data | `/var/lib/apimgr/weather/` |
+| Cache | `/var/cache/apimgr/weather/` |
+| Logs | `/var/log/apimgr/weather/` |
+| Log File | `/var/log/apimgr/weather/server.log` |
+| Backup | `/mnt/Backups/apimgr/weather/` |
+| PID File | `/var/run/apimgr/weather.pid` |
+| SSL | `/etc/apimgr/weather/ssl/` (letsencrypt/, local/) |
+| Security | `/etc/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| SQLite DB | `/var/lib/apimgr/weather/db/` (server.db, users.db) |
+| Service | `/etc/systemd/system/weather.service` |
 
 ### User (non-privileged)
 
 | Type | Path |
 |------|------|
-| Binary | `~/.local/bin/{projectname}` |
-| Config | `~/.config/{projectorg}/{projectname}/` |
-| Config File | `~/.config/{projectorg}/{projectname}/server.yml` |
-| Data | `~/.local/share/{projectorg}/{projectname}/` |
-| Cache | `~/.cache/{projectorg}/{projectname}/` |
-| Logs | `~/.local/log/{projectorg}/{projectname}/` |
-| Log File | `~/.local/log/{projectorg}/{projectname}/server.log` |
-| Backup | `~/.local/share/Backups/{projectorg}/{projectname}/` |
-| PID File | `~/.local/share/{projectorg}/{projectname}/{projectname}.pid` |
-| SSL | `~/.config/{projectorg}/{projectname}/ssl/` (letsencrypt/, local/) |
-| Security | `~/.config/{projectorg}/{projectname}/security/` (geoip/, blocklists/, cve/, trivy/) |
-| SQLite DB | `~/.local/share/{projectorg}/{projectname}/db/` (server.db, users.db) |
+| Binary | `~/.local/bin/weather` |
+| Config | `~/.config/apimgr/weather/` |
+| Config File | `~/.config/apimgr/weather/server.yml` |
+| Data | `~/.local/share/apimgr/weather/` |
+| Cache | `~/.cache/apimgr/weather/` |
+| Logs | `~/.local/log/apimgr/weather/` |
+| Log File | `~/.local/log/apimgr/weather/server.log` |
+| Backup | `~/.local/share/Backups/apimgr/weather/` |
+| PID File | `~/.local/share/apimgr/weather/weather.pid` |
+| SSL | `~/.config/apimgr/weather/ssl/` (letsencrypt/, local/) |
+| Security | `~/.config/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| SQLite DB | `~/.local/share/apimgr/weather/db/` (server.db, users.db) |
 
 ---
 
@@ -6266,37 +6266,37 @@ Before proceeding, confirm you understand:
 
 | Type | Path |
 |------|------|
-| Binary | `/usr/local/bin/{projectname}` |
-| Config | `/Library/Application Support/{projectorg}/{projectname}/` |
-| Config File | `/Library/Application Support/{projectorg}/{projectname}/server.yml` |
-| Data | `/Library/Application Support/{projectorg}/{projectname}/data/` |
-| Cache | `/Library/Caches/{projectorg}/{projectname}/` |
-| Logs | `/Library/Logs/{projectorg}/{projectname}/` |
-| Log File | `/Library/Logs/{projectorg}/{projectname}/server.log` |
-| Backup | `/Library/Backups/{projectorg}/{projectname}/` |
-| PID File | `/var/run/{projectorg}/{projectname}.pid` |
-| SSL | `/Library/Application Support/{projectorg}/{projectname}/ssl/` (letsencrypt/, local/) |
-| Security | `/Library/Application Support/{projectorg}/{projectname}/security/` (geoip/, blocklists/, cve/, trivy/) |
-| SQLite DB | `/Library/Application Support/{projectorg}/{projectname}/db/` (server.db, users.db) |
-| Service | `/Library/LaunchDaemons/com.{projectorg}.{projectname}.plist` |
+| Binary | `/usr/local/bin/weather` |
+| Config | `/Library/Application Support/apimgr/weather/` |
+| Config File | `/Library/Application Support/apimgr/weather/server.yml` |
+| Data | `/Library/Application Support/apimgr/weather/data/` |
+| Cache | `/Library/Caches/apimgr/weather/` |
+| Logs | `/Library/Logs/apimgr/weather/` |
+| Log File | `/Library/Logs/apimgr/weather/server.log` |
+| Backup | `/Library/Backups/apimgr/weather/` |
+| PID File | `/var/run/apimgr/weather.pid` |
+| SSL | `/Library/Application Support/apimgr/weather/ssl/` (letsencrypt/, local/) |
+| Security | `/Library/Application Support/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| SQLite DB | `/Library/Application Support/apimgr/weather/db/` (server.db, users.db) |
+| Service | `/Library/LaunchDaemons/com.apimgr.weather.plist` |
 
 ### User (non-privileged)
 
 | Type | Path |
 |------|------|
-| Binary | `~/bin/{projectname}` or `/usr/local/bin/{projectname}` |
-| Config | `~/Library/Application Support/{projectorg}/{projectname}/` |
-| Config File | `~/Library/Application Support/{projectorg}/{projectname}/server.yml` |
-| Data | `~/Library/Application Support/{projectorg}/{projectname}/` |
-| Cache | `~/Library/Caches/{projectorg}/{projectname}/` |
-| Logs | `~/Library/Logs/{projectorg}/{projectname}/` |
-| Log File | `~/Library/Logs/{projectorg}/{projectname}/server.log` |
-| Backup | `~/Library/Backups/{projectorg}/{projectname}/` |
-| PID File | `~/Library/Application Support/{projectorg}/{projectname}/{projectname}.pid` |
-| SSL | `~/Library/Application Support/{projectorg}/{projectname}/ssl/` (letsencrypt/, local/) |
-| Security | `~/Library/Application Support/{projectorg}/{projectname}/security/` (geoip/, blocklists/, cve/, trivy/) |
-| SQLite DB | `~/Library/Application Support/{projectorg}/{projectname}/db/` (server.db, users.db) |
-| Service | `~/Library/LaunchAgents/com.{projectorg}.{projectname}.plist` |
+| Binary | `~/bin/weather` or `/usr/local/bin/weather` |
+| Config | `~/Library/Application Support/apimgr/weather/` |
+| Config File | `~/Library/Application Support/apimgr/weather/server.yml` |
+| Data | `~/Library/Application Support/apimgr/weather/` |
+| Cache | `~/Library/Caches/apimgr/weather/` |
+| Logs | `~/Library/Logs/apimgr/weather/` |
+| Log File | `~/Library/Logs/apimgr/weather/server.log` |
+| Backup | `~/Library/Backups/apimgr/weather/` |
+| PID File | `~/Library/Application Support/apimgr/weather/weather.pid` |
+| SSL | `~/Library/Application Support/apimgr/weather/ssl/` (letsencrypt/, local/) |
+| Security | `~/Library/Application Support/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| SQLite DB | `~/Library/Application Support/apimgr/weather/db/` (server.db, users.db) |
+| Service | `~/Library/LaunchAgents/com.apimgr.weather.plist` |
 
 ---
 
@@ -6306,36 +6306,36 @@ Before proceeding, confirm you understand:
 
 | Type | Path |
 |------|------|
-| Binary | `/usr/local/bin/{projectname}` |
-| Config | `/usr/local/etc/{projectorg}/{projectname}/` |
-| Config File | `/usr/local/etc/{projectorg}/{projectname}/server.yml` |
-| Data | `/var/db/{projectorg}/{projectname}/` |
-| Cache | `/var/cache/{projectorg}/{projectname}/` |
-| Logs | `/var/log/{projectorg}/{projectname}/` |
-| Log File | `/var/log/{projectorg}/{projectname}/server.log` |
-| Backup | `/var/backups/{projectorg}/{projectname}/` |
-| PID File | `/var/run/{projectorg}/{projectname}.pid` |
-| SSL | `/usr/local/etc/{projectorg}/{projectname}/ssl/` (letsencrypt/, local/) |
-| Security | `/usr/local/etc/{projectorg}/{projectname}/security/` (geoip/, blocklists/, cve/, trivy/) |
-| SQLite DB | `/var/db/{projectorg}/{projectname}/db/` (server.db, users.db) |
-| Service | `/usr/local/etc/rc.d/{projectname}` |
+| Binary | `/usr/local/bin/weather` |
+| Config | `/usr/local/etc/apimgr/weather/` |
+| Config File | `/usr/local/etc/apimgr/weather/server.yml` |
+| Data | `/var/db/apimgr/weather/` |
+| Cache | `/var/cache/apimgr/weather/` |
+| Logs | `/var/log/apimgr/weather/` |
+| Log File | `/var/log/apimgr/weather/server.log` |
+| Backup | `/var/backups/apimgr/weather/` |
+| PID File | `/var/run/apimgr/weather.pid` |
+| SSL | `/usr/local/etc/apimgr/weather/ssl/` (letsencrypt/, local/) |
+| Security | `/usr/local/etc/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| SQLite DB | `/var/db/apimgr/weather/db/` (server.db, users.db) |
+| Service | `/usr/local/etc/rc.d/weather` |
 
 ### User (non-privileged)
 
 | Type | Path |
 |------|------|
-| Binary | `~/.local/bin/{projectname}` |
-| Config | `~/.config/{projectorg}/{projectname}/` |
-| Config File | `~/.config/{projectorg}/{projectname}/server.yml` |
-| Data | `~/.local/share/{projectorg}/{projectname}/` |
-| Cache | `~/.cache/{projectorg}/{projectname}/` |
-| Logs | `~/.local/log/{projectorg}/{projectname}/` |
-| Log File | `~/.local/log/{projectorg}/{projectname}/server.log` |
-| Backup | `~/.local/share/Backups/{projectorg}/{projectname}/` |
-| PID File | `~/.local/share/{projectorg}/{projectname}/{projectname}.pid` |
-| SSL | `~/.config/{projectorg}/{projectname}/ssl/` (letsencrypt/, local/) |
-| Security | `~/.config/{projectorg}/{projectname}/security/` (geoip/, blocklists/, cve/, trivy/) |
-| SQLite DB | `~/.local/share/{projectorg}/{projectname}/db/` (server.db, users.db) |
+| Binary | `~/.local/bin/weather` |
+| Config | `~/.config/apimgr/weather/` |
+| Config File | `~/.config/apimgr/weather/server.yml` |
+| Data | `~/.local/share/apimgr/weather/` |
+| Cache | `~/.cache/apimgr/weather/` |
+| Logs | `~/.local/log/apimgr/weather/` |
+| Log File | `~/.local/log/apimgr/weather/server.log` |
+| Backup | `~/.local/share/Backups/apimgr/weather/` |
+| PID File | `~/.local/share/apimgr/weather/weather.pid` |
+| SSL | `~/.config/apimgr/weather/ssl/` (letsencrypt/, local/) |
+| Security | `~/.config/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| SQLite DB | `~/.local/share/apimgr/weather/db/` (server.db, users.db) |
 
 ---
 
@@ -6345,34 +6345,34 @@ Before proceeding, confirm you understand:
 
 | Type | Path |
 |------|------|
-| Binary | `C:\Program Files\{projectorg}\{projectname}\{projectname}.exe` |
-| Config | `%ProgramData%\{projectorg}\{projectname}\` |
-| Config File | `%ProgramData%\{projectorg}\{projectname}\server.yml` |
-| Data | `%ProgramData%\{projectorg}\{projectname}\data\` |
-| Cache | `%ProgramData%\{projectorg}\{projectname}\cache\` |
-| Logs | `%ProgramData%\{projectorg}\{projectname}\logs\` |
-| Log File | `%ProgramData%\{projectorg}\{projectname}\logs\server.log` |
-| Backup | `%ProgramData%\Backups\{projectorg}\{projectname}\` |
-| SSL | `%ProgramData%\{projectorg}\{projectname}\ssl\` (letsencrypt\, local\) |
-| Security | `%ProgramData%\{projectorg}\{projectname}\security\` (geoip\, blocklists\, cve\, trivy\) |
-| SQLite DB | `%ProgramData%\{projectorg}\{projectname}\db\` (server.db, users.db) |
+| Binary | `C:\Program Files\apimgr\weather\weather.exe` |
+| Config | `%ProgramData%\apimgr\weather\` |
+| Config File | `%ProgramData%\apimgr\weather\server.yml` |
+| Data | `%ProgramData%\apimgr\weather\data\` |
+| Cache | `%ProgramData%\apimgr\weather\cache\` |
+| Logs | `%ProgramData%\apimgr\weather\logs\` |
+| Log File | `%ProgramData%\apimgr\weather\logs\server.log` |
+| Backup | `%ProgramData%\Backups\apimgr\weather\` |
+| SSL | `%ProgramData%\apimgr\weather\ssl\` (letsencrypt\, local\) |
+| Security | `%ProgramData%\apimgr\weather\security\` (geoip\, blocklists\, cve\, trivy\) |
+| SQLite DB | `%ProgramData%\apimgr\weather\db\` (server.db, users.db) |
 | Service | Windows Service Manager |
 
 ### User (non-privileged)
 
 | Type | Path |
 |------|------|
-| Binary | `%LocalAppData%\{projectorg}\{projectname}\{projectname}.exe` |
-| Config | `%AppData%\{projectorg}\{projectname}\` |
-| Config File | `%AppData%\{projectorg}\{projectname}\server.yml` |
-| Data | `%LocalAppData%\{projectorg}\{projectname}\` |
-| Cache | `%LocalAppData%\{projectorg}\{projectname}\cache\` |
-| Logs | `%LocalAppData%\{projectorg}\{projectname}\logs\` |
-| Log File | `%LocalAppData%\{projectorg}\{projectname}\logs\server.log` |
-| Backup | `%LocalAppData%\Backups\{projectorg}\{projectname}\` |
-| SSL | `%AppData%\{projectorg}\{projectname}\ssl\` (letsencrypt\, local\) |
-| Security | `%AppData%\{projectorg}\{projectname}\security\` (geoip\, blocklists\, cve\, trivy\) |
-| SQLite DB | `%LocalAppData%\{projectorg}\{projectname}\db\` (server.db, users.db) |
+| Binary | `%LocalAppData%\apimgr\weather\weather.exe` |
+| Config | `%AppData%\apimgr\weather\` |
+| Config File | `%AppData%\apimgr\weather\server.yml` |
+| Data | `%LocalAppData%\apimgr\weather\` |
+| Cache | `%LocalAppData%\apimgr\weather\cache\` |
+| Logs | `%LocalAppData%\apimgr\weather\logs\` |
+| Log File | `%LocalAppData%\apimgr\weather\logs\server.log` |
+| Backup | `%LocalAppData%\Backups\apimgr\weather\` |
+| SSL | `%AppData%\apimgr\weather\ssl\` (letsencrypt\, local\) |
+| Security | `%AppData%\apimgr\weather\security\` (geoip\, blocklists\, cve\, trivy\) |
+| SQLite DB | `%LocalAppData%\apimgr\weather\db\` (server.db, users.db) |
 
 ---
 
@@ -6382,16 +6382,16 @@ Before proceeding, confirm you understand:
 
 | Type | Path |
 |------|------|
-| Binary | `/usr/local/bin/{projectname}` |
-| Config | `/config/{projectname}/` |
-| Config File | `/config/{projectname}/server.yml` |
-| Security DBs | `/config/{projectname}/security/` (geoip, blocklists, cve, trivy) |
-| Data | `/data/{projectname}/` |
-| Cache | `/data/{projectname}/cache/` |
-| Logs | `/data/log/{projectname}/` |
-| Log File | `/data/log/{projectname}/server.log` |
+| Binary | `/usr/local/bin/weather` |
+| Config | `/config/weather/` |
+| Config File | `/config/weather/server.yml` |
+| Security DBs | `/config/weather/security/` (geoip, blocklists, cve, trivy) |
+| Data | `/data/weather/` |
+| Cache | `/data/weather/cache/` |
+| Logs | `/data/log/weather/` |
+| Log File | `/data/log/weather/server.log` |
 | SQLite DB | `/data/db/sqlite/` (server.db, users.db) |
-| Backup | `/data/backups/{projectname}/` |
+| Backup | `/data/backups/weather/` |
 | Internal Port | `80` |
 
 **Docker volume mounts map host paths to container paths:**
@@ -6409,7 +6409,7 @@ Before proceeding, confirm you understand:
 - [ ] Each OS has specific paths for privileged and non-privileged users
 - [ ] Config file is ALWAYS `server.yml` (not .yaml)
 - [ ] Docker uses simplified paths (/config, /data)
-- [ ] All paths follow the {projectorg}/{projectname} pattern
+- [ ] All paths follow the apimgr/weather pattern
 
 ---
 
@@ -7455,8 +7455,8 @@ func (req *CreateUserRequest) Parse() (*User, error) {
 
 | User Type | Path |
 |-----------|------|
-| Root | `/etc/{projectorg}/{projectname}/server.yml` |
-| Regular | `~/.config/{projectorg}/{projectname}/server.yml` |
+| Root | `/etc/apimgr/weather/server.yml` |
+| Regular | `~/.config/apimgr/weather/server.yml` |
 
 ### Migration
 
@@ -7503,8 +7503,8 @@ func (req *CreateUserRequest) Parse() (*User, error) {
 
 | Mode | How Started | Port Restriction | Privilege Handling |
 |------|-------------|------------------|-------------------|
-| **Service (escalated)** | `sudo {projectname} --service install` | Any port | Runs as root/admin, binary drops after binding |
-| **User ($USER)** | `{projectname}` | >1024 only | Runs as calling user, no escalation |
+| **Service (escalated)** | `sudo weather --service install` | Any port | Runs as root/admin, binary drops after binding |
+| **User ($USER)** | `weather` | >1024 only | Runs as calling user, no escalation |
 
 #### Service Installation (One-Time Escalation)
 
@@ -7512,13 +7512,13 @@ func (req *CreateUserRequest) Parse() (*User, error) {
 
 ```bash
 # Unix-like (Linux, macOS, FreeBSD)
-sudo {projectname} --service install
+sudo weather --service install
 # Binary creates service file configured to run as root
 # All future service starts run as root automatically
 
 # Windows (run as Administrator)
-{projectname}.exe --service install
-# Binary creates Windows service with Virtual Service Account (NT SERVICE\{projectname})
+weather.exe --service install
+# Binary creates Windows service with Virtual Service Account (NT SERVICE\weather)
 ```
 
 #### Unix-Like Platforms (Linux, macOS, FreeBSD)
@@ -7528,10 +7528,10 @@ sudo {projectname} --service install
 | Step | Running As | Actions |
 |------|-----------|---------|
 | 1 | **root** | Service manager starts binary |
-| 2 | **root** | Create system user `{projectname}` (if needed) |
+| 2 | **root** | Create system user `weather` (if needed) |
 | 3 | **root** | Create directories, set ownership |
 | 4 | **root** | Bind configured ports (any port works) |
-| 5 | **root→user** | **DROP PRIVILEGES** to `{projectname}` user |
+| 5 | **root→user** | **DROP PRIVILEGES** to `weather` user |
 | 6 | **user** | Initialize config, database, etc. |
 | 7 | **user** | Start serving requests |
 
@@ -7540,7 +7540,7 @@ Service start (automatic after install):
     ├─ Start as root (service manager)
     ├─ Create user/dirs if needed
     ├─ Bind port 80/443 (root)
-    ├─ Drop to {projectname} user
+    ├─ Drop to weather user
     └─ Serve requests (user)
 ```
 
@@ -7550,7 +7550,7 @@ Service start (automatic after install):
 ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
 
 # WRONG: Don't do this - prevents privileged port binding
-# USER {projectname}
+# USER weather
 ```
 
 #### Windows
@@ -7559,10 +7559,10 @@ ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
 
 | Step | Running As | Actions |
 |------|-----------|---------|
-| 1 | **NT SERVICE\\{projectname}** | Service manager starts binary |
-| 2 | **NT SERVICE\\{projectname}** | Create directories (has access via ACL) |
-| 3 | **NT SERVICE\\{projectname}** | Bind configured ports |
-| 4 | **NT SERVICE\\{projectname}** | Initialize and serve requests |
+| 1 | **NT SERVICE\\weather** | Service manager starts binary |
+| 2 | **NT SERVICE\\weather** | Create directories (has access via ACL) |
+| 3 | **NT SERVICE\\weather** | Bind configured ports |
+| 4 | **NT SERVICE\\weather** | Initialize and serve requests |
 
 **Note:** VSA is auto-created by Windows when service is installed. No manual user creation needed.
 
@@ -7572,7 +7572,7 @@ ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
 
 ```bash
 # No sudo - runs as current user
-{projectname} --port 8080
+weather --port 8080
 
 # Port must be >1024 (unprivileged)
 # Paths use user directories (~/.config/, ~/.local/, etc.)
@@ -7789,8 +7789,8 @@ ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
    Error: Cannot bind to port 80
 
    Port 80 requires elevated privileges. Options:
-     1. Install as service (requires admin): sudo {projectname} --service install
-     2. Use high port (no admin needed): {projectname} --port 8080
+     1. Install as service (requires admin): sudo weather --service install
+     2. Use high port (no admin needed): weather --port 8080
    ```
 
 #### Commands Requiring Escalation
@@ -7821,7 +7821,7 @@ ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
 | `--maintenance mode` | 🔐 Auth | Requires admin auth OR root | N/A |
 | (normal start) | ❌ No | Adapts paths to current user | N/A |
 
-**Key insight:** After service install, the `{projectname}` user owns all data directories. However, sensitive operations require AUTHORIZATION, not just file access.
+**Key insight:** After service install, the `weather` user owns all data directories. However, sensitive operations require AUTHORIZATION, not just file access.
 
 #### Sensitive Operations (🔐 Auth Required)
 
@@ -7836,7 +7836,7 @@ ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
 **Setup authorization flow:**
 
 ```
-User runs: {projectname} --maintenance setup
+User runs: weather --maintenance setup
 
 Binary checks:
 ├─ Is database empty (no admins exist)?
@@ -7848,21 +7848,21 @@ Binary checks:
 └─ NO authorization → Reject with:
    "Setup already completed. To reconfigure:
     1. Use existing admin credentials via WebUI
-    2. Run as root: sudo {projectname} --maintenance setup
+    2. Run as root: sudo weather --maintenance setup
     3. Use setup token shown at first-run (if you saved it)"
 ```
 
 **Restore authorization flow:**
 
 ```
-User runs: {projectname} --maintenance restore backup.tar.gz
+User runs: weather --maintenance restore backup.tar.gz
 
 Binary checks:
 ├─ Is database empty (first-run/fresh install)?
 │   └─ YES → Allow restore (nothing to protect)
 ├─ Is user root?
 │   └─ YES → Allow restore (with confirmation prompt)
-├─ Is user the service user ({projectname})?
+├─ Is user the service user (weather)?
 │   └─ YES → Require admin credentials:
 │            "This will OVERWRITE all data. Enter admin credentials to confirm."
 │            └─ Valid credentials → Allow restore
@@ -7875,12 +7875,12 @@ Binary checks:
 **Mode change authorization flow:**
 
 ```
-User runs: {projectname} --maintenance mode development
+User runs: weather --maintenance mode development
 
 Binary checks:
 ├─ Is user root?
 │   └─ YES → Allow (with warning about security implications)
-├─ Is user the service user ({projectname})?
+├─ Is user the service user (weather)?
 │   └─ YES → Require admin credentials
 └─ Random user → Reject
 ```
@@ -7904,9 +7904,9 @@ func needsEscalationForService() bool {
         return !isElevated() && isWindowsServiceInstalled()
     }
     // Unix: check for system service files
-    if fileExists("/etc/systemd/system/{projectname}.service") ||
-       fileExists("/Library/LaunchDaemons/{projectorg}.{projectname}.plist") ||
-       fileExists("/usr/local/etc/rc.d/{projectname}") {
+    if fileExists("/etc/systemd/system/weather.service") ||
+       fileExists("/Library/LaunchDaemons/apimgr.weather.plist") ||
+       fileExists("/usr/local/etc/rc.d/weather") {
         // System service installed - need elevated privileges to manage
         return !isElevated()
     }
@@ -7994,7 +7994,7 @@ func canChangeMode() (bool, string) {
 **Smart escalation behavior:**
 
 ```
-User runs: {projectname} --service --install
+User runs: weather --service --install
 
 Binary checks:
 ├─ Already root/admin? → Proceed with system service
@@ -8009,7 +8009,7 @@ Binary checks:
 **Port fallback behavior:**
 
 ```
-User runs: {projectname} --port 80
+User runs: weather --port 80
 
 Binary checks:
 ├─ Already root/admin? → Bind port 80, proceed
@@ -8021,35 +8021,35 @@ Binary checks:
 └─ Warn user of actual port in use
 ```
 
-#### The `{projectname}` System User/Group
+#### The `weather` System User/Group
 
 **Created automatically during first root/service startup.**
 
 | Property | Value |
 |----------|-------|
-| **Username** | `{projectname}` |
-| **Group** | `{projectname}` |
+| **Username** | `weather` |
+| **Group** | `weather` |
 | **Shell** | `/usr/sbin/nologin` (no login) |
-| **Home** | `/var/lib/{projectorg}/{projectname}` |
+| **Home** | `/var/lib/apimgr/weather` |
 | **UID/GID** | Auto-assigned by system |
 | **Type** | System user (UID < 1000 on Linux) |
 
-**What the `{projectname}` user CAN do:**
+**What the `weather` user CAN do:**
 
 | Permission | Details |
 |------------|---------|
-| Read/write config | `/etc/{projectorg}/{projectname}/` |
-| Read/write data | `/var/lib/{projectorg}/{projectname}/` |
-| Read/write cache | `/var/cache/{projectorg}/{projectname}/` |
-| Read/write logs | `/var/log/{projectorg}/{projectname}/` |
-| Read/write backups | `/var/lib/Backups/{projectorg}/{projectname}/` or `/mnt/Backups/...` |
+| Read/write config | `/etc/apimgr/weather/` |
+| Read/write data | `/var/lib/apimgr/weather/` |
+| Read/write cache | `/var/cache/apimgr/weather/` |
+| Read/write logs | `/var/log/apimgr/weather/` |
+| Read/write backups | `/var/lib/Backups/apimgr/weather/` or `/mnt/Backups/...` |
 | Use bound sockets | Inherited from root before privilege drop |
 | Bind ports >1024 | New sockets after privilege drop |
 | Run scheduled tasks | Backup, cleanup, SSL renewal, etc. |
 | Manage database | SQLite in data dir |
 | Manage SSL certs | In `{config_dir}/ssl/` |
 
-**What the `{projectname}` user CANNOT do:**
+**What the `weather` user CANNOT do:**
 
 | Restriction | Reason |
 |-------------|--------|
@@ -8065,19 +8065,19 @@ Binary checks:
 
 ```bash
 # Binary sets these during startup as root
-chown -R {projectname}:{projectname} /etc/{projectorg}/{projectname}/
-chown -R {projectname}:{projectname} /var/lib/{projectorg}/{projectname}/
-chown -R {projectname}:{projectname} /var/cache/{projectorg}/{projectname}/
-chown -R {projectname}:{projectname} /var/log/{projectorg}/{projectname}/
+chown -R weather:weather /etc/apimgr/weather/
+chown -R weather:weather /var/lib/apimgr/weather/
+chown -R weather:weather /var/cache/apimgr/weather/
+chown -R weather:weather /var/log/apimgr/weather/
 
 # Permissions
-chmod 755 /etc/{projectorg}/{projectname}/
-chmod 700 /etc/{projectorg}/{projectname}/security/
-chmod 700 /etc/{projectorg}/{projectname}/ssl/
-chmod 700 /etc/{projectorg}/{projectname}/tor/
-chmod 755 /var/lib/{projectorg}/{projectname}/
-chmod 755 /var/cache/{projectorg}/{projectname}/
-chmod 755 /var/log/{projectorg}/{projectname}/
+chmod 755 /etc/apimgr/weather/
+chmod 700 /etc/apimgr/weather/security/
+chmod 700 /etc/apimgr/weather/ssl/
+chmod 700 /etc/apimgr/weather/tor/
+chmod 755 /var/lib/apimgr/weather/
+chmod 755 /var/cache/apimgr/weather/
+chmod 755 /var/log/apimgr/weather/
 ```
 
 **User creation:** See PART 24 for platform-specific user creation commands (Linux `useradd`, macOS `dscl`, FreeBSD `pw`).
@@ -8087,7 +8087,7 @@ chmod 755 /var/log/{projectorg}/{projectname}/
 | Aspect | System Service | User Service |
 |--------|---------------|--------------|
 | **Installed by** | root/admin | Regular user |
-| **Runs as** | root → drops to `{projectname}` | Calling user |
+| **Runs as** | root → drops to `weather` | Calling user |
 | **Ports** | Any | >1024 only |
 | **Paths** | `/etc/`, `/var/` | `~/.config/`, `~/.local/` |
 | **Survives logout** | Yes | Depends on `lingering` |
@@ -8185,7 +8185,7 @@ server:
 
   # Branding & SEO - see PART 16 for full details
   branding:
-    title: "{projectname}"
+    title: "weather"
     tagline: ""
     description: ""
   seo:
@@ -8835,7 +8835,7 @@ import (
     "runtime"
     "strings"
 
-    "github.com/{projectorg}/{projectname}/src/config"
+    "github.com/apimgr/weather/src/config"
 )
 
 var (
@@ -9267,12 +9267,12 @@ func ShowProgress(env *DisplayEnv, percent int) {
 
 ```bash
 # Test dumb terminal behavior
-TERM=dumb {projectname} --status
-TERM=dumb {projectname}-cli list
-TERM=dumb {projectname}-agent status
+TERM=dumb weather --status
+TERM=dumb weather-cli list
+TERM=dumb weather-agent status
 
 # Should produce plain text output with no escape codes
-TERM=dumb {projectname} --status | cat -v   # No ^[ sequences
+TERM=dumb weather --status | cat -v   # No ^[ sequences
 ```
 
 ### Platform-Specific Display Detection
@@ -9437,7 +9437,7 @@ src/
 
 ```go
 // go.mod
-module {projectorg}/{projectname}
+module apimgr/weather
 
 go 1.xx  // Use current latest stable version
 
@@ -9563,7 +9563,7 @@ package banner
 
 import (
     "fmt"
-    "{projectorg}/{projectname}/common/terminal"
+    "apimgr/weather/common/terminal"
 )
 
 type BannerConfig struct {
@@ -9597,15 +9597,15 @@ func PrintStartupBanner(cfg BannerConfig) {
 
 # PART 8: SERVER BINARY CLI 
 
-**These are the command-line flags for the SERVER binary (`{projectname}`), NOT the client (`{projectname}-cli`).**
+**These are the command-line flags for the SERVER binary (`weather`), NOT the client (`weather-cli`).**
 
 ## Binary Types
 
 | Binary | Default Name | Purpose | Key Flags |
 |--------|--------------|---------|-----------|
-| **Server** | `{projectname}` | Runs the HTTP server | `--config`, `--data`, `--port`, `--mode` |
-| **Agent** | `{projectname}-agent` | Reports to server | `--server`, `--token`, `--config` |
-| **Client** | `{projectname}-cli` | User interface to server | `--server`, `--token`, `--output` |
+| **Server** | `weather` | Runs the HTTP server | `--config`, `--data`, `--port`, `--mode` |
+| **Agent** | `weather-agent` | Reports to server | `--server`, `--token`, `--config` |
+| **Client** | `weather-cli` | User interface to server | `--server`, `--token`, `--output` |
 
 **Shared flags (ALL binaries):** `--help`, `--version`, `--shell`, `--debug`, `--color`
 
@@ -9613,18 +9613,18 @@ func PrintStartupBanner(cfg BannerConfig) {
 
 | Binary | Default Name | User-Agent |
 |--------|--------------|------------|
-| Server | `{projectname}` | `{projectname}/{version}` |
-| Agent | `{projectname}-agent` | `{projectname}-agent/{version}` |
-| Client | `{projectname}-cli` | `{projectname}-cli/{version}` |
+| Server | `weather` | `weather/{version}` |
+| Agent | `weather-agent` | `weather-agent/{version}` |
+| Client | `weather-cli` | `weather-cli/{version}` |
 
 **ALL binaries can be renamed by users. Must show ACTUAL binary name in:**
 - `--help` and `--version` output
 - Error messages showing "run X --help"
 - Any user-facing documentation/instructions
 
-**Hardcode `{projectname}` for internal identifiers (never changes):**
+**Hardcode `weather` for internal identifiers (never changes):**
 - User-Agent header (identifies binary type to server)
-- Default paths (`/etc/{projectorg}/{projectname}/`)
+- Default paths (`/etc/apimgr/weather/`)
 - Config keys, database tables, API identifiers
 
 **Get actual binary name:**
@@ -9743,20 +9743,20 @@ output:
 **Testing:**
 ```bash
 # Colors and emojis enabled (default)
-{projectname} --status
+weather --status
 
 # Colors and emojis disabled via NO_COLOR
-NO_COLOR=1 {projectname} --status
+NO_COLOR=1 weather --status
 
 # Colors forced on (overrides NO_COLOR for colors only)
-NO_COLOR=1 {projectname} --status --color=always
+NO_COLOR=1 weather --status --color=always
 
 # Colors forced off (explicit)
-{projectname} --status --color=never
+weather --status --color=never
 
 # Verify no escape codes or emojis in output
-NO_COLOR=1 {projectname} --status | cat -v   # No ^[ sequences
-NO_COLOR=1 {projectname} --status | grep -E '✅|❌|⚠️|🚀'  # Should find nothing
+NO_COLOR=1 weather --status | cat -v   # No ^[ sequences
+NO_COLOR=1 weather --status | grep -E '✅|❌|⚠️|🚀'  # Should find nothing
 ```
 
 **THESE SERVER COMMANDS CANNOT BE CHANGED. This is the complete command set.**
@@ -9790,11 +9790,11 @@ NO_COLOR=1 {projectname} --status | grep -E '✅|❌|⚠️|🚀'  # Should find
 ### Server --help Output
 
 ```bash
-$ {projectname} --help
-{projectname} {projectversion} - {project description}
+$ weather --help
+weather {projectversion} - {project description}
 
 Usage:
-  {projectname} [flags]
+  weather [flags]
 
 Information:
   -h, --help                        Show help (--help for any command shows its help)
@@ -9825,7 +9825,7 @@ Service Management:
       --maintenance CMD             Maintenance operations (--maintenance --help for details)
       --update [CMD]                Check/perform updates (--update --help for details)
 
-Run '{projectname} <command> --help' for detailed help on any command.
+Run 'weather <command> --help' for detailed help on any command.
 ```
 
 ## Directory Flags
@@ -9834,12 +9834,12 @@ Run '{projectname} <command> --help' for detailed help on any command.
 
 | Flag | Type | Default (Linux root) | Default (Linux user) |
 |------|------|----------------------|----------------------|
-| `--config` | Directory | `/etc/{projectorg}/{projectname}/` | `~/.config/{projectorg}/{projectname}/` |
-| `--data` | Directory | `/var/lib/{projectorg}/{projectname}/` | `~/.local/share/{projectorg}/{projectname}/` |
-| `--cache` | Directory | `/var/cache/{projectorg}/{projectname}/` | `~/.cache/{projectorg}/{projectname}/` |
-| `--log` | Directory | `/var/log/{projectorg}/{projectname}/` | `~/.local/log/{projectorg}/{projectname}/` |
-| `--backup` | Directory | `/mnt/Backups/{projectorg}/{projectname}/` (if writable) | `~/.local/share/Backups/{projectorg}/{projectname}/` |
-| `--pid` | File | `/var/run/{projectorg}/{projectname}.pid` | `~/.local/share/{projectorg}/{projectname}/{projectname}.pid` |
+| `--config` | Directory | `/etc/apimgr/weather/` | `~/.config/apimgr/weather/` |
+| `--data` | Directory | `/var/lib/apimgr/weather/` | `~/.local/share/apimgr/weather/` |
+| `--cache` | Directory | `/var/cache/apimgr/weather/` | `~/.cache/apimgr/weather/` |
+| `--log` | Directory | `/var/log/apimgr/weather/` | `~/.local/log/apimgr/weather/` |
+| `--backup` | Directory | `/mnt/Backups/apimgr/weather/` (if writable) | `~/.local/share/Backups/apimgr/weather/` |
+| `--pid` | File | `/var/run/apimgr/weather.pid` | `~/.local/share/apimgr/weather/weather.pid` |
 
 **Note:** `--backup` prefers system backup dir if writable, falls back to user dir. See `GetBackupDir()` in PART 5.
 
@@ -9951,7 +9951,7 @@ func isOurProcess(pid int) bool {
         // On macOS/BSD, use ps command
         return isOurProcessDarwin(pid)
     }
-    return strings.Contains(filepath.Base(exePath), "{projectname}")
+    return strings.Contains(filepath.Base(exePath), "weather")
 }
 
 // isOurProcessDarwin checks process on macOS/BSD
@@ -9961,7 +9961,7 @@ func isOurProcessDarwin(pid int) bool {
     if err != nil {
         return false
     }
-    return strings.Contains(string(output), "{projectname}")
+    return strings.Contains(string(output), "weather")
 }
 
 // --- pid_windows.go ---
@@ -10000,7 +10000,7 @@ func isOurProcess(pid int) bool {
         return false
     }
     exePath := windows.UTF16ToString(buf[:size])
-    return strings.Contains(strings.ToLower(filepath.Base(exePath)), "{projectname}")
+    return strings.Contains(strings.ToLower(filepath.Base(exePath)), "weather")
 }
 
 // WritePIDFile writes current process PID to file
@@ -10113,15 +10113,15 @@ PHASE 5: Server startup (actual server start)
 
 8. IF RUNNING AS ROOT - setup system resources BEFORE dropping privileges:
    a. Check/create system user:
-      ├─ User {projectname} exists → use it
-      └─ User missing → create {projectname}:{projectname} (see PART 25)
+      ├─ User weather exists → use it
+      └─ User missing → create weather:weather (see PART 25)
    b. Create ALL directories (while still root):
       ├─ {config_dir}/ and subdirs (security/, ssl/, tor/)
       ├─ {data_dir}/ and subdirs (db/, tor/, tor/site/)
       ├─ {cache_dir}/
       ├─ {log_dir}/
       └─ {backup_dir}/
-   c. Set ownership: chown -R {projectname}:{projectname} on all dirs
+   c. Set ownership: chown -R weather:weather on all dirs
    d. Set permissions: 0755 general dirs, 0700 sensitive (security/, ssl/, tor/)
    e. Determine ports (see PART 15 for full port rules):
       ├─ Format 1: --port {port} (single port)
@@ -10131,22 +10131,22 @@ PHASE 5: Server startup (actual server start)
       ├─ Format 2: --port {http},{https} (dual port)
       │   ├─ First port = HTTP
       │   └─ Second port = HTTPS
-      ├─ No --port? → check {PROJECTNAME}_PORT env var (same format)
+      ├─ No --port? → check WEATHER_PORT env var (same format)
       ├─ No env var? → read from config file (server.port)
       └─ No config? → random port in 64000-64999 range (single, HTTP)
    f. Bind ALL privileged ports (< 1024) NOW while still root:
       ├─ For each port < 1024: create and bind socket, store fd
       ├─ If ANY privileged port fails: exit with error
       └─ Unprivileged ports (>= 1024) bound later in step 18
-   g. DROP PRIVILEGES to {projectname} user
+   g. DROP PRIVILEGES to weather user
    h. Verify privilege drop succeeded (getuid() != 0)
 
 9. IF RUNNING AS USER (non-root) - setup user directories:
-   ├─ Create {config_dir} (~/.config/{projectorg}/{projectname}/)
-   ├─ Create {data_dir} (~/.local/share/{projectorg}/{projectname}/)
-   ├─ Create {cache_dir} (~/.cache/{projectorg}/{projectname}/)
-   ├─ Create {log_dir} (~/.local/log/{projectorg}/{projectname}/)
-   ├─ Create {backup_dir} (~/.local/share/Backups/{projectorg}/{projectname}/)
+   ├─ Create {config_dir} (~/.config/apimgr/weather/)
+   ├─ Create {data_dir} (~/.local/share/apimgr/weather/)
+   ├─ Create {cache_dir} (~/.cache/apimgr/weather/)
+   ├─ Create {log_dir} (~/.local/log/apimgr/weather/)
+   ├─ Create {backup_dir} (~/.local/share/Backups/apimgr/weather/)
    ├─ Set permissions: 0700 on all dirs (user-only access)
    └─ Note: port must be >1024 (user mode cannot bind privileged ports)
 
@@ -10155,7 +10155,7 @@ PHASE 5: Server startup (actual server start)
     ├─ Set default log level (info)
     └─ Log "Server starting, version X.Y.Z"
 
-11. Check PID file (root: /var/run/{projectorg}/{projectname}.pid, user: {data_dir}/{projectname}.pid):
+11. Check PID file (root: /var/run/apimgr/weather.pid, user: {data_dir}/weather.pid):
     ├─ PID file exists AND process running → exit 1 "already running"
     ├─ PID file exists AND process dead → remove stale PID, continue
     └─ No PID file → continue
@@ -10166,7 +10166,7 @@ PHASE 5: Server startup (actual server start)
     ├─ Look for {config_dir}/server.yml
     ├─ Determine port (if not already bound in step 8f):
     │   ├─ --port CLI flag → use specified
-    │   ├─ {PROJECTNAME}_PORT env var → use specified
+    │   ├─ WEATHER_PORT env var → use specified
     │   ├─ Config file server.port → use specified
     │   └─ Default → random 64000-64999
     ├─ If MISSING (first run):
@@ -10178,7 +10178,7 @@ PHASE 5: Server startup (actual server start)
     ├─ If EXISTS:
     │   ├─ Parse YAML configuration
     │   └─ Validate all values (invalid → log WARN, use default)
-    └─ Apply remaining environment variable overrides ({PROJECTNAME}_*)
+    └─ Apply remaining environment variable overrides (WEATHER_*)
 
 14. Reconfigure logging from config:
     ├─ Set log level from server.logging.level
@@ -10315,7 +10315,7 @@ PHASE 5: Server startup (actual server start)
 | Init systems | Parent PID 1 is: `tini`, `dumb-init`, `s6-svscan`, `runsv`, `runsvdir`, `catatonit` |
 | Kubernetes | `KUBERNETES_SERVICE_HOST` env var set |
 | cgroup | `/proc/1/cgroup` contains `docker`, `kubepods`, `lxc` |
-| Self wrapper | Parent process is `{projectname}` (entrypoint wrapper)
+| Self wrapper | Parent process is `weather` (entrypoint wrapper)
 
 **Manual Start Priority Order:**
 1. `--daemon` CLI flag (highest)
@@ -10357,7 +10357,7 @@ func isContainer() bool {
     switch parentName {
     case "tini", "dumb-init", "s6-svscan", "runsv", "runsvdir", "catatonit":
         return true
-    case "{projectname}":
+    case "weather":
         // Parent is our own binary - likely container entrypoint
         return true
     }
@@ -10604,7 +10604,7 @@ myapp is running (PID 12345)
 **Used for Docker/compose healthcheck:**
 ```yaml
 healthcheck:
-  test: /usr/local/bin/{projectname} --status
+  test: /usr/local/bin/weather --status
   interval: 10s
   timeout: 5s
   retries: 3
@@ -12035,7 +12035,7 @@ $ kill -TERM $(cat /var/run/myapp.pid)
 | (none) | `DATABASE_DIR` | SQLite database directory (Docker: `/data/db/sqlite`, Native: `{data_dir}/db/`) |
 | (none) | `BACKUP_DIR` | Backup directory (defaults to `{data_dir}/backup/`, changeable) |
 
-**External backup mounts:** In production, `BACKUP_DIR` should typically point to external storage (NAS, separate disk, etc.) rather than staying under `{data_dir}`. Example: `BACKUP_DIR=/mnt/Backups/{projectorg}/{projectname}`. The default `{data_dir}/backup/` is for development/testing only.
+**External backup mounts:** In production, `BACKUP_DIR` should typically point to external storage (NAS, separate disk, etc.) rather than staying under `{data_dir}`. Example: `BACKUP_DIR=/mnt/Backups/apimgr/weather`. The default `{data_dir}/backup/` is for development/testing only.
 
 **Implementation:**
 
@@ -12120,10 +12120,10 @@ func isWritable(path string) bool {
 }
 
 // systemBackupDir returns the system-level backup directory
-// Linux: /mnt/Backups/{projectorg}/{projectname}
-// macOS: /Library/Backups/{projectorg}/{projectname}
-// BSD:   /var/backups/{projectorg}/{projectname}
-// Windows: %ProgramData%\Backups\{projectorg}\{projectname}
+// Linux: /mnt/Backups/apimgr/weather
+// macOS: /Library/Backups/apimgr/weather
+// BSD:   /var/backups/apimgr/weather
+// Windows: %ProgramData%\Backups\apimgr\weather
 func systemBackupDir() string {
     switch runtime.GOOS {
     case "darwin":
@@ -12138,9 +12138,9 @@ func systemBackupDir() string {
 }
 
 // userBackupDir returns the user-level backup directory
-// Linux/BSD: ~/.local/share/Backups/{projectorg}/{projectname}
-// macOS: ~/Library/Backups/{projectorg}/{projectname}
-// Windows: %LocalAppData%\Backups\{projectorg}\{projectname}
+// Linux/BSD: ~/.local/share/Backups/apimgr/weather
+// macOS: ~/Library/Backups/apimgr/weather
+// Windows: %LocalAppData%\Backups\apimgr\weather
 func userBackupDir() string {
     home, _ := os.UserHomeDir()
     switch runtime.GOOS {
@@ -12158,7 +12158,7 @@ func userBackupDir() string {
 
 ```bash
 # Configurable paths - organized by component
-# APP_NAME is set to {projectname}
+# APP_NAME is set to weather
 export CONFIG_DIR="/config/${APP_NAME}"
 export DATA_DIR="/data/${APP_NAME}"
 export CACHE_DIR="/data/${APP_NAME}/cache"
@@ -12167,8 +12167,8 @@ export DATABASE_DIR="/data/db"
 export BACKUP_DIR="/data/backups/${APP_NAME}"
 
 # Tor directories under binary's dirs (binary owns Tor)
-# ${CONFIG_DIR}/tor/ = /config/{projectname}/tor/
-# ${DATA_DIR}/tor/   = /data/{projectname}/tor/
+# ${CONFIG_DIR}/tor/ = /config/weather/tor/
+# ${DATA_DIR}/tor/   = /data/weather/tor/
 ```
 
 ### Docker Compose Mapping
@@ -12177,14 +12177,14 @@ export BACKUP_DIR="/data/backups/${APP_NAME}"
 
 ```yaml
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-app
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-app
     command:
       - --config=/config
       - --data=/data
       - --log=/logs
-      - --pid=/run/{projectname}.pid
+      - --pid=/run/weather.pid
       - --port=8080
     volumes:
       - config:/config:ro          # Config (read-only)
@@ -12199,16 +12199,16 @@ services:
 
 ```yaml
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-app
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-app
     volumes:
-      - {projectname}-data:/data
+      - weather-data:/data
     ports:
       - "8080:8080"
 
 volumes:
-  {projectname}-data:
+  weather-data:
 ```
 
 ### Commands Anyone Can Run (No Privileges)
@@ -12512,7 +12512,7 @@ This properly handles complex suffixes like `.co.uk`, `.com.au`, `.org.uk`, etc.
 - `.localhost`, `.test`, `.example`, `.invalid` (RFC 6761)
 - `.local`, `.lan`, `.internal`, `.home`, `.localdomain`
 - `.home.arpa`, `.intranet`, `.corp`, `.private`
-- `{projectname}` - dynamic (e.g., `app.jokes`, `dev.quotes`, `my.api`)
+- `weather` - dynamic (e.g., `app.jokes`, `dev.quotes`, `my.api`)
 
 **Overlay Network TLDs (App-Managed, not set in DOMAIN):**
 - `.onion` - Tor hidden services (RFC 7686) - app generates/manages
@@ -12568,7 +12568,7 @@ func IsValidHost(host string, devMode bool, projectName string) bool {
         return true
     }
 
-    // Check dynamic project-specific TLD (e.g., app.jokes, dev.quotes, quotes, jokes, {projectname})
+    // Check dynamic project-specific TLD (e.g., app.jokes, dev.quotes, quotes, jokes, weather)
     if projectName != "" && strings.HasSuffix(lower, "."+strings.ToLower(projectName)) {
         // Project TLDs only valid in dev mode
         return devMode
@@ -16548,7 +16548,7 @@ server:
     timeout: 5s
 
     # Key prefix to avoid collisions (use unique prefix per app)
-    prefix: "{projectname}:"
+    prefix: "weather:"
 
     # Default TTL
     ttl: 1h
@@ -16583,7 +16583,7 @@ server:
   cache:
     type: valkey
     url: ${CACHE_URL}  # valkey://user:pass@valkey.example.com:6379/0
-    prefix: "{projectname}:"
+    prefix: "weather:"
 ```
 
 **Using individual fields:**
@@ -16595,7 +16595,7 @@ server:
     port: 6379
     password: ${VALKEY_PASSWORD}
     db: 0
-    prefix: "{projectname}:"
+    prefix: "weather:"
 ```
 
 **Valkey/Redis Cluster:**
@@ -16609,7 +16609,7 @@ server:
       - valkey2.example.com:6379
       - valkey3.example.com:6379
     password: ${VALKEY_PASSWORD}
-    prefix: "{projectname}:"
+    prefix: "weather:"
 ```
 
 ### Cache Usage in Application
@@ -16904,7 +16904,7 @@ type StatsInfo struct {
 
 | Requirement | Details |
 |-------------|---------|
-| Page title | `{projectname} - Health Status` |
+| Page title | `weather - Health Status` |
 | Layout | Standard public layout (header, main.container, footer) |
 | CSS patterns | PART 16 global classes |
 | Field order | Same as backend struct (1-8) |
@@ -16916,7 +16916,7 @@ type StatsInfo struct {
 <!DOCTYPE html>
 <html lang="en" class="theme-dark">
 <head>
-  <title>{projectname} - Health Status</title>
+  <title>weather - Health Status</title>
   <!-- Standard meta, CSS, theme support -->
 </head>
 <body>
@@ -17383,7 +17383,7 @@ When not in cluster mode:
 ### --version Output
 
 ```
-{projectname} {projectversion}
+weather {projectversion}
 Built: {BUILD_DATE}
 Go: {GO_VERSION}
 OS/Arch: {GOOS}/{GOARCH}
@@ -18062,7 +18062,7 @@ When an HTTP tool (curl, wget, httpie) is detected, the server MUST:
 
 | Type | Examples | Detection | Response | Interactive | JS Support |
 |------|----------|-----------|----------|-------------|------------|
-| **Our Client** | `{projectname}-cli` | `{projectname}-cli/` in User-Agent | JSON (client handles formatting) | **YES** (TUI/GUI) | N/A |
+| **Our Client** | `weather-cli` | `weather-cli/` in User-Agent | JSON (client handles formatting) | **YES** (TUI/GUI) | N/A |
 | **Text Browsers** | lynx, w3m, links, elinks | User-Agent patterns | HTML **without JavaScript** (no-JS alternative) | **YES** (navigate, click) | **NO** |
 | **HTTP Tools** | curl, wget, httpie | User-Agent patterns | Formatted text (HTML2TextConverter) | **NO** (just dump output) | N/A |
 
@@ -18088,7 +18088,7 @@ When an HTTP tool (curl, wget, httpie) is detected, the server MUST:
 ```go
 // src/common/httputil/detect.go
 
-// isOurCliClient detects our own client binary ({projectname}-cli)
+// isOurCliClient detects our own client binary (weather-cli)
 // Client is INTERACTIVE (TUI/GUI) - receives JSON, renders itself
 func isOurCliClient(r *http.Request) bool {
     ua := r.Header.Get("User-Agent")
@@ -18318,7 +18318,7 @@ ID: joke_123
   • API Docs [/docs]
   • Get Another Joke [/jokes/random]
 ────────────────────────────────────────────────────────────────────────────────
-                    Powered by {projectname} • v{version}
+                    Powered by weather • v{version}
 ```
 
 **Request Handler Integration:**
@@ -18374,7 +18374,7 @@ func renderNoJSHTML(w http.ResponseWriter, data interface{}) {
 | Client Type | Detection | Response | Interactive | JS Support |
 |-------------|-----------|----------|-------------|------------|
 | Browser (Chrome, Firefox) | User-Agent | HTML + JS | **Yes** | **Yes** |
-| **Our Client** (`{projectname}-cli`) | `isOurCliClient()` | JSON | **Yes** (TUI/GUI) | N/A |
+| **Our Client** (`weather-cli`) | `isOurCliClient()` | JSON | **Yes** (TUI/GUI) | N/A |
 | **Text Browsers** (lynx, w3m, links) | `isTextBrowser()` | HTML (no-JS) | **Yes** (navigate, click) | **No** |
 | **HTTP Tools** (curl, wget, httpie) | `isHttpTool()` | Formatted text | **No** (just dump) | N/A |
 | Accept: text/plain | Header | Formatted text | No | N/A |
@@ -19096,7 +19096,7 @@ Before proceeding, confirm you understand:
 
 | Environment | DOMAIN Value | Example |
 |-------------|--------------|---------|
-| **Development** | `{projectname}` | `DOMAIN=jokes` |
+| **Development** | `weather` | `DOMAIN=jokes` |
 | **Production** | Valid FQDN | `DOMAIN=api.example.com` |
 
 **Valid Production DOMAIN formats (comma-separated list supported):**
@@ -19302,9 +19302,9 @@ export DOMAIN=myapp.com,www.myapp.com,api.myapp.com
 **Dev TLDs are allowed in development mode but require global IP fallback for remote access.**
 
 **Dynamic Dev TLDs (project name as TLD):**
-- `{projectname}` - e.g., `app.jokes`, `my.quotes`, `dev.api`
-- `{projectname}.local` - e.g., `app.jokes.local`
-- `{projectname}.test` - e.g., `app.jokes.test`
+- `weather` - e.g., `app.jokes`, `my.quotes`, `dev.api`
+- `weather.local` - e.g., `app.jokes.local`
+- `weather.test` - e.g., `app.jokes.test`
 
 **Static Dev TLDs:**
 - `.local`, `.test`, `.example`, `.invalid` (RFC 6761)
@@ -19340,7 +19340,7 @@ func GetDisplayURL(projectName string, port int, isHTTPS bool) string {
 func isDevTLD(host, projectName string) bool {
     lower := strings.ToLower(host)
 
-    // Check dynamic project-specific TLD (e.g., app.jokes, dev.quotes, quotes, jokes, {projectname})
+    // Check dynamic project-specific TLD (e.g., app.jokes, dev.quotes, quotes, jokes, weather)
     if projectName != "" && strings.HasSuffix(lower, "."+strings.ToLower(projectName)) {
         return true
     }
@@ -19675,7 +19675,7 @@ formatURL(host, 8443, true)
 **Example (Production with SSL + Tor on 443):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19690,7 +19690,7 @@ formatURL(host, 8443, true)
 **Example (Full Banner with Tor + I2P + SMTP):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19709,7 +19709,7 @@ formatURL(host, 8443, true)
 **Example (Production on port 8080):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19723,7 +19723,7 @@ formatURL(host, 8443, true)
 **Example (Development on port 8080):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: development                          │
 ├───────────────────────────────────────────────────────────┤
@@ -19737,7 +19737,7 @@ formatURL(host, 8443, true)
 **Example (Development IPv6 on port 8080):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: development                          │
 ├───────────────────────────────────────────────────────────┤
@@ -19751,7 +19751,7 @@ formatURL(host, 8443, true)
 **Example (Production on port 80):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19765,7 +19765,7 @@ formatURL(host, 8443, true)
 **Example (Production with debugging enabled):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: {app_mode} [debugging]               │
 ├───────────────────────────────────────────────────────────┤
@@ -19779,7 +19779,7 @@ formatURL(host, 8443, true)
 **Example (First Run - Setup Required):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19811,7 +19811,7 @@ formatURL(host, 8443, true)
 
 **60-79 cols (Compact - no ASCII art, icons + text):**
 ```
-🚀 {PROJECTNAME} v{projectversion}
+🚀 WEATHER v{projectversion}
 🔒 Mode: {app_mode}
 🌐 {proto}://{fqdn}
 📡 Listening: {proto}://{address}:{port}
@@ -19820,7 +19820,7 @@ formatURL(host, 8443, true)
 
 **60-79 cols (Compact - First Run):**
 ```
-🚀 {PROJECTNAME} v{projectversion}
+🚀 WEATHER v{projectversion}
 🔧 Mode: {app_mode}
 🌐 {proto}://{address}:{port}
 📡 Listening: {proto}://{address}:{port}
@@ -19834,14 +19834,14 @@ Go to: {proto}://{fqdn}/{admin_path}/server/setup
 
 **40-59 cols (Minimal - abbreviated, no icons):**
 ```
-{PROJECTNAME} {projectversion}
+WEATHER {projectversion}
 {app_mode}
 {fqdn}:{port}
 ```
 
 **40-59 cols (Minimal - First Run):**
 ```
-{PROJECTNAME} {projectversion}
+WEATHER {projectversion}
 {app_mode}
 {address}:{port}
 SETUP: {setup_token}
@@ -19849,17 +19849,17 @@ SETUP: {setup_token}
 
 **<40 cols (Micro - single line):**
 ```
-{PROJECTNAME} :{port}
+WEATHER :{port}
 ```
 
 **<40 cols (Micro - First Run):**
 ```
-{PROJECTNAME} :{port} [SETUP]
+WEATHER :{port} [SETUP]
 ```
 
 **NO_COLOR / TERM=dumb (Plain text - no emojis, no box drawing, no colors):**
 ```
-{PROJECTNAME} v{projectversion}
+WEATHER v{projectversion}
 Mode: {app_mode}
 URL: {proto}://{fqdn}
 Listening: {proto}://{address}:{port}
@@ -19868,7 +19868,7 @@ Started: {startup_datetime}
 
 **NO_COLOR / TERM=dumb (Plain - First Run):**
 ```
-{PROJECTNAME} v{projectversion}
+WEATHER v{projectversion}
 Mode: {app_mode}
 URL: {proto}://{address}:{port}
 Listening: {proto}://{address}:{port}
@@ -19883,13 +19883,13 @@ This token will only be shown ONCE.
 **--color flag overrides (applies to all sizes):**
 ```bash
 # Force colors on (overrides NO_COLOR)
-{projectname} --color=always
+weather --color=always
 
 # Force colors off
-{projectname} --color=never
+weather --color=never
 
 # Auto-detect (default) - respects NO_COLOR, TERM, TTY
-{projectname} --color=auto
+weather --color=auto
 ```
 
 ### Console vs Logs 
@@ -23677,14 +23677,14 @@ partial/
 ```
 Desktop:
 ┌─────────────────────────────────────────────────────────────────┐
-│  {projectname}                                      [User Icon] │  ← Header
+│  weather                                      [User Icon] │  ← Header
 ├─────────────────────────────────────────────────────────────────┤
 │  Home  |  [App Section 1]  |  [App Section 2]  |  ...           │  ← Nav
 └─────────────────────────────────────────────────────────────────┘
 
 Mobile:
 ┌─────────────────────────────────────────────────────────────────┐
-│  {projectname}                                      [User Icon] │  ← Header
+│  weather                                      [User Icon] │  ← Header
 ├─────────────────────────────────────────────────────────────────┤
 │                                                      [☰ Menu]   │  ← Nav row
 └─────────────────────────────────────────────────────────────────┘
@@ -23699,7 +23699,7 @@ Mobile:
 ```html
 <!-- Header bar: site name + user icon -->
 <header class="header">
-  <a href="/" class="site-brand">{projectname}</a>
+  <a href="/" class="site-brand">weather</a>
 
   <!-- User icon (always visible, far right) -->
   <div class="user-menu">
@@ -24225,8 +24225,8 @@ var ThemePaletteLight = ThemePalette{
 
 | Changes (User-Visible) | Does NOT Change (System) |
 |------------------------|--------------------------|
-| Page titles | Directory names (`{projectname}/`) |
-| Browser tab | System username (`{projectname}`) |
+| Page titles | Directory names (`weather/`) |
+| Browser tab | System username (`weather`) |
 | Header/logo text | Log filenames |
 | Footer branding | Config paths |
 | Email "From" name | Binary name |
@@ -24240,7 +24240,7 @@ var ThemePaletteLight = ThemePalette{
 server:
   branding:
     # Display name (e.g., "Jokes API")
-    title: "{projectname}"
+    title: "weather"
     # Short slogan (e.g., "The best jokes API")
     tagline: ""
     # Longer description for SEO/about
@@ -24603,7 +24603,7 @@ func FetchRemoteImage(ctx context.Context, rawURL string, cfg FetchRemoteImageCo
     }
 
     // Set safe headers
-    req.Header.Set("User-Agent", "{projectname}/1.0")
+    req.Header.Set("User-Agent", "weather/1.0")
     req.Header.Set("Accept", strings.Join(cfg.AllowedTypes, ", "))
 
     resp, err := client.Do(req)
@@ -24672,13 +24672,13 @@ if err != nil {
 
 | Field | Default Value |
 |-------|---------------|
-| `title` | `{projectname}` |
+| `title` | `weather` |
 | `tagline` | Empty |
 | `description` | Empty |
 | `keywords` | Empty |
 | All others | Empty |
 
-**Rule:** If `title` is empty, fall back to `{projectname}`. Other fields are optional.
+**Rule:** If `title` is empty, fall back to `weather`. Other fields are optional.
 
 ## Announcements 
 
@@ -24947,8 +24947,8 @@ When admin edits `custom_html`, show:
 | Variable | Description |
 |----------|-------------|
 | `{currentyear}` | Current year (e.g., 2025) |
-| `{projectname}` | Project name |
-| `{projectorg}` | Organization name |
+| `weather` | Project name |
+| `apimgr` | Organization name |
 | `{projectversion}` | Application version |
 | `{builddatetime}` | Build date/time |
 
@@ -24998,7 +24998,7 @@ When admin edits `custom_html`, show:
   <div class="admin-footer-content">
     <!-- Version info -->
     <span class="admin-footer-version">
-      <a href="/{admin_path}/server/info">{projectname} {projectversion}</a>
+      <a href="/{admin_path}/server/info">weather {projectversion}</a>
     </span>
 
     <span class="admin-footer-separator">•</span>
@@ -26673,7 +26673,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 {PROJECTNAME} · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 {projectversion}                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
@@ -27369,7 +27369,7 @@ Admin Panel Header:
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
-| `title` | Text | `{projectname}` | No | App display name |
+| `title` | Text | `weather` | No | App display name |
 | `tagline` | Text | (empty) | No | Short slogan |
 | `description` | Textarea | (empty) | No | SEO/about description |
 | `logo` | File | (none) | No | Logo image upload |
@@ -28548,7 +28548,7 @@ IMPORTANT NEXT STEPS
 5. Enable two-factor authentication
 
 Keep your admin credentials secure. If you lose access, use:
-  {projectname} --maintenance setup
+  weather --maintenance setup
 ────────────────────────────────────────────────────────────────────────
 
 --
@@ -29685,8 +29685,8 @@ server:
         enabled: true
         # Verify after creation (all checks must pass)
         verify: true
-        # Creates: {projectname}_backup_YYYY-MM-DD.tar.gz[.enc] (full)
-        #          {projectname}-daily.tar.gz[.enc] (incremental)
+        # Creates: weather_backup_YYYY-MM-DD.tar.gz[.enc] (full)
+        #          weather-daily.tar.gz[.enc] (incremental)
         retention:
           max_backups: 1     # 1-365: daily full backups to keep
           keep_weekly: 0     # 0-52: Sunday backups (0 = disabled)
@@ -29697,7 +29697,7 @@ server:
       backup_hourly:
         schedule: "@hourly"
         enabled: false
-        # Creates: {projectname}-hourly.tar.gz[.enc] (incremental since daily)
+        # Creates: weather-hourly.tar.gz[.enc] (incremental since daily)
         # Always 1 file (replaced each hour)
 
       # Every 5 minutes
@@ -29951,11 +29951,11 @@ Execute task
 | Verify | Yes | All checks must pass |
 
 **What backup_daily creates (default: 2 files):**
-- `{projectname}_backup_YYYY-MM-DD.tar.gz[.enc]` - Full backup (yesterday's)
-- `{projectname}-daily.tar.gz[.enc]` - Daily incremental
+- `weather_backup_YYYY-MM-DD.tar.gz[.enc]` - Full backup (yesterday's)
+- `weather-daily.tar.gz[.enc]` - Daily incremental
 
 **What backup_hourly creates (if enabled: +1 file):**
-- `{projectname}-hourly.tar.gz[.enc]` - Hourly incremental
+- `weather-hourly.tar.gz[.enc]` - Hourly incremental
 
 ### API Endpoints
 
@@ -30122,7 +30122,7 @@ Authorization: Bearer <token>
 **Prometheus scrape config with token:**
 ```yaml
 scrape_configs:
-  - job_name: '{projectname}'
+  - job_name: 'weather'
     static_configs:
       - targets: ['app.internal:8080']
     authorization:
@@ -30170,7 +30170,7 @@ server:
 
 | Rule | Format | Example |
 |------|--------|---------|
-| **Prefix** | `{projectname}_` | `jokes_http_requests_total` |
+| **Prefix** | `weather_` | `jokes_http_requests_total` |
 | **Snake case** | `word_word_word` | `http_request_duration_seconds` |
 | **Unit suffix** | `_seconds`, `_bytes`, `_total` | `request_duration_seconds` |
 | **Total suffix** | Counters end with `_total` | `http_requests_total` |
@@ -30204,36 +30204,36 @@ server:
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `{projectname}_app_info` | Gauge | `version`, `commit`, `build_date`, `go_version` | Always 1, labels carry info |
-| `{projectname}_app_uptime_seconds` | Gauge | - | Seconds since start |
-| `{projectname}_app_start_timestamp` | Gauge | - | Unix timestamp of start |
+| `weather_app_info` | Gauge | `version`, `commit`, `build_date`, `go_version` | Always 1, labels carry info |
+| `weather_app_uptime_seconds` | Gauge | - | Seconds since start |
+| `weather_app_start_timestamp` | Gauge | - | Unix timestamp of start |
 
 ### Required: HTTP Metrics
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `{projectname}_http_requests_total` | Counter | `method`, `path`, `status` | Total HTTP requests |
-| `{projectname}_http_request_duration_seconds` | Histogram | `method`, `path` | Request latency |
-| `{projectname}_http_request_size_bytes` | Histogram | `method`, `path` | Request body size |
-| `{projectname}_http_response_size_bytes` | Histogram | `method`, `path` | Response body size |
-| `{projectname}_http_active_requests` | Gauge | - | In-flight requests |
+| `weather_http_requests_total` | Counter | `method`, `path`, `status` | Total HTTP requests |
+| `weather_http_request_duration_seconds` | Histogram | `method`, `path` | Request latency |
+| `weather_http_request_size_bytes` | Histogram | `method`, `path` | Request body size |
+| `weather_http_response_size_bytes` | Histogram | `method`, `path` | Response body size |
+| `weather_http_active_requests` | Gauge | - | In-flight requests |
 
 ### Required: Database Metrics (if using database)
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `{projectname}_db_queries_total` | Counter | `operation`, `table` | Total queries |
-| `{projectname}_db_query_duration_seconds` | Histogram | `operation`, `table` | Query latency |
-| `{projectname}_db_connections_open` | Gauge | - | Open connections |
-| `{projectname}_db_connections_in_use` | Gauge | - | Active connections |
-| `{projectname}_db_errors_total` | Counter | `operation`, `error_type` | Database errors |
+| `weather_db_queries_total` | Counter | `operation`, `table` | Total queries |
+| `weather_db_query_duration_seconds` | Histogram | `operation`, `table` | Query latency |
+| `weather_db_connections_open` | Gauge | - | Open connections |
+| `weather_db_connections_in_use` | Gauge | - | Active connections |
+| `weather_db_errors_total` | Counter | `operation`, `error_type` | Database errors |
 
 ### Required: Authentication Metrics
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `{projectname}_auth_attempts_total` | Counter | `method`, `status` | Auth attempts |
-| `{projectname}_auth_sessions_active` | Gauge | - | Active sessions |
+| `weather_auth_attempts_total` | Counter | `method`, `status` | Auth attempts |
+| `weather_auth_sessions_active` | Gauge | - | Active sessions |
 
 ### Optional: Extended Metrics
 
@@ -30247,7 +30247,7 @@ server:
 
 ## Complete Metrics Reference
 
-**Every metric exported by `/metrics`. All prefixed with `{projectname}_`.**
+**Every metric exported by `/metrics`. All prefixed with `weather_`.**
 
 ### Application Metrics (REQUIRED)
 
@@ -30427,132 +30427,132 @@ server:
 **Sample `/metrics` output (Prometheus text format):**
 
 ```
-# HELP {projectname}_app_info Application information
-# TYPE {projectname}_app_info gauge
-{projectname}_app_info{version="1.2.3",commit="abc1234",build_date="2025-01-15",go_version="go1.23"} 1
+# HELP weather_app_info Application information
+# TYPE weather_app_info gauge
+weather_app_info{version="1.2.3",commit="abc1234",build_date="2025-01-15",go_version="go1.23"} 1
 
-# HELP {projectname}_app_uptime_seconds Application uptime in seconds
-# TYPE {projectname}_app_uptime_seconds gauge
-{projectname}_app_uptime_seconds 86423.5
+# HELP weather_app_uptime_seconds Application uptime in seconds
+# TYPE weather_app_uptime_seconds gauge
+weather_app_uptime_seconds 86423.5
 
-# HELP {projectname}_app_start_timestamp Application start timestamp
-# TYPE {projectname}_app_start_timestamp gauge
-{projectname}_app_start_timestamp 1.705312200e+09
+# HELP weather_app_start_timestamp Application start timestamp
+# TYPE weather_app_start_timestamp gauge
+weather_app_start_timestamp 1.705312200e+09
 
-# HELP {projectname}_http_requests_total Total number of HTTP requests
-# TYPE {projectname}_http_requests_total counter
-{projectname}_http_requests_total{method="GET",path="/api/v1/users",status="200"} 1523
-{projectname}_http_requests_total{method="GET",path="/api/v1/users/:id",status="200"} 892
-{projectname}_http_requests_total{method="GET",path="/api/v1/users/:id",status="404"} 23
-{projectname}_http_requests_total{method="POST",path="/api/v1/users",status="201"} 42
-{projectname}_http_requests_total{method="GET",path="/healthz",status="200"} 8640
+# HELP weather_http_requests_total Total number of HTTP requests
+# TYPE weather_http_requests_total counter
+weather_http_requests_total{method="GET",path="/api/v1/users",status="200"} 1523
+weather_http_requests_total{method="GET",path="/api/v1/users/:id",status="200"} 892
+weather_http_requests_total{method="GET",path="/api/v1/users/:id",status="404"} 23
+weather_http_requests_total{method="POST",path="/api/v1/users",status="201"} 42
+weather_http_requests_total{method="GET",path="/healthz",status="200"} 8640
 
-# HELP {projectname}_http_request_duration_seconds HTTP request duration in seconds
-# TYPE {projectname}_http_request_duration_seconds histogram
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.001"} 120
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.005"} 890
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.01"} 1400
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.025"} 1500
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.05"} 1510
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.1"} 1520
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="+Inf"} 1523
-{projectname}_http_request_duration_seconds_sum{method="GET",path="/api/v1/users"} 12.456
-{projectname}_http_request_duration_seconds_count{method="GET",path="/api/v1/users"} 1523
+# HELP weather_http_request_duration_seconds HTTP request duration in seconds
+# TYPE weather_http_request_duration_seconds histogram
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.001"} 120
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.005"} 890
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.01"} 1400
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.025"} 1500
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.05"} 1510
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.1"} 1520
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="+Inf"} 1523
+weather_http_request_duration_seconds_sum{method="GET",path="/api/v1/users"} 12.456
+weather_http_request_duration_seconds_count{method="GET",path="/api/v1/users"} 1523
 
-# HELP {projectname}_http_active_requests Number of active HTTP requests
-# TYPE {projectname}_http_active_requests gauge
-{projectname}_http_active_requests 3
+# HELP weather_http_active_requests Number of active HTTP requests
+# TYPE weather_http_active_requests gauge
+weather_http_active_requests 3
 
-# HELP {projectname}_db_connections_open Number of open database connections
-# TYPE {projectname}_db_connections_open gauge
-{projectname}_db_connections_open 10
+# HELP weather_db_connections_open Number of open database connections
+# TYPE weather_db_connections_open gauge
+weather_db_connections_open 10
 
-# HELP {projectname}_db_connections_in_use Number of database connections in use
-# TYPE {projectname}_db_connections_in_use gauge
-{projectname}_db_connections_in_use 2
+# HELP weather_db_connections_in_use Number of database connections in use
+# TYPE weather_db_connections_in_use gauge
+weather_db_connections_in_use 2
 
-# HELP {projectname}_cache_hits_total Total number of cache hits
-# TYPE {projectname}_cache_hits_total counter
-{projectname}_cache_hits_total{cache="sessions"} 8234
-{projectname}_cache_hits_total{cache="users"} 1523
+# HELP weather_cache_hits_total Total number of cache hits
+# TYPE weather_cache_hits_total counter
+weather_cache_hits_total{cache="sessions"} 8234
+weather_cache_hits_total{cache="users"} 1523
 
-# HELP {projectname}_cache_misses_total Total number of cache misses
-# TYPE {projectname}_cache_misses_total counter
-{projectname}_cache_misses_total{cache="sessions"} 156
-{projectname}_cache_misses_total{cache="users"} 42
+# HELP weather_cache_misses_total Total number of cache misses
+# TYPE weather_cache_misses_total counter
+weather_cache_misses_total{cache="sessions"} 156
+weather_cache_misses_total{cache="users"} 42
 
-# HELP {projectname}_auth_attempts_total Total authentication attempts
-# TYPE {projectname}_auth_attempts_total counter
-{projectname}_auth_attempts_total{method="password",status="success"} 523
-{projectname}_auth_attempts_total{method="password",status="failed"} 12
-{projectname}_auth_attempts_total{method="api_token",status="success"} 8923
+# HELP weather_auth_attempts_total Total authentication attempts
+# TYPE weather_auth_attempts_total counter
+weather_auth_attempts_total{method="password",status="success"} 523
+weather_auth_attempts_total{method="password",status="failed"} 12
+weather_auth_attempts_total{method="api_token",status="success"} 8923
 
-# HELP {projectname}_auth_sessions_active Number of active sessions
-# TYPE {projectname}_auth_sessions_active gauge
-{projectname}_auth_sessions_active 42
+# HELP weather_auth_sessions_active Number of active sessions
+# TYPE weather_auth_sessions_active gauge
+weather_auth_sessions_active 42
 
-# HELP {projectname}_scheduler_tasks_total Total number of scheduled tasks executed
-# TYPE {projectname}_scheduler_tasks_total counter
-{projectname}_scheduler_tasks_total{task="cleanup",status="success"} 288
-{projectname}_scheduler_tasks_total{task="backup",status="success"} 24
-{projectname}_scheduler_tasks_total{task="geoip_update",status="success"} 1
+# HELP weather_scheduler_tasks_total Total number of scheduled tasks executed
+# TYPE weather_scheduler_tasks_total counter
+weather_scheduler_tasks_total{task="cleanup",status="success"} 288
+weather_scheduler_tasks_total{task="backup",status="success"} 24
+weather_scheduler_tasks_total{task="geoip_update",status="success"} 1
 
-# HELP {projectname}_scheduler_last_run_timestamp Timestamp of last task run
-# TYPE {projectname}_scheduler_last_run_timestamp gauge
-{projectname}_scheduler_last_run_timestamp{task="cleanup"} 1.705398600e+09
-{projectname}_scheduler_last_run_timestamp{task="backup"} 1.705395000e+09
+# HELP weather_scheduler_last_run_timestamp Timestamp of last task run
+# TYPE weather_scheduler_last_run_timestamp gauge
+weather_scheduler_last_run_timestamp{task="cleanup"} 1.705398600e+09
+weather_scheduler_last_run_timestamp{task="backup"} 1.705395000e+09
 
-# HELP {projectname}_system_cpu_usage_percent Current CPU usage percentage
-# TYPE {projectname}_system_cpu_usage_percent gauge
-{projectname}_system_cpu_usage_percent 12.5
+# HELP weather_system_cpu_usage_percent Current CPU usage percentage
+# TYPE weather_system_cpu_usage_percent gauge
+weather_system_cpu_usage_percent 12.5
 
-# HELP {projectname}_system_memory_usage_percent Current memory usage percentage
-# TYPE {projectname}_system_memory_usage_percent gauge
-{projectname}_system_memory_usage_percent 45.2
+# HELP weather_system_memory_usage_percent Current memory usage percentage
+# TYPE weather_system_memory_usage_percent gauge
+weather_system_memory_usage_percent 45.2
 
-# HELP {projectname}_system_memory_used_bytes Memory used in bytes
-# TYPE {projectname}_system_memory_used_bytes gauge
-{projectname}_system_memory_used_bytes 3.865470976e+09
+# HELP weather_system_memory_used_bytes Memory used in bytes
+# TYPE weather_system_memory_used_bytes gauge
+weather_system_memory_used_bytes 3.865470976e+09
 
-# HELP {projectname}_system_memory_total_bytes Total memory in bytes
-# TYPE {projectname}_system_memory_total_bytes gauge
-{projectname}_system_memory_total_bytes 8.589934592e+09
+# HELP weather_system_memory_total_bytes Total memory in bytes
+# TYPE weather_system_memory_total_bytes gauge
+weather_system_memory_total_bytes 8.589934592e+09
 
-# HELP {projectname}_system_disk_usage_percent Disk usage percentage
-# TYPE {projectname}_system_disk_usage_percent gauge
-{projectname}_system_disk_usage_percent{path="/var/lib/myorg/myapp"} 62.3
+# HELP weather_system_disk_usage_percent Disk usage percentage
+# TYPE weather_system_disk_usage_percent gauge
+weather_system_disk_usage_percent{path="/var/lib/myorg/myapp"} 62.3
 
-# HELP {projectname}_go_goroutines Number of goroutines
-# TYPE {projectname}_go_goroutines gauge
-{projectname}_go_goroutines 47
+# HELP weather_go_goroutines Number of goroutines
+# TYPE weather_go_goroutines gauge
+weather_go_goroutines 47
 
-# HELP {projectname}_go_mem_alloc_bytes Bytes allocated and in use
-# TYPE {projectname}_go_mem_alloc_bytes gauge
-{projectname}_go_mem_alloc_bytes 2.4576e+07
+# HELP weather_go_mem_alloc_bytes Bytes allocated and in use
+# TYPE weather_go_mem_alloc_bytes gauge
+weather_go_mem_alloc_bytes 2.4576e+07
 
-# HELP {projectname}_go_gc_runs_total Total number of GC runs
-# TYPE {projectname}_go_gc_runs_total counter
-{projectname}_go_gc_runs_total 1523
+# HELP weather_go_gc_runs_total Total number of GC runs
+# TYPE weather_go_gc_runs_total counter
+weather_go_gc_runs_total 1523
 
-# HELP {projectname}_cluster_nodes_total Total nodes in cluster
-# TYPE {projectname}_cluster_nodes_total gauge
-{projectname}_cluster_nodes_total 3
+# HELP weather_cluster_nodes_total Total nodes in cluster
+# TYPE weather_cluster_nodes_total gauge
+weather_cluster_nodes_total 3
 
-# HELP {projectname}_cluster_nodes_healthy Healthy nodes in cluster
-# TYPE {projectname}_cluster_nodes_healthy gauge
-{projectname}_cluster_nodes_healthy 3
+# HELP weather_cluster_nodes_healthy Healthy nodes in cluster
+# TYPE weather_cluster_nodes_healthy gauge
+weather_cluster_nodes_healthy 3
 
-# HELP {projectname}_cluster_is_primary 1 if this node is primary
-# TYPE {projectname}_cluster_is_primary gauge
-{projectname}_cluster_is_primary 1
+# HELP weather_cluster_is_primary 1 if this node is primary
+# TYPE weather_cluster_is_primary gauge
+weather_cluster_is_primary 1
 
-# HELP {projectname}_tor_enabled 1 if Tor is enabled
-# TYPE {projectname}_tor_enabled gauge
-{projectname}_tor_enabled 1
+# HELP weather_tor_enabled 1 if Tor is enabled
+# TYPE weather_tor_enabled gauge
+weather_tor_enabled 1
 
-# HELP {projectname}_tor_running 1 if Tor process is running
-# TYPE {projectname}_tor_running gauge
-{projectname}_tor_running 1
+# HELP weather_tor_running 1 if Tor process is running
+# TYPE weather_tor_running gauge
+weather_tor_running 1
 ```
 
 ## Metrics Implementation
@@ -30572,7 +30572,7 @@ var (
     // HTTP metrics
     HTTPRequestsTotal = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_http_requests_total",
+            Name: "weather_http_requests_total",
             Help: "Total number of HTTP requests",
         },
         []string{"method", "path", "status"},
@@ -30580,7 +30580,7 @@ var (
 
     HTTPRequestDuration = promauto.NewHistogramVec(
         prometheus.HistogramOpts{
-            Name:    "{projectname}_http_request_duration_seconds",
+            Name:    "weather_http_request_duration_seconds",
             Help:    "HTTP request duration in seconds",
             Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10},
         },
@@ -30589,7 +30589,7 @@ var (
 
     HTTPRequestSize = promauto.NewHistogramVec(
         prometheus.HistogramOpts{
-            Name:    "{projectname}_http_request_size_bytes",
+            Name:    "weather_http_request_size_bytes",
             Help:    "HTTP request size in bytes",
             Buckets: []float64{100, 1000, 10000, 100000, 1000000, 10000000},
         },
@@ -30598,7 +30598,7 @@ var (
 
     HTTPResponseSize = promauto.NewHistogramVec(
         prometheus.HistogramOpts{
-            Name:    "{projectname}_http_response_size_bytes",
+            Name:    "weather_http_response_size_bytes",
             Help:    "HTTP response size in bytes",
             Buckets: []float64{100, 1000, 10000, 100000, 1000000, 10000000},
         },
@@ -30607,7 +30607,7 @@ var (
 
     HTTPActiveRequests = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_http_active_requests",
+            Name: "weather_http_active_requests",
             Help: "Number of active HTTP requests",
         },
     )
@@ -30615,7 +30615,7 @@ var (
     // Database metrics
     DBQueriesTotal = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_db_queries_total",
+            Name: "weather_db_queries_total",
             Help: "Total number of database queries",
         },
         []string{"operation", "table"},
@@ -30623,7 +30623,7 @@ var (
 
     DBQueryDuration = promauto.NewHistogramVec(
         prometheus.HistogramOpts{
-            Name:    "{projectname}_db_query_duration_seconds",
+            Name:    "weather_db_query_duration_seconds",
             Help:    "Database query duration in seconds",
             Buckets: []float64{0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1},
         },
@@ -30632,21 +30632,21 @@ var (
 
     DBConnectionsOpen = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_db_connections_open",
+            Name: "weather_db_connections_open",
             Help: "Number of open database connections",
         },
     )
 
     DBConnectionsInUse = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_db_connections_in_use",
+            Name: "weather_db_connections_in_use",
             Help: "Number of database connections in use",
         },
     )
 
     DBErrors = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_db_errors_total",
+            Name: "weather_db_errors_total",
             Help: "Total number of database errors",
         },
         []string{"operation", "error_type"},
@@ -30655,7 +30655,7 @@ var (
     // Cache metrics
     CacheHits = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_cache_hits_total",
+            Name: "weather_cache_hits_total",
             Help: "Total number of cache hits",
         },
         []string{"cache"},
@@ -30663,7 +30663,7 @@ var (
 
     CacheMisses = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_cache_misses_total",
+            Name: "weather_cache_misses_total",
             Help: "Total number of cache misses",
         },
         []string{"cache"},
@@ -30671,7 +30671,7 @@ var (
 
     CacheEvictions = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_cache_evictions_total",
+            Name: "weather_cache_evictions_total",
             Help: "Total number of cache evictions",
         },
         []string{"cache"},
@@ -30679,7 +30679,7 @@ var (
 
     CacheSize = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_cache_size",
+            Name: "weather_cache_size",
             Help: "Current cache size (items)",
         },
         []string{"cache"},
@@ -30687,7 +30687,7 @@ var (
 
     CacheBytes = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_cache_bytes",
+            Name: "weather_cache_bytes",
             Help: "Current cache size (bytes)",
         },
         []string{"cache"},
@@ -30696,7 +30696,7 @@ var (
     // Scheduler metrics
     SchedulerTasksTotal = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_scheduler_tasks_total",
+            Name: "weather_scheduler_tasks_total",
             Help: "Total number of scheduled tasks executed",
         },
         []string{"task", "status"},
@@ -30704,7 +30704,7 @@ var (
 
     SchedulerTaskDuration = promauto.NewHistogramVec(
         prometheus.HistogramOpts{
-            Name:    "{projectname}_scheduler_task_duration_seconds",
+            Name:    "weather_scheduler_task_duration_seconds",
             Help:    "Scheduled task duration in seconds",
             Buckets: []float64{0.1, 0.5, 1, 5, 10, 30, 60, 300, 600},
         },
@@ -30713,7 +30713,7 @@ var (
 
     SchedulerTasksRunning = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_scheduler_tasks_running",
+            Name: "weather_scheduler_tasks_running",
             Help: "Number of currently running scheduled tasks",
         },
         []string{"task"},
@@ -30721,7 +30721,7 @@ var (
 
     SchedulerLastRun = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_scheduler_last_run_timestamp",
+            Name: "weather_scheduler_last_run_timestamp",
             Help: "Timestamp of last task run",
         },
         []string{"task"},
@@ -30730,7 +30730,7 @@ var (
     // Authentication metrics
     AuthAttempts = promauto.NewCounterVec(
         prometheus.CounterOpts{
-            Name: "{projectname}_auth_attempts_total",
+            Name: "weather_auth_attempts_total",
             Help: "Total authentication attempts",
         },
         []string{"method", "status"},
@@ -30738,7 +30738,7 @@ var (
 
     AuthSessionsActive = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_auth_sessions_active",
+            Name: "weather_auth_sessions_active",
             Help: "Number of active sessions",
         },
     )
@@ -30746,21 +30746,21 @@ var (
     // Business metrics
     UsersTotal = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_users_total",
+            Name: "weather_users_total",
             Help: "Total number of registered users",
         },
     )
 
     UsersActive = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_users_active",
+            Name: "weather_users_active",
             Help: "Number of users active in last 24 hours",
         },
     )
 
     APITokensActive = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_api_tokens_active",
+            Name: "weather_api_tokens_active",
             Help: "Number of active API tokens",
         },
     )
@@ -30768,7 +30768,7 @@ var (
     // Application info
     AppInfo = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_app_info",
+            Name: "weather_app_info",
             Help: "Application information",
         },
         []string{"version", "commit", "build_date", "go_version"},
@@ -30776,14 +30776,14 @@ var (
 
     AppUptime = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_app_uptime_seconds",
+            Name: "weather_app_uptime_seconds",
             Help: "Application uptime in seconds",
         },
     )
 
     AppStartTime = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_app_start_timestamp",
+            Name: "weather_app_start_timestamp",
             Help: "Application start timestamp",
         },
     )
@@ -30807,7 +30807,7 @@ import (
     "strconv"
     "time"
 
-    "github.com/{projectorg}/{projectname}/src/server/metrics"
+    "github.com/apimgr/weather/src/server/metrics"
 )
 
 // metricsMiddleware records HTTP metrics for all requests
@@ -30891,7 +30891,7 @@ import (
     "database/sql"
     "time"
 
-    "github.com/{projectorg}/{projectname}/src/server/metrics"
+    "github.com/apimgr/weather/src/server/metrics"
 )
 
 // MetricsDB wraps sql.DB with metrics
@@ -30992,7 +30992,7 @@ package cache
 import (
     "time"
 
-    "github.com/{projectorg}/{projectname}/src/server/metrics"
+    "github.com/apimgr/weather/src/server/metrics"
 )
 
 // MetricsCache wraps a cache with metrics
@@ -31045,7 +31045,7 @@ package scheduler
 import (
     "time"
 
-    "github.com/{projectorg}/{projectname}/src/server/metrics"
+    "github.com/apimgr/weather/src/server/metrics"
 )
 
 // RecordTaskStart records when a task starts
@@ -31088,35 +31088,35 @@ var (
     // System metrics
     SystemCPUUsage = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_cpu_usage_percent",
+            Name: "weather_system_cpu_usage_percent",
             Help: "Current CPU usage percentage",
         },
     )
 
     SystemMemoryUsage = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_memory_usage_percent",
+            Name: "weather_system_memory_usage_percent",
             Help: "Current memory usage percentage",
         },
     )
 
     SystemMemoryUsed = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_memory_used_bytes",
+            Name: "weather_system_memory_used_bytes",
             Help: "Memory used in bytes",
         },
     )
 
     SystemMemoryTotal = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_memory_total_bytes",
+            Name: "weather_system_memory_total_bytes",
             Help: "Total memory in bytes",
         },
     )
 
     SystemDiskUsage = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_disk_usage_percent",
+            Name: "weather_system_disk_usage_percent",
             Help: "Disk usage percentage",
         },
         []string{"path"},
@@ -31124,7 +31124,7 @@ var (
 
     SystemDiskUsed = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_disk_used_bytes",
+            Name: "weather_system_disk_used_bytes",
             Help: "Disk used in bytes",
         },
         []string{"path"},
@@ -31132,7 +31132,7 @@ var (
 
     SystemDiskTotal = promauto.NewGaugeVec(
         prometheus.GaugeOpts{
-            Name: "{projectname}_system_disk_total_bytes",
+            Name: "weather_system_disk_total_bytes",
             Help: "Total disk in bytes",
         },
         []string{"path"},
@@ -31141,35 +31141,35 @@ var (
     // Go runtime metrics
     GoGoroutines = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_go_goroutines",
+            Name: "weather_go_goroutines",
             Help: "Number of goroutines",
         },
     )
 
     GoMemAlloc = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_go_mem_alloc_bytes",
+            Name: "weather_go_mem_alloc_bytes",
             Help: "Bytes allocated and in use",
         },
     )
 
     GoMemSys = promauto.NewGauge(
         prometheus.GaugeOpts{
-            Name: "{projectname}_go_mem_sys_bytes",
+            Name: "weather_go_mem_sys_bytes",
             Help: "Bytes obtained from system",
         },
     )
 
     GoGCRuns = promauto.NewCounter(
         prometheus.CounterOpts{
-            Name: "{projectname}_go_gc_runs_total",
+            Name: "weather_go_gc_runs_total",
             Help: "Total number of GC runs",
         },
     )
 
     GoGCPauseTotal = promauto.NewCounter(
         prometheus.CounterOpts{
-            Name: "{projectname}_go_gc_pause_total_seconds",
+            Name: "weather_go_gc_pause_total_seconds",
             Help: "Total GC pause time in seconds",
         },
     )
@@ -31317,35 +31317,35 @@ func StartUptimeUpdater() {
 ## Metrics Endpoint Output
 
 ```
-# HELP {projectname}_http_requests_total Total number of HTTP requests
-# TYPE {projectname}_http_requests_total counter
-{projectname}_http_requests_total{method="GET",path="/api/{api_version}/users",status="200"} 1523
-{projectname}_http_requests_total{method="POST",path="/api/{api_version}/users",status="201"} 42
+# HELP weather_http_requests_total Total number of HTTP requests
+# TYPE weather_http_requests_total counter
+weather_http_requests_total{method="GET",path="/api/{api_version}/users",status="200"} 1523
+weather_http_requests_total{method="POST",path="/api/{api_version}/users",status="201"} 42
 
-# HELP {projectname}_http_request_duration_seconds HTTP request duration in seconds
-# TYPE {projectname}_http_request_duration_seconds histogram
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="0.01"} 1400
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="0.1"} 1520
-{projectname}_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="+Inf"} 1523
-{projectname}_http_request_duration_seconds_sum{method="GET",path="/api/{api_version}/users"} 12.456
-{projectname}_http_request_duration_seconds_count{method="GET",path="/api/{api_version}/users"} 1523
+# HELP weather_http_request_duration_seconds HTTP request duration in seconds
+# TYPE weather_http_request_duration_seconds histogram
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="0.01"} 1400
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="0.1"} 1520
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="+Inf"} 1523
+weather_http_request_duration_seconds_sum{method="GET",path="/api/{api_version}/users"} 12.456
+weather_http_request_duration_seconds_count{method="GET",path="/api/{api_version}/users"} 1523
 
-# HELP {projectname}_db_connections_open Number of open database connections
-# TYPE {projectname}_db_connections_open gauge
-{projectname}_db_connections_open 5
+# HELP weather_db_connections_open Number of open database connections
+# TYPE weather_db_connections_open gauge
+weather_db_connections_open 5
 
-# HELP {projectname}_cache_hits_total Total number of cache hits
-# TYPE {projectname}_cache_hits_total counter
-{projectname}_cache_hits_total{cache="sessions"} 8234
-{projectname}_cache_hits_total{cache="users"} 1523
+# HELP weather_cache_hits_total Total number of cache hits
+# TYPE weather_cache_hits_total counter
+weather_cache_hits_total{cache="sessions"} 8234
+weather_cache_hits_total{cache="users"} 1523
 
-# HELP {projectname}_app_info Application information
-# TYPE {projectname}_app_info gauge
-{projectname}_app_info{version="1.2.3",commit="abc123",build_date="2025-01-15",go_version="go1.23"} 1
+# HELP weather_app_info Application information
+# TYPE weather_app_info gauge
+weather_app_info{version="1.2.3",commit="abc123",build_date="2025-01-15",go_version="go1.23"} 1
 
-# HELP {projectname}_app_uptime_seconds Application uptime in seconds
-# TYPE {projectname}_app_uptime_seconds gauge
-{projectname}_app_uptime_seconds 86423.5
+# HELP weather_app_uptime_seconds Application uptime in seconds
+# TYPE weather_app_uptime_seconds gauge
+weather_app_uptime_seconds 86423.5
 ```
 
 ## Alerting Rules (Prometheus)
@@ -31353,13 +31353,13 @@ func StartUptimeUpdater() {
 ```yaml
 # alerts.yml - Example Prometheus alerting rules
 groups:
-  - name: {projectname}_alerts
+  - name: weather_alerts
     rules:
       # High error rate
       - alert: HighErrorRate
         expr: |
-          sum(rate({projectname}_http_requests_total{status=~"5.."}[5m]))
-          / sum(rate({projectname}_http_requests_total[5m])) > 0.05
+          sum(rate(weather_http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(weather_http_requests_total[5m])) > 0.05
         for: 5m
         labels:
           severity: critical
@@ -31370,7 +31370,7 @@ groups:
       # High latency
       - alert: HighLatency
         expr: |
-          histogram_quantile(0.95, rate({projectname}_http_request_duration_seconds_bucket[5m])) > 1
+          histogram_quantile(0.95, rate(weather_http_request_duration_seconds_bucket[5m])) > 1
         for: 5m
         labels:
           severity: warning
@@ -31381,7 +31381,7 @@ groups:
       # Database connection pool exhausted
       - alert: DBConnectionPoolExhausted
         expr: |
-          {projectname}_db_connections_in_use / {projectname}_db_connections_open > 0.9
+          weather_db_connections_in_use / weather_db_connections_open > 0.9
         for: 5m
         labels:
           severity: warning
@@ -31390,7 +31390,7 @@ groups:
 
       # High memory usage
       - alert: HighMemoryUsage
-        expr: {projectname}_system_memory_usage_percent > 90
+        expr: weather_system_memory_usage_percent > 90
         for: 10m
         labels:
           severity: warning
@@ -31399,7 +31399,7 @@ groups:
 
       # Disk space low
       - alert: DiskSpaceLow
-        expr: {projectname}_system_disk_usage_percent > 85
+        expr: weather_system_disk_usage_percent > 85
         for: 5m
         labels:
           severity: warning
@@ -31408,18 +31408,18 @@ groups:
 
       # Application down
       - alert: ApplicationDown
-        expr: up{job="{projectname}"} == 0
+        expr: up{job="weather"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "{projectname} is down"
+          summary: "weather is down"
 
       # Goroutine leak
       - alert: GoroutineLeak
         expr: |
-          {projectname}_go_goroutines > 1000
-          and increase({projectname}_go_goroutines[1h]) > 100
+          weather_go_goroutines > 1000
+          and increase(weather_go_goroutines[1h]) > 100
         for: 30m
         labels:
           severity: warning
@@ -31430,7 +31430,7 @@ groups:
       # Scheduler task failing
       - alert: SchedulerTaskFailing
         expr: |
-          increase({projectname}_scheduler_tasks_total{status="error"}[1h]) > 3
+          increase(weather_scheduler_tasks_total{status="error"}[1h]) > 3
         for: 0m
         labels:
           severity: warning
@@ -31442,72 +31442,72 @@ groups:
 
 ```json
 {
-  "title": "{PROJECTNAME} Metrics",
+  "title": "WEATHER Metrics",
   "panels": [
     {
       "title": "Request Rate",
       "type": "graph",
       "targets": [
-        {"expr": "sum(rate({projectname}_http_requests_total[5m]))"}
+        {"expr": "sum(rate(weather_http_requests_total[5m]))"}
       ]
     },
     {
       "title": "Error Rate",
       "type": "graph",
       "targets": [
-        {"expr": "sum(rate({projectname}_http_requests_total{status=~\"5..\"}[5m])) / sum(rate({projectname}_http_requests_total[5m]))"}
+        {"expr": "sum(rate(weather_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(weather_http_requests_total[5m]))"}
       ]
     },
     {
       "title": "Latency (p50, p95, p99)",
       "type": "graph",
       "targets": [
-        {"expr": "histogram_quantile(0.50, rate({projectname}_http_request_duration_seconds_bucket[5m]))", "legendFormat": "p50"},
-        {"expr": "histogram_quantile(0.95, rate({projectname}_http_request_duration_seconds_bucket[5m]))", "legendFormat": "p95"},
-        {"expr": "histogram_quantile(0.99, rate({projectname}_http_request_duration_seconds_bucket[5m]))", "legendFormat": "p99"}
+        {"expr": "histogram_quantile(0.50, rate(weather_http_request_duration_seconds_bucket[5m]))", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.95, rate(weather_http_request_duration_seconds_bucket[5m]))", "legendFormat": "p95"},
+        {"expr": "histogram_quantile(0.99, rate(weather_http_request_duration_seconds_bucket[5m]))", "legendFormat": "p99"}
       ]
     },
     {
       "title": "Active Requests",
       "type": "stat",
       "targets": [
-        {"expr": "{projectname}_http_active_requests"}
+        {"expr": "weather_http_active_requests"}
       ]
     },
     {
       "title": "Database Connections",
       "type": "graph",
       "targets": [
-        {"expr": "{projectname}_db_connections_open", "legendFormat": "open"},
-        {"expr": "{projectname}_db_connections_in_use", "legendFormat": "in_use"}
+        {"expr": "weather_db_connections_open", "legendFormat": "open"},
+        {"expr": "weather_db_connections_in_use", "legendFormat": "in_use"}
       ]
     },
     {
       "title": "Cache Hit Rate",
       "type": "graph",
       "targets": [
-        {"expr": "sum(rate({projectname}_cache_hits_total[5m])) / (sum(rate({projectname}_cache_hits_total[5m])) + sum(rate({projectname}_cache_misses_total[5m])))"}
+        {"expr": "sum(rate(weather_cache_hits_total[5m])) / (sum(rate(weather_cache_hits_total[5m])) + sum(rate(weather_cache_misses_total[5m])))"}
       ]
     },
     {
       "title": "Memory Usage",
       "type": "gauge",
       "targets": [
-        {"expr": "{projectname}_system_memory_usage_percent"}
+        {"expr": "weather_system_memory_usage_percent"}
       ]
     },
     {
       "title": "Goroutines",
       "type": "graph",
       "targets": [
-        {"expr": "{projectname}_go_goroutines"}
+        {"expr": "weather_go_goroutines"}
       ]
     },
     {
       "title": "Uptime",
       "type": "stat",
       "targets": [
-        {"expr": "{projectname}_app_uptime_seconds"}
+        {"expr": "weather_app_uptime_seconds"}
       ]
     }
   ]
@@ -31533,7 +31533,7 @@ groups:
 ## Backup Command
 
 ```bash
-{projectname} --maintenance backup [filename]
+weather --maintenance backup [filename]
 ```
 
 ### Backup Contents
@@ -31565,7 +31565,7 @@ groups:
 ### Backup Format
 
 - Single `.tar.gz` file (or `.tar.gz.enc` if encrypted)
-- Filename: `{projectname}_backup_YYYY-MM-DD_HHMMSS.tar.gz[.enc]`
+- Filename: `weather_backup_YYYY-MM-DD_HHMMSS.tar.gz[.enc]`
 - Includes manifest with version info
 - Encrypted if backup password was set during setup
 
@@ -31668,14 +31668,14 @@ When `server.compliance.enabled: true`:
 
 ```bash
 # If encryption password set during setup:
-{projectname} --maintenance backup
+weather --maintenance backup
 # Prompts for password, creates encrypted backup
 
 # Override with explicit password:
-{projectname} --maintenance backup --password "mypassword"
+weather --maintenance backup --password "mypassword"
 
 # Restore encrypted backup:
-{projectname} --maintenance restore backup.tar.gz.enc
+weather --maintenance restore backup.tar.gz.enc
 # Prompts for password
 ```
 
@@ -31743,9 +31743,9 @@ server:
 **Backup Creation Flow (backup_daily task at 02:00):**
 
 ```
-1. Create full backup: {projectname}_backup_YYYY-MM-DD.tar.gz[.enc]
+1. Create full backup: weather_backup_YYYY-MM-DD.tar.gz[.enc]
 2. Verify full backup (all checks must pass)
-3. Create daily incremental: {projectname}-daily.tar.gz[.enc]
+3. Create daily incremental: weather-daily.tar.gz[.enc]
 4. Verify daily incremental (all checks must pass)
 5. If ALL verifications pass:
    - Apply retention policy (delete old backups per retention settings)
@@ -31815,9 +31815,9 @@ Every backup is verified **immediately after creation** - backups must be 100% w
 
 | File | Description | Retention |
 |------|-------------|-----------|
-| `{projectname}_backup_YYYY-MM-DD.tar.gz[.enc]` | Full backup (yesterday's data) | Controlled by `max_backups` |
-| `{projectname}-daily.tar.gz[.enc]` | Daily incremental (changes since full) | Always 1 (replaced each run) |
-| `{projectname}-hourly.tar.gz[.enc]` | Hourly incremental (if enabled) | Always 1 (replaced each run) |
+| `weather_backup_YYYY-MM-DD.tar.gz[.enc]` | Full backup (yesterday's data) | Controlled by `max_backups` |
+| `weather-daily.tar.gz[.enc]` | Daily incremental (changes since full) | Always 1 (replaced each run) |
+| `weather-hourly.tar.gz[.enc]` | Hourly incremental (if enabled) | Always 1 (replaced each run) |
 
 ### Retention Configuration
 
@@ -31997,7 +31997,7 @@ on a Sunday counts as daily + weekly + monthly + yearly - uses highest priority)
 ## Restore Command
 
 ```bash
-{projectname} --maintenance restore <backup-file>
+weather --maintenance restore <backup-file>
 ```
 
 ### Restore Authorization
@@ -32026,16 +32026,16 @@ on a Sunday counts as daily + weekly + monthly + yearly - uses highest priority)
 
 ```bash
 # Encrypted backup - prompts for password
-{projectname} --maintenance restore backup_2025-01-15.tar.gz.enc
+weather --maintenance restore backup_2025-01-15.tar.gz.enc
 Enter backup password: ••••••••••••
 Verifying backup integrity... OK
 Restoring...
 
 # Encrypted backup - password via flag
-{projectname} --maintenance restore backup_2025-01-15.tar.gz.enc --password "mypassword"
+weather --maintenance restore backup_2025-01-15.tar.gz.enc --password "mypassword"
 
 # Unencrypted backup - no password needed
-{projectname} --maintenance restore backup_2025-01-15.tar.gz
+weather --maintenance restore backup_2025-01-15.tar.gz
 ```
 
 **WebUI Restore:**
@@ -32139,7 +32139,7 @@ POST /api/{api_version}/{admin_path}/server/restore
 ## Admin Recovery Command
 
 ```bash
-{projectname} --maintenance setup
+weather --maintenance setup
 ```
 
 **Purpose:** Resets admin credentials and generates a new setup token. This is the ONLY way for a Server Admin to recover access if they have lost their password, API token, AND recovery keys.
@@ -32179,10 +32179,10 @@ POST /api/{api_version}/{admin_path}/server/restore
 
 ```bash
 # Stop the service first (recommended)
-{projectname} --service stop
+weather --service stop
 
 # Run setup reset
-{projectname} --maintenance setup
+weather --maintenance setup
 
 # Output:
 # ┌─────────────────────────────────────────────────────────────┐
@@ -32192,7 +32192,7 @@ POST /api/{api_version}/{admin_path}/server/restore
 # │                                                             │
 # │  Setup Token: a1b2c3d4e5f67890abcdef1234567890              │
 # │                                                             │
-# │  1. Start the service: {projectname} --service start        │
+# │  1. Start the service: weather --service start        │
 # │  2. Go to: {proto}://{fqdn}/{admin_path}                    │
 # │  3. Enter the setup token above                             │
 # │  4. Create new admin account via setup wizard               │
@@ -32201,7 +32201,7 @@ POST /api/{api_version}/{admin_path}/server/restore
 # └─────────────────────────────────────────────────────────────┘
 
 # Start the service
-{projectname} --service start
+weather --service start
 ```
 
 ### Security Considerations
@@ -32236,7 +32236,7 @@ POST /api/{api_version}/{admin_path}/server/restore
 │  Admin locked out (no password, no token, no recovery keys)     │
 │                           │                                     │
 │                           ▼                                     │
-│  Server admin runs: {projectname} --maintenance setup           │
+│  Server admin runs: weather --maintenance setup           │
 │                           │                                     │
 │                           ▼                                     │
 │  Admin credentials cleared, new setup token generated           │
@@ -32296,17 +32296,17 @@ POST /api/{api_version}/{admin_path}/server/restore
 
 ```bash
 # Check for updates (no privileges required)
-{projectname} --update check
+weather --update check
 
 # Perform update (these are equivalent)
-{projectname} --update
-{projectname} --update yes
-{projectname} --maintenance update
+weather --update
+weather --update yes
+weather --maintenance update
 
 # Switch channels
-{projectname} --update branch beta
-{projectname} --update branch daily
-{projectname} --update branch stable
+weather --update branch beta
+weather --update branch daily
+weather --update branch stable
 ```
 
 ## Self-Update Implementation
@@ -32487,10 +32487,10 @@ func CheckForUpdate(ctx context.Context, currentVersion, branch string) (*Releas
     var url string
     switch branch {
     case "stable":
-        url = "https://api.github.com/repos/{projectorg}/{projectname}/releases/latest"
+        url = "https://api.github.com/repos/apimgr/weather/releases/latest"
     default:
         // For beta/daily, get all releases and filter
-        url = "https://api.github.com/repos/{projectorg}/{projectname}/releases"
+        url = "https://api.github.com/repos/apimgr/weather/releases"
     }
 
     req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -32553,7 +32553,7 @@ func DoUpdate(ctx context.Context, release *Release) error {
     }
 
     // Download to temp file
-    tmpFile, err := os.CreateTemp("", "{projectname}-update-*")
+    tmpFile, err := os.CreateTemp("", "weather-update-*")
     if err != nil {
         return fmt.Errorf("failed to create temp file: %w", err)
     }
@@ -32604,7 +32604,7 @@ func DoUpdate(ctx context.Context, release *Release) error {
 
 // getBinaryName returns the expected binary name for this platform
 func getBinaryName() string {
-    name := "{projectname}-" + runtime.GOOS + "-" + runtime.GOARCH
+    name := "weather-" + runtime.GOOS + "-" + runtime.GOARCH
     if runtime.GOOS == "windows" {
         name += ".exe"
     }
@@ -32660,11 +32660,11 @@ func restartService() error {
 func restartLinuxService() error {
     // Try systemd first
     if _, err := exec.LookPath("systemctl"); err == nil {
-        cmd := exec.Command("systemctl", "restart", "{projectname}")
+        cmd := exec.Command("systemctl", "restart", "weather")
         return cmd.Run()
     }
     // Fall back to generic service command
-    cmd := exec.Command("service", "{projectname}", "restart")
+    cmd := exec.Command("service", "weather", "restart")
     return cmd.Run()
 }
 
@@ -32673,7 +32673,7 @@ func restartLinuxService() error {
 // +build darwin
 
 func restartDarwinService() error {
-    label := "{projectorg}.{projectname}"
+    label := "apimgr.weather"
     // kickstart -k kills existing and starts fresh
     cmd := exec.Command("launchctl", "kickstart", "-k", "system/"+label)
     return cmd.Run()
@@ -32685,14 +32685,14 @@ func restartDarwinService() error {
 
 func restartWindowsService() error {
     // Stop service
-    stopCmd := exec.Command("sc", "stop", "{projectname}")
+    stopCmd := exec.Command("sc", "stop", "weather")
     stopCmd.Run() // Ignore error if not running
 
     // Wait for stop
     time.Sleep(2 * time.Second)
 
     // Start service
-    startCmd := exec.Command("sc", "start", "{projectname}")
+    startCmd := exec.Command("sc", "start", "weather")
     return startCmd.Run()
 }
 
@@ -32701,7 +32701,7 @@ func restartWindowsService() error {
 // +build freebsd openbsd netbsd
 
 func restartBSDService() error {
-    cmd := exec.Command("service", "{projectname}", "restart")
+    cmd := exec.Command("service", "weather", "restart")
     return cmd.Run()
 }
 ```
@@ -32852,7 +32852,7 @@ ON --service --disable:
 ## Service Help Output
 
 ```bash
-$ {projectname} --service --help
+$ weather --service --help
 Service management commands:
 
   start       Start the service
@@ -32874,11 +32874,11 @@ Current status:
 ## Maintenance Help Output
 
 ```bash
-$ {projectname} --maintenance --help
+$ weather --maintenance --help
 Maintenance commands:
 
   backup [file]     Create backup of all data
-                    Default: {backup_dir}/{projectname}-{timestamp}.tar.gz
+                    Default: {backup_dir}/weather-{timestamp}.tar.gz
 
   restore <file>    Restore from backup file
                     Stops server, restores data, restarts server
@@ -32896,19 +32896,19 @@ Maintenance commands:
                     Creates primary Server Admin, configures server
 
 Examples:
-  {projectname} --maintenance backup
-  {projectname} --maintenance backup /path/to/backup.tar.gz
-  {projectname} --maintenance restore /path/to/backup.tar.gz
-  {projectname} --maintenance update check
-  {projectname} --maintenance update yes
-  {projectname} --maintenance mode development
-  {projectname} --maintenance setup
+  weather --maintenance backup
+  weather --maintenance backup /path/to/backup.tar.gz
+  weather --maintenance restore /path/to/backup.tar.gz
+  weather --maintenance update check
+  weather --maintenance update yes
+  weather --maintenance mode development
+  weather --maintenance setup
 ```
 
 ## Shell Help Output
 
 ```bash
-$ {projectname} --shell --help
+$ weather --shell --help
 Shell integration commands:
 
   completions [SHELL]   Print shell completion script
@@ -32920,21 +32920,21 @@ Shell integration commands:
 
 Usage:
   # Add to shell profile for persistent completions
-  {projectname} --shell init >> ~/.bashrc      # bash
-  {projectname} --shell init >> ~/.zshrc       # zsh
-  {projectname} --shell init >> ~/.config/fish/config.fish  # fish
+  weather --shell init >> ~/.bashrc      # bash
+  weather --shell init >> ~/.zshrc       # zsh
+  weather --shell init >> ~/.config/fish/config.fish  # fish
 
   # Or eval directly for current session
-  eval "$({projectname} --shell init)"
+  eval "$(weather --shell init)"
 
   # Generate completion script only
-  {projectname} --shell completions bash > /etc/bash_completion.d/{projectname}
+  weather --shell completions bash > /etc/bash_completion.d/weather
 ```
 
 ## Update Help Output
 
 ```bash
-$ {projectname} --update --help
+$ weather --update --help
 Update management:
 
   check                 Check for available updates
@@ -32949,9 +32949,9 @@ Update management:
                         daily  - Daily builds (development)
 
 Examples:
-  {projectname} --update check
-  {projectname} --update yes
-  {projectname} --update branch beta
+  weather --update check
+  weather --update yes
+  weather --update branch beta
 
 Current:
   Version:  {projectversion}
@@ -32962,12 +32962,12 @@ Current:
 ## CLI Admin Help Output
 
 ```bash
-$ {projectname}-cli --admin --help
+$ weather-cli --admin --help
 Admin CLI - manage users, organizations, and API tokens.
 
 AUTHENTICATION REQUIRED:
   Admin token must be set and valid. Use one of:
-  1. Environment variable: {PROJECTNAME}_TOKEN=adm_xxx...
+  1. Environment variable: WEATHER_TOKEN=adm_xxx...
   2. Flag: --token adm_xxx...
 
   Token must have admin scope (prefix: adm_). User tokens (usr_) will be rejected.
@@ -33004,16 +33004,16 @@ Global Flags:
   --quiet               Suppress non-essential output
 
 Examples:
-  {projectname}-cli --admin user list
-  {projectname}-cli --admin user create newuser
-  {projectname}-cli --admin org create myorg
-  {projectname}-cli --admin token create "CI Token"
+  weather-cli --admin user list
+  weather-cli --admin user create newuser
+  weather-cli --admin org create myorg
+  weather-cli --admin token create "CI Token"
 ```
 
 ## CLI Admin User Help Output
 
 ```bash
-$ {projectname}-cli --admin user --help
+$ weather-cli --admin user --help
 User management commands:
 
   list                  List all users
@@ -33043,18 +33043,18 @@ User management commands:
                         Disable two-factor authentication for user
 
 Examples:
-  {projectname}-cli --admin user list
-  {projectname}-cli --admin user list --status suspended
-  {projectname}-cli --admin user get johndoe
-  {projectname}-cli --admin user create johndoe --email john@example.com
-  {projectname}-cli --admin user suspend johndoe
-  {projectname}-cli --admin user reset-password johndoe
+  weather-cli --admin user list
+  weather-cli --admin user list --status suspended
+  weather-cli --admin user get johndoe
+  weather-cli --admin user create johndoe --email john@example.com
+  weather-cli --admin user suspend johndoe
+  weather-cli --admin user reset-password johndoe
 ```
 
 ## CLI Admin Org Help Output
 
 ```bash
-$ {projectname}-cli --admin org --help
+$ weather-cli --admin org --help
 Organization management commands:
 
   list                  List all organizations
@@ -33083,16 +33083,16 @@ Organization management commands:
     --force             Skip confirmation prompt
 
 Examples:
-  {projectname}-cli --admin org list
-  {projectname}-cli --admin org create myorg --display-name "My Organization"
-  {projectname}-cli --admin org members myorg
-  {projectname}-cli --admin org add-member myorg johndoe --role admin
+  weather-cli --admin org list
+  weather-cli --admin org create myorg --display-name "My Organization"
+  weather-cli --admin org members myorg
+  weather-cli --admin org add-member myorg johndoe --role admin
 ```
 
 ## CLI Admin Token Help Output
 
 ```bash
-$ {projectname}-cli --admin token --help
+$ weather-cli --admin token --help
 API token management commands:
 
   list                  List all tokens
@@ -33110,21 +33110,21 @@ API token management commands:
     --format FORMAT     Output format (table|json|yaml)
 
 Examples:
-  {projectname}-cli --admin token list
-  {projectname}-cli --admin token create "CI Token" --expires 90d --scopes read,write
-  {projectname}-cli --admin token revoke tk_abc123
-  {projectname}-cli --admin token info tk_abc123
+  weather-cli --admin token list
+  weather-cli --admin token create "CI Token" --expires 90d --scopes read,write
+  weather-cli --admin token revoke tk_abc123
+  weather-cli --admin token info tk_abc123
 ```
 
 ## CLI Admin Server Help Output
 
 ```bash
-$ {projectname}-cli --admin server --help
+$ weather-cli --admin server --help
 Server admin CLI - server configuration and management.
 
 AUTHENTICATION REQUIRED:
   Server admin token must be set and valid. Use one of:
-  1. Environment variable: {PROJECTNAME}_TOKEN=adm_xxx...
+  1. Environment variable: WEATHER_TOKEN=adm_xxx...
   2. Flag: --token adm_xxx...
 
   Token must have Server Admin scope (prefix: adm_). User tokens (usr_) and
@@ -33153,17 +33153,17 @@ Global Flags:
   --format {table|json|yaml}  Output format (default: table)
 
 Examples:
-  {projectname}-cli --admin server config list
-  {projectname}-cli --admin server config get registration.mode
-  {projectname}-cli --admin server config set registration.mode private
-  {projectname}-cli --admin server admin list
-  {projectname}-cli --admin server stats overview
+  weather-cli --admin server config list
+  weather-cli --admin server config get registration.mode
+  weather-cli --admin server config set registration.mode private
+  weather-cli --admin server admin list
+  weather-cli --admin server stats overview
 ```
 
 ## CLI Admin Server Config Help Output
 
 ```bash
-$ {projectname}-cli --admin server config --help
+$ weather-cli --admin server config --help
 Server configuration commands:
 
   get [key]             Get configuration value
@@ -33190,17 +33190,17 @@ Common Configuration Keys:
   email.from_address    From email address
 
 Examples:
-  {projectname}-cli --admin server config list
-  {projectname}-cli --admin server config get registration.mode
-  {projectname}-cli --admin server config set registration.mode private
-  {projectname}-cli --admin server config set branding.title "My Server"
-  {projectname}-cli --admin server config reset registration.mode
+  weather-cli --admin server config list
+  weather-cli --admin server config get registration.mode
+  weather-cli --admin server config set registration.mode private
+  weather-cli --admin server config set branding.title "My Server"
+  weather-cli --admin server config reset registration.mode
 ```
 
 ## CLI Admin Server Admin Help Output
 
 ```bash
-$ {projectname}-cli --admin server admin --help
+$ weather-cli --admin server admin --help
 Server admin management commands:
 
   list                  List all server admins
@@ -33221,16 +33221,16 @@ Server admin management commands:
 Note: Primary server admin cannot be removed. Use --maintenance setup for recovery.
 
 Examples:
-  {projectname}-cli --admin server admin list
-  {projectname}-cli --admin server admin invite newadmin --email admin@example.com
-  {projectname}-cli --admin server admin remove oldadmin
-  {projectname}-cli --admin server admin reset-password adminuser
+  weather-cli --admin server admin list
+  weather-cli --admin server admin invite newadmin --email admin@example.com
+  weather-cli --admin server admin remove oldadmin
+  weather-cli --admin server admin reset-password adminuser
 ```
 
 ## CLI Admin Server Stats Help Output
 
 ```bash
-$ {projectname}-cli --admin server stats --help
+$ weather-cli --admin server stats --help
 Server statistics commands:
 
   overview              General server statistics
@@ -33250,24 +33250,24 @@ Flags:
   --period PERIOD       Time period (1h|24h|7d|30d, default: 24h)
 
 Examples:
-  {projectname}-cli --admin server stats overview
-  {projectname}-cli --admin server stats users --period 30d
-  {projectname}-cli --admin server stats storage --format json
-  {projectname}-cli --admin server stats performance
+  weather-cli --admin server stats overview
+  weather-cli --admin server stats users --period 30d
+  weather-cli --admin server stats storage --format json
+  weather-cli --admin server stats performance
 ```
 
 ## System User Requirements 
 
 | Requirement | Value |
 |-------------|-------|
-| Username | `{projectname}` |
-| Group | `{projectname}` |
+| Username | `weather` |
+| Group | `weather` |
 | UID/GID | **Must match** - same value for both UID and GID |
 | UID/GID Range | **200-899** (safe system range, avoids well-known service IDs) |
 | Shell | `/sbin/nologin` or `/usr/sbin/nologin` |
-| Home | Config directory (`/etc/{projectorg}/{projectname}`) or data directory (`/var/lib/{projectorg}/{projectname}`) |
+| Home | Config directory (`/etc/apimgr/weather`) or data directory (`/var/lib/apimgr/weather`) |
 | Type | System user (no password, no login) |
-| Gecos | `{projectname} service account` |
+| Gecos | `weather service account` |
 
 ### UID/GID Selection Logic
 
@@ -33365,14 +33365,14 @@ func findAvailableSystemID() (int, error) {
 **Linux:**
 ```bash
 # Create group with specific GID
-groupadd --system --gid {id} {projectname}
+groupadd --system --gid {id} weather
 
 # Create user with matching UID, same primary group
 useradd --system --uid {id} --gid {id} \
-  --home-dir /etc/{projectorg}/{projectname} \
+  --home-dir /etc/apimgr/weather \
   --shell /sbin/nologin \
-  --comment "{projectname} service account" \
-  {projectname}
+  --comment "weather service account" \
+  weather
 ```
 
 ### macOS Service Account
@@ -33383,10 +33383,10 @@ useradd --system --uid {id} --gid {id} \
 |-------|-----------|---------|
 | Start | root | launchd starts binary as root |
 | Bind | root | Bind privileged ports (<1024) |
-| Drop | root→`{projectname}` | Binary drops privileges |
-| Run | `{projectname}` | Serve requests as unprivileged user |
+| Drop | root→`weather` | Binary drops privileges |
+| Run | `weather` | Serve requests as unprivileged user |
 
-**The `{projectname}` user is created automatically by the binary on first startup.**
+**The `weather` user is created automatically by the binary on first startup.**
 
 macOS uses `dscl` (Directory Service Command Line) to create system users. The user is hidden from login screen and has no shell access.
 
@@ -33408,21 +33408,21 @@ Same reserved IDs as Linux apply (see Reserved/Well-Known UIDs table above).
 # Start at 399, work down, skip reserved IDs
 
 # Create group with specific GID
-dscl . -create /Groups/{projectname}
-dscl . -create /Groups/{projectname} PrimaryGroupID {id}
-dscl . -create /Groups/{projectname} Password "*"
+dscl . -create /Groups/weather
+dscl . -create /Groups/weather PrimaryGroupID {id}
+dscl . -create /Groups/weather Password "*"
 
 # Create user with matching UID
-dscl . -create /Users/{projectname}
-dscl . -create /Users/{projectname} UniqueID {id}
-dscl . -create /Users/{projectname} PrimaryGroupID {id}
-dscl . -create /Users/{projectname} UserShell /usr/bin/false
-dscl . -create /Users/{projectname} RealName "{projectname} service account"
-dscl . -create /Users/{projectname} NFSHomeDirectory /usr/local/var/{projectorg}/{projectname}
-dscl . -create /Users/{projectname} Password "*"
+dscl . -create /Users/weather
+dscl . -create /Users/weather UniqueID {id}
+dscl . -create /Users/weather PrimaryGroupID {id}
+dscl . -create /Users/weather UserShell /usr/bin/false
+dscl . -create /Users/weather RealName "weather service account"
+dscl . -create /Users/weather NFSHomeDirectory /usr/local/var/apimgr/weather
+dscl . -create /Users/weather Password "*"
 
 # Hide user from login window
-dscl . -create /Users/{projectname} IsHidden 1
+dscl . -create /Users/weather IsHidden 1
 ```
 
 **launchd plist (runs as root, binary drops privileges):**
@@ -33432,14 +33432,14 @@ dscl . -create /Users/{projectname} IsHidden 1
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>{projectorg}.{projectname}</string>
+    <string>apimgr.weather</string>
 
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/{projectname}</string>
+        <string>/usr/local/bin/weather</string>
     </array>
 
-    <!-- No UserName/GroupName - starts as root, binary drops to {projectname} user -->
+    <!-- No UserName/GroupName - starts as root, binary drops to weather user -->
 
     <key>RunAtLoad</key>
     <true/>
@@ -33448,10 +33448,10 @@ dscl . -create /Users/{projectname} IsHidden 1
     <true/>
 
     <key>StandardOutPath</key>
-    <string>/var/log/{projectorg}/{projectname}/stdout.log</string>
+    <string>/var/log/apimgr/weather/stdout.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/var/log/{projectorg}/{projectname}/stderr.log</string>
+    <string>/var/log/apimgr/weather/stderr.log</string>
 </dict>
 </plist>
 ```
@@ -33460,11 +33460,11 @@ dscl . -create /Users/{projectname} IsHidden 1
 
 | Directory | Path | Purpose |
 |-----------|------|---------|
-| Binary | `/usr/local/bin/{projectname}` | Executable |
-| Config | `/usr/local/etc/{projectorg}/{projectname}/` | Configuration files |
-| Data | `/usr/local/var/{projectorg}/{projectname}/` | Application data |
-| Logs | `/usr/local/var/log/{projectorg}/{projectname}/` | Log files |
-| launchd plist | `/Library/LaunchDaemons/{projectorg}.{projectname}.plist` | Service definition |
+| Binary | `/usr/local/bin/weather` | Executable |
+| Config | `/usr/local/etc/apimgr/weather/` | Configuration files |
+| Data | `/usr/local/var/apimgr/weather/` | Application data |
+| Logs | `/usr/local/var/log/apimgr/weather/` | Log files |
+| launchd plist | `/Library/LaunchDaemons/apimgr.weather.plist` | Service definition |
 
 **Go Implementation (macOS):**
 ```go
@@ -33523,11 +33523,11 @@ func createMacOSServiceUser(name string, id int, homeDir string) error {
 **FreeBSD:**
 ```bash
 # Create user and group with matching ID
-pw groupadd -n {projectname} -g {id}
-pw useradd -n {projectname} -u {id} -g {id} \
-  -d /var/lib/{projectorg}/{projectname} \
+pw groupadd -n weather -g {id}
+pw useradd -n weather -u {id} -g {id} \
+  -d /var/lib/apimgr/weather \
   -s /usr/sbin/nologin \
-  -c "{projectname} service account"
+  -c "weather service account"
 ```
 
 ### Windows Service Account
@@ -33547,33 +33547,33 @@ pw useradd -n {projectname} -u {id} -g {id} \
 
 Virtual Service Accounts are automatically managed by Windows, require no password management, and have minimal privileges. They are created automatically when the service is installed.
 
-**Service Account Format:** `NT SERVICE\{projectname}`
+**Service Account Format:** `NT SERVICE\weather`
 
 ```powershell
 # Create service with Virtual Service Account (automatic)
-New-Service -Name "{projectname}" `
-  -BinaryPathName "C:\Program Files\{projectorg}\{projectname}\{projectname}.exe" `
-  -DisplayName "{projectname}" `
-  -Description "{projectname} service" `
+New-Service -Name "weather" `
+  -BinaryPathName "C:\Program Files\apimgr\weather\weather.exe" `
+  -DisplayName "weather" `
+  -Description "weather service" `
   -StartupType Automatic
 
-# Service automatically runs as NT SERVICE\{projectname}
+# Service automatically runs as NT SERVICE\weather
 # No user creation needed - Windows manages it
 ```
 
 **Directory Permissions:**
 ```powershell
 # Grant Virtual Service Account access to config/data directories
-$acl = Get-Acl "C:\ProgramData\{projectorg}\{projectname}"
+$acl = Get-Acl "C:\ProgramData\apimgr\weather"
 $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-    "NT SERVICE\{projectname}",
+    "NT SERVICE\weather",
     "FullControl",
     "ContainerInherit,ObjectInherit",
     "None",
     "Allow"
 )
 $acl.SetAccessRule($rule)
-Set-Acl "C:\ProgramData\{projectorg}\{projectname}" $acl
+Set-Acl "C:\ProgramData\apimgr\weather" $acl
 ```
 
 **Go Implementation (Windows):**
@@ -33594,11 +33594,11 @@ func installWindowsService() error {
     // Create service - runs as Virtual Service Account by default
     // when ServiceStartName is empty or "NT SERVICE\{name}"
     s, err := m.CreateService(
-        "{projectname}",
+        "weather",
         exePath,
         mgr.Config{
-            DisplayName:     "{projectname}",
-            Description:     "{projectname} service",
+            DisplayName:     "weather",
+            Description:     "weather service",
             StartType:       mgr.StartAutomatic,
             // Empty = Virtual Service Account
             ServiceStartName: "",
@@ -33617,17 +33617,17 @@ func installWindowsService() error {
 
 | Directory | Path | Purpose |
 |-----------|------|---------|
-| Binary | `C:\Program Files\{projectorg}\{projectname}\` | Executable |
-| Config | `C:\ProgramData\{projectorg}\{projectname}\config\` | Configuration files |
-| Data | `C:\ProgramData\{projectorg}\{projectname}\data\` | Application data |
-| Logs | `C:\ProgramData\{projectorg}\{projectname}\logs\` | Log files |
+| Binary | `C:\Program Files\apimgr\weather\` | Executable |
+| Config | `C:\ProgramData\apimgr\weather\config\` | Configuration files |
+| Data | `C:\ProgramData\apimgr\weather\data\` | Application data |
+| Logs | `C:\ProgramData\apimgr\weather\logs\` | Log files |
 
 ### Home Directory Selection
 
 | Directory | Use When |
 |-----------|----------|
-| Config dir (`/etc/{projectorg}/{projectname}`) | Default - user needs access to config files |
-| Data dir (`/var/lib/{projectorg}/{projectname}`) | When data dir contains user-writable content |
+| Config dir (`/etc/apimgr/weather`) | Default - user needs access to config files |
+| Data dir (`/var/lib/apimgr/weather`) | When data dir contains user-writable content |
 
 **Note:** Home directory must exist before user creation. Create directories first, then user, then set ownership.
 
@@ -33655,25 +33655,25 @@ func installWindowsService() error {
 
 ## Service Templates
 
-**Unix: Service starts as root, binary drops to `{projectname}` user after port binding.**
-**Windows: Service runs as Virtual Service Account (`NT SERVICE\{projectname}`).**
+**Unix: Service starts as root, binary drops to `weather` user after port binding.**
+**Windows: Service runs as Virtual Service Account (`NT SERVICE\weather`).**
 
 This allows any port configuration without service file changes.
 
 ### systemd (Linux)
 
-**Installation path:** `/etc/systemd/system/{projectname}.service`
+**Installation path:** `/etc/systemd/system/weather.service`
 
 ```ini
 [Unit]
-Description={projectname} service
-Documentation=https://{projectorg}.github.io/{projectname}
+Description=weather service
+Documentation=https://apimgr.github.io/weather
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/{projectname}
+ExecStart=/usr/local/bin/weather
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -33683,10 +33683,10 @@ StandardError=journal
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-ReadWritePaths=/etc/{projectorg}/{projectname}
-ReadWritePaths=/var/lib/{projectorg}/{projectname}
-ReadWritePaths=/var/cache/{projectorg}/{projectname}
-ReadWritePaths=/var/log/{projectorg}/{projectname}
+ReadWritePaths=/etc/apimgr/weather
+ReadWritePaths=/var/lib/apimgr/weather
+ReadWritePaths=/var/cache/apimgr/weather
+ReadWritePaths=/var/log/apimgr/weather
 
 [Install]
 WantedBy=multi-user.target
@@ -33694,10 +33694,10 @@ WantedBy=multi-user.target
 
 ### runit (Linux)
 
-**Installation path:** `/etc/sv/{projectname}/`
+**Installation path:** `/etc/sv/weather/`
 
 ```
-/etc/sv/{projectname}/
+/etc/sv/weather/
 ├── run           # Main service script
 ├── log/
 │   └── run       # Logging script
@@ -33707,31 +33707,31 @@ WantedBy=multi-user.target
 **run script:**
 ```bash
 #!/bin/sh
-exec /usr/local/bin/{projectname} 2>&1
+exec /usr/local/bin/weather 2>&1
 ```
 
 **log/run script:**
 ```bash
 #!/bin/sh
-exec svlogd -tt /var/log/{projectorg}/{projectname}
+exec svlogd -tt /var/log/apimgr/weather
 ```
 
 ### rc.d (FreeBSD)
 
-**Installation path:** `/usr/local/etc/rc.d/{projectname}`
+**Installation path:** `/usr/local/etc/rc.d/weather`
 
 ```bash
 #!/bin/sh
 
-# PROVIDE: {projectname}
+# PROVIDE: weather
 # REQUIRE: NETWORKING
 # KEYWORD: shutdown
 
 . /etc/rc.subr
 
-name="{projectname}"
-rcvar="{projectname}_enable"
-command="/usr/local/bin/{projectname}"
+name="weather"
+rcvar="weather_enable"
+command="/usr/local/bin/weather"
 
 load_rc_config $name
 run_rc_command "$1"
@@ -33739,7 +33739,7 @@ run_rc_command "$1"
 
 ### launchd (macOS)
 
-**Installation path:** `/Library/LaunchDaemons/{projectorg}.{projectname}.plist`
+**Installation path:** `/Library/LaunchDaemons/apimgr.weather.plist`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -33747,19 +33747,19 @@ run_rc_command "$1"
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>{projectorg}.{projectname}</string>
+    <string>apimgr.weather</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/{projectname}</string>
+        <string>/usr/local/bin/weather</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/var/log/{projectorg}/{projectname}/stdout.log</string>
+    <string>/var/log/apimgr/weather/stdout.log</string>
     <key>StandardErrorPath</key>
-    <string>/var/log/{projectorg}/{projectname}/stderr.log</string>
+    <string>/var/log/apimgr/weather/stderr.log</string>
 </dict>
 </plist>
 ```
@@ -33767,13 +33767,13 @@ run_rc_command "$1"
 **Commands:**
 ```bash
 # Load and start service
-sudo launchctl load /Library/LaunchDaemons/{projectorg}.{projectname}.plist
+sudo launchctl load /Library/LaunchDaemons/apimgr.weather.plist
 
 # Unload service
-sudo launchctl unload /Library/LaunchDaemons/{projectorg}.{projectname}.plist
+sudo launchctl unload /Library/LaunchDaemons/apimgr.weather.plist
 
 # Check status
-sudo launchctl list | grep {projectname}
+sudo launchctl list | grep weather
 ```
 
 ### Windows Service
@@ -33782,7 +33782,7 @@ sudo launchctl list | grep {projectname}
 
 | Account | Description |
 |---------|-------------|
-| `NT SERVICE\{projectname}` | Virtual Service Account - auto-managed by Windows |
+| `NT SERVICE\weather` | Virtual Service Account - auto-managed by Windows |
 
 Use `golang.org/x/sys/windows/svc` for Windows service integration:
 
@@ -33792,7 +33792,7 @@ Use `golang.org/x/sys/windows/svc` for Windows service integration:
 import "golang.org/x/sys/windows/svc"
 
 func runAsService() error {
-    return svc.Run("{projectname}", &windowsService{})
+    return svc.Run("weather", &windowsService{})
 }
 
 type windowsService struct{}
@@ -33826,7 +33826,7 @@ func (ws *windowsService) Execute(args []string, r <-chan svc.ChangeRequest, s c
 
 | Target | Purpose | Output Location | When to Use |
 |--------|---------|-----------------|-------------|
-| `dev` | Quick development build | `${TMPDIR}/${PROJECTORG}/${PROJECTNAME}-XXXXXX/` | Active coding, quick tests |
+| `dev` | Quick development build | `${TMPDIR}/$APIMGR/$WEATHER-XXXXXX/` | Active coding, quick tests |
 | `local` | Production test build | `binaries/` (with version) | Test prod builds locally |
 | `build` | Full release (all 8 platforms) | `binaries/` | Before release |
 | `test` | Run unit tests | Coverage report | After code changes |
@@ -33922,13 +33922,13 @@ format_version_tag() {
 
 ### Naming Pattern
 
-**Pattern: `{projectname}[-type]-{os}-{arch}[.exe]`**
+**Pattern: `weather[-type]-{os}-{arch}[.exe]`**
 
 | Binary | Local Build | Distribution |
 |--------|------------|--------------|
-| **Server** | `{projectname}` | `{projectname}-{os}-{arch}` |
-| **CLI** | `{projectname}-cli` | `{projectname}-cli-{os}-{arch}` |
-| **Agent** | `{projectname}-agent` | `{projectname}-agent-{os}-{arch}` |
+| **Server** | `weather` | `weather-{os}-{arch}` |
+| **CLI** | `weather-cli` | `weather-cli-{os}-{arch}` |
+| **Agent** | `weather-agent` | `weather-agent-{os}-{arch}` |
 
 ### Examples
 
@@ -33942,22 +33942,22 @@ format_version_tag() {
 
 ```
 binaries/
-├── {projectname}                      # Local server binary
-├── {projectname}-cli                  # Local CLI binary (if src/client/ exists)
-├── {projectname}-agent                # Local agent binary (if src/agent/ exists)
-├── {projectname}-linux-amd64          # Server distributions
-├── {projectname}-linux-arm64
-├── {projectname}-darwin-amd64
-├── {projectname}-darwin-arm64
-├── {projectname}-windows-amd64.exe
-├── {projectname}-windows-arm64.exe
-├── {projectname}-freebsd-amd64
-├── {projectname}-freebsd-arm64
-├── {projectname}-cli-linux-amd64      # CLI distributions
-├── {projectname}-cli-linux-arm64
+├── weather                      # Local server binary
+├── weather-cli                  # Local CLI binary (if src/client/ exists)
+├── weather-agent                # Local agent binary (if src/agent/ exists)
+├── weather-linux-amd64          # Server distributions
+├── weather-linux-arm64
+├── weather-darwin-amd64
+├── weather-darwin-arm64
+├── weather-windows-amd64.exe
+├── weather-windows-arm64.exe
+├── weather-freebsd-amd64
+├── weather-freebsd-arm64
+├── weather-cli-linux-amd64      # CLI distributions
+├── weather-cli-linux-arm64
 ├── ...
-├── {projectname}-agent-linux-amd64    # Agent distributions
-├── {projectname}-agent-linux-arm64
+├── weather-agent-linux-amd64    # Agent distributions
+├── weather-agent-linux-arm64
 └── ...
 ```
 
@@ -33965,7 +33965,7 @@ binaries/
 
 | Context | Path |
 |---------|------|
-| Temp build | `$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")` |
+| Temp build | `$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")` |
 
 **If built with musl → strip binary before release. Final name has NO `-musl` suffix.**
 
@@ -34281,8 +34281,8 @@ All Docker builds use persistent Go module caching to avoid re-downloading depen
 2. Creates cache directories if needed
 3. Downloads Go modules (cached)
 4. Creates `binaries/` directory
-5. Builds local binary: `binaries/{projectname}`
-6. Builds all platform binaries: `binaries/{projectname}-{os}-{arch}`
+5. Builds local binary: `binaries/weather`
+6. Builds all platform binaries: `binaries/weather-{os}-{arch}`
 7. Uses `CGO_ENABLED=0` for static binaries
 8. Embeds Version, CommitID, BuildDate via `-ldflags`
 9. All builds via Docker (`golang:alpine`)
@@ -34321,9 +34321,9 @@ All Docker builds use persistent Go module caching to avoid re-downloading depen
 1. Quick build for local development/testing
 2. Builds local platform only (fastest)
 3. No `-ldflags` (version info not embedded)
-4. Outputs to `{tempdir}/{projectorg}/{projectname}-XXXXXX/` (isolated, org-identifiable)
+4. Outputs to `{tempdir}/apimgr/weather-XXXXXX/` (isolated, org-identifiable)
 5. Uses Docker (`golang:alpine`) - keeps local machine clean
-6. Easy cleanup: `rm -rf "${TMPDIR:-/tmp}"/${PROJECTORG}.*/` or auto-deleted on reboot
+6. Easy cleanup: `rm -rf "${TMPDIR:-/tmp}"/$APIMGR.*/` or auto-deleted on reboot
 
 ### `make local`
 
@@ -34338,7 +34338,7 @@ All Docker builds use persistent Go module caching to avoid re-downloading depen
 
 | Command | Purpose | Output | When to Use |
 |---------|---------|--------|-------------|
-| `make dev` | **Development & Debugging** | `${TMPDIR}/${PROJECTORG}/${PROJECTNAME}-XXXXXX/` | Active coding, quick tests, debugging |
+| `make dev` | **Development & Debugging** | `${TMPDIR}/$APIMGR/$WEATHER-XXXXXX/` | Active coding, quick tests, debugging |
 | `make local` | **Production Testing** | `binaries/` (with version) | Test production builds locally before release |
 | `make build` | **Full Release Build** | `binaries/` (all 8 platforms) | Before tagging release, cross-platform verification |
 | `make test` | **Unit Tests** | Coverage report | After code changes, before commits |
@@ -34358,13 +34358,13 @@ All Docker builds use persistent Go module caching to avoid re-downloading depen
 
 ```bash
 # After make dev, test in Docker with debug tools
-BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-*/ 2>/dev/null | head -1)
+BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/$APIMGR/$WEATHER-*/ 2>/dev/null | head -1)
 docker run --rm -it \
   -v "$BUILD_DIR:/app" \
   alpine:latest sh -c "
     apk add --no-cache curl bash file jq
-    /app/${PROJECTNAME} --help
-    /app/${PROJECTNAME} --version
+    /app/$WEATHER --help
+    /app/$WEATHER --version
     # Debug interactively...
   "
 ```
@@ -34450,34 +34450,34 @@ The **only** time binaries are copied is during CI/CD release process, where the
 
 | File | Description |
 |------|-------------|
-| `{projectname}-linux-amd64` | Linux AMD64 server binary |
-| `{projectname}-linux-arm64` | Linux ARM64 server binary |
-| `{projectname}-darwin-amd64` | macOS AMD64 server binary |
-| `{projectname}-darwin-arm64` | macOS ARM64 (Apple Silicon) server binary |
-| `{projectname}-windows-amd64.exe` | Windows AMD64 server binary |
-| `{projectname}-windows-arm64.exe` | Windows ARM64 server binary |
-| `{projectname}-freebsd-amd64` | FreeBSD AMD64 server binary |
-| `{projectname}-freebsd-arm64` | FreeBSD ARM64 server binary |
+| `weather-linux-amd64` | Linux AMD64 server binary |
+| `weather-linux-arm64` | Linux ARM64 server binary |
+| `weather-darwin-amd64` | macOS AMD64 server binary |
+| `weather-darwin-arm64` | macOS ARM64 (Apple Silicon) server binary |
+| `weather-windows-amd64.exe` | Windows AMD64 server binary |
+| `weather-windows-arm64.exe` | Windows ARM64 server binary |
+| `weather-freebsd-amd64` | FreeBSD AMD64 server binary |
+| `weather-freebsd-arm64` | FreeBSD ARM64 server binary |
 
 ### CLI Binaries (If Project Has CLI)
 
 | File | Description |
 |------|-------------|
-| `{projectname}-cli-linux-amd64` | Linux AMD64 CLI binary |
-| `{projectname}-cli-linux-arm64` | Linux ARM64 CLI binary |
-| `{projectname}-cli-darwin-amd64` | macOS AMD64 CLI binary |
-| `{projectname}-cli-darwin-arm64` | macOS ARM64 (Apple Silicon) CLI binary |
-| `{projectname}-cli-windows-amd64.exe` | Windows AMD64 CLI binary |
-| `{projectname}-cli-windows-arm64.exe` | Windows ARM64 CLI binary |
-| `{projectname}-cli-freebsd-amd64` | FreeBSD AMD64 CLI binary |
-| `{projectname}-cli-freebsd-arm64` | FreeBSD ARM64 CLI binary |
+| `weather-cli-linux-amd64` | Linux AMD64 CLI binary |
+| `weather-cli-linux-arm64` | Linux ARM64 CLI binary |
+| `weather-cli-darwin-amd64` | macOS AMD64 CLI binary |
+| `weather-cli-darwin-arm64` | macOS ARM64 (Apple Silicon) CLI binary |
+| `weather-cli-windows-amd64.exe` | Windows AMD64 CLI binary |
+| `weather-cli-windows-arm64.exe` | Windows ARM64 CLI binary |
+| `weather-cli-freebsd-amd64` | FreeBSD AMD64 CLI binary |
+| `weather-cli-freebsd-arm64` | FreeBSD ARM64 CLI binary |
 
 ### Metadata Files (Always)
 
 | File | Description | Example Content |
 |------|-------------|-----------------|
 | `version.txt` | Version string only | `1.2.3`, `20251218060432-beta`, `20251218060432` |
-| `{projectname}-{version}-source.tar.gz` | Source code archive | Excludes `.git`, `.github`, `binaries/`, `releases/` |
+| `weather-{version}-source.tar.gz` | Source code archive | Excludes `.git`, `.github`, `binaries/`, `releases/` |
 
 ### version.txt Content
 
@@ -34617,7 +34617,7 @@ docker/
 | Meta labels | All OCI labels (see below) |
 | Required packages | git, curl, bash, tini, tor |
 | Tor handling | Installed but **binary controls** (see PART 32) |
-| Binary location | `/usr/local/bin/{projectname}` |
+| Binary location | `/usr/local/bin/weather` |
 | Entrypoint script | `/usr/local/bin/entrypoint.sh` |
 | Init system | **tini** |
 | Internal port | **80** |
@@ -34629,7 +34629,7 @@ docker/
 
 ```
 /config/
-└── {projectname}/                    # App config directory
+└── weather/                    # App config directory
     ├── server.yml                    # Main config file
     ├── security/                     # Security databases
     │   ├── geoip.mmdb               # GeoIP database
@@ -34638,7 +34638,7 @@ docker/
         └── torrc                     # Tor configuration
 
 /data/
-├── {projectname}/                    # App data directory
+├── weather/                    # App data directory
 │   ├── uploads/                      # User uploads
 │   ├── cache/                        # App cache
 │   └── tor/                          # Tor data (binary owns Tor)
@@ -34651,26 +34651,26 @@ docker/
 │   ├── postgres/                     # PostgreSQL data (if used)
 │   └── valkey/                       # Valkey/Redis data (if used)
 ├── log/                              # Log files
-│   └── {projectname}/               # App logs
+│   └── weather/               # App logs
 │       ├── access.log
 │       ├── error.log
 │       └── tor.log
 └── backups/                          # Backup archives
-    └── {projectname}/
+    └── weather/
 ```
 
 **Path Reference:**
 
 | Path | Purpose |
 |------|---------|
-| `/config/{projectname}/` | App config (server.yml, security/, tor/) |
-| `/data/{projectname}/` | App data (uploads, cache, tor/) |
+| `/config/weather/` | App config (server.yml, security/, tor/) |
+| `/data/weather/` | App data (uploads, cache, tor/) |
 | `/data/db/sqlite/` | SQLite databases (server.db, users.db) |
 | `/data/db/postgres/` | PostgreSQL data directory |
 | `/data/db/valkey/` | Valkey/Redis persistence |
-| `/data/log/{projectname}/` | App logs |
-| `/data/backups/{projectname}/` | Backup archives |
-| `/usr/local/bin/{projectname}` | Application binary |
+| `/data/log/weather/` | App logs |
+| `/data/backups/weather/` | Backup archives |
+| `/usr/local/bin/weather` | Application binary |
 
 **Host Volume Mapping (docker-compose):**
 
@@ -34692,9 +34692,9 @@ volumes:
 ```
 ./rootfs/
 ├── config/
-│   └── {projectname}/        # App config
+│   └── weather/        # App config
 └── data/
-    ├── {projectname}/        # App data
+    ├── weather/        # App data
     ├── db/
     │   ├── sqlite/           # SQLite databases (server.db, users.db)
     │   ├── postgres/         # PostgreSQL (if multi-service)
@@ -34704,7 +34704,7 @@ volumes:
 ```
 
 **Key principles:**
-- Binary owns Tor completely - Tor dirs are under `{projectname}/`, not separate
+- Binary owns Tor completely - Tor dirs are under `weather/`, not separate
 - All SQLite databases in `/data/db/sqlite/` (not scattered)
 - Database names are ALWAYS `server.db` and `users.db` (globally consistent)
 - External services (postgres, valkey) have their own `/data/db/{service}/` dirs
@@ -34717,11 +34717,11 @@ All Dockerfiles MUST include these labels:
 | Label | Value |
 |-------|-------|
 | `maintainer` | `{maintainer_name} <{maintainer_email}>` |
-| `org.opencontainers.image.vendor` | `{projectorg}` |
-| `org.opencontainers.image.authors` | `{projectorg}` |
-| `org.opencontainers.image.title` | `{projectname}` |
-| `org.opencontainers.image.base.name` | `{projectname}` |
-| `org.opencontainers.image.description` | `{projectname} - standard image (alpine)` or `{projectname} - all-in-one (...)` |
+| `org.opencontainers.image.vendor` | `apimgr` |
+| `org.opencontainers.image.authors` | `apimgr` |
+| `org.opencontainers.image.title` | `weather` |
+| `org.opencontainers.image.base.name` | `weather` |
+| `org.opencontainers.image.description` | `weather - standard image (alpine)` or `weather - all-in-one (...)` |
 | `org.opencontainers.image.licenses` | License (e.g., `MIT`) |
 | `org.opencontainers.image.created` | `${BUILD_DATE}` (ARG) |
 | `org.opencontainers.image.version` | `${VERSION}` (ARG) |
@@ -34795,7 +34795,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build \
     -ldflags "-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'" \
-    -o /build/binary/{projectname} ./src
+    -o /build/binary/weather ./src
 
 # =============================================================================
 # Runtime Stage - Minimal Alpine image
@@ -34810,11 +34810,11 @@ ARG LICENSE=MIT
 
 # Static Labels
 LABEL maintainer="{maintainer_name} <{maintainer_email}>" \
-      org.opencontainers.image.vendor="{projectorg}" \
-      org.opencontainers.image.authors="{projectorg}" \
-      org.opencontainers.image.title="{projectname}" \
-      org.opencontainers.image.base.name="{projectname}" \
-      org.opencontainers.image.description="{projectname} - standard image (alpine)" \
+      org.opencontainers.image.vendor="apimgr" \
+      org.opencontainers.image.authors="apimgr" \
+      org.opencontainers.image.title="weather" \
+      org.opencontainers.image.base.name="weather" \
+      org.opencontainers.image.description="weather - standard image (alpine)" \
       org.opencontainers.image.url="{PLATFORM_REPO_URL}" \
       org.opencontainers.image.source="{PLATFORM_REPO_URL}" \
       org.opencontainers.image.documentation="{PLATFORM_REPO_URL}" \
@@ -34842,7 +34842,7 @@ RUN apk add --no-cache \
 # Docker volume mounts auto-create mount points
 
 # Copy binary from builder stage (multi-stage build)
-COPY --from=builder /build/binary/{projectname} /usr/local/bin/{projectname}
+COPY --from=builder /build/binary/weather /usr/local/bin/weather
 
 # Copy BUILD-TIME overlay (entrypoint.sh) from docker/file_system/ into image
 # Note: This is docker/file_system/ (build context), NOT runtime ./rootfs/ volumes
@@ -34869,7 +34869,7 @@ STOPSIGNAL SIGRTMIN+3
 
 # Health check (long start period for services that need initialization)
 HEALTHCHECK --start-period=10m --interval=5m --timeout=15s --retries=3 \
-    CMD /usr/local/bin/{projectname} --status || exit 1
+    CMD /usr/local/bin/weather --status || exit 1
 
 # Use tini as init with signal propagation
 # -p SIGTERM: propagate SIGTERM to child processes
@@ -34910,7 +34910,7 @@ set -e
 # Binary handles: directories, permissions, user/group, Tor, etc.
 # =============================================================================
 
-APP_NAME="{projectname}"
+APP_NAME="weather"
 APP_BIN="/usr/local/bin/${APP_NAME}"
 
 # Export environment defaults (binary reads these)
@@ -35011,23 +35011,23 @@ exec $APP_BIN $FLAGS "$@"
 |-------------|-------|
 | `build:` | **NEVER include** |
 | `version:` | **NEVER include** |
-| `name:` | `{projectname}` (top-level) |
-| `container_name:` | `{projectname}-app` (main), `{projectname}-db` (database) |
-| Main service name | `{projectname}` (matches project name) |
+| `name:` | `weather` (top-level) |
+| `container_name:` | `weather-app` (main), `weather-db` (database) |
+| Main service name | `weather` (matches project name) |
 | `pull_policy:` | `always` |
 | `restart:` | `always` |
 | `x-logging:` | Anchor for consistent logging (see below) |
-| Network | Custom `{projectname}` with `external: false` |
+| Network | Custom `weather` with `external: false` |
 | Environment variables | **Hardcode with sane defaults** (NEVER use .env files) |
 | **environment: MODE** | **production** (strict host validation) |
 
 ### Docker Compose Structure 
 
 ```yaml
-# {projectname} - {brief description}
+# weather - {brief description}
 # nginx proxy address - http://172.17.0.1:{port}
 
-name: {projectname}
+name: weather
 
 x-logging: &default-logging
   options:
@@ -35036,9 +35036,9 @@ x-logging: &default-logging
   driver: json-file
 
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-app
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-app
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     pull_policy: always
@@ -35054,17 +35054,17 @@ services:
     ports:
       - '172.17.0.1:64580:80'
     healthcheck:
-      test: /usr/local/bin/{projectname} --status
+      test: /usr/local/bin/weather --status
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 90s
     networks:
-      - {projectname}
+      - weather
 
 networks:
-  {projectname}:
-    name: {projectname}
+  weather:
+    name: weather
     external: false
 ```
 
@@ -35072,15 +35072,15 @@ networks:
 
 | Field | Value | Description |
 |-------|-------|-------------|
-| `name:` | `{projectname}` | Top-level compose project name |
-| `container_name:` | `{projectname}-app`, `{projectname}-db` | e.g., `jokes-app`, `jokes-db` |
-| Main service | `{projectname}` | Service name matches project name |
-| Database service | `{projectname}-db` | Database service name |
+| `name:` | `weather` | Top-level compose project name |
+| `container_name:` | `weather-app`, `weather-db` | e.g., `jokes-app`, `jokes-db` |
+| Main service | `weather` | Service name matches project name |
+| Database service | `weather-db` | Database service name |
 | `hostname:` | `${BASE_HOST_NAME:-$HOSTNAME}` | Uses env or system hostname |
 | `restart:` | `always` | Always restart on failure |
 | `pull_policy:` | `always` | Always pull latest image |
 | `logging:` | `*default-logging` | Use the logging anchor |
-| `networks:` | `{projectname}` | Isolated network per project |
+| `networks:` | `weather` | Isolated network per project |
 
 ### Logging Anchor 
 
@@ -35097,17 +35097,17 @@ x-logging: &default-logging
 **Every service MUST use the anchor:**
 ```yaml
 services:
-  {projectname}:
+  weather:
     logging: *default-logging
 ```
 
 ### Multi-Service Example
 
 ```yaml
-# {projectname} - with PostgreSQL + Valkey
+# weather - with PostgreSQL + Valkey
 # nginx proxy address - http://172.17.0.1:64580
 
-name: {projectname}
+name: weather
 
 x-logging: &default-logging
   options:
@@ -35116,9 +35116,9 @@ x-logging: &default-logging
   driver: json-file
 
 services:
-  {projectname}:
-    image: ghcr.io/{projectorg}/{projectname}:latest
-    container_name: {projectname}-app
+  weather:
+    image: ghcr.io/apimgr/weather:latest
+    container_name: weather-app
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     pull_policy: always
@@ -35128,56 +35128,56 @@ services:
       - PORT=80
       - DEBUG=false
       - TZ=${TZ:-America/New_York}
-      - DB_HOST={projectname}-db
-      - DB_NAME={projectname}
-      - DB_USER={projectname}
-      - CACHE_HOST={projectname}-cache
+      - DB_HOST=weather-db
+      - DB_NAME=weather
+      - DB_USER=weather
+      - CACHE_HOST=weather-cache
     volumes:
       - './rootfs/config:/config:z'
       - './rootfs/data:/data:z'
     ports:
       - '172.17.0.1:64580:80'
     healthcheck:
-      test: /usr/local/bin/{projectname} --status
+      test: /usr/local/bin/weather --status
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 90s
     depends_on:
-      {projectname}-db:
+      weather-db:
         condition: service_healthy
-      {projectname}-cache:
+      weather-cache:
         condition: service_healthy
     networks:
-      - {projectname}
+      - weather
 
-  {projectname}-db:
+  weather-db:
     image: postgres:alpine
-    container_name: {projectname}-db
+    container_name: weather-db
     restart: always
     logging: *default-logging
     environment:
-      - POSTGRES_DB={projectname}
-      - POSTGRES_USER={projectname}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-{projectname}}
+      - POSTGRES_DB=weather
+      - POSTGRES_USER=weather
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-weather}
     volumes:
-      - './rootfs/data/db/postgres/{projectname}:/var/lib/postgresql/data:z'
+      - './rootfs/data/db/postgres/weather:/var/lib/postgresql/data:z'
     healthcheck:
-      test: pg_isready -U {projectname} -d {projectname}
+      test: pg_isready -U weather -d weather
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
     networks:
-      - {projectname}
+      - weather
 
-  {projectname}-cache:
+  weather-cache:
     image: valkey/valkey:alpine
-    container_name: {projectname}-cache
+    container_name: weather-cache
     restart: always
     logging: *default-logging
     volumes:
-      - './rootfs/data/db/valkey/{projectname}:/data:z'
+      - './rootfs/data/db/valkey/weather:/data:z'
     healthcheck:
       test: valkey-cli ping || exit 1
       interval: 10s
@@ -35185,11 +35185,11 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - {projectname}
+      - weather
 
 networks:
-  {projectname}:
-    name: {projectname}
+  weather:
+    name: weather
     external: false
 ```
 
@@ -35197,13 +35197,13 @@ networks:
 
 | Service Type | Service Name | Container Name |
 |--------------|--------------|----------------|
-| Main application | `{projectname}` | `{projectname}-app` |
-| All-in-one | `{projectname}` | `{projectname}-app` |
-| Database | `{projectname}-db` | `{projectname}-db` |
-| Cache (Valkey) | `{projectname}-cache` | `{projectname}-cache` |
-| Search (Meilisearch) | `{projectname}-search` | `{projectname}-search` |
-| Queue (RabbitMQ) | `{projectname}-queue` | `{projectname}-queue` |
-| Proxy (Nginx) | `{projectname}-proxy` | `{projectname}-proxy` |
+| Main application | `weather` | `weather-app` |
+| All-in-one | `weather` | `weather-app` |
+| Database | `weather-db` | `weather-db` |
+| Cache (Valkey) | `weather-cache` | `weather-cache` |
+| Search (Meilisearch) | `weather-search` | `weather-search` |
+| Queue (RabbitMQ) | `weather-queue` | `weather-queue` |
+| Proxy (Nginx) | `weather-proxy` | `weather-proxy` |
 
 ### All-in-One vs Multi-Service 
 
@@ -35221,8 +35221,8 @@ networks:
 - Single container runs everything
 - Uses SQLite (embedded) or embedded key-value store
 - Valkey/Redis runs inside container via supervisor or embedded
-- Service name: `{projectname}`
-- Container name: `{projectname}-app`
+- Service name: `weather`
+- Container name: `weather-app`
 - Simpler deployment, single image
 - **Trade-offs:** No horizontal scaling, single point of failure, harder to debug
 
@@ -35238,11 +35238,11 @@ networks:
 **All-in-One docker-compose (`docker/all-in-one.yml`):**
 
 ```yaml
-# {projectname} - All-in-One (app + embedded DB)
+# weather - All-in-One (app + embedded DB)
 # nginx proxy address - http://172.17.0.1:64580
 # Usage: docker compose -f all-in-one.yml up -d
 
-name: {projectname}
+name: weather
 
 x-logging: &default-logging
   options:
@@ -35251,9 +35251,9 @@ x-logging: &default-logging
   driver: json-file
 
 services:
-  {projectname}:
-    image: ghcr.io/{projectorg}/{projectname}-aio:latest
-    container_name: {projectname}-app
+  weather:
+    image: ghcr.io/apimgr/weather-aio:latest
+    container_name: weather-app
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     pull_policy: always
@@ -35269,17 +35269,17 @@ services:
     ports:
       - '172.17.0.1:64580:80'
     healthcheck:
-      test: /usr/local/bin/{projectname} --status
+      test: /usr/local/bin/weather --status
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 90s
     networks:
-      - {projectname}
+      - weather
 
 networks:
-  {projectname}:
-    name: {projectname}
+  weather:
+    name: weather
     external: false
 ```
 
@@ -35311,7 +35311,7 @@ networks:
 # All-in-One Dockerfile - includes app + postgresql + valkey + tor
 # Build: golang:alpine (static binary, CGO_ENABLED=0)
 # Runtime: debian:latest (stable, broad compatibility)
-# Image name: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}-aio:latest
+# Image name: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather-aio:latest
 # PORTS: Only 80 exposed (db/cache are internal-only)
 
 # =============================================================================
@@ -35338,7 +35338,7 @@ ARG BUILD_TIME=unknown
 
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X main.Version=${VERSION} -X main.Commit=${COMMIT} -X main.BuildTime=${BUILD_TIME}" \
-    -o {projectname} ./src
+    -o weather ./src
 
 # =============================================================================
 # Stage 2: Runtime image with PostgreSQL + Valkey + Tor
@@ -35346,7 +35346,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 FROM debian:latest
 
 LABEL org.opencontainers.image.source="{PLATFORM_REPO_URL}"
-LABEL org.opencontainers.image.description="{projectname} - all-in-one (debian + postgresql + valkey + tor)"
+LABEL org.opencontainers.image.description="weather - all-in-one (debian + postgresql + valkey + tor)"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Install dependencies (PostgreSQL + Valkey + Tor + Supervisor)
@@ -35374,8 +35374,8 @@ RUN mkdir -p /config/postgres /config/valkey \
 COPY docker/file_system/ /
 
 # Copy application binary from builder
-COPY --from=builder /build/{projectname} /usr/local/bin/
-RUN chmod +x /usr/local/bin/{projectname} /usr/local/bin/entrypoint.sh
+COPY --from=builder /build/weather /usr/local/bin/
+RUN chmod +x /usr/local/bin/weather /usr/local/bin/entrypoint.sh
 
 # Default environment
 # DATABASE_DIR: SQLite location (binary auto-detects container, but explicit is clearer)
@@ -35386,8 +35386,8 @@ ENV MODE=production \
     DATABASE_DIR=/data/db/sqlite \
     PGDATA=/data/db/postgres \
     DB_HOST=/run/postgresql \
-    DB_NAME={projectname} \
-    DB_USER={projectname} \
+    DB_NAME=weather \
+    DB_USER=weather \
     VALKEY_SOCKET=/run/valkey/valkey.sock
 
 # Only expose app port - db/cache are internal
@@ -35425,7 +35425,7 @@ stdout_logfile=/data/log/valkey.log
 stderr_logfile=/data/log/valkey.log
 
 [program:tor]
-command=/usr/bin/tor -f /config/{projectname}/tor/torrc
+command=/usr/bin/tor -f /config/weather/tor/torrc
 autostart=%(ENV_TOR_ENABLED)s
 autorestart=true
 priority=30
@@ -35433,7 +35433,7 @@ stdout_logfile=/data/log/tor.log
 stderr_logfile=/data/log/tor.log
 
 [program:app]
-command=/usr/local/bin/{projectname}
+command=/usr/local/bin/weather
 autostart=true
 autorestart=true
 priority=100
@@ -35552,9 +35552,9 @@ if [ ! -f /data/db/postgres/PG_VERSION ]; then
     sleep 3
 
     # Create application database and user
-    su - postgres -c "psql -c \"CREATE USER ${DB_USER:-{projectname}} WITH PASSWORD '${DB_PASSWORD:-{projectname}}';\""
-    su - postgres -c "psql -c \"CREATE DATABASE ${DB_NAME:-{projectname}} OWNER ${DB_USER:-{projectname}};\""
-    su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME:-{projectname}} TO ${DB_USER:-{projectname}};\""
+    su - postgres -c "psql -c \"CREATE USER ${DB_USER:-weather} WITH PASSWORD '${DB_PASSWORD:-weather}';\""
+    su - postgres -c "psql -c \"CREATE DATABASE ${DB_NAME:-weather} OWNER ${DB_USER:-weather};\""
+    su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME:-weather} TO ${DB_USER:-weather};\""
 
     # Stop PostgreSQL (supervisor will start it)
     su - postgres -c "pg_ctl -D /data/db/postgres stop"
@@ -35582,9 +35582,9 @@ exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
 | `PORT` | `80` | Application port |
 | `DEBUG` | `false` | Debug mode |
 | `TZ` | `America/New_York` | Timezone |
-| `DB_NAME` | `{projectname}` | PostgreSQL database name |
-| `DB_USER` | `{projectname}` | PostgreSQL username |
-| `DB_PASSWORD` | `{projectname}` | PostgreSQL password |
+| `DB_NAME` | `weather` | PostgreSQL database name |
+| `DB_USER` | `weather` | PostgreSQL username |
+| `DB_PASSWORD` | `weather` | PostgreSQL password |
 | `TOR_ENABLED` | `false` | Enable Tor hidden service |
 
 **App Connection Strings (internal):**
@@ -35601,10 +35601,10 @@ valkeyURL := "unix:///run/valkey/valkey.sock"
 
 ```bash
 # Standard image (context is project root)
-docker build -t {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest -f docker/Dockerfile .
+docker build -t {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest -f docker/Dockerfile .
 
 # All-in-one image (context is project root)
-docker build -t {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}-aio:latest -f docker/Dockerfile.aio .
+docker build -t {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather-aio:latest -f docker/Dockerfile.aio .
 ```
 
 **When to use All-in-One:**
@@ -35670,16 +35670,16 @@ $TEMP_DIR/
 
 | Container Path | Contents |
 |----------------|----------|
-| `/config/{projectname}/` | Binary's {config_dir} - server.yml, etc. |
-| `/config/{projectname}/security/` | TLS certs, keys, security DBs |
-| `/config/{projectname}/tor/` | Tor config (torrc) - binary owns Tor |
+| `/config/weather/` | Binary's {config_dir} - server.yml, etc. |
+| `/config/weather/security/` | TLS certs, keys, security DBs |
+| `/config/weather/tor/` | Tor config (torrc) - binary owns Tor |
 | `/config/{servicename}/` | External service configs (valkey, nginx, etc.) |
-| `/data/{projectname}/` | Binary's {data_dir} |
-| `/data/{projectname}/tor/` | Tor data (hidden service keys) - binary owns Tor |
+| `/data/weather/` | Binary's {data_dir} |
+| `/data/weather/tor/` | Tor data (hidden service keys) - binary owns Tor |
 | `/data/db/{dbtype}/` | Database data (postgres, valkey, sqlite, etc.) |
-| `/data/log/{projectname}/` | App logs (access.log, error.log, tor.log) |
+| `/data/log/weather/` | App logs (access.log, error.log, tor.log) |
 | `/data/log/{servicename}/` | Service logs (nginx, caddy, etc.) |
-| `/data/backups/{projectname}/` | Backup files |
+| `/data/backups/weather/` | Backup files |
 | `/data/{servicename}/` | External service data (nginx, apache, etc.) |
 
 **Rules:**
@@ -35700,12 +35700,12 @@ $TEMP_DIR/
 5. Data lives in temp dir, isolated from project
 
 ```bash
-# Setup (uses OS temp dir: {ostempdir}/{projectorg}/{projectname}-XXXXXX/)
+# Setup (uses OS temp dir: {ostempdir}/apimgr/weather-XXXXXX/)
 # Set PROJECT_ROOT to your actual project location
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"  # Use git top-level
 # Or use absolute path: PROJECT_ROOT="/path/to/your/project"
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 mkdir -p "$TEMP_DIR/rootfs/config" "$TEMP_DIR/rootfs/data"
 
 # Copy docker-compose.yml
@@ -35777,12 +35777,12 @@ rm -rf "$TEMP_DIR"
 Development mode with optional debug. Humans run this manually for local development.
 
 ```yaml
-name: {projectname}-dev
+name: weather-dev
 
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-dev
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-dev
     restart: unless-stopped
     environment:
       # Development: relaxed security, verbose logging, no caching
@@ -35800,18 +35800,18 @@ services:
       - ./rootfs/config:/config:z
       - ./rootfs/data:/data:z
     networks:
-      - {projectname}-dev
+      - weather-dev
 
 networks:
-  {projectname}-dev:
-    name: {projectname}-dev
+  weather-dev:
+    name: weather-dev
     external: false
 ```
 
 **Run:**
 ```bash
-mkdir -p "${TMPDIR:-/tmp}/{projectorg}"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/{projectorg}/{projectname}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/apimgr"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/apimgr/weather-XXXXXX")
 mkdir -p "$TEMP_DIR/rootfs/config" "$TEMP_DIR/rootfs/data"
 cp docker/docker-compose.dev.yml "$TEMP_DIR/docker-compose.yml"
 cd "$TEMP_DIR" && docker compose up -d
@@ -35826,12 +35826,12 @@ cd "$TEMP_DIR" && docker compose up -d
 Production has NO debug options. Debug must be set via CLI if needed. Humans deploy this for production use.
 
 ```yaml
-name: {projectname}
+name: weather
 
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-app
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-app
     restart: unless-stopped
     environment:
       # Production: strict security, minimal logging, caching enabled
@@ -35854,18 +35854,18 @@ services:
       - ./rootfs/config:/config:z
       - ./rootfs/data:/data:z
     networks:
-      - {projectname}
+      - weather
 
 networks:
-  {projectname}:
-    name: {projectname}
+  weather:
+    name: weather
     external: false
 ```
 
 **Run:**
 ```bash
-mkdir -p "${TMPDIR:-/tmp}/{projectorg}"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/{projectorg}/{projectname}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/apimgr"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/apimgr/weather-XXXXXX")
 mkdir -p "$TEMP_DIR/rootfs/config" "$TEMP_DIR/rootfs/data"
 cp docker/docker-compose.yml "$TEMP_DIR/"
 cd "$TEMP_DIR" && docker compose up -d
@@ -35880,12 +35880,12 @@ cd "$TEMP_DIR" && docker compose up -d
 Debug enabled for test visibility. **MUST be copied to temp directory before use - NEVER run from project directory.**
 
 ```yaml
-name: {projectname}-test
+name: weather-test
 
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-test
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-test
     restart: "no"
     environment:
       - MODE=development
@@ -35900,18 +35900,18 @@ services:
       - ./rootfs/config:/config:z
       - ./rootfs/data:/data:z
     networks:
-      - {projectname}-test
+      - weather-test
 
 networks:
-  {projectname}-test:
-    name: {projectname}-test
+  weather-test:
+    name: weather-test
     external: false
 ```
 
 **AI/Automated Testing Workflow (REQUIRED):**
 ```bash
-mkdir -p "${TMPDIR:-/tmp}/{projectorg}"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/{projectorg}/{projectname}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/apimgr"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/apimgr/weather-XXXXXX")
 mkdir -p "$TEMP_DIR/rootfs/config" "$TEMP_DIR/rootfs/data"
 cp docker/docker-compose.test.yml "$TEMP_DIR/docker-compose.yml"
 cd "$TEMP_DIR" && docker compose up --abort-on-container-exit
@@ -35923,15 +35923,15 @@ rm -rf "$TEMP_DIR"  # Cleanup after tests
 **Location:** `docker/docker-compose.yml`
 
 ```yaml
-name: {projectname}
+name: weather
 
 services:
-  {projectname}:
-    image: {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
-    container_name: {projectname}-app
+  weather:
+    image: {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
+    container_name: weather-app
     restart: unless-stopped
     depends_on:
-      {projectname}-db:
+      weather-db:
         condition: service_healthy
     environment:
       # Tor auto-enabled (tor binary installed in image)
@@ -35940,11 +35940,11 @@ services:
       # DOMAIN (optional - containers behind reverse proxy auto-detect from headers)
       # Only set if NOT behind reverse proxy, comma-separated list supported
       # - DOMAIN=myapp.com,www.myapp.com,api.myapp.com
-      - DB_HOST={projectname}-db
+      - DB_HOST=weather-db
       - DB_PORT=5432
-      - DB_NAME={projectname}
-      - DB_USER={projectname}
-      - DB_PASS=${DB_PASSWORD:-{projectname}}
+      - DB_NAME=weather
+      - DB_USER=weather
+      - DB_PASS=${DB_PASSWORD:-weather}
     ports:
       # Production: bound to Docker bridge only (reverse proxy handles external)
       - "172.17.0.1:64580:80"
@@ -35952,31 +35952,31 @@ services:
       - ./rootfs/config:/config:z
       - ./rootfs/data:/data:z
     networks:
-      - {projectname}
+      - weather
 
-  {projectname}-db:
+  weather-db:
     image: postgres:alpine
-    container_name: {projectname}-db
+    container_name: weather-db
     restart: unless-stopped
     environment:
-      - POSTGRES_DB={projectname}
-      - POSTGRES_USER={projectname}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-{projectname}}
+      - POSTGRES_DB=weather
+      - POSTGRES_USER=weather
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-weather}
       - TZ=America/New_York
     volumes:
-      - ./rootfs/data/db/postgres/{projectname}:/var/lib/postgresql/data:z
+      - ./rootfs/data/db/postgres/weather:/var/lib/postgresql/data:z
     healthcheck:
-      test: pg_isready -U {projectname} -d {projectname}
+      test: pg_isready -U weather -d weather
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
     networks:
-      - {projectname}
+      - weather
 
 networks:
-  {projectname}:
-    name: {projectname}
+  weather:
+    name: weather
     external: false
 ```
 
@@ -35987,15 +35987,15 @@ networks:
 | Setting | Value |
 |---------|-------|
 | Internal port | **80** (always) |
-| Config dir | `/config/{projectname}/` (binary's {config_dir}) |
-| Security dir | `/config/{projectname}/security/` |
-| Tor config dir | `/config/{projectname}/tor/` (binary owns Tor) |
-| Data dir | `/data/{projectname}/` (binary's {data_dir}) |
-| Tor data dir | `/data/{projectname}/tor/` (binary owns Tor) |
+| Config dir | `/config/weather/` (binary's {config_dir}) |
+| Security dir | `/config/weather/security/` |
+| Tor config dir | `/config/weather/tor/` (binary owns Tor) |
+| Data dir | `/data/weather/` (binary's {data_dir}) |
+| Tor data dir | `/data/weather/tor/` (binary owns Tor) |
 | Database dir | `/data/db/{dbtype}/` (postgres, valkey, sqlite) |
-| Log dir | `/data/log/{projectname}/` |
-| Backup dir | `/data/backups/{projectname}/` |
-| Binary | `/usr/local/bin/{projectname}` |
+| Log dir | `/data/log/weather/` |
+| Backup dir | `/data/backups/weather/` |
+| Binary | `/usr/local/bin/weather` |
 | HEALTHCHECK | `{binary} --status` |
 
 **Path Mapping (Container vs Local):**
@@ -36004,8 +36004,8 @@ networks:
 |----------------|-----------|---------|
 | `/config` | `./rootfs/config` | Configuration root (organized by component) |
 | `/data` | `./rootfs/data` | Data root (organized by component) |
-| `/config/{projectname}/` | `./rootfs/config/{projectname}/` | Binary's config |
-| `/data/{projectname}/` | `./rootfs/data/{projectname}/` | Binary's data |
+| `/config/weather/` | `./rootfs/config/weather/` | Binary's config |
+| `/data/weather/` | `./rootfs/data/weather/` | Binary's data |
 | `/data/db/` | `./rootfs/data/db/` | Database data |
 | `/data/log/` | `./rootfs/data/log/` | Log files |
 
@@ -36017,10 +36017,10 @@ networks:
 |----------|-------------|
 | Auto-detection | Tor starts automatically if `tor` binary is installed |
 | Always enabled | Docker image includes `tor`, so always enabled in containers |
-| Config location | Torrc in `/config/{projectname}/tor/torrc` |
-| Data persistence | Tor keys in `/data/{projectname}/tor/site/` (survives restart) |
+| Config location | Torrc in `/config/weather/tor/torrc` |
+| Data persistence | Tor keys in `/data/weather/tor/site/` (survives restart) |
 | .onion address | Persists across container restarts via volume mount |
-| Binary owns Tor | Tor dirs under `{projectname}/`, not separate service |
+| Binary owns Tor | Tor dirs under `weather/`, not separate service |
 
 ## Container Detection
 
@@ -36043,17 +36043,17 @@ networks:
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `{PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest` | Latest stable release | `ghcr.io/myorg/myapp:latest` |
-| `{PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:{version}` | Specific version | `ghcr.io/myorg/myapp:1.2.3` |
-| `{PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:{YYMM}` | Year/month tag | `ghcr.io/myorg/myapp:2512` |
-| `{PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:{commit}` | Git commit (7 char) | `ghcr.io/myorg/myapp:abc1234` |
+| `{PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest` | Latest stable release | `ghcr.io/myorg/myapp:latest` |
+| `{PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:{version}` | Specific version | `ghcr.io/myorg/myapp:1.2.3` |
+| `{PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:{YYMM}` | Year/month tag | `ghcr.io/myorg/myapp:2512` |
+| `{PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:{commit}` | Git commit (7 char) | `ghcr.io/myorg/myapp:abc1234` |
 
 ### Development Tags (Local)
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `{projectname}:dev` | Local development build | `myapp:dev` |
-| `{projectname}:test` | Local test build | `myapp:test` |
+| `weather:dev` | Local development build | `myapp:dev` |
+| `weather:test` | Local test build | `myapp:test` |
 
 ### Registry
 
@@ -36064,7 +36064,7 @@ networks:
 
 ### Tag Rules
 
-1. **Release builds** MUST push to `{PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}`
+1. **Release builds** MUST push to `{PLATFORM_CONTAINER_REGISTRY}/apimgr/weather`
 2. **Development builds** MUST use local-only tags (no registry prefix)
 3. **NEVER push `:dev` or `:test` tags to production registry**
 4. All release images built for `linux/amd64` AND `linux/arm64`
@@ -36148,7 +36148,7 @@ on:
       - '[0-9]*.[0-9]*.[0-9]*'
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
 
 jobs:
   build:
@@ -36302,7 +36302,7 @@ on:
       - beta
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
 
 jobs:
   build:
@@ -36441,7 +36441,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
 
 jobs:
   build:
@@ -36609,7 +36609,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -36681,8 +36681,8 @@ jobs:
             BUILD_DATE=${{ env.BUILD_DATE }}
             COMMIT_ID=${{ env.COMMIT_ID }}
           labels: |
-            org.opencontainers.image.vendor={projectorg}
-            org.opencontainers.image.authors={projectorg}
+            org.opencontainers.image.vendor=apimgr
+            org.opencontainers.image.authors=apimgr
             org.opencontainers.image.title=${{ env.PROJECTNAME }}
             org.opencontainers.image.base.name=${{ env.PROJECTNAME }}
             org.opencontainers.image.description=${{ env.PROJECTNAME }} - standard image (alpine)
@@ -36694,8 +36694,8 @@ jobs:
             org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.licenses=MIT
           annotations: |
-            manifest:org.opencontainers.image.vendor={projectorg}
-            manifest:org.opencontainers.image.authors={projectorg}
+            manifest:org.opencontainers.image.vendor=apimgr
+            manifest:org.opencontainers.image.authors=apimgr
             manifest:org.opencontainers.image.title=${{ env.PROJECTNAME }}
             manifest:org.opencontainers.image.base.name=${{ env.PROJECTNAME }}
             manifest:org.opencontainers.image.description=${{ env.PROJECTNAME }} - standard image (alpine)
@@ -36776,8 +36776,8 @@ jobs:
             BUILD_DATE=${{ env.BUILD_DATE }}
             COMMIT_ID=${{ env.COMMIT_ID }}
           labels: |
-            org.opencontainers.image.vendor={projectorg}
-            org.opencontainers.image.authors={projectorg}
+            org.opencontainers.image.vendor=apimgr
+            org.opencontainers.image.authors=apimgr
             org.opencontainers.image.title=${{ env.PROJECTNAME }}-aio
             org.opencontainers.image.description=${{ env.PROJECTNAME }} - all-in-one (debian + postgresql + valkey + tor)
             org.opencontainers.image.version=${{ env.VERSION }}
@@ -36788,8 +36788,8 @@ jobs:
             org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.licenses=MIT
           annotations: |
-            manifest:org.opencontainers.image.vendor={projectorg}
-            manifest:org.opencontainers.image.authors={projectorg}
+            manifest:org.opencontainers.image.vendor=apimgr
+            manifest:org.opencontainers.image.authors=apimgr
             manifest:org.opencontainers.image.title=${{ env.PROJECTNAME }}-aio
             manifest:org.opencontainers.image.description=${{ env.PROJECTNAME }} - all-in-one (debian + postgresql + valkey + tor)
             manifest:org.opencontainers.image.version=${{ env.VERSION }}
@@ -36879,7 +36879,7 @@ on:
       - '[0-9]*.[0-9]*.[0-9]*'
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
 
 jobs:
   build:
@@ -37031,7 +37031,7 @@ on:
       - beta
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
 
 jobs:
   build:
@@ -37156,7 +37156,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
 
 jobs:
   build:
@@ -37303,7 +37303,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECTNAME: {projectname}
+  PROJECTNAME: weather
   # Registry auto-detected from Gitea instance (works with self-hosted)
   # Format: {gitea-server}/owner/repo -> extracts server for registry
   IMAGE_NAME: ${{ gitea.repository }}
@@ -37390,8 +37390,8 @@ jobs:
             BUILD_DATE=${{ env.BUILD_DATE }}
             COMMIT_ID=${{ env.COMMIT_ID }}
           labels: |
-            org.opencontainers.image.vendor={projectorg}
-            org.opencontainers.image.authors={projectorg}
+            org.opencontainers.image.vendor=apimgr
+            org.opencontainers.image.authors=apimgr
             org.opencontainers.image.title=${{ env.PROJECTNAME }}
             org.opencontainers.image.base.name=${{ env.PROJECTNAME }}
             org.opencontainers.image.description=${{ env.PROJECTNAME }} - standard image (alpine)
@@ -37403,8 +37403,8 @@ jobs:
             org.opencontainers.image.documentation=${{ gitea.server_url }}/${{ gitea.repository }}
             org.opencontainers.image.licenses=MIT
           annotations: |
-            manifest:org.opencontainers.image.vendor={projectorg}
-            manifest:org.opencontainers.image.authors={projectorg}
+            manifest:org.opencontainers.image.vendor=apimgr
+            manifest:org.opencontainers.image.authors=apimgr
             manifest:org.opencontainers.image.title=${{ env.PROJECTNAME }}
             manifest:org.opencontainers.image.base.name=${{ env.PROJECTNAME }}
             manifest:org.opencontainers.image.description=${{ env.PROJECTNAME }} - standard image (alpine)
@@ -37492,8 +37492,8 @@ jobs:
             BUILD_DATE=${{ env.BUILD_DATE }}
             COMMIT_ID=${{ env.COMMIT_ID }}
           labels: |
-            org.opencontainers.image.vendor={projectorg}
-            org.opencontainers.image.authors={projectorg}
+            org.opencontainers.image.vendor=apimgr
+            org.opencontainers.image.authors=apimgr
             org.opencontainers.image.title=${{ env.PROJECTNAME }}-aio
             org.opencontainers.image.description=${{ env.PROJECTNAME }} - all-in-one (debian + postgresql + valkey + tor)
             org.opencontainers.image.version=${{ env.VERSION }}
@@ -37504,8 +37504,8 @@ jobs:
             org.opencontainers.image.documentation=${{ gitea.server_url }}/${{ gitea.repository }}
             org.opencontainers.image.licenses=MIT
           annotations: |
-            manifest:org.opencontainers.image.vendor={projectorg}
-            manifest:org.opencontainers.image.authors={projectorg}
+            manifest:org.opencontainers.image.vendor=apimgr
+            manifest:org.opencontainers.image.authors=apimgr
             manifest:org.opencontainers.image.title=${{ env.PROJECTNAME }}-aio
             manifest:org.opencontainers.image.description=${{ env.PROJECTNAME }} - all-in-one (debian + postgresql + valkey + tor)
             manifest:org.opencontainers.image.version=${{ env.VERSION }}
@@ -37577,12 +37577,12 @@ All `$CI_*` variables are auto-populated by GitLab (works with self-hosted).
 **File:** `.gitlab-ci.yml`
 
 ```yaml
-# GitLab CI/CD Pipeline for {projectname}
+# GitLab CI/CD Pipeline for weather
 # Equivalent to GitHub Actions: release.yml, beta.yml, daily.yml, docker.yml
 
 variables:
-  PROJECTNAME: "{projectname}"
-  PROJECTORG: "{projectorg}"
+  PROJECTNAME: "weather"
+  PROJECTORG: "apimgr"
   CGO_ENABLED: "0"
   GOOS: linux
   GOARCH: amd64
@@ -37620,12 +37620,12 @@ build:linux-amd64:
     GOOS: linux
     GOARCH: amd64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-linux-amd64 ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-linux-amd64 ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-linux-amd64 ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-amd64 ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-linux-amd64 ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-linux-amd64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-linux-amd64*
+      - $WEATHER-linux-amd64*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37637,12 +37637,12 @@ build:linux-arm64:
     GOOS: linux
     GOARCH: arm64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-linux-arm64 ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-linux-arm64 ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-linux-arm64 ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-arm64 ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-linux-arm64 ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-linux-arm64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-linux-arm64*
+      - $WEATHER-linux-arm64*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37654,12 +37654,12 @@ build:darwin-amd64:
     GOOS: darwin
     GOARCH: amd64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-darwin-amd64 ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-darwin-amd64 ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-darwin-amd64 ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-darwin-amd64 ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-darwin-amd64 ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-darwin-amd64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-darwin-amd64*
+      - $WEATHER-darwin-amd64*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37671,12 +37671,12 @@ build:darwin-arm64:
     GOOS: darwin
     GOARCH: arm64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-darwin-arm64 ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-darwin-arm64 ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-darwin-arm64 ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-darwin-arm64 ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-darwin-arm64 ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-darwin-arm64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-darwin-arm64*
+      - $WEATHER-darwin-arm64*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37688,12 +37688,12 @@ build:windows-amd64:
     GOOS: windows
     GOARCH: amd64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-windows-amd64.exe ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-windows-amd64.exe ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-windows-amd64.exe ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-windows-amd64.exe ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-windows-amd64.exe ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-windows-amd64.exe ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-windows-amd64*.exe
+      - $WEATHER-windows-amd64*.exe
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37705,12 +37705,12 @@ build:windows-arm64:
     GOOS: windows
     GOARCH: arm64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-windows-arm64.exe ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-windows-arm64.exe ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-windows-arm64.exe ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-windows-arm64.exe ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-windows-arm64.exe ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-windows-arm64.exe ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-windows-arm64*.exe
+      - $WEATHER-windows-arm64*.exe
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37722,12 +37722,12 @@ build:freebsd-amd64:
     GOOS: freebsd
     GOARCH: amd64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-freebsd-amd64 ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-freebsd-amd64 ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-freebsd-amd64 ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-freebsd-amd64 ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-freebsd-amd64 ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-freebsd-amd64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-freebsd-amd64*
+      - $WEATHER-freebsd-amd64*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37739,12 +37739,12 @@ build:freebsd-arm64:
     GOOS: freebsd
     GOARCH: arm64
   script:
-    - go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-freebsd-arm64 ./src
-    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-freebsd-arm64 ./src/client; fi
-    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-freebsd-arm64 ./src/agent; fi
+    - go build -ldflags "${LDFLAGS}" -o $WEATHER-freebsd-arm64 ./src
+    - if [ -d "src/client" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-freebsd-arm64 ./src/client; fi
+    - if [ -d "src/agent" ]; then go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-freebsd-arm64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-freebsd-arm64*
+      - $WEATHER-freebsd-arm64*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
@@ -37786,29 +37786,29 @@ release:
   artifacts:
     paths:
       - version.txt
-      - ${PROJECTNAME}-*
+      - $WEATHER-*
   release:
     tag_name: $CI_COMMIT_TAG
     name: "Release $CI_COMMIT_TAG"
     description: "Release created by GitLab CI"
     assets:
       links:
-        - name: "${PROJECTNAME}-linux-amd64"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-linux-amd64?job=build:linux-amd64"
-        - name: "${PROJECTNAME}-linux-arm64"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-linux-arm64?job=build:linux-arm64"
-        - name: "${PROJECTNAME}-darwin-amd64"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-darwin-amd64?job=build:darwin-amd64"
-        - name: "${PROJECTNAME}-darwin-arm64"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-darwin-arm64?job=build:darwin-arm64"
-        - name: "${PROJECTNAME}-windows-amd64.exe"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-windows-amd64.exe?job=build:windows-amd64"
-        - name: "${PROJECTNAME}-windows-arm64.exe"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-windows-arm64.exe?job=build:windows-arm64"
-        - name: "${PROJECTNAME}-freebsd-amd64"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-freebsd-amd64?job=build:freebsd-amd64"
-        - name: "${PROJECTNAME}-freebsd-arm64"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/${PROJECTNAME}-freebsd-arm64?job=build:freebsd-arm64"
+        - name: "$WEATHER-linux-amd64"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-linux-amd64?job=build:linux-amd64"
+        - name: "$WEATHER-linux-arm64"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-linux-arm64?job=build:linux-arm64"
+        - name: "$WEATHER-darwin-amd64"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-darwin-amd64?job=build:darwin-amd64"
+        - name: "$WEATHER-darwin-arm64"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-darwin-arm64?job=build:darwin-arm64"
+        - name: "$WEATHER-windows-amd64.exe"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-windows-amd64.exe?job=build:windows-amd64"
+        - name: "$WEATHER-windows-arm64.exe"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-windows-arm64.exe?job=build:windows-arm64"
+        - name: "$WEATHER-freebsd-amd64"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-freebsd-amd64?job=build:freebsd-amd64"
+        - name: "$WEATHER-freebsd-arm64"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/$WEATHER-freebsd-arm64?job=build:freebsd-arm64"
   rules:
     - if: $CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+/
 
@@ -37827,35 +37827,35 @@ build:beta:
     - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'"
   script:
     # Build all 8 platforms
-    - GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-linux-amd64 ./src
-    - GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-linux-arm64 ./src
-    - GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-darwin-amd64 ./src
-    - GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-darwin-arm64 ./src
-    - GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-windows-amd64.exe ./src
-    - GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-windows-arm64.exe ./src
-    - GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-freebsd-amd64 ./src
-    - GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-freebsd-arm64 ./src
+    - GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-amd64 ./src
+    - GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-arm64 ./src
+    - GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-darwin-amd64 ./src
+    - GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-darwin-arm64 ./src
+    - GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-windows-amd64.exe ./src
+    - GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-windows-arm64.exe ./src
+    - GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-freebsd-amd64 ./src
+    - GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-freebsd-arm64 ./src
     # Build CLI if exists
-    - if [ -d "src/client" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-linux-amd64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-linux-arm64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-darwin-amd64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-darwin-arm64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-windows-amd64.exe ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-windows-arm64.exe ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-freebsd-amd64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-freebsd-arm64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-linux-amd64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-linux-arm64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-darwin-amd64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-darwin-arm64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-windows-amd64.exe ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-windows-arm64.exe ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-freebsd-amd64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-freebsd-arm64 ./src/client; fi
     # Build Agent if exists
-    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-linux-amd64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-linux-arm64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-darwin-amd64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-darwin-arm64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-windows-amd64.exe ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-windows-arm64.exe ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-freebsd-amd64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-freebsd-arm64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-linux-amd64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-linux-arm64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-darwin-amd64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-darwin-arm64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-windows-amd64.exe ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-windows-arm64.exe ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-freebsd-amd64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-freebsd-arm64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-*
+      - $WEATHER-*
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_BRANCH == "beta"
@@ -37875,35 +37875,35 @@ build:daily:
     - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'"
   script:
     # Build all 8 platforms
-    - GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-linux-amd64 ./src
-    - GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-linux-arm64 ./src
-    - GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-darwin-amd64 ./src
-    - GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-darwin-arm64 ./src
-    - GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-windows-amd64.exe ./src
-    - GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-windows-arm64.exe ./src
-    - GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-freebsd-amd64 ./src
-    - GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-freebsd-arm64 ./src
+    - GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-amd64 ./src
+    - GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-arm64 ./src
+    - GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-darwin-amd64 ./src
+    - GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-darwin-arm64 ./src
+    - GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-windows-amd64.exe ./src
+    - GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-windows-arm64.exe ./src
+    - GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-freebsd-amd64 ./src
+    - GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-freebsd-arm64 ./src
     # Build CLI if exists
-    - if [ -d "src/client" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-linux-amd64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-linux-arm64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-darwin-amd64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-darwin-arm64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-windows-amd64.exe ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-windows-arm64.exe ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-freebsd-amd64 ./src/client; fi
-    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli-freebsd-arm64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-linux-amd64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-linux-arm64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-darwin-amd64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-darwin-arm64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-windows-amd64.exe ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-windows-arm64.exe ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-freebsd-amd64 ./src/client; fi
+    - if [ -d "src/client" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-cli-freebsd-arm64 ./src/client; fi
     # Build Agent if exists
-    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-linux-amd64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-linux-arm64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-darwin-amd64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-darwin-arm64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-windows-amd64.exe ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-windows-arm64.exe ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-freebsd-amd64 ./src/agent; fi
-    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-agent-freebsd-arm64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-linux-amd64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-linux-arm64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-darwin-amd64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-darwin-arm64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-windows-amd64.exe ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-windows-arm64.exe ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-freebsd-amd64 ./src/agent; fi
+    - if [ -d "src/agent" ]; then GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o $WEATHER-agent-freebsd-arm64 ./src/agent; fi
   artifacts:
     paths:
-      - ${PROJECTNAME}-*
+      - $WEATHER-*
     expire_in: 1 day
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -37949,11 +37949,11 @@ docker:build:
         --build-arg VERSION="${VERSION}" \
         --build-arg COMMIT_ID="${CI_COMMIT_SHORT_SHA}" \
         --build-arg BUILD_DATE="${BUILD_DATE}" \
-        --label "org.opencontainers.image.vendor=${PROJECTORG}" \
-        --label "org.opencontainers.image.authors=${PROJECTORG}" \
-        --label "org.opencontainers.image.title=${PROJECTNAME}" \
-        --label "org.opencontainers.image.base.name=${PROJECTNAME}" \
-        --label "org.opencontainers.image.description=${PROJECTNAME} - standard image (alpine)" \
+        --label "org.opencontainers.image.vendor=$APIMGR" \
+        --label "org.opencontainers.image.authors=$APIMGR" \
+        --label "org.opencontainers.image.title=$WEATHER" \
+        --label "org.opencontainers.image.base.name=$WEATHER" \
+        --label "org.opencontainers.image.description=$WEATHER - standard image (alpine)" \
         --label "org.opencontainers.image.licenses=MIT" \
         --label "org.opencontainers.image.version=${VERSION}" \
         --label "org.opencontainers.image.created=${BUILD_DATE}" \
@@ -37961,11 +37961,11 @@ docker:build:
         --label "org.opencontainers.image.url=${CI_PROJECT_URL}" \
         --label "org.opencontainers.image.source=${CI_PROJECT_URL}" \
         --label "org.opencontainers.image.documentation=${CI_PROJECT_URL}" \
-        --annotation "manifest:org.opencontainers.image.vendor=${PROJECTORG}" \
-        --annotation "manifest:org.opencontainers.image.authors=${PROJECTORG}" \
-        --annotation "manifest:org.opencontainers.image.title=${PROJECTNAME}" \
-        --annotation "manifest:org.opencontainers.image.base.name=${PROJECTNAME}" \
-        --annotation "manifest:org.opencontainers.image.description=${PROJECTNAME} - standard image (alpine)" \
+        --annotation "manifest:org.opencontainers.image.vendor=$APIMGR" \
+        --annotation "manifest:org.opencontainers.image.authors=$APIMGR" \
+        --annotation "manifest:org.opencontainers.image.title=$WEATHER" \
+        --annotation "manifest:org.opencontainers.image.base.name=$WEATHER" \
+        --annotation "manifest:org.opencontainers.image.description=$WEATHER - standard image (alpine)" \
         --annotation "manifest:org.opencontainers.image.licenses=MIT" \
         --annotation "manifest:org.opencontainers.image.version=${VERSION}" \
         --annotation "manifest:org.opencontainers.image.created=${BUILD_DATE}" \
@@ -38016,10 +38016,10 @@ docker:build-aio:
         --build-arg VERSION="${VERSION}" \
         --build-arg COMMIT_ID="${CI_COMMIT_SHORT_SHA}" \
         --build-arg BUILD_DATE="${BUILD_DATE}" \
-        --label "org.opencontainers.image.vendor=${PROJECTORG}" \
-        --label "org.opencontainers.image.authors=${PROJECTORG}" \
-        --label "org.opencontainers.image.title=${PROJECTNAME}-aio" \
-        --label "org.opencontainers.image.description=${PROJECTNAME} - all-in-one (debian + postgresql + valkey + tor)" \
+        --label "org.opencontainers.image.vendor=$APIMGR" \
+        --label "org.opencontainers.image.authors=$APIMGR" \
+        --label "org.opencontainers.image.title=$WEATHER-aio" \
+        --label "org.opencontainers.image.description=$WEATHER - all-in-one (debian + postgresql + valkey + tor)" \
         --label "org.opencontainers.image.licenses=MIT" \
         --label "org.opencontainers.image.version=${VERSION}" \
         --label "org.opencontainers.image.created=${BUILD_DATE}" \
@@ -38027,10 +38027,10 @@ docker:build-aio:
         --label "org.opencontainers.image.url=${CI_PROJECT_URL}" \
         --label "org.opencontainers.image.source=${CI_PROJECT_URL}" \
         --label "org.opencontainers.image.documentation=${CI_PROJECT_URL}" \
-        --annotation "manifest:org.opencontainers.image.vendor=${PROJECTORG}" \
-        --annotation "manifest:org.opencontainers.image.authors=${PROJECTORG}" \
-        --annotation "manifest:org.opencontainers.image.title=${PROJECTNAME}-aio" \
-        --annotation "manifest:org.opencontainers.image.description=${PROJECTNAME} - all-in-one (debian + postgresql + valkey + tor)" \
+        --annotation "manifest:org.opencontainers.image.vendor=$APIMGR" \
+        --annotation "manifest:org.opencontainers.image.authors=$APIMGR" \
+        --annotation "manifest:org.opencontainers.image.title=$WEATHER-aio" \
+        --annotation "manifest:org.opencontainers.image.description=$WEATHER - all-in-one (debian + postgresql + valkey + tor)" \
         --annotation "manifest:org.opencontainers.image.licenses=MIT" \
         --annotation "manifest:org.opencontainers.image.version=${VERSION}" \
         --annotation "manifest:org.opencontainers.image.created=${BUILD_DATE}" \
@@ -38128,12 +38128,12 @@ pipeline {
     }
 
     environment {
-        PROJECTNAME = '{projectname}'
-        PROJECTORG = '{projectorg}'
+        PROJECTNAME = 'weather'
+        PROJECTORG = 'apimgr'
         BINDIR = 'binaries'
         RELDIR = 'releases'
-        GODIR = "/tmp/${PROJECTORG}/go"
-        GOCACHE = "/tmp/${PROJECTORG}/go/build"
+        GODIR = "/tmp/$APIMGR/go"
+        GOCACHE = "/tmp/$APIMGR/go/build"
 
         // =========================================================================
         // GIT PROVIDER CONFIGURATION
@@ -38143,22 +38143,22 @@ pipeline {
         // ----- GITHUB (default) -----
         GIT_FQDN = 'github.com'
         GIT_TOKEN = credentials('github-token')  // Jenkins credentials ID
-        REGISTRY = "ghcr.io/${PROJECTORG}/${PROJECTNAME}"
+        REGISTRY = "ghcr.io/$APIMGR/$WEATHER"
 
         // ----- GITEA / FORGEJO (self-hosted) -----
         // GIT_FQDN = 'git.example.com'  // Your Gitea/Forgejo domain
         // GIT_TOKEN = credentials('gitea-token')  // Jenkins credentials ID
-        // REGISTRY = "${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}"
+        // REGISTRY = "${GIT_FQDN}/$APIMGR/$WEATHER"
 
         // ----- GITLAB (gitlab.com or self-hosted) -----
         // GIT_FQDN = 'gitlab.com'  // or your self-hosted GitLab domain
         // GIT_TOKEN = credentials('gitlab-token')  // Jenkins credentials ID
-        // REGISTRY = "registry.${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}"
+        // REGISTRY = "registry.${GIT_FQDN}/$APIMGR/$WEATHER"
 
         // ----- DOCKER HUB -----
         // GIT_FQDN = 'github.com'  // Git provider (separate from registry)
         // GIT_TOKEN = credentials('github-token')
-        // REGISTRY = "docker.io/${PROJECTORG}/${PROJECTNAME}"
+        // REGISTRY = "docker.io/$APIMGR/$WEATHER"
 
         // =========================================================================
     }
@@ -38213,7 +38213,7 @@ pipeline {
                                 -e GOOS=linux \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-linux-amd64 ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-linux-amd64 ./src
                         '''
                     }
                 }
@@ -38230,7 +38230,7 @@ pipeline {
                                 -e GOOS=linux \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-linux-arm64 ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-linux-arm64 ./src
                         '''
                     }
                 }
@@ -38248,7 +38248,7 @@ pipeline {
                                 -e GOOS=darwin \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-darwin-amd64 ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-darwin-amd64 ./src
                         '''
                     }
                 }
@@ -38265,7 +38265,7 @@ pipeline {
                                 -e GOOS=darwin \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-darwin-arm64 ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-darwin-arm64 ./src
                         '''
                     }
                 }
@@ -38283,7 +38283,7 @@ pipeline {
                                 -e GOOS=windows \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-windows-amd64.exe ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-windows-amd64.exe ./src
                         '''
                     }
                 }
@@ -38300,7 +38300,7 @@ pipeline {
                                 -e GOOS=windows \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-windows-arm64.exe ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-windows-arm64.exe ./src
                         '''
                     }
                 }
@@ -38318,7 +38318,7 @@ pipeline {
                                 -e GOOS=freebsd \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-freebsd-amd64 ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-freebsd-amd64 ./src
                         '''
                     }
                 }
@@ -38335,7 +38335,7 @@ pipeline {
                                 -e GOOS=freebsd \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-freebsd-arm64 ./src
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-freebsd-arm64 ./src
                         '''
                     }
                 }
@@ -38361,7 +38361,7 @@ pipeline {
                                 -e GOOS=linux \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-linux-amd64 ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-linux-amd64 ./src/client
                         '''
                     }
                 }
@@ -38378,7 +38378,7 @@ pipeline {
                                 -e GOOS=linux \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-linux-arm64 ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-linux-arm64 ./src/client
                         '''
                     }
                 }
@@ -38395,7 +38395,7 @@ pipeline {
                                 -e GOOS=darwin \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-darwin-amd64 ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-darwin-amd64 ./src/client
                         '''
                     }
                 }
@@ -38412,7 +38412,7 @@ pipeline {
                                 -e GOOS=darwin \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-darwin-arm64 ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-darwin-arm64 ./src/client
                         '''
                     }
                 }
@@ -38429,7 +38429,7 @@ pipeline {
                                 -e GOOS=windows \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-windows-amd64.exe ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-windows-amd64.exe ./src/client
                         '''
                     }
                 }
@@ -38446,7 +38446,7 @@ pipeline {
                                 -e GOOS=windows \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-windows-arm64.exe ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-windows-arm64.exe ./src/client
                         '''
                     }
                 }
@@ -38463,7 +38463,7 @@ pipeline {
                                 -e GOOS=freebsd \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-freebsd-amd64 ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-freebsd-amd64 ./src/client
                         '''
                     }
                 }
@@ -38480,7 +38480,7 @@ pipeline {
                                 -e GOOS=freebsd \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-cli-freebsd-arm64 ./src/client
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-cli-freebsd-arm64 ./src/client
                         '''
                     }
                 }
@@ -38506,7 +38506,7 @@ pipeline {
                                 -e GOOS=linux \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-linux-amd64 ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-linux-amd64 ./src/agent
                         '''
                     }
                 }
@@ -38523,7 +38523,7 @@ pipeline {
                                 -e GOOS=linux \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-linux-arm64 ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-linux-arm64 ./src/agent
                         '''
                     }
                 }
@@ -38540,7 +38540,7 @@ pipeline {
                                 -e GOOS=darwin \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-darwin-amd64 ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-darwin-amd64 ./src/agent
                         '''
                     }
                 }
@@ -38557,7 +38557,7 @@ pipeline {
                                 -e GOOS=darwin \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-darwin-arm64 ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-darwin-arm64 ./src/agent
                         '''
                     }
                 }
@@ -38574,7 +38574,7 @@ pipeline {
                                 -e GOOS=windows \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-windows-amd64.exe ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-windows-amd64.exe ./src/agent
                         '''
                     }
                 }
@@ -38591,7 +38591,7 @@ pipeline {
                                 -e GOOS=windows \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-windows-arm64.exe ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-windows-arm64.exe ./src/agent
                         '''
                     }
                 }
@@ -38608,7 +38608,7 @@ pipeline {
                                 -e GOOS=freebsd \
                                 -e GOARCH=amd64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-freebsd-amd64 ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-freebsd-amd64 ./src/agent
                         '''
                     }
                 }
@@ -38625,7 +38625,7 @@ pipeline {
                                 -e GOOS=freebsd \
                                 -e GOARCH=arm64 \
                                 golang:alpine \
-                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/${PROJECTNAME}-agent-freebsd-arm64 ./src/agent
+                                go build -ldflags "${LDFLAGS}" -o ${BINDIR}/$WEATHER-agent-freebsd-arm64 ./src/agent
                         '''
                     }
                 }
@@ -38657,7 +38657,7 @@ pipeline {
                 sh '''
                     echo "${VERSION}" > ${RELDIR}/version.txt
 
-                    for f in ${BINDIR}/${PROJECTNAME}-*; do
+                    for f in ${BINDIR}/$WEATHER-*; do
                         [ -f "$f" ] || continue
                         cp "$f" ${RELDIR}/
                     done
@@ -38665,7 +38665,7 @@ pipeline {
                     tar --exclude='.git' --exclude='.github' --exclude='.gitea' \
                         --exclude='.forgejo' --exclude='binaries' --exclude='releases' \
                         --exclude='*.tar.gz' \
-                        -czf ${RELDIR}/${PROJECTNAME}-${VERSION}-source.tar.gz .
+                        -czf ${RELDIR}/$WEATHER-${VERSION}-source.tar.gz .
                 '''
                 archiveArtifacts artifacts: 'releases/*', fingerprint: true
             }
@@ -38681,7 +38681,7 @@ pipeline {
                 sh '''
                     echo "${VERSION}" > ${RELDIR}/version.txt
 
-                    for f in ${BINDIR}/${PROJECTNAME}-*; do
+                    for f in ${BINDIR}/$WEATHER-*; do
                         [ -f "$f" ] || continue
                         cp "$f" ${RELDIR}/
                     done
@@ -38700,7 +38700,7 @@ pipeline {
                 sh '''
                     echo "${VERSION}" > ${RELDIR}/version.txt
 
-                    for f in ${BINDIR}/${PROJECTNAME}-*; do
+                    for f in ${BINDIR}/$WEATHER-*; do
                         [ -f "$f" ] || continue
                         cp "$f" ${RELDIR}/
                     done
@@ -38734,42 +38734,42 @@ pipeline {
                     // Login to container registry
                     // Works with: ghcr.io, registry.gitlab.com, gitea/forgejo, docker.io
                     sh """
-                        echo "\${GIT_TOKEN}" | docker login ${REGISTRY.split('/')[0]} -u ${PROJECTORG} --password-stdin
+                        echo "\${GIT_TOKEN}" | docker login ${REGISTRY.split('/')[0]} -u $APIMGR --password-stdin
                     """
 
                     // Build multi-arch with OCI labels and manifest annotations
                     sh """
-                        docker buildx create --name ${PROJECTNAME}-builder --use 2>/dev/null || docker buildx use ${PROJECTNAME}-builder
+                        docker buildx create --name $WEATHER-builder --use 2>/dev/null || docker buildx use $WEATHER-builder
                         docker buildx build \
                             -f docker/Dockerfile \
                             --platform linux/amd64,linux/arm64 \
                             --build-arg VERSION="${VERSION}" \
                             --build-arg COMMIT_ID="${COMMIT_ID}" \
                             --build-arg BUILD_DATE="${BUILD_DATE}" \
-                            --label "org.opencontainers.image.vendor=${PROJECTORG}" \
-                            --label "org.opencontainers.image.authors=${PROJECTORG}" \
-                            --label "org.opencontainers.image.title=${PROJECTNAME}" \
-                            --label "org.opencontainers.image.base.name=${PROJECTNAME}" \
-                            --label "org.opencontainers.image.description=${PROJECTNAME} - standard image (alpine)" \
+                            --label "org.opencontainers.image.vendor=$APIMGR" \
+                            --label "org.opencontainers.image.authors=$APIMGR" \
+                            --label "org.opencontainers.image.title=$WEATHER" \
+                            --label "org.opencontainers.image.base.name=$WEATHER" \
+                            --label "org.opencontainers.image.description=$WEATHER - standard image (alpine)" \
                             --label "org.opencontainers.image.licenses=MIT" \
                             --label "org.opencontainers.image.version=${VERSION}" \
                             --label "org.opencontainers.image.created=${BUILD_DATE}" \
                             --label "org.opencontainers.image.revision=${COMMIT_ID}" \
-                            --label "org.opencontainers.image.url=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --label "org.opencontainers.image.source=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --label "org.opencontainers.image.documentation=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.vendor=${PROJECTORG}" \
-                            --annotation "manifest:org.opencontainers.image.authors=${PROJECTORG}" \
-                            --annotation "manifest:org.opencontainers.image.title=${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.base.name=${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.description=${PROJECTNAME} - standard image (alpine)" \
+                            --label "org.opencontainers.image.url=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --label "org.opencontainers.image.source=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --label "org.opencontainers.image.documentation=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.vendor=$APIMGR" \
+                            --annotation "manifest:org.opencontainers.image.authors=$APIMGR" \
+                            --annotation "manifest:org.opencontainers.image.title=$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.base.name=$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.description=$WEATHER - standard image (alpine)" \
                             --annotation "manifest:org.opencontainers.image.licenses=MIT" \
                             --annotation "manifest:org.opencontainers.image.version=${VERSION}" \
                             --annotation "manifest:org.opencontainers.image.created=${BUILD_DATE}" \
                             --annotation "manifest:org.opencontainers.image.revision=${COMMIT_ID}" \
-                            --annotation "manifest:org.opencontainers.image.url=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.source=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.documentation=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
+                            --annotation "manifest:org.opencontainers.image.url=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.source=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.documentation=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
                             ${tags} \
                             --push \
                             .
@@ -38804,40 +38804,40 @@ pipeline {
 
                     // Login to container registry
                     sh """
-                        echo "\${GIT_TOKEN}" | docker login ${REGISTRY.split('/')[0]} -u ${PROJECTORG} --password-stdin
+                        echo "\${GIT_TOKEN}" | docker login ${REGISTRY.split('/')[0]} -u $APIMGR --password-stdin
                     """
 
                     // Build multi-arch all-in-one with OCI labels and manifest annotations
                     sh """
-                        docker buildx create --name ${PROJECTNAME}-builder --use 2>/dev/null || docker buildx use ${PROJECTNAME}-builder
+                        docker buildx create --name $WEATHER-builder --use 2>/dev/null || docker buildx use $WEATHER-builder
                         docker buildx build \
                             -f docker/Dockerfile.aio \
                             --platform linux/amd64,linux/arm64 \
                             --build-arg VERSION="${VERSION}" \
                             --build-arg COMMIT_ID="${COMMIT_ID}" \
                             --build-arg BUILD_DATE="${BUILD_DATE}" \
-                            --label "org.opencontainers.image.vendor=${PROJECTORG}" \
-                            --label "org.opencontainers.image.authors=${PROJECTORG}" \
-                            --label "org.opencontainers.image.title=${PROJECTNAME}-aio" \
-                            --label "org.opencontainers.image.description=${PROJECTNAME} - all-in-one (debian + postgresql + valkey + tor)" \
+                            --label "org.opencontainers.image.vendor=$APIMGR" \
+                            --label "org.opencontainers.image.authors=$APIMGR" \
+                            --label "org.opencontainers.image.title=$WEATHER-aio" \
+                            --label "org.opencontainers.image.description=$WEATHER - all-in-one (debian + postgresql + valkey + tor)" \
                             --label "org.opencontainers.image.licenses=MIT" \
                             --label "org.opencontainers.image.version=${VERSION}" \
                             --label "org.opencontainers.image.created=${BUILD_DATE}" \
                             --label "org.opencontainers.image.revision=${COMMIT_ID}" \
-                            --label "org.opencontainers.image.url=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --label "org.opencontainers.image.source=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --label "org.opencontainers.image.documentation=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.vendor=${PROJECTORG}" \
-                            --annotation "manifest:org.opencontainers.image.authors=${PROJECTORG}" \
-                            --annotation "manifest:org.opencontainers.image.title=${PROJECTNAME}-aio" \
-                            --annotation "manifest:org.opencontainers.image.description=${PROJECTNAME} - all-in-one (debian + postgresql + valkey + tor)" \
+                            --label "org.opencontainers.image.url=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --label "org.opencontainers.image.source=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --label "org.opencontainers.image.documentation=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.vendor=$APIMGR" \
+                            --annotation "manifest:org.opencontainers.image.authors=$APIMGR" \
+                            --annotation "manifest:org.opencontainers.image.title=$WEATHER-aio" \
+                            --annotation "manifest:org.opencontainers.image.description=$WEATHER - all-in-one (debian + postgresql + valkey + tor)" \
                             --annotation "manifest:org.opencontainers.image.licenses=MIT" \
                             --annotation "manifest:org.opencontainers.image.version=${VERSION}" \
                             --annotation "manifest:org.opencontainers.image.created=${BUILD_DATE}" \
                             --annotation "manifest:org.opencontainers.image.revision=${COMMIT_ID}" \
-                            --annotation "manifest:org.opencontainers.image.url=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.source=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
-                            --annotation "manifest:org.opencontainers.image.documentation=https://${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}" \
+                            --annotation "manifest:org.opencontainers.image.url=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.source=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
+                            --annotation "manifest:org.opencontainers.image.documentation=https://${GIT_FQDN}/$APIMGR/$WEATHER" \
                             ${tags} \
                             --push \
                             .
@@ -38864,7 +38864,7 @@ pipeline {
 | Agent labels | `amd64` and `arm64` MUST be available |
 | Docker | Required on all agents (builds use golang:alpine) |
 | Docker buildx | Required on amd64 agent for multi-arch builds |
-| Go caches | `/tmp/{projectorg}/go-cache` and `/tmp/{projectorg}/go-mod-cache` |
+| Go caches | `/tmp/apimgr/go-cache` and `/tmp/apimgr/go-mod-cache` |
 
 ### Credentials Setup (Jenkins → Credentials → Add Credentials)
 
@@ -38895,17 +38895,17 @@ In the Jenkinsfile, uncomment the appropriate block:
 // ----- GITHUB (default) -----
 GIT_FQDN = 'github.com'
 GIT_TOKEN = credentials('github-token')
-REGISTRY = "ghcr.io/${PROJECTORG}/${PROJECTNAME}"
+REGISTRY = "ghcr.io/$APIMGR/$WEATHER"
 
 // ----- GITEA / FORGEJO (self-hosted) -----
 // GIT_FQDN = 'git.example.com'
 // GIT_TOKEN = credentials('gitea-token')
-// REGISTRY = "${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}"
+// REGISTRY = "${GIT_FQDN}/$APIMGR/$WEATHER"
 
 // ----- GITLAB (gitlab.com or self-hosted) -----
 // GIT_FQDN = 'gitlab.com'
 // GIT_TOKEN = credentials('gitlab-token')
-// REGISTRY = "registry.${GIT_FQDN}/${PROJECTORG}/${PROJECTNAME}"
+// REGISTRY = "registry.${GIT_FQDN}/$APIMGR/$WEATHER"
 ```
 
 ### Triggers Comparison
@@ -38950,8 +38950,8 @@ Before proceeding, confirm you understand:
 
 | REQUIRED | Example |
 |----------|---------|
-| Temp directory | `/tmp/{projectorg}/{projectname}-XXXXXX/` |
-| Volume mounts | `/tmp/{projectorg}/{projectname}-XXXXXX/rootfs/` |
+| Temp directory | `/tmp/apimgr/weather-XXXXXX/` |
+| Volume mounts | `/tmp/apimgr/weather-XXXXXX/rootfs/` |
 | Test databases | In temp directory, never project |
 
 **The project directory is for SOURCE CODE ONLY. All runtime/test data goes to the OS temp directory.**
@@ -38982,8 +38982,8 @@ Before proceeding, confirm you understand:
 **AI testing workflow:**
 ```bash
 # 1. Create temp directory (REQUIRED)
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 mkdir -p "$TEMP_DIR/rootfs/config" "$TEMP_DIR/rootfs/data"
 
 # 2. Copy ONLY docker-compose.test.yml to temp dir
@@ -39025,7 +39025,7 @@ Config files are NEVER in the repository. They are generated at RUNTIME:
 | File | Location | Created When |
 |------|----------|--------------|
 | `server.yml` | `{config_dir}/server.yml` (see PART 4) | Server first run |
-| `cli.yml` | `~/.config/{projectorg}/{projectname}/cli.yml` | CLI first run |
+| `cli.yml` | `~/.config/apimgr/weather/cli.yml` | CLI first run |
 | Tor config | `{config_dir}/tor/torrc` (see PART 32) | When Tor enabled |
 | Tor data | `{data_dir}/tor/` (see PART 32) | When Tor enabled |
 
@@ -39052,28 +39052,28 @@ Config files are NEVER in the repository. They are generated at RUNTIME:
 
 ## Temporary Directory Structure 
 
-**CRITICAL: NEVER use `/tmp` root directory directly. ALWAYS use `/tmp/{projectorg}/{projectname}-XXXXXX` structure.**
+**CRITICAL: NEVER use `/tmp` root directory directly. ALWAYS use `/tmp/apimgr/weather-XXXXXX` structure.**
 
 **FORBIDDEN:**
 - ❌ `/tmp/myfile` - Root tmp directory
-- ❌ `/tmp/{projectname}` - Missing org prefix
+- ❌ `/tmp/weather` - Missing org prefix
 - ❌ `mktemp -d` - No org/project structure
 - ❌ `/tmp/test-data` - Generic paths
 
 **REQUIRED:**
-- ✓ `/tmp/{projectorg}/{projectname}-XXXXXX/` - Full structure
+- ✓ `/tmp/apimgr/weather-XXXXXX/` - Full structure
 - ✓ `/tmp/cloudops/echoip-aB3xY9/` - Org + project + random
-- ✓ `mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX"` - Proper command
+- ✓ `mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX"` - Proper command
 
 **See "Inferring Variables from Path" section for how to detect `ORG` and `PROJECT`.**
 
 ### Creating Temp Directories
 
-**Always use `{projectorg}/{projectname}-` structure for identifiable temp dirs:**
+**Always use `apimgr/weather-` structure for identifiable temp dirs:**
 
 | Language | How to Create Prefixed Temp Dir |
 |----------|--------------------------------|
-| Shell | `mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}" && mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX"` |
+| Shell | `mkdir -p "${TMPDIR:-/tmp}/$APIMGR" && mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX"` |
 | Go | `os.MkdirAll(filepath.Join(os.TempDir(), projectOrg), 0755); os.MkdirTemp(filepath.Join(os.TempDir(), projectOrg), projectName+"-")` |
 | Python | `os.makedirs(f"{tempfile.gettempdir()}/{project_org}", exist_ok=True); tempfile.mkdtemp(prefix=f"{project_name}-", dir=f"{tempfile.gettempdir()}/{project_org}")` |
 
@@ -39083,9 +39083,9 @@ Config files are NEVER in the repository. They are generated at RUNTIME:
 
 | Purpose | Path Pattern | Example |
 |---------|--------------|---------|
-| Dev/Test runtime | `{tempdir}/{projectorg}/{projectname}-XXXXXX/` | `/tmp/{projectorg}/{projectname}-aB3xY9/` |
-| Config volume | `{tempdir}/{projectorg}/{projectname}-XXXXXX/rootfs/config/` | `/tmp/{projectorg}/{projectname}-aB3xY9/rootfs/config/` |
-| Data volume | `{tempdir}/{projectorg}/{projectname}-XXXXXX/rootfs/data/` | `/tmp/{projectorg}/{projectname}-aB3xY9/rootfs/data/` |
+| Dev/Test runtime | `{tempdir}/apimgr/weather-XXXXXX/` | `/tmp/apimgr/weather-aB3xY9/` |
+| Config volume | `{tempdir}/apimgr/weather-XXXXXX/rootfs/config/` | `/tmp/apimgr/weather-aB3xY9/rootfs/config/` |
+| Data volume | `{tempdir}/apimgr/weather-XXXXXX/rootfs/data/` | `/tmp/apimgr/weather-aB3xY9/rootfs/data/` |
 
 ### OS Temp Directories
 
@@ -39103,44 +39103,44 @@ Config files are NEVER in the repository. They are generated at RUNTIME:
 | **NEVER** | Use project directory for test/runtime data |
 | **NEVER** | Hardcode `/tmp` - use `os.TempDir()` or `mktemp` |
 | **NEVER** | Use bare `mktemp -d` without org prefix |
-| **ALWAYS** | Use `{projectorg}/{projectname}-` structure for all temp dirs |
+| **ALWAYS** | Use `apimgr/weather-` structure for all temp dirs |
 | **ALWAYS** | Detect org from git remote or directory path |
 
 ### Cleanup
 
 ```bash
 # Find all temp dirs for this org
-ls -la "${TMPDIR:-/tmp}/${PROJECTORG}/"
+ls -la "${TMPDIR:-/tmp}/$APIMGR/"
 
 # Clean all temp dirs for this org
-rm -rf "${TMPDIR:-/tmp}/${PROJECTORG}/"
+rm -rf "${TMPDIR:-/tmp}/$APIMGR/"
 ```
 
 ### Correct vs Incorrect
 
 | WRONG | RIGHT | Why |
 |-------|-------|-----|
-| `/tmp/` | `/tmp/{projectorg}/{projectname}-XXXXXX/` | NEVER use root tmp |
+| `/tmp/` | `/tmp/apimgr/weather-XXXXXX/` | NEVER use root tmp |
 | `/tmp/myfile` | `/tmp/cloudops/echoip-aB3xY9/myfile` | Always use org/project structure |
 | `/tmp/echoip` | `/tmp/cloudops/echoip-kL9mN2/` | Missing org, missing random suffix |
 | `/tmp/test-data/` | `/tmp/devtools/quotesvc-Qw5rT1/test-data/` | Generic path not allowed |
-| `mktemp -d` | `mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX"` | Must include org/project |
+| `mktemp -d` | `mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX"` | Must include org/project |
 | `os.TempDir()` alone | `os.MkdirTemp(filepath.Join(os.TempDir(), projectOrg), projectName+"-")` | Must nest under org |
 | Hardcoded org name | Detect from git remote or path | Auto-detect, never hardcode |
 
-**Rule: ALL temp directories MUST be under `/tmp/{projectorg}/{projectname}-XXXXXX/` - no exceptions.**
+**Rule: ALL temp directories MUST be under `/tmp/apimgr/weather-XXXXXX/` - no exceptions.**
 
 ### Summary: Temp Directory Rules
 
 **The ONLY acceptable temp directory pattern:**
 ```
-/tmp/{projectorg}/{projectname}-XXXXXX/
+/tmp/apimgr/weather-XXXXXX/
 ```
 
 **Breaking it down:**
 - `/tmp/` or `$TMPDIR` - OS temp directory base
-- `{projectorg}/` - Organization directory (cloudops, acmesoft, etc.)
-- `{projectname}-XXXXXX` - Project directory with random suffix
+- `apimgr/` - Organization directory (cloudops, acmesoft, etc.)
+- `weather-XXXXXX` - Project directory with random suffix
 
 **Examples of CORRECT paths:**
 - `/tmp/cloudops/echoip-aB3xY9/` ✓
@@ -39155,7 +39155,7 @@ rm -rf "${TMPDIR:-/tmp}/${PROJECTORG}/"
 
 **Why this structure:**
 - Prevents conflicts between projects
-- Makes cleanup easy (`rm -rf /tmp/{projectorg}/`)
+- Makes cleanup easy (`rm -rf /tmp/apimgr/`)
 - Identifies which project created temp files
 - Prevents pollution of root `/tmp` directory
 - Multiple projects can run simultaneously
@@ -39174,8 +39174,8 @@ rm -rf "${TMPDIR:-/tmp}/${PROJECTORG}/"
 | **NEVER run binaries locally** | All binaries run inside containers, never directly |
 | **NEVER** | Run `go build` directly on local machine |
 | **NEVER** | Run `go test` directly on local machine |
-| **NEVER** | Run `binaries/{projectname}` on local machine |
-| **NEVER** | Run `$BUILD_DIR/{projectname}` on local machine |
+| **NEVER** | Run `binaries/weather` on local machine |
+| **NEVER** | Run `$BUILD_DIR/weather` on local machine |
 | **ALWAYS** | Build inside container, run inside container |
 
 ### Container Types
@@ -39655,28 +39655,28 @@ verify_all_endpoints_tested
 
 ```bash
 # 1. Build in Docker (always use Docker for builds)
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 docker run --rm -v $(pwd):/build -w /build -e CGO_ENABLED=0 \
-  golang:alpine go build -o /build/binaries/{projectname} ./src
+  golang:alpine go build -o /build/binaries/weather ./src
 
 # 2. Test (prefer Incus, fallback to Docker)
 if command -v incus &>/dev/null; then
   # PREFERRED: Full OS test in Incus (debian + systemd)
   # Use latest Debian stable (currently 13/trixie)
   echo "Testing with Incus (Debian + systemd)..."
-  incus launch images:debian/trixie test-{projectname}
-  incus file push binaries/{projectname} test-{projectname}/usr/local/bin/
-  incus exec test-{projectname} -- chmod +x /usr/local/bin/{projectname}
-  incus exec test-{projectname} -- {projectname} --help
-  incus exec test-{projectname} -- {projectname} --service --install
-  incus exec test-{projectname} -- systemctl status {projectname}
-  incus delete test-{projectname} --force
+  incus launch images:debian/trixie test-weather
+  incus file push binaries/weather test-weather/usr/local/bin/
+  incus exec test-weather -- chmod +x /usr/local/bin/weather
+  incus exec test-weather -- weather --help
+  incus exec test-weather -- weather --service --install
+  incus exec test-weather -- systemctl status weather
+  incus delete test-weather --force
 else
   # FALLBACK: Quick test in Docker (alpine, no systemd)
   echo "Incus not available, testing with Docker..."
   docker run --rm -v $(pwd)/binaries:/app alpine:latest \
-    /app/{projectname} --help
+    /app/weather --help
 fi
 ```
 
@@ -39735,8 +39735,8 @@ PROJECTNAME=$(basename "$PWD")
 PROJECTORG=$(basename "$(dirname "$PWD")")
 
 # Create temp directory for build
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 trap "rm -rf $BUILD_DIR" EXIT
 
 # Go cache directories (same as Makefile)
@@ -39754,18 +39754,18 @@ GO_DOCKER="docker run --rm \
   golang:alpine"
 
 echo "Building server binary in Docker..."
-$GO_DOCKER go build -o "$BUILD_DIR/${PROJECTNAME}" ./src
+$GO_DOCKER go build -o "$BUILD_DIR/$WEATHER" ./src
 
 # Build client if exists
 if [ -d "src/client" ]; then
     echo "Building client in Docker..."
-    $GO_DOCKER go build -o "$BUILD_DIR/${PROJECTNAME}-cli" ./src/client
+    $GO_DOCKER go build -o "$BUILD_DIR/$WEATHER-cli" ./src/client
 fi
 
 # Build agent if exists
 if [ -d "src/agent" ]; then
     echo "Building agent in Docker..."
-    $GO_DOCKER go build -o "$BUILD_DIR/${PROJECTNAME}-agent" ./src/agent
+    $GO_DOCKER go build -o "$BUILD_DIR/$WEATHER-agent" ./src/agent
 fi
 
 echo "Testing in Docker (Alpine)..."
@@ -39777,22 +39777,22 @@ docker run --rm \
     # Install required tools for testing
     apk add --no-cache curl bash file jq >/dev/null
 
-    chmod +x /app/${PROJECTNAME}
-    [ -f /app/${PROJECTNAME}-cli ] && chmod +x /app/${PROJECTNAME}-cli
-    [ -f /app/${PROJECTNAME}-agent ] && chmod +x /app/${PROJECTNAME}-agent
+    chmod +x /app/$WEATHER
+    [ -f /app/$WEATHER-cli ] && chmod +x /app/$WEATHER-cli
+    [ -f /app/$WEATHER-agent ] && chmod +x /app/$WEATHER-agent
 
     echo '=== Version Check ==='
-    /app/${PROJECTNAME} --version
+    /app/$WEATHER --version
 
     echo '=== Help Check ==='
-    /app/${PROJECTNAME} --help
+    /app/$WEATHER --help
 
     echo '=== Binary Info ==='
-    ls -lh /app/${PROJECTNAME}
-    file /app/${PROJECTNAME}
+    ls -lh /app/$WEATHER
+    file /app/$WEATHER
 
     echo '=== Starting Server for API Tests ==='
-    /app/${PROJECTNAME} --port 64580 > /tmp/server.log 2>&1 &
+    /app/$WEATHER --port 64580 > /tmp/server.log 2>&1 &
     SERVER_PID=\$!
     sleep 3
     # Show setup token if present (for debugging)
@@ -39885,7 +39885,7 @@ docker run --rm \
 
     echo '=== Binary Rename Tests ==='
     # Test that binaries show ACTUAL name in --help/--version (not hardcoded)
-    cp /app/${PROJECTNAME} /app/renamed-server
+    cp /app/$WEATHER /app/renamed-server
     chmod +x /app/renamed-server
     if /app/renamed-server --help 2>&1 | grep -q 'renamed-server'; then
         echo '✓ Server binary rename works (--help shows actual name)'
@@ -39894,12 +39894,12 @@ docker run --rm \
     fi
 
     echo '=== Client Tests (if exists) ==='
-    if [ -f /app/${PROJECTNAME}-cli ]; then
-        /app/${PROJECTNAME}-cli --version || echo 'FAILED: CLI --version'
-        /app/${PROJECTNAME}-cli --help || echo 'FAILED: CLI --help'
+    if [ -f /app/$WEATHER-cli ]; then
+        /app/$WEATHER-cli --version || echo 'FAILED: CLI --version'
+        /app/$WEATHER-cli --help || echo 'FAILED: CLI --help'
 
         # Test binary rename
-        cp /app/${PROJECTNAME}-cli /app/renamed-cli
+        cp /app/$WEATHER-cli /app/renamed-cli
         chmod +x /app/renamed-cli
         if /app/renamed-cli --help 2>&1 | grep -q 'renamed-cli'; then
             echo '✓ CLI binary rename works'
@@ -39911,24 +39911,24 @@ docker run --rm \
         echo '--- CLI Full Functionality Tests ---'
         if [ -n \"\${API_TOKEN:-}\" ]; then
             # Test with API token
-            /app/${PROJECTNAME}-cli --server http://localhost:64580 --token \"\$API_TOKEN\" status || echo 'CLI status failed'
+            /app/$WEATHER-cli --server http://localhost:64580 --token \"\$API_TOKEN\" status || echo 'CLI status failed'
             # Project-specific CLI commands go here (IDEA.md)
-            # Example: /app/${PROJECTNAME}-cli --server http://localhost:64580 --token \"\$API_TOKEN\" list
+            # Example: /app/$WEATHER-cli --server http://localhost:64580 --token \"\$API_TOKEN\" list
         else
             # Test without token (anonymous if allowed)
-            /app/${PROJECTNAME}-cli --server http://localhost:64580 status || echo 'CLI status (no token) failed or not applicable'
+            /app/$WEATHER-cli --server http://localhost:64580 status || echo 'CLI status (no token) failed or not applicable'
         fi
     else
         echo 'client not built - skipping'
     fi
 
     echo '=== Agent Tests (if exists) ==='
-    if [ -f /app/${PROJECTNAME}-agent ]; then
-        /app/${PROJECTNAME}-agent --version || echo 'FAILED: Agent --version'
-        /app/${PROJECTNAME}-agent --help || echo 'FAILED: Agent --help'
+    if [ -f /app/$WEATHER-agent ]; then
+        /app/$WEATHER-agent --version || echo 'FAILED: Agent --version'
+        /app/$WEATHER-agent --help || echo 'FAILED: Agent --help'
 
         # Test binary rename
-        cp /app/${PROJECTNAME}-agent /app/renamed-agent
+        cp /app/$WEATHER-agent /app/renamed-agent
         chmod +x /app/renamed-agent
         if /app/renamed-agent --help 2>&1 | grep -q 'renamed-agent'; then
             echo '✓ Agent binary rename works'
@@ -39940,7 +39940,7 @@ docker run --rm \
         echo '--- Agent Full Functionality Tests ---'
         if [ -n \"\${API_TOKEN:-}\" ]; then
             # Test agent registration/status with API token
-            /app/${PROJECTNAME}-agent --server http://localhost:64580 --token \"\$API_TOKEN\" status || echo 'Agent status failed'
+            /app/$WEATHER-agent --server http://localhost:64580 --token \"\$API_TOKEN\" status || echo 'Agent status failed'
             # Project-specific agent commands go here (IDEA.md)
         else
             echo 'Agent tests skipped (no API token)'
@@ -39976,14 +39976,14 @@ fi
 # Detect project info
 PROJECTNAME=$(basename "$PWD")
 PROJECTORG=$(basename "$(dirname "$PWD")")
-CONTAINER_NAME="test-${PROJECTNAME}-$$"
+CONTAINER_NAME="test-$WEATHER-$$"
 
 # Incus image - use latest Debian stable (update when new stable releases)
 INCUS_IMAGE="images:debian/trixie"
 
 # Create temp directory for build
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 trap "rm -rf $BUILD_DIR; incus delete $CONTAINER_NAME --force 2>/dev/null || true" EXIT
 
 # Go cache directories (same as Makefile)
@@ -40001,18 +40001,18 @@ GO_DOCKER="docker run --rm \
   golang:alpine"
 
 echo "Building server binary in Docker..."
-$GO_DOCKER go build -o "$BUILD_DIR/${PROJECTNAME}" ./src
+$GO_DOCKER go build -o "$BUILD_DIR/$WEATHER" ./src
 
 # Build client if exists
 if [ -d "src/client" ]; then
     echo "Building client in Docker..."
-    $GO_DOCKER go build -o "$BUILD_DIR/${PROJECTNAME}-cli" ./src/client
+    $GO_DOCKER go build -o "$BUILD_DIR/$WEATHER-cli" ./src/client
 fi
 
 # Build agent if exists
 if [ -d "src/agent" ]; then
     echo "Building agent in Docker..."
-    $GO_DOCKER go build -o "$BUILD_DIR/${PROJECTNAME}-agent" ./src/agent
+    $GO_DOCKER go build -o "$BUILD_DIR/$WEATHER-agent" ./src/agent
 fi
 
 echo "Launching Incus container (Debian + systemd)..."
@@ -40022,19 +40022,19 @@ incus launch "$INCUS_IMAGE" "$CONTAINER_NAME"
 sleep 2
 
 echo "Copying binaries to container..."
-incus file push "$BUILD_DIR/${PROJECTNAME}" "$CONTAINER_NAME/usr/local/bin/"
-incus exec "$CONTAINER_NAME" -- chmod +x "/usr/local/bin/${PROJECTNAME}"
+incus file push "$BUILD_DIR/$WEATHER" "$CONTAINER_NAME/usr/local/bin/"
+incus exec "$CONTAINER_NAME" -- chmod +x "/usr/local/bin/$WEATHER"
 
 # Copy client if built
-if [ -f "$BUILD_DIR/${PROJECTNAME}-cli" ]; then
-    incus file push "$BUILD_DIR/${PROJECTNAME}-cli" "$CONTAINER_NAME/usr/local/bin/"
-    incus exec "$CONTAINER_NAME" -- chmod +x "/usr/local/bin/${PROJECTNAME}-cli"
+if [ -f "$BUILD_DIR/$WEATHER-cli" ]; then
+    incus file push "$BUILD_DIR/$WEATHER-cli" "$CONTAINER_NAME/usr/local/bin/"
+    incus exec "$CONTAINER_NAME" -- chmod +x "/usr/local/bin/$WEATHER-cli"
 fi
 
 # Copy agent if built
-if [ -f "$BUILD_DIR/${PROJECTNAME}-agent" ]; then
-    incus file push "$BUILD_DIR/${PROJECTNAME}-agent" "$CONTAINER_NAME/usr/local/bin/"
-    incus exec "$CONTAINER_NAME" -- chmod +x "/usr/local/bin/${PROJECTNAME}-agent"
+if [ -f "$BUILD_DIR/$WEATHER-agent" ]; then
+    incus file push "$BUILD_DIR/$WEATHER-agent" "$CONTAINER_NAME/usr/local/bin/"
+    incus exec "$CONTAINER_NAME" -- chmod +x "/usr/local/bin/$WEATHER-agent"
 fi
 
 # Ensure curl is available for testing
@@ -40045,25 +40045,25 @@ incus exec "$CONTAINER_NAME" -- bash -c "
     set -e
 
     echo '=== Version Check ==='
-    ${PROJECTNAME} --version
+    $WEATHER --version
 
     echo '=== Help Check ==='
-    ${PROJECTNAME} --help
+    $WEATHER --help
 
     echo '=== Binary Info ==='
-    ls -lh /usr/local/bin/${PROJECTNAME}
-    file /usr/local/bin/${PROJECTNAME}
+    ls -lh /usr/local/bin/$WEATHER
+    file /usr/local/bin/$WEATHER
 
     echo '=== Service Install Test ==='
-    ${PROJECTNAME} --service --install
+    $WEATHER --service --install
 
     echo '=== Service Status ==='
-    systemctl status ${PROJECTNAME} || true
+    systemctl status $WEATHER || true
 
     echo '=== Service Start Test ==='
-    systemctl start ${PROJECTNAME}
+    systemctl start $WEATHER
     sleep 2
-    systemctl status ${PROJECTNAME}
+    systemctl status $WEATHER
 
     echo '=== API Endpoint Tests ==='
     # Test JSON response (default)
@@ -40112,7 +40112,7 @@ incus exec "$CONTAINER_NAME" -- bash -c "
 
     echo '=== Admin Setup & API Token Creation ==='
     # Get setup token from journal
-    SETUP_TOKEN=\$(journalctl -u ${PROJECTNAME} --no-pager 2>/dev/null | grep -oP 'Setup Token.*:\\s*\\K[a-f0-9]+' | head -1 || echo '')
+    SETUP_TOKEN=\$(journalctl -u $WEATHER --no-pager 2>/dev/null | grep -oP 'Setup Token.*:\\s*\\K[a-f0-9]+' | head -1 || echo '')
 
     if [ -n \"\$SETUP_TOKEN\" ]; then
         echo \"Setup token found: \${SETUP_TOKEN:0:8}...\"
@@ -40152,7 +40152,7 @@ incus exec "$CONTAINER_NAME" -- bash -c "
 
     echo '=== Binary Rename Tests ==='
     # Test that binaries show ACTUAL name in --help/--version (not hardcoded)
-    cp /usr/local/bin/${PROJECTNAME} /tmp/renamed-server
+    cp /usr/local/bin/$WEATHER /tmp/renamed-server
     chmod +x /tmp/renamed-server
     if /tmp/renamed-server --help 2>&1 | grep -q 'renamed-server'; then
         echo '✓ Server binary rename works (--help shows actual name)'
@@ -40161,12 +40161,12 @@ incus exec "$CONTAINER_NAME" -- bash -c "
     fi
 
     echo '=== Client Tests (if exists) ==='
-    if [ -f /usr/local/bin/${PROJECTNAME}-cli ]; then
-        ${PROJECTNAME}-cli --version || echo 'FAILED: CLI --version'
-        ${PROJECTNAME}-cli --help || echo 'FAILED: CLI --help'
+    if [ -f /usr/local/bin/$WEATHER-cli ]; then
+        $WEATHER-cli --version || echo 'FAILED: CLI --version'
+        $WEATHER-cli --help || echo 'FAILED: CLI --help'
 
         # Test binary rename
-        cp /usr/local/bin/${PROJECTNAME}-cli /tmp/renamed-cli
+        cp /usr/local/bin/$WEATHER-cli /tmp/renamed-cli
         chmod +x /tmp/renamed-cli
         if /tmp/renamed-cli --help 2>&1 | grep -q 'renamed-cli'; then
             echo '✓ CLI binary rename works'
@@ -40178,23 +40178,23 @@ incus exec "$CONTAINER_NAME" -- bash -c "
         echo '--- CLI Full Functionality Tests ---'
         if [ -n \"\${API_TOKEN:-}\" ]; then
             # Test with API token
-            ${PROJECTNAME}-cli --server http://localhost:80 --token \"\$API_TOKEN\" status || echo 'CLI status failed'
+            $WEATHER-cli --server http://localhost:80 --token \"\$API_TOKEN\" status || echo 'CLI status failed'
             # Project-specific CLI commands go here (IDEA.md)
         else
             # Test without token (anonymous if allowed)
-            ${PROJECTNAME}-cli --server http://localhost:80 status || echo 'CLI status (no token) failed or not applicable'
+            $WEATHER-cli --server http://localhost:80 status || echo 'CLI status (no token) failed or not applicable'
         fi
     else
         echo 'client not installed - skipping'
     fi
 
     echo '=== Agent Tests (if exists) ==='
-    if [ -f /usr/local/bin/${PROJECTNAME}-agent ]; then
-        ${PROJECTNAME}-agent --version || echo 'FAILED: Agent --version'
-        ${PROJECTNAME}-agent --help || echo 'FAILED: Agent --help'
+    if [ -f /usr/local/bin/$WEATHER-agent ]; then
+        $WEATHER-agent --version || echo 'FAILED: Agent --version'
+        $WEATHER-agent --help || echo 'FAILED: Agent --help'
 
         # Test binary rename
-        cp /usr/local/bin/${PROJECTNAME}-agent /tmp/renamed-agent
+        cp /usr/local/bin/$WEATHER-agent /tmp/renamed-agent
         chmod +x /tmp/renamed-agent
         if /tmp/renamed-agent --help 2>&1 | grep -q 'renamed-agent'; then
             echo '✓ Agent binary rename works'
@@ -40206,7 +40206,7 @@ incus exec "$CONTAINER_NAME" -- bash -c "
         echo '--- Agent Full Functionality Tests ---'
         if [ -n \"\${API_TOKEN:-}\" ]; then
             # Test agent registration/status with API token
-            ${PROJECTNAME}-agent --server http://localhost:80 --token \"\$API_TOKEN\" status || echo 'Agent status failed'
+            $WEATHER-agent --server http://localhost:80 --token \"\$API_TOKEN\" status || echo 'Agent status failed'
             # Project-specific agent commands go here (IDEA.md)
         else
             echo 'Agent tests skipped (no API token)'
@@ -40216,7 +40216,7 @@ incus exec "$CONTAINER_NAME" -- bash -c "
     fi
 
     echo '=== Service Stop Test ==='
-    systemctl stop ${PROJECTNAME}
+    systemctl stop $WEATHER
 
     echo '=== All tests passed ==='
 "
@@ -40282,14 +40282,14 @@ See PART 33: "Shell Completions (Built-in)" for full implementation details.
 
 ```bash
 # Generate and install completions (prints to stdout, user redirects)
-{projectname} --shell completions bash > /etc/bash_completion.d/{projectname}
-{projectname}-cli --shell completions bash > /etc/bash_completion.d/{projectname}-cli
-{projectname}-agent --shell completions bash > /etc/bash_completion.d/{projectname}-agent
+weather --shell completions bash > /etc/bash_completion.d/weather
+weather-cli --shell completions bash > /etc/bash_completion.d/weather-cli
+weather-agent --shell completions bash > /etc/bash_completion.d/weather-agent
 
 # Or use eval in shell rc file
-eval "$({projectname} --shell init)"
-eval "$({projectname}-cli --shell init)"
-eval "$({projectname}-agent --shell init)"
+eval "$(weather --shell init)"
+eval "$(weather-cli --shell init)"
+eval "$(weather-agent --shell init)"
 ```
 
 | Advantage | Description |
@@ -40315,7 +40315,7 @@ set -euo pipefail
 echo '=== Admin Authentication Tests ==='
 
 # Start server normally (authentication required)
-/app/${PROJECTNAME} --port 64580 &
+/app/$WEATHER --port 64580 &
 SERVER_PID=$!
 sleep 3
 
@@ -40332,7 +40332,7 @@ else
 fi
 
 # 2. Get setup token from server logs (using proper temp dir structure)
-SETUP_TOKEN=$(grep -oP 'Setup Token.*:\s*\K[a-f0-9]+' "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}/server.log" | head -1)
+SETUP_TOKEN=$(grep -oP 'Setup Token.*:\s*\K[a-f0-9]+' "${TMPDIR:-/tmp}/$APIMGR/$WEATHER/server.log" | head -1)
 
 if [ -z "$SETUP_TOKEN" ]; then
     echo "✗ FAILED: No setup token found in logs"
@@ -40476,7 +40476,7 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 # Set project path to YOUR actual project location (examples shown below)
 # Use git top-level if in a git repo: PROJECT_PATH="$(git rev-parse --show-toplevel)"
 # Or use absolute path to your project directory
-PROJECT_PATH="/root/Projects/github/apimgr/{projectname}"  # Example 1
+PROJECT_PATH="/root/Projects/github/apimgr/weather"  # Example 1
 # PROJECT_PATH="~/Documents/myproject"                     # Example 2
 # PROJECT_PATH="~/myproject"                               # Example 3
 # PROJECT_PATH="/workspace/dev/myproject"                  # Example 4
@@ -40495,7 +40495,7 @@ GO_DOCKER="docker run --rm \
   -e CGO_ENABLED=0"
 
 # Build (outputs to binaries/ which can be mounted into test containers)
-$GO_DOCKER golang:alpine go build -o /build/binaries/{projectname} ./src
+$GO_DOCKER golang:alpine go build -o /build/binaries/weather ./src
 
 # Run tests
 $GO_DOCKER golang:alpine go test ./...
@@ -40540,20 +40540,20 @@ docker run --rm \
   -v $GOCACHE:/root/.cache/go-build \
   -v $GODIR:/go \
   -w /build -e CGO_ENABLED=0 \
-  golang:alpine go build -o /build/binaries/{projectname} ./src
+  golang:alpine go build -o /build/binaries/weather ./src
 
 # Test in Docker (quick) - install tools first
 docker run --rm -v $(pwd)/binaries:/app alpine:latest sh -c "
   apk add --no-cache curl bash file jq >/dev/null
-  /app/{projectname} --help
+  /app/weather --help
 "
 
 # Test in Incus (full OS with systemd) - PREFERRED
 # Use latest Debian stable (currently 13/trixie)
-incus launch images:debian/trixie test-{projectname}
-incus file push binaries/{projectname} test-{projectname}/usr/local/bin/
-incus exec test-{projectname} -- {projectname} --help
-incus delete test-{projectname} --force
+incus launch images:debian/trixie test-weather
+incus file push binaries/weather test-weather/usr/local/bin/
+incus exec test-weather -- weather --help
+incus delete test-weather --force
 ```
 
 ### Testing with Config/Data
@@ -40565,8 +40565,8 @@ GOCACHE="${HOME}/.local/share/go/build"
 mkdir -p "$GODIR" "$GOCACHE"
 
 # Create prefixed temp dir for test data
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 mkdir -p $TEST_DIR/{config,data,logs}
 
 # Build to binaries/ (with caching)
@@ -40575,20 +40575,20 @@ docker run --rm \
   -v $GOCACHE:/root/.cache/go-build \
   -v $GODIR:/go \
   -w /build -e CGO_ENABLED=0 \
-  golang:alpine go build -o /build/binaries/{projectname} ./src
+  golang:alpine go build -o /build/binaries/weather ./src
 
 # Quick test in Docker (install tools first)
 docker run --rm -v $(pwd)/binaries:/app alpine:latest sh -c "
   apk add --no-cache curl bash file jq >/dev/null
-  /app/{projectname} --help
-  /app/{projectname} --version
+  /app/weather --help
+  /app/weather --version
 "
 
 # Full test with config/data in Docker
 docker run --rm \
   -v $(pwd)/binaries:/app \
   -v $TEST_DIR:/test \
-  alpine:latest /app/{projectname} \
+  alpine:latest /app/weather \
     --config /test/config \
     --data /test/data \
     --log /test/logs
@@ -40603,29 +40603,29 @@ rm -rf $TEST_DIR
 
 ```bash
 # Create prefixed temp dir
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 mkdir -p $TEST_DIR/{config,data,logs}
 
 # Build
 docker run --rm -v $(pwd):/build -w /build -e CGO_ENABLED=0 \
-  golang:alpine go build -o /build/binaries/{projectname} ./src
+  golang:alpine go build -o /build/binaries/weather ./src
 
 # Launch Incus container (use latest Debian stable)
-incus launch images:debian/trixie test-{projectname}
+incus launch images:debian/trixie test-weather
 
 # Push binary and test data
-incus file push binaries/{projectname} test-{projectname}/usr/local/bin/
-incus exec test-{projectname} -- mkdir -p /etc/{projectorg}/{projectname} /var/lib/{projectorg}/{projectname}
+incus file push binaries/weather test-weather/usr/local/bin/
+incus exec test-weather -- mkdir -p /etc/apimgr/weather /var/lib/apimgr/weather
 
 # Test
-incus exec test-{projectname} -- {projectname} --help
-incus exec test-{projectname} -- {projectname} --version
-incus exec test-{projectname} -- {projectname} --service --install
-incus exec test-{projectname} -- systemctl status {projectname}
+incus exec test-weather -- weather --help
+incus exec test-weather -- weather --version
+incus exec test-weather -- weather --service --install
+incus exec test-weather -- systemctl status weather
 
 # Cleanup
-incus delete test-{projectname} --force
+incus delete test-weather --force
 rm -rf $TEST_DIR
 ```
 
@@ -40670,11 +40670,11 @@ rm -rf $TEST_DIR
 
 **Kill Process Flow:**
 ```
-1. pgrep -la {projectname}           # List matching processes
+1. pgrep -la weather           # List matching processes
 2. Verify the PID is correct          # CHECK before killing
 3. kill {pid}                         # Graceful termination (SIGTERM)
 4. sleep 5                            # Wait for graceful shutdown
-5. pgrep -la {projectname}           # Check if still running
+5. pgrep -la weather           # Check if still running
 6. kill -9 {pid}                      # Force kill ONLY if still running
 ```
 
@@ -40682,23 +40682,23 @@ rm -rf $TEST_DIR
 
 | Rule | Description |
 |------|-------------|
-| **ONLY this project** | Only stop/remove containers named `{projectname}` |
+| **ONLY this project** | Only stop/remove containers named `weather` |
 | **NEVER other containers** | Even if they look related or unused |
-| **NEVER images not ours** | Only remove `{projectorg}/{projectname}:*` images |
+| **NEVER images not ours** | Only remove `apimgr/weather:*` images |
 | **NEVER base images** | Never remove `golang`, `alpine`, `ubuntu`, etc. |
 | **NEVER volumes** | Unless explicitly part of this project |
 
 **Docker Cleanup Flow:**
 ```
-1. docker ps -a --filter name={projectname}     # List ONLY this project's containers
-2. Verify output shows ONLY {projectname}       # CHECK before removing
-3. docker stop {projectname}                    # Stop gracefully
-4. docker rm {projectname}                      # Remove container
+1. docker ps -a --filter name=weather     # List ONLY this project's containers
+2. Verify output shows ONLY weather       # CHECK before removing
+3. docker stop weather                    # Stop gracefully
+4. docker rm weather                      # Remove container
 
 # For images:
-1. docker images {projectorg}/{projectname}     # List ONLY this project's images
+1. docker images apimgr/weather     # List ONLY this project's images
 2. Verify output shows ONLY our images          # CHECK before removing
-3. docker rmi {projectorg}/{projectname}:tag    # Remove SPECIFIC tag
+3. docker rmi apimgr/weather:tag    # Remove SPECIFIC tag
 ```
 
 ### Allowed Commands (Project-Scoped ONLY)
@@ -40706,10 +40706,10 @@ rm -rf $TEST_DIR
 | Command | Description |
 |---------|-------------|
 | `kill {specific-pid}` | Kill exact PID only (after verification) |
-| `pkill -x {projectname}` | Exact binary name match only |
-| `docker stop {projectname}` | Stop specific container by name |
-| `docker rm {projectname}` | Remove specific container by name |
-| `docker rmi {projectorg}/{projectname}:tag` | Remove specific image:tag |
+| `pkill -x weather` | Exact binary name match only |
+| `docker stop weather` | Stop specific container by name |
+| `docker rm weather` | Remove specific container by name |
+| `docker rmi apimgr/weather:tag` | Remove specific image:tag |
 | `rm -rf $BUILD_DIR` | Remove temp build dir (from mktemp) |
 | `rm -rf $TEST_DIR` | Remove temp test dir (from mktemp) |
 
@@ -40732,10 +40732,10 @@ rm -rf $TEST_DIR
 | Temp build dir | `rm -rf $BUILD_DIR` (saved from mktemp) |
 | Temp test dir | `rm -rf $TEST_DIR` (saved from mktemp) |
 | All mktemp dirs | Cleaned automatically on reboot |
-| Project binaries | `rm -rf binaries/{projectname}*` |
-| Project releases | `rm -rf releases/{projectname}*` |
+| Project binaries | `rm -rf binaries/weather*` |
+| Project releases | `rm -rf releases/weather*` |
 
-**Note:** Always use `mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX"` and save the path to a variable for cleanup. Temp dirs are auto-cleaned on reboot.
+**Note:** Always use `mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX"` and save the path to a variable for cleanup. Temp dirs are auto-cleaned on reboot.
 
 ### NEVER Delete Without Confirmation
 
@@ -40785,14 +40785,14 @@ Documentation uses MkDocs Material theme with dark/light/auto switching.
 
 | Format | URL Pattern | RTD Project Name |
 |--------|-------------|------------------|
-| **Org-Project** | `https://{projectorg}-{projectname}.readthedocs.io` | `{projectorg}-{projectname}` |
-| **Project Only** | `https://{projectname}.readthedocs.io` | `{projectname}` |
+| **Org-Project** | `https://apimgr-weather.readthedocs.io` | `apimgr-weather` |
+| **Project Only** | `https://weather.readthedocs.io` | `weather` |
 | **Custom Domain** | `https://{custom_rtd_address}` | Configured in RTD settings |
 
 **How to determine which format:**
 1. Check your ReadTheDocs project dashboard for the actual URL
-2. Organization accounts typically use `{projectorg}-{projectname}`
-3. Standalone projects may use just `{projectname}`
+2. Organization accounts typically use `apimgr-weather`
+3. Standalone projects may use just `weather`
 4. Custom domains require RTD paid plan or manual DNS setup
 
 ## Required Files
@@ -40822,16 +40822,16 @@ Documentation uses MkDocs Material theme with dark/light/auto switching.
 ## mkdocs.yml Template 
 
 ```yaml
-site_name: {PROJECTNAME}
+site_name: WEATHER
 # site_url: Use whichever RTD URL format matches your project:
-#   https://{projectorg}-{projectname}.readthedocs.io  (org-project)
-#   https://{projectname}.readthedocs.io               (project only)
+#   https://apimgr-weather.readthedocs.io  (org-project)
+#   https://weather.readthedocs.io               (project only)
 #   https://{custom_rtd_address}                       (custom domain)
 site_url: https://{RTD_URL}
 site_description: "{Project description}"
-site_author: {projectorg}
+site_author: apimgr
 
-repo_name: {projectorg}/{projectname}
+repo_name: apimgr/weather
 repo_url: {PLATFORM_REPO_URL}
 edit_uri: edit/main/docs/  # Adjust path format for GitLab/Gitea if needed
 
@@ -40910,8 +40910,8 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: {projectorg}
-      repo: {projectname}
+      user: apimgr
+      repo: weather
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.superfences:
@@ -41256,7 +41256,7 @@ pymdown-extensions>=10.0
 ### docs/index.md
 
 ```markdown
-# {PROJECTNAME}
+# WEATHER
 
 {Brief project description}
 
@@ -41264,10 +41264,10 @@ pymdown-extensions>=10.0
 
 ```bash
 # Docker
-docker run -p 64580:80 {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
+docker run -p 64580:80 {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
 
 # Binary
-./{projectname}-linux-amd64 --config server.yml
+./weather-linux-amd64 --config server.yml
 ```
 
 ## Features
@@ -41287,7 +41287,7 @@ docker run -p 64580:80 {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:
 ## Links
 
 - [Repository]({PLATFORM_REPO_URL})
-- [Live Demo](https://{projectname}.{projectorg}.us) (if applicable)
+- [Live Demo](https://weather.apimgr.us) (if applicable)
 - [API Documentation](/openapi) (Swagger UI)
 - [GraphQL Playground](/graphql)
 
@@ -41305,10 +41305,10 @@ MIT - See [LICENSE.md]({PLATFORM_REPO_URL}/blob/main/LICENSE.md)
 
 ```bash
 docker run -d \
-  --name {projectname} \
+  --name weather \
   -p 64580:80 \
-  -v {projectname}-data:/data \
-  {PLATFORM_CONTAINER_REGISTRY}/{projectorg}/{projectname}:latest
+  -v weather-data:/data \
+  {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
 ```
 
 ## Binary
@@ -41317,17 +41317,17 @@ Download from [releases]({PLATFORM_REPO_URL}/releases):
 
 ```bash
 # Linux AMD64
-wget {PLATFORM_RELEASE_URL}/{projectname}-linux-amd64
-chmod +x {projectname}-linux-amd64
-./{projectname}-linux-amd64
+wget {PLATFORM_RELEASE_URL}/weather-linux-amd64
+chmod +x weather-linux-amd64
+./weather-linux-amd64
 ```
 
 ## Systemd Service
 
 ```bash
-sudo ./{projectname} --service install
-sudo systemctl start {projectname}
-sudo systemctl enable {projectname}
+sudo ./weather --service install
+sudo systemctl start weather
+sudo systemctl enable weather
 ```
 
 ## Configuration
@@ -41363,8 +41363,8 @@ database:
 All settings can be overridden via environment:
 
 ```bash
-{PROJECTNAME}_SERVER_PORT=8080
-{PROJECTNAME}_DATABASE_TYPE=postgres
+WEATHER_SERVER_PORT=8080
+WEATHER_DATABASE_TYPE=postgres
 ```
 
 ## Admin Panel
@@ -41443,14 +41443,14 @@ Programmatic access via `/api/{api_version}/{admin_path}/` with bearer token aut
 
 ```bash
 git clone {PLATFORM_REPO_URL}
-cd {projectname}
+cd weather
 make build
 ```
 
 ## Run Locally
 
 ```bash
-./binaries/{projectname} --config server.yml --debug
+./binaries/weather --config server.yml --debug
 ```
 
 ## Testing
@@ -42290,13 +42290,13 @@ This prevents conflicts with any existing Tor installation on the system.
 
 | Server Started As | Server Runs As | Tor Runs As |
 |-------------------|----------------|-------------|
-| `root` | `{projectname}` (after drop) | `{projectname}` |
-| `{projectname}` | `{projectname}` | `{projectname}` |
+| `root` | `weather` (after drop) | `weather` |
+| `weather` | `weather` | `weather` |
 | Regular user | Regular user | Regular user |
 
 **Process:**
 1. Server starts (possibly as root for port binding)
-2. Server drops privileges to `{projectname}` user (if started as root)
+2. Server drops privileges to `weather` user (if started as root)
 3. Server starts Tor process **as the current (dropped) user**
 4. Tor inherits user context from server process
 
@@ -43091,11 +43091,11 @@ No impact on binary size - Tor is external. Application binary remains small and
 
 | Environment | {config_dir} | {data_dir} | {log_dir} |
 |-------------|--------------|------------|-----------|
-| Docker | `/config/{projectname}/` | `/data/{projectname}/` | `/data/log/{projectname}/` |
-| Linux root | `/etc/{projectorg}/{projectname}/` | `/var/lib/{projectorg}/{projectname}/` | `/var/log/{projectorg}/{projectname}/` |
-| Linux user | `~/.config/{projectorg}/{projectname}/` | `~/.local/share/{projectorg}/{projectname}/` | `~/.local/log/{projectorg}/{projectname}/` |
-| macOS | `~/Library/Application Support/{projectorg}/{projectname}/` | Same as config | `~/Library/Logs/{projectorg}/{projectname}/` |
-| Windows | `%AppData%\{projectorg}\{projectname}\` | Same as config | `%AppData%\{projectorg}\{projectname}\log\` |
+| Docker | `/config/weather/` | `/data/weather/` | `/data/log/weather/` |
+| Linux root | `/etc/apimgr/weather/` | `/var/lib/apimgr/weather/` | `/var/log/apimgr/weather/` |
+| Linux user | `~/.config/apimgr/weather/` | `~/.local/share/apimgr/weather/` | `~/.local/log/apimgr/weather/` |
+| macOS | `~/Library/Application Support/apimgr/weather/` | Same as config | `~/Library/Logs/apimgr/weather/` |
+| Windows | `%AppData%\apimgr\weather\` | Same as config | `%AppData%\apimgr\weather\log\` |
 
 **Tor directories are ALWAYS `{config_dir}/tor/`, `{data_dir}/tor/`, `{log_dir}/tor.log` - never hardcoded paths.**
 
@@ -43711,11 +43711,11 @@ When a project includes a client, it provides a terminal-based interface for int
 
 | Attribute | Value |
 |-----------|-------|
-| Default binary name | `{projectname}-cli` |
+| Default binary name | `weather-cli` |
 | Versioning | Same as main application |
 | Build | Part of same Makefile (`make build` produces both binaries) |
-| Config location (Unix) | `~/.config/{projectorg}/{projectname}/cli.yml` |
-| Config location (Windows) | `%APPDATA%\{projectorg}\{projectname}\cli.yml` |
+| Config location (Unix) | `~/.config/apimgr/weather/cli.yml` |
+| Config location (Windows) | `%APPDATA%\apimgr\weather\cli.yml` |
 
 ## Binary Naming Rules 
 
@@ -43723,18 +43723,18 @@ When a project includes a client, it provides a terminal-based interface for int
 
 | Rule | Display | Internal |
 |------|---------|----------|
-| Binary name | ACTUAL name (`filepath.Base(os.Args[0])`) | Hardcoded `{projectname}` |
+| Binary name | ACTUAL name (`filepath.Base(os.Args[0])`) | Hardcoded `weather` |
 | `--help` output | Shows actual binary name | - |
 | `--version` output | Shows actual binary name | - |
-| User-Agent | - | `{projectname}-cli/{version}` (hardcoded) |
-| Config paths | - | `/etc/{projectorg}/{projectname}/` (hardcoded) |
+| User-Agent | - | `weather-cli/{version}` (hardcoded) |
+| Config paths | - | `/etc/apimgr/weather/` (hardcoded) |
 
 ```go
 // Display: use actual binary name
 binaryName := filepath.Base(os.Args[0])
 
 // Internal: hardcoded project name (compiled via -ldflags)
-const projectName = "{projectname}"
+const projectName = "weather"
 userAgent := fmt.Sprintf("%s-cli/%s", projectName, version)
 ```
 
@@ -43750,9 +43750,9 @@ userAgent := fmt.Sprintf("%s-cli/%s", projectName, version)
 **Token sources (priority order):**
 1. `--token` flag (explicit)
 2. `--token-file` flag (file path)
-3. Environment variable: `{PROJECTNAME}_TOKEN`
+3. Environment variable: `WEATHER_TOKEN`
 4. Config file: `cli.yml` → `token: xxx`
-5. Token file: `{config_dir}/token` (Unix: `~/.config/{projectorg}/{projectname}/token`, Windows: `%APPDATA%\{projectorg}\{projectname}\token`)
+5. Token file: `{config_dir}/token` (Unix: `~/.config/apimgr/weather/token`, Windows: `%APPDATA%\apimgr\weather\token`)
 
 **Token format:** See PART 11 "API Token Security" for token format and validation.
 
@@ -43786,14 +43786,14 @@ func getToken(flags *Flags) (string, error) {
 **Usage:**
 ```bash
 # Explicit token
-{projectname}-cli --token "usr_abc123..." list
+weather-cli --token "usr_abc123..." list
 
 # From environment
-export {PROJECTNAME}_TOKEN="usr_abc123..."
-{projectname}-cli list
+export WEATHER_TOKEN="usr_abc123..."
+weather-cli list
 
 # Store token (interactive login)
-{projectname}-cli login
+weather-cli login
 # Saves to {config_dir}/token (see platform-specific paths above)
 ```
 
@@ -43898,17 +43898,17 @@ func ValidateAccess(ctx context.Context, token *Token, target string, action str
 
 ```bash
 # Default: use token owner's personal context (no --user flag)
-{projectname}-cli list                    # GET /api/{api_version}/users/{resource} (current user)
+weather-cli list                    # GET /api/{api_version}/users/{resource} (current user)
 
 # Explicit user context (view another user's public resources)
-{projectname}-cli --user @alice list      # GET /api/{api_version}/users/alice/{resource}
+weather-cli --user @alice list      # GET /api/{api_version}/users/alice/{resource}
 
 # Org context (user must have org access)
-{projectname}-cli --user +acme-corp list  # GET /api/{api_version}/orgs/acme-corp/{resource}
+weather-cli --user +acme-corp list  # GET /api/{api_version}/orgs/acme-corp/{resource}
 
 # Auto-detect: CLI determines if name is user or org
-{projectname}-cli --user alice list       # GET /api/{api_version}/users/alice/{resource} (if user)
-{projectname}-cli --user acme-corp list   # GET /api/{api_version}/orgs/acme-corp/{resource} (if org)
+weather-cli --user alice list       # GET /api/{api_version}/users/alice/{resource} (if user)
+weather-cli --user acme-corp list   # GET /api/{api_version}/orgs/acme-corp/{resource} (if org)
 ```
 
 **Note:** `{resource}` is the project-specific resource type (e.g., `repos`, `pastes`, `links`). See IDEA.md for your project's resources.
@@ -43926,7 +43926,7 @@ func ValidateAccess(ctx context.Context, token *Token, target string, action str
 
 ```bash
 # CLI translates --user to URL-scoped route
-{projectname}-cli --user acme-corp list
+weather-cli --user acme-corp list
 
 # Becomes:
 GET /api/{api_version}/orgs/acme-corp/{resource}
@@ -43971,23 +43971,23 @@ CLI receives --user flag
 
 ```bash
 # Token: alice (no org access)
-{projectname}-cli list                    # Uses alice's context (only option)
-{projectname}-cli --user alice list       # Same (redundant but valid)
-{projectname}-cli --user acme-corp list   # ERROR: no access to acme-corp
+weather-cli list                    # Uses alice's context (only option)
+weather-cli --user alice list       # Same (redundant but valid)
+weather-cli --user acme-corp list   # ERROR: no access to acme-corp
 
 # Token: scoped to acme-corp only (org-specific token)
-{projectname}-cli list                    # Uses acme-corp context (only option)
-{projectname}-cli --user acme-corp list   # Same (redundant but valid)
-{projectname}-cli --user @me list         # ERROR: token not scoped to user
+weather-cli list                    # Uses acme-corp context (only option)
+weather-cli --user acme-corp list   # Same (redundant but valid)
+weather-cli --user @me list         # ERROR: token not scoped to user
 
 # Token: alice + acme-corp (user has one org)
-{projectname}-cli list                    # Uses alice's context (default = user)
-{projectname}-cli --user acme-corp list   # Uses acme-corp context
+weather-cli list                    # Uses alice's context (default = user)
+weather-cli --user acme-corp list   # Uses acme-corp context
 
 # Token: alice + acme-corp + dev-team (user has multiple orgs)
-{projectname}-cli list                    # Uses alice's context (default = user)
-{projectname}-cli --user acme-corp list   # Uses acme-corp context
-{projectname}-cli --user dev-team list    # Uses dev-team context
+weather-cli list                    # Uses alice's context (default = user)
+weather-cli --user acme-corp list   # Uses acme-corp context
+weather-cli --user dev-team list    # Uses dev-team context
 ```
 
 **Server-side scope detection:**
@@ -44071,11 +44071,11 @@ func SaveIfEmptyOrInvalid(current, flagValue string, validate func(string) bool)
 **Example:**
 ```bash
 # First run: no server configured
-{projectname}-cli --server https://api.example.com list
+weather-cli --server https://api.example.com list
 # → Saves to cli.yml (was empty)
 
 # Second run: server already configured
-{projectname}-cli --server https://staging.example.com list
+weather-cli --server https://staging.example.com list
 # → Uses staging for THIS command, but cli.yml still has api.example.com
 
 # To permanently change: edit cli.yml directly
@@ -44097,7 +44097,7 @@ func SaveIfEmptyOrInvalid(current, flagValue string, validate func(string) bool)
 
 ```bash
 # @me always means token owner
-{projectname}-cli --user @me list    # Always personal context
+weather-cli --user @me list    # Always personal context
 ```
 
 ## Modes
@@ -44153,25 +44153,25 @@ display:
 
 **Exit-immediately flags (NEVER launch TUI):**
 ```bash
-{projectname}-cli -h                    # Print help, exit
-{projectname}-cli --help                # Print help, exit
-{projectname}-cli -v                    # Print version, exit
-{projectname}-cli --version             # Print version, exit
+weather-cli -h                    # Print help, exit
+weather-cli --help                # Print help, exit
+weather-cli -v                    # Print version, exit
+weather-cli --version             # Print version, exit
 ```
 
 **Config flags (still launch TUI):**
 ```bash
-{projectname}-cli                                    # TUI mode
-{projectname}-cli --config dev                       # TUI mode (with dev.yml)
-{projectname}-cli --server https://example.com       # TUI mode (with server)
-{projectname}-cli --token abc123                     # TUI mode (with token)
+weather-cli                                    # TUI mode
+weather-cli --config dev                       # TUI mode (with dev.yml)
+weather-cli --server https://example.com       # TUI mode (with server)
+weather-cli --token abc123                     # TUI mode (with token)
 ```
 
 **Command/args (CLI mode):**
 ```bash
-{projectname}-cli list                               # CLI mode
-{projectname}-cli golang tutorials                   # CLI mode (search)
-{projectname}-cli notes.txt                          # CLI mode (paste file)
+weather-cli list                               # CLI mode
+weather-cli golang tutorials                   # CLI mode (search)
+weather-cli notes.txt                          # CLI mode (paste file)
 ```
 
 ```go
@@ -44283,7 +44283,7 @@ Only CLI has a built-in wizard. Server serves web pages for setup.
 
 **Agent connection string example (provided by server admin panel):**
 ```
-{projectname}-agent --connect "https://api.example.com?token=agt_xxx&name=office-pc"
+weather-agent --connect "https://api.example.com?token=agt_xxx&name=office-pc"
 ```
 
 ### CLI: Full TUI/GUI App with Setup Wizard
@@ -44347,14 +44347,14 @@ Why CLI needs a setup wizard:
 ### CLI First-Run Flow
 
 ```
-User double-clicks {projectname}-cli:
+User double-clicks weather-cli:
 
 1. SETUP WIZARD (GUI or TUI based on environment)
    ┌─────────────────────────────────────────────────────────────┐
-   │  {PROJECTNAME} CLI Setup                                [X] │
+   │  WEATHER CLI Setup                                [X] │
    ├─────────────────────────────────────────────────────────────┤
    │                                                             │
-   │  Connect to a {projectname} server:                         │
+   │  Connect to a weather server:                         │
    │                                                             │
    │  Server URL:                                                │
    │  [https://                                           ] [?]  │
@@ -44430,7 +44430,7 @@ func selectSetupMode() SetupMode {
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  {PROJECTNAME} Setup                                    [X] │
+│  WEATHER Setup                                    [X] │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  Welcome! Let's configure your server.                      │
@@ -44451,7 +44451,7 @@ func selectSetupMode() SetupMode {
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║                      {PROJECTNAME} CLI SETUP                          ║
+║                      WEATHER CLI SETUP                          ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                      ║
 ║   No server configured. Let's set one up!                            ║
@@ -44468,7 +44468,7 @@ func selectSetupMode() SetupMode {
 **CLI Setup Wizard Flow:**
 
 ```
-User double-clicks {projectname}-cli:
+User double-clicks weather-cli:
 
 1. Check for config file (cli.yml)
    ├─ Config exists with valid server URL?
@@ -44492,7 +44492,7 @@ User double-clicks {projectname}-cli:
 ```
 Agent is configured via server-provided connection string:
 
-{projectname}-agent --connect "https://api.example.com?token=agt_xxx&name=office-pc"
+weather-agent --connect "https://api.example.com?token=agt_xxx&name=office-pc"
 
 First run without connection string:
 - Show error: "No connection configured. Use --connect flag with server-provided URL."
@@ -44620,11 +44620,11 @@ import (
 )
 
 func launchGTKGui(config *Config) error {
-    app := gtk.NewApplication("{projectorg}.{projectname}.cli", gio.ApplicationFlagsNone)
+    app := gtk.NewApplication("apimgr.weather.cli", gio.ApplicationFlagsNone)
 
     app.ConnectActivate(func() {
         win := gtk.NewApplicationWindow(app)
-        win.SetTitle("{PROJECTNAME} CLI")
+        win.SetTitle("WEATHER CLI")
         win.SetDefaultSize(800, 600)
 
         // Build UI from config
@@ -44674,7 +44674,7 @@ import "C"
 import "unsafe"
 
 func launchCocoaGui(config *Config) error {
-    title := C.CString("{PROJECTNAME} CLI")
+    title := C.CString("WEATHER CLI")
     defer C.free(unsafe.Pointer(title))
 
     C.launchCocoaApp(title, 800, 600)
@@ -44693,7 +44693,7 @@ func launchCocoaGui(config *Config) error {
 //         styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
 //                    NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable)
 //         backing:NSBackingStoreBuffered defer:NO];
-//     [self.window setTitle:@"{PROJECTNAME} CLI"];
+//     [self.window setTitle:@"WEATHER CLI"];
 //     [self.window center];
 //     [self.window makeKeyAndOrderFront:nil];
 // }
@@ -44735,8 +44735,8 @@ const (
 )
 
 func launchWin32Gui(config *Config) error {
-    className := windows.StringToUTF16Ptr("{projectname}_cli_window")
-    windowName := windows.StringToUTF16Ptr("{PROJECTNAME} CLI")
+    className := windows.StringToUTF16Ptr("weather_cli_window")
+    windowName := windows.StringToUTF16Ptr("WEATHER CLI")
 
     // Register window class
     var wc WNDCLASSEXW
@@ -45022,7 +45022,7 @@ func calculateGUILayout(width, height int, dpi float64) Layout {
 // src/client/tui/layout.go
 package tui
 
-import "{projectorg}/{projectname}/common/terminal"
+import "apimgr/weather/common/terminal"
 
 // LayoutConfig provides TUI-specific layout settings based on SizeMode
 type LayoutConfig struct {
@@ -45309,10 +45309,10 @@ When command arguments are provided:
 
 ```bash
 # Standard CLI output (your project)
-{projectname}-cli create --file notes.txt --expire 24h
-{projectname}-cli get abc123 --output json
-{projectname}-cli list --limit 10
-{projectname}-cli search --query "keyword"
+weather-cli create --file notes.txt --expire 24h
+weather-cli get abc123 --output json
+weather-cli list --limit 10
+weather-cli search --query "keyword"
 ```
 
 ### TUI Mode (Automatic)
@@ -45321,7 +45321,7 @@ When launched with no arguments in an interactive terminal:
 
 ```bash
 # Launch TUI (no arguments needed)
-{projectname}-cli              # Opens TUI automatically
+weather-cli              # Opens TUI automatically
 
 # TUI provides:
 # - Interactive menus
@@ -45352,23 +45352,23 @@ The client uses the same user directory structure as the server in user mode. Th
 
 | Directory | Path | Purpose |
 |-----------|------|---------|
-| Config | `~/.config/{projectorg}/{projectname}/` | Configuration files |
-| Config File | `~/.config/{projectorg}/{projectname}/cli.yml` | CLI configuration |
-| Data | `~/.local/share/{projectorg}/{projectname}/` | Persistent data |
-| Cache | `~/.cache/{projectorg}/{projectname}/` | Temporary/cached data |
-| Logs | `~/.local/log/{projectorg}/{projectname}/` | Log files |
-| Log File | `~/.local/log/{projectorg}/{projectname}/cli.log` | CLI log output |
+| Config | `~/.config/apimgr/weather/` | Configuration files |
+| Config File | `~/.config/apimgr/weather/cli.yml` | CLI configuration |
+| Data | `~/.local/share/apimgr/weather/` | Persistent data |
+| Cache | `~/.cache/apimgr/weather/` | Temporary/cached data |
+| Logs | `~/.local/log/apimgr/weather/` | Log files |
+| Log File | `~/.local/log/apimgr/weather/cli.log` | CLI log output |
 
 #### Windows
 
 | Directory | Path | Purpose |
 |-----------|------|---------|
-| Config | `%APPDATA%\{projectorg}\{projectname}\` | Configuration files |
-| Config File | `%APPDATA%\{projectorg}\{projectname}\cli.yml` | CLI configuration |
-| Data | `%LOCALAPPDATA%\{projectorg}\{projectname}\data\` | Persistent data |
-| Cache | `%LOCALAPPDATA%\{projectorg}\{projectname}\cache\` | Temporary/cached data |
-| Logs | `%LOCALAPPDATA%\{projectorg}\{projectname}\log\` | Log files |
-| Log File | `%LOCALAPPDATA%\{projectorg}\{projectname}\log\cli.log` | CLI log output |
+| Config | `%APPDATA%\apimgr\weather\` | Configuration files |
+| Config File | `%APPDATA%\apimgr\weather\cli.yml` | CLI configuration |
+| Data | `%LOCALAPPDATA%\apimgr\weather\data\` | Persistent data |
+| Cache | `%LOCALAPPDATA%\apimgr\weather\cache\` | Temporary/cached data |
+| Logs | `%LOCALAPPDATA%\apimgr\weather\log\` | Log files |
+| Log File | `%LOCALAPPDATA%\apimgr\weather\log\cli.log` | CLI log output |
 
 #### Directory Usage
 
@@ -45380,9 +45380,9 @@ The client uses the same user directory structure as the server in user mode. Th
 | Logs | `cli.log`, debug logs | Optional |
 
 **NEVER use OS system directories:**
-- `/etc/{projectorg}/{projectname}/` (Linux system config)
-- `/var/lib/{projectorg}/{projectname}/` (Linux system data)
-- `/var/log/{projectorg}/{projectname}/` (Linux system logs)
+- `/etc/apimgr/weather/` (Linux system config)
+- `/var/lib/apimgr/weather/` (Linux system data)
+- `/var/log/apimgr/weather/` (Linux system logs)
 - `C:\ProgramData\` (Windows system data)
 - Any directory requiring elevated privileges
 
@@ -45394,10 +45394,10 @@ On every startup, the CLI MUST:
 
 1. **Ensure directories exist** (create if missing):
    ```
-   ├─ {config_dir}/           (~/.config/{projectorg}/{projectname}/)
-   ├─ {data_dir}/             (~/.local/share/{projectorg}/{projectname}/)
-   ├─ {cache_dir}/            (~/.cache/{projectorg}/{projectname}/)
-   └─ {log_dir}/              (~/.local/log/{projectorg}/{projectname}/)
+   ├─ {config_dir}/           (~/.config/apimgr/weather/)
+   ├─ {data_dir}/             (~/.local/share/apimgr/weather/)
+   ├─ {cache_dir}/            (~/.cache/apimgr/weather/)
+   └─ {log_dir}/              (~/.local/log/apimgr/weather/)
    ```
 
 2. **Set correct permissions** (user-only access):
@@ -45506,8 +45506,8 @@ import (
 )
 
 const (
-	projectOrg  = "{projectorg}"
-	projectName = "{projectname}"
+	projectOrg  = "apimgr"
+	projectName = "weather"
 )
 
 // ConfigDir returns the CLI config directory
@@ -45634,9 +45634,9 @@ func resolveYamlExtension(path string) string {
 **Example usage:**
 ```bash
 # Use different configs for different environments
-{projectname}-cli --config dev list              # Uses ~/.config/.../dev.yml
-{projectname}-cli --config staging list          # Uses ~/.config/.../staging.yml
-{projectname}-cli --config ~/work/prod.yml list  # Uses absolute path
+weather-cli --config dev list              # Uses ~/.config/.../dev.yml
+weather-cli --config staging list          # Uses ~/.config/.../staging.yml
+weather-cli --config ~/work/prod.yml list  # Uses absolute path
 
 # Config profiles allow different servers/tokens without flags
 # dev.yml:   server: https://dev.example.com, token: dev-token
@@ -45648,7 +45648,7 @@ func resolveYamlExtension(path string) string {
 **EVERYTHING must be configurable via cli.yml. Sane defaults match server where applicable.**
 
 ```yaml
-# ~/.config/{projectorg}/{projectname}/cli.yml
+# ~/.config/apimgr/weather/cli.yml
 # client configuration - ALL options with defaults
 
 # Server connection
@@ -45713,18 +45713,18 @@ defaults:
 | Priority | Source | Example |
 |----------|--------|---------|
 | 1 | CLI flag | `--format json` |
-| 2 | Environment variable | `{PROJECTNAME}_FORMAT=json` |
+| 2 | Environment variable | `WEATHER_FORMAT=json` |
 | 3 | Config file | `output.format: json` |
 | 4 | Compiled default | `table` |
 
 **Environment variable mapping:**
 ```bash
-# Pattern: {PROJECTNAME}_{SECTION}_{KEY} or {PROJECTNAME}_{KEY}
-{PROJECTNAME}_SERVER_PRIMARY="https://example.com"
-{PROJECTNAME}_SERVER_TIMEOUT=60
-{PROJECTNAME}_TOKEN="usr_abc123..."
-{PROJECTNAME}_OUTPUT_FORMAT="json"
-{PROJECTNAME}_DEBUG=true
+# Pattern: WEATHER_{SECTION}_{KEY} or WEATHER_{KEY}
+WEATHER_SERVER_PRIMARY="https://example.com"
+WEATHER_SERVER_TIMEOUT=60
+WEATHER_TOKEN="usr_abc123..."
+WEATHER_OUTPUT_FORMAT="json"
+WEATHER_DEBUG=true
 ```
 
 ### CLI Cluster Failover 
@@ -45803,23 +45803,23 @@ func saveIfEmpty(current, newValue string, validate func(string) bool) (string, 
 **Error when no server configured (projects without official site):**
 
 ```bash
-$ {projectname}-cli list
+$ weather-cli list
 Error: no server configured
 
 To configure a server, run:
-  {projectname}-cli --server https://your-server.example.com list
+  weather-cli --server https://your-server.example.com list
 
 This will save the server address for future commands.
-Or edit ~/.config/{projectorg}/{projectname}/cli.yml directly.
+Or edit ~/.config/apimgr/weather/cli.yml directly.
 ```
 
 **Projects with official site show default in help:**
 
 ```bash
-$ {projectname}-cli --help
+$ weather-cli --help
 ...
 Flags:
-      --server string    Server address (default: https://{projectname}.example.com)
+      --server string    Server address (default: https://weather.example.com)
 ...
 ```
 
@@ -45830,7 +45830,7 @@ Flags:
 - CLI/Agent: Default `--server` URL (so users don't need to specify)
 
 **What official site does NOT affect:**
-- Docker labels (use `{projectorg}`, `{projectname}`, `{fqdn}`)
+- Docker labels (use `apimgr`, `weather`, `{fqdn}`)
 - Documentation structure or content
 - Build artifacts or binary metadata
 - Any runtime behavior (just a compiled default)
@@ -45878,11 +45878,11 @@ See PART 5: Boolean Handling for the complete implementation.
 
 **Usage in flags:**
 ```bash
-{projectname}-cli --public                    # Boolean flag (true)
-{projectname}-cli --public=yes                # Explicit truthy
-{projectname}-cli --public=no                 # Explicit falsey
-{projectname}-cli --expire=0                  # Falsey = no expiration
-{projectname}-cli --expire=disabled           # Falsey = no expiration
+weather-cli --public                    # Boolean flag (true)
+weather-cli --public=yes                # Explicit truthy
+weather-cli --public=no                 # Explicit falsey
+weather-cli --expire=0                  # Falsey = no expiration
+weather-cli --expire=disabled           # Falsey = no expiration
 ```
 
 **Config file (cli.yml):**
@@ -45927,29 +45927,29 @@ server:
 **Search/Query CLI (minimal flags):**
 ```bash
 # Args ARE the search - no flags needed for basic use
-{projectname}-cli golang tutorials           # Search
-{projectname}-cli --limit 10 golang          # With limit
-{projectname}-cli --output json golang       # JSON output
+weather-cli golang tutorials           # Search
+weather-cli --limit 10 golang          # With limit
+weather-cli --output json golang       # JSON output
 ```
 
 **Pastebin/Content CLI:**
 ```bash
 # Smart detection handles input, flags for metadata
-{projectname}-cli notes.txt                          # File (detected), uses defaults
-{projectname}-cli notes.txt --public yes             # Public paste
-{projectname}-cli notes.txt --public no              # Private (requires auth)
-{projectname}-cli notes.txt --public unlisted        # Unlisted (default)
-{projectname}-cli notes.txt --expire 24h             # Expiration
-{projectname}-cli notes.txt --syntax python          # Syntax highlight
-{projectname}-cli notes.txt --author "John"          # Author name
+weather-cli notes.txt                          # File (detected), uses defaults
+weather-cli notes.txt --public yes             # Public paste
+weather-cli notes.txt --public no              # Private (requires auth)
+weather-cli notes.txt --public unlisted        # Unlisted (default)
+weather-cli notes.txt --expire 24h             # Expiration
+weather-cli notes.txt --syntax python          # Syntax highlight
+weather-cli notes.txt --author "John"          # Author name
 ```
 
 **API/Data CLI:**
 ```bash
 # Resource-specific flags
-{projectname}-cli get abc123                         # Get by ID
-{projectname}-cli list --limit 20 --offset 0         # Pagination
-{projectname}-cli delete abc123 --force              # Dangerous ops need confirm
+weather-cli get abc123                         # Get by ID
+weather-cli list --limit 20 --offset 0         # Pagination
+weather-cli delete abc123 --force              # Dangerous ops need confirm
 ```
 
 ### Flag Defaults from Config 
@@ -45968,7 +45968,7 @@ defaults:
 
 **Precedence (highest to lowest):**
 1. Command-line flag (`--public yes`)
-2. Environment variable (`{PROJECTNAME}_PUBLIC=yes`)
+2. Environment variable (`WEATHER_PUBLIC=yes`)
 3. Config file (`defaults.public: yes`)
 4. Hardcoded default
 
@@ -45996,12 +45996,12 @@ defaults:
 **`--shell init` is just a convenience wrapper:**
 ```bash
 # These are equivalent:
-eval "$({projectname} --shell init)"
-eval "$({projectname} --shell init bash)"      # if $SHELL=/bin/bash
+eval "$(weather --shell init)"
+eval "$(weather --shell init bash)"      # if $SHELL=/bin/bash
 
 # init outputs the eval command, completions outputs the script:
-{projectname} --shell init        # → source <({projectname} --shell completions bash)
-{projectname} --shell completions # → (actual completion script)
+weather --shell init        # → source <(weather --shell completions bash)
+weather --shell completions # → (actual completion script)
 ```
 
 **Supported shells:**
@@ -46025,28 +46025,28 @@ eval "$({projectname} --shell init bash)"      # if $SHELL=/bin/bash
 **Usage examples:**
 ```bash
 # Explicit shell specification
-{projectname} --shell completions bash > ~/.local/share/bash-completion/completions/{projectname}
-{projectname}-cli --shell completions zsh > ~/.zsh/completions/_{projectname}-cli
-{projectname}-agent --shell completions fish > ~/.config/fish/completions/{projectname}-agent.fish
-{projectname} --shell completions powershell > ~/Documents/PowerShell/completions/{projectname}.ps1
+weather --shell completions bash > ~/.local/share/bash-completion/completions/weather
+weather-cli --shell completions zsh > ~/.zsh/completions/_weather-cli
+weather-agent --shell completions fish > ~/.config/fish/completions/weather-agent.fish
+weather --shell completions powershell > ~/Documents/PowerShell/completions/weather.ps1
 
 # Auto-detect shell (omit SHELL argument)
-{projectname} --shell completions > ~/completions/{projectname}
-{projectname}-cli --shell init                    # auto-detect, print init
-eval "$({projectname} --shell init)"              # auto-detect in eval
+weather --shell completions > ~/completions/weather
+weather-cli --shell init                    # auto-detect, print init
+eval "$(weather --shell init)"              # auto-detect in eval
 
 # Specific shell init
-eval "$({projectname}-cli --shell init bash)"
-eval "$({projectname}-agent --shell init zsh)"
-{projectname} --shell init fish | source
+eval "$(weather-cli --shell init bash)"
+eval "$(weather-agent --shell init zsh)"
+weather --shell init fish | source
 ```
 
 **Add to shell rc file:**
 ```bash
 # ~/.bashrc, ~/.zshrc, ~/.config/fish/config.fish, etc.
-eval "$({projectname} --shell init)"        # server (auto-detect)
-eval "$({projectname}-cli --shell init)"    # client (auto-detect)
-eval "$({projectname}-agent --shell init)"  # agent (auto-detect)
+eval "$(weather --shell init)"        # server (auto-detect)
+eval "$(weather-cli --shell init)"    # client (auto-detect)
+eval "$(weather-agent --shell init)"  # agent (auto-detect)
 ```
 
 **Why built-in (not separate files):**
@@ -46132,12 +46132,12 @@ func printInit(shell, binaryName string) {
 ### --help Output
 
 ```bash
-$ {projectname}-cli --help
-{projectname}-cli {projectversion} - CLI for {projectname}
+$ weather-cli --help
+weather-cli {projectversion} - CLI for weather
 
 Usage:
-  {projectname}-cli [args] [flags]
-  {projectname}-cli                    # TUI mode (no args)
+  weather-cli [args] [flags]
+  weather-cli                    # TUI mode (no args)
 
 Flags:
   -h, --help                        Show help
@@ -46163,13 +46163,13 @@ Administration (requires admin token):
 Shells: bash, zsh, fish, sh, dash, ksh, powershell, pwsh
 
 Run without arguments for interactive TUI mode.
-Run '{projectname}-cli <command> --help' for detailed help on any command.
+Run 'weather-cli <command> --help' for detailed help on any command.
 ```
 
 **If user renames binary:**
 ```bash
 $ mypaste --help
-mypaste {projectversion} - client for {projectname} API   # Shows actual binary name
+mypaste {projectversion} - client for weather API   # Shows actual binary name
 
 Usage:
   mypaste [command] [flags]                     # Shows actual binary name
@@ -46181,8 +46181,8 @@ Usage:
 **MUST match server `--version` format. Shows ACTUAL binary name:**
 
 ```bash
-$ {projectname}-cli --version
-{projectname}-cli {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
+$ weather-cli --version
+weather-cli {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
 
 # If renamed:
 $ mypaste --version
@@ -46223,11 +46223,11 @@ Example commands (project-dependent):
 **Token Storage:**
 - Stored in `cli.yml` under `server.token`
 - `--token` flag saves to cli.yml only if not already set (same as `--server`)
-- Environment variable: `{PROJECTNAME}_CLI_TOKEN` (does NOT save to config)
+- Environment variable: `WEATHER_CLI_TOKEN` (does NOT save to config)
 
 **Priority (highest to lowest):**
 1. `--token` flag (saves only if config empty/invalid)
-2. `{PROJECTNAME}_CLI_TOKEN` environment variable
+2. `WEATHER_CLI_TOKEN` environment variable
 3. `server.token` in cli.yml
 
 ## HTTP Client Identity 
@@ -46253,16 +46253,16 @@ Example commands (project-dependent):
 ### User-Agent Format
 
 ```
-{projectname}-cli/{version}
+weather-cli/{version}
 ```
 
 **Examples (User-Agent uses compiled project name, not binary name):**
 
 | Binary Name | User-Agent Header |
 |-------------|-------------------|
-| `{projectname}-cli` | `{projectname}-cli/1.2.3` |
-| `mypaste` (renamed by user) | `{projectname}-cli/1.2.3` |
-| `pb` (renamed by user) | `{projectname}-cli/1.2.3` |
+| `weather-cli` | `weather-cli/1.2.3` |
+| `mypaste` (renamed by user) | `weather-cli/1.2.3` |
+| `pb` (renamed by user) | `weather-cli/1.2.3` |
 
 ### Implementation
 
@@ -46290,7 +46290,7 @@ func GetBinaryName() string {
 **Build command (CI/CD injects version from git tag):**
 ```bash
 # VERSION comes from git tag (see PART 26/28 for version handling)
-go build -ldflags "-X main.ProjectName={projectname} -X main.Version=${VERSION}" -o {projectname}-cli ./src/client
+go build -ldflags "-X main.ProjectName=weather -X main.Version=${VERSION}" -o weather-cli ./src/client
 ```
 
 ### Server-Side Client Detection
@@ -46436,7 +46436,7 @@ package api
 
 import (
     "net/http"
-    "github.com/{projectorg}/{projectname}/common/urlutil"
+    "github.com/apimgr/weather/common/urlutil"
 )
 
 type APIClient struct {
@@ -46511,7 +46511,7 @@ func (c *APIClient) doAPIRequest(method, apiURL string, body io.Reader) (*APIRes
 ### JSON
 
 ```bash
-$ {projectname}-cli get abc123 --output json
+$ weather-cli get abc123 --output json
 {
   "id": "abc123",
   "content": "Hello world example code snippet",
@@ -46523,7 +46523,7 @@ $ {projectname}-cli get abc123 --output json
 ### Table
 
 ```bash
-$ {projectname}-cli list --output table
+$ weather-cli list --output table
 ┌──────────┬─────────────────────────────────────────────┬──────────┬─────────────┐
 │ ID       │ Content                                     │ Language │ Expires     │
 ├──────────┼─────────────────────────────────────────────┼──────────┼─────────────┤
@@ -46536,7 +46536,7 @@ $ {projectname}-cli list --output table
 ### Plain
 
 ```bash
-$ {projectname}-cli get abc123 --output plain
+$ weather-cli get abc123 --output plain
 Hello world example code snippet
 ```
 
@@ -46551,18 +46551,18 @@ Each project defines its own commands based on its API.
 **Search/Query Services:**
 ```bash
 # Bare args = search term (no --query flag needed)
-{projectname}-cli golang tutorials        # Search for "golang tutorials"
-{projectname}-cli "exact phrase"          # Quoted = exact match
-{projectname}-cli --limit 5 golang        # Flags before search term OK
+weather-cli golang tutorials        # Search for "golang tutorials"
+weather-cli "exact phrase"          # Quoted = exact match
+weather-cli --limit 5 golang        # Flags before search term OK
 ```
 
 **Content/Paste Services:**
 ```bash
 # Detection order: stdin → file → directory → text
-echo "hello" | {projectname}-cli          # stdin detected → paste stdin
-{projectname}-cli notes.txt               # File exists → paste file content
-{projectname}-cli /path/to/dir            # Directory → error or list
-{projectname}-cli "some text here"        # Not file → paste as text
+echo "hello" | weather-cli          # stdin detected → paste stdin
+weather-cli notes.txt               # File exists → paste file content
+weather-cli /path/to/dir            # Directory → error or list
+weather-cli "some text here"        # Not file → paste as text
 ```
 
 **Detection Logic:**
@@ -46606,8 +46606,8 @@ func detectInput(args []string) (content string, source string) {
 
 **Explicit flags still work (override detection):**
 ```bash
-{projectname}-cli --file notes.txt        # Force file mode
-{projectname}-cli --text "notes.txt"      # Force text mode (not file)
+weather-cli --file notes.txt        # Force file mode
+weather-cli --text "notes.txt"      # Force text mode (not file)
 ```
 
 ## Build Integration
@@ -46619,15 +46619,15 @@ func detectInput(args []string) (content string, source string) {
 ```bash
 # Quick dev build (server + CLI + agent if exist)
 make dev
-# Output: ${TMPDIR}/${PROJECTORG}/${PROJECTNAME}-XXXXXX/{projectname}, {projectname}-cli, {projectname}-agent
+# Output: ${TMPDIR}/$APIMGR/$WEATHER-XXXXXX/weather, weather-cli, weather-agent
 
 # Production test build
 make local
-# Output: binaries/{projectname}, binaries/{projectname}-cli (with version)
+# Output: binaries/weather, binaries/weather-cli (with version)
 
 # Full release (all 8 platforms)
 make build
-# Output: binaries/{projectname}-{os}-{arch}, binaries/{projectname}-cli-{os}-{arch}
+# Output: binaries/weather-{os}-{arch}, binaries/weather-cli-{os}-{arch}
 ```
 
 ### CI/CD (Direct go build - NOT Makefile)
@@ -46635,13 +46635,13 @@ make build
 ```bash
 # CI/CD uses actions/setup-go@v5, NOT Docker containers
 # See PART 28: CI/CD WORKFLOWS for complete examples
-go build -ldflags "${LDFLAGS}" -o ${PROJECTNAME}-cli ./src/client
+go build -ldflags "${LDFLAGS}" -o $WEATHER-cli ./src/client
 ```
 
 ### Directory Structure
 
 ```
-{projectname}/
+weather/
 ├── src/                    # Server application
 │   ├── main.go
 │   ├── config/
@@ -46717,7 +46717,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 client uses `common/terminal` from PART 7:
 ```go
 // CLI uses common/terminal package (defined in PART 7)
-import "{projectorg}/{projectname}/common/terminal"
+import "apimgr/weather/common/terminal"
 
 func (m SizeMode) MaxTableColumns() int {
     switch m {
@@ -46992,19 +46992,19 @@ stty rows 10 cols 40
 
 ```bash
 # Connection error
-$ {projectname}-cli list
-Error: cannot connect to server at https://{projectname}.example.com
+$ weather-cli list
+Error: cannot connect to server at https://weather.example.com
   Check your network connection and server address.
   Use --server to specify a different server.
 
 # Auth error
-$ {projectname}-cli admin users --token invalid
+$ weather-cli admin users --token invalid
 Error: authentication failed
   Your API token is invalid or expired.
   Update server.token in cli.yml or use --token flag.
 
 # Not found
-$ {projectname}-cli get abc123
+$ weather-cli get abc123
 Error: resource not found: abc123
 ```
 
@@ -47013,10 +47013,10 @@ Error: resource not found: abc123
 When server is reachable, `--version` can show extended info:
 
 ```bash
-$ {projectname}-cli --version
-{projectname}-cli {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
+$ weather-cli --version
+weather-cli {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
 
-Server: https://{projectname}.example.com
+Server: https://weather.example.com
 Server Version: {projectversion} (compatible)
 
 Build Info:
@@ -47358,7 +47358,7 @@ Answer these questions for your specific project:
 
 | Attribute | Value |
 |-----------|-------|
-| Binary naming | `{projectname}-agent-{os}-{arch}` |
+| Binary naming | `weather-agent-{os}-{arch}` |
 | Examples | `monitor-agent-linux-amd64`, `monitor-agent-windows-arm64` |
 | Versioning | Same as server and client |
 | Build | Part of same Makefile (`make build` builds all if `src/agent/` exists) |
@@ -47482,12 +47482,12 @@ register                      # Interactive registration with server
 ### Agent --help Output
 
 ```bash
-$ {projectname}-agent --help
-{projectname}-agent {projectversion} - Agent for {projectname}
+$ weather-agent --help
+weather-agent {projectversion} - Agent for weather
 
 Usage:
-  {projectname}-agent [flags]
-  {projectname}-agent [command]
+  weather-agent [flags]
+  weather-agent [command]
 
 Commands:
   status                        Show agent status
@@ -47524,10 +47524,10 @@ Shells: bash, zsh, fish, sh, dash, ksh, powershell, pwsh
 
 ```bash
 # Default: run agent (foreground)
-{projectname}-agent
+weather-agent
 
 # Status: show current agent status
-{projectname}-agent status
+weather-agent status
   Agent: monitor-agent v1.0.0
   Hostname: web-server-01
   Server: https://monitor.example.com
@@ -47536,14 +47536,14 @@ Shells: bash, zsh, fish, sh, dash, ksh, powershell, pwsh
   Next Report: 2025-01-15 10:31:00
 
 # Test: verify server connection
-{projectname}-agent test
+weather-agent test
   Testing connection to https://monitor.example.com...
   ✅ Connection successful
   ✅ Authentication valid
   ✅ Agent registered
 
 # Connect: one-liner from server panel (preferred)
-{projectname}-agent --server https://monitor.example.com --token adm_agt_abc123def456...
+weather-agent --server https://monitor.example.com --token adm_agt_abc123def456...
   Connecting to https://monitor.example.com...
   ✅ Connection successful
   ✅ Token validated
@@ -47556,11 +47556,11 @@ Shells: bash, zsh, fish, sh, dash, ksh, powershell, pwsh
   Agent is now sending data to server for admin scope.
 
 # Service management
-{projectname}-agent --service install   # Install as system service
-{projectname}-agent --service start     # Start service
-{projectname}-agent --service stop      # Stop service
-{projectname}-agent --service status    # Show service status
-{projectname}-agent --service uninstall # Remove service
+weather-agent --service install   # Install as system service
+weather-agent --service start     # Start service
+weather-agent --service stop      # Stop service
+weather-agent --service status    # Show service status
+weather-agent --service uninstall # Remove service
 ```
 
 ### Agent Setup Process 
@@ -47578,7 +47578,7 @@ Shells: bash, zsh, fish, sh, dash, ksh, powershell, pwsh
 │                                                             │
 │  2. On Target Machine (one command)                            │
 │     └─→ Paste and run the one-liner:                        │
-│         {projectname}-agent --server {url} --token {token}  │
+│         weather-agent --server {url} --token {token}  │
 │     └─→ Agent connects, registers, saves config             │
 │     └─→ Server shows notification: "{name} has connected"   │
 │                                                             │
@@ -47675,8 +47675,8 @@ func GenerateAgentToken(scope AgentScope) string {
 **File: `{config_dir}/agent.yml`** (same directory as server.yml)
 
 ```yaml
-# /etc/{projectorg}/{projectname}/agent.yml (root)
-# ~/.config/{projectorg}/{projectname}/agent.yml (user)
+# /etc/apimgr/weather/agent.yml (root)
+# ~/.config/apimgr/weather/agent.yml (user)
 # Agent configuration - ALL options with defaults
 
 # Server connection
@@ -47733,18 +47733,18 @@ mode: ""                           # production, development (empty = auto-detec
 | Priority | Source | Example |
 |----------|--------|---------|
 | 1 | CLI flag | `--server https://...` |
-| 2 | Environment variable | `{PROJECTNAME}_AGENT_SERVER=https://...` |
+| 2 | Environment variable | `WEATHER_AGENT_SERVER=https://...` |
 | 3 | Config file | `server.primary: https://...` |
 | 4 | Compiled default | (none for server, must be configured) |
 
 **Environment variable mapping:**
 ```bash
-# Pattern: {PROJECTNAME}_AGENT_{KEY} or {PROJECTNAME}_{KEY}
-{PROJECTNAME}_AGENT_SERVER_PRIMARY="https://example.com"
-{PROJECTNAME}_AGENT_TOKEN="adm_agt_abc123..."
-{PROJECTNAME}_AGENT_HOSTNAME="web-server-01"
-{PROJECTNAME}_AGENT_COLLECTION_INTERVAL=30
-{PROJECTNAME}_DEBUG=true
+# Pattern: WEATHER_AGENT_{KEY} or WEATHER_{KEY}
+WEATHER_AGENT_SERVER_PRIMARY="https://example.com"
+WEATHER_AGENT_TOKEN="adm_agt_abc123..."
+WEATHER_AGENT_HOSTNAME="web-server-01"
+WEATHER_AGENT_COLLECTION_INTERVAL=30
+WEATHER_DEBUG=true
 ```
 
 ### Agent Cluster Failover 
@@ -47819,10 +47819,10 @@ mode: ""                           # production, development (empty = auto-detec
 | **Execution context** | User context | System context |
 | **Runs as** | Current user | root/Administrator |
 | **Config base path** | `~/` (user home) | `/` (system root) |
-| **Config directory** | `~/.config/{projectorg}/{projectname}/` | `/etc/{projectorg}/{projectname}/` |
-| **Data directory** | `~/.local/share/{projectorg}/{projectname}/` | `/var/lib/{projectorg}/{projectname}/` |
-| **Log directory** | `~/.local/log/{projectorg}/{projectname}/` | `/var/log/{projectorg}/{projectname}/` |
-| **Cache directory** | `~/.cache/{projectorg}/{projectname}/` | `/var/cache/{projectorg}/{projectname}/` |
+| **Config directory** | `~/.config/apimgr/weather/` | `/etc/apimgr/weather/` |
+| **Data directory** | `~/.local/share/apimgr/weather/` | `/var/lib/apimgr/weather/` |
+| **Log directory** | `~/.local/log/apimgr/weather/` | `/var/log/apimgr/weather/` |
+| **Cache directory** | `~/.cache/apimgr/weather/` | `/var/cache/apimgr/weather/` |
 | **Privilege level** | Normal user | Elevated (root/admin) |
 | **System access** | User files only | Full system access |
 
@@ -47837,24 +47837,24 @@ mode: ""                           # production, development (empty = auto-detec
 
 ```bash
 # Client (user context - runs as "alice")
-~/.config/{projectorg}/{projectname}/cli.yml        # Alice's config
-~/.local/share/{projectorg}/{projectname}/          # Alice's data
-~/.local/log/{projectorg}/{projectname}/cli.log     # Alice's logs
+~/.config/apimgr/weather/cli.yml        # Alice's config
+~/.local/share/apimgr/weather/          # Alice's data
+~/.local/log/apimgr/weather/cli.log     # Alice's logs
 
 # Agent (system context - runs as root)
-/etc/{projectorg}/{projectname}/agent.yml           # System config
-/var/lib/{projectorg}/{projectname}/                # System data
-/var/log/{projectorg}/{projectname}/agent.log       # System logs
+/etc/apimgr/weather/agent.yml           # System config
+/var/lib/apimgr/weather/                # System data
+/var/log/apimgr/weather/agent.log       # System logs
 ```
 
 **Platform-Specific Paths:**
 
 | Platform | Client Config | Agent Config |
 |----------|-------------------|--------------|
-| **Linux** | `~/.config/{projectorg}/{projectname}/` | `/etc/{projectorg}/{projectname}/` |
-| **macOS** | `~/Library/Application Support/{projectorg}/{projectname}/` | `/Library/Application Support/{projectorg}/{projectname}/` |
-| **Windows** | `%APPDATA%\{projectorg}\{projectname}\` | `%PROGRAMDATA%\{projectorg}\{projectname}\` |
-| **FreeBSD** | `~/.config/{projectorg}/{projectname}/` | `/usr/local/etc/{projectorg}/{projectname}/` |
+| **Linux** | `~/.config/apimgr/weather/` | `/etc/apimgr/weather/` |
+| **macOS** | `~/Library/Application Support/apimgr/weather/` | `/Library/Application Support/apimgr/weather/` |
+| **Windows** | `%APPDATA%\apimgr\weather\` | `%PROGRAMDATA%\apimgr\weather\` |
+| **FreeBSD** | `~/.config/apimgr/weather/` | `/usr/local/etc/apimgr/weather/` |
 
 ### Purpose Matching 
 
@@ -47869,7 +47869,7 @@ All three binaries are built for the SAME project and work together as a system:
 │                                                                            │
 │  ┌─────────────────────┐                                                   │
 │  │       SERVER        │  Central server - serves API, WebUI, manages data│
-│  │    {projectname}    │  Runs as service/daemon                           │
+│  │    weather    │  Runs as service/daemon                           │
 │  └──────────┬──────────┘                                                   │
 │             │                                                              │
 │             │ API                                                          │
@@ -47878,11 +47878,11 @@ All three binaries are built for the SAME project and work together as a system:
 │       │           │                                                        │
 │       ▼           ▼                                                        │
 │  ┌─────────────────────┐     ┌─────────────────────────┐                   │
-│  │ {projectname} CLIENT │     │         AGENT           │                   │
-│  │  {projectname}-cli  │     │  {projectname}-agent    │                   │
+│  │ weather CLIENT │     │         AGENT           │                   │
+│  │  weather-cli  │     │  weather-agent    │                   │
 │  └─────────────────────┘     └─────────────────────────┘                   │
 │                                                                            │
-│  {projectname} CLIENT:                AGENT:                                   │
+│  weather CLIENT:                AGENT:                                   │
 │  • Full remote admin              • Purpose-specific daemon                │
 │  • TUI/CLI/GUI modes              • Headless, no admin                     │
 │  • User context (~/)              • System context (/)                     │
@@ -47982,11 +47982,11 @@ SERVER STARTUP                          AGENT STARTUP
 
 **Admin flags (Client only):**
 ```bash
-{projectname}-cli --admin users list          # List all users
-{projectname}-cli --admin users create ...    # Create user
-{projectname}-cli --admin server status       # Server status
-{projectname}-cli --admin server config       # View/edit config
-{projectname}-cli --admin backup create       # Create backup
+weather-cli --admin users list          # List all users
+weather-cli --admin users create ...    # Create user
+weather-cli --admin server status       # Server status
+weather-cli --admin server config       # View/edit config
+weather-cli --admin backup create       # Create backup
 ```
 
 ### Agent = Purpose-Specific Worker 
@@ -48088,18 +48088,18 @@ src/
 
 ```
 binaries/
-├── {projectname}                         # Local server binary - for testing
-├── {projectname}-cli                     # Local CLI binary (if src/client/ exists)
-├── {projectname}-agent                   # Local agent binary (if src/agent/ exists)
-├── {projectname}-linux-amd64             # Server
-├── {projectname}-linux-arm64
-├── {projectname}-cli-linux-amd64         # CLI (if src/client/ exists)
-├── {projectname}-cli-linux-arm64
-├── {projectname}-agent-linux-amd64       # Agent (if src/agent/ exists)
-├── {projectname}-agent-linux-arm64
-├── {projectname}-agent-windows-amd64.exe
-├── {projectname}-agent-darwin-amd64
-└── {projectname}-agent-darwin-arm64
+├── weather                         # Local server binary - for testing
+├── weather-cli                     # Local CLI binary (if src/client/ exists)
+├── weather-agent                   # Local agent binary (if src/agent/ exists)
+├── weather-linux-amd64             # Server
+├── weather-linux-arm64
+├── weather-cli-linux-amd64         # CLI (if src/client/ exists)
+├── weather-cli-linux-arm64
+├── weather-agent-linux-amd64       # Agent (if src/agent/ exists)
+├── weather-agent-linux-arm64
+├── weather-agent-windows-amd64.exe
+├── weather-agent-darwin-amd64
+└── weather-agent-darwin-arm64
 ```
 
 **See PART 26 (Makefile) for full build details.**
@@ -48543,7 +48543,7 @@ var UsernameBlocklist = []string{
     "webmaster", "hostmaster", "abuse", "spam", "junk", "trash",
 
     // Project-specific (dynamic)
-    "{projectname}", "{projectorg}",
+    "weather", "apimgr",
 }
 ```
 
@@ -49154,11 +49154,11 @@ The Server Admin (administrator with access to the server/binary) has ONE recove
 
 | Scenario | Recovery Method |
 |----------|-----------------|
-| Admin forgot password | `{projectname} --maintenance setup` |
-| Admin lost API token | `{projectname} --maintenance setup` |
-| Admin lost recovery keys | `{projectname} --maintenance setup` |
-| Admin lost 2FA + no recovery keys | `{projectname} --maintenance setup` |
-| Admin lost everything | `{projectname} --maintenance setup` |
+| Admin forgot password | `weather --maintenance setup` |
+| Admin lost API token | `weather --maintenance setup` |
+| Admin lost recovery keys | `weather --maintenance setup` |
+| Admin lost 2FA + no recovery keys | `weather --maintenance setup` |
+| Admin lost everything | `weather --maintenance setup` |
 
 **This requires:**
 - Console/SSH access to the server to run the binary
@@ -53443,7 +53443,7 @@ IDEA.md must follow this structure:
 ## IDEA.md Template
 
 ```markdown
-# {projectname}
+# weather
 
 ## Project Description
 
@@ -53769,7 +53769,7 @@ A weather aggregation API that fetches data from external providers, caches it, 
 | `go build` locally | `make dev` or `make local` or `make build` |
 | `go test` locally | `make test` (includes coverage enforcement) |
 | `go mod tidy` locally | Handled by `make build/local/dev` automatically |
-| `./binaries/{projectname}` locally | Run binary inside Docker/Incus container |
+| `./binaries/weather` locally | Run binary inside Docker/Incus container |
 | Go installed locally | Use Makefile targets (they use Docker internally) |
 
 **GODIR (Go Module Cache):**
@@ -53783,14 +53783,14 @@ GOCACHE := $(HOME)/.local/share/go/build  # Local machine path for build cache
 | NEVER | ALWAYS |
 |-------|--------|
 | `docker compose up` in project dir | Use temp directory workflow |
-| Runtime data in project directory | `/tmp/{projectorg}/{projectname}-XXXXXX/` |
-| `mktemp -d` (bare) | `mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX"` |
-| `/tmp/myfile` | `/tmp/{projectorg}/{projectname}-XXXXXX/myfile` |
+| Runtime data in project directory | `/tmp/apimgr/weather-XXXXXX/` |
+| `mktemp -d` (bare) | `mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX"` |
+| `/tmp/myfile` | `/tmp/apimgr/weather-XXXXXX/myfile` |
 
 ```bash
 # Temp dir workflow
-mkdir -p "${TMPDIR:-/tmp}/${PROJECTORG}"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-XXXXXX")
+mkdir -p "${TMPDIR:-/tmp}/$APIMGR"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$APIMGR/$WEATHER-XXXXXX")
 mkdir -p "$TEMP_DIR/rootfs/config" "$TEMP_DIR/rootfs/data"
 cp docker/docker-compose.test.yml "$TEMP_DIR/docker-compose.yml"
 cd "$TEMP_DIR" && docker compose up -d
@@ -53838,7 +53838,7 @@ make docker # Build Docker image
 |------|------------------|------------|
 | Config | `/tmp/{org}/{proj}-XXX/rootfs/config/` | `/etc/{org}/{proj}/` (Linux) |
 | Data | `/tmp/{org}/{proj}-XXX/rootfs/data/` | `/var/lib/{org}/{proj}/` (Linux) |
-| Binary | `binaries/{projectname}` | `/usr/local/bin/{projectname}` |
+| Binary | `binaries/weather` | `/usr/local/bin/weather` |
 
 ---
 
@@ -53875,12 +53875,12 @@ make docker # Build Docker image
 - [ ] BSD paths: Same as Linux
 - [ ] Docker paths: `/config/`, `/data/`
 - [ ] Root vs user path detection works
-- [ ] All path functions use `{projectorg}/{projectname}` structure
+- [ ] All path functions use `apimgr/weather` structure
 
 **PART 5: Configuration**
 - [ ] Config file: `server.yml` (not .yaml, not .json)
 - [ ] Hierarchy: CLI flags > env vars > file > defaults
-- [ ] Environment prefix: `{PROJECTNAME}_`
+- [ ] Environment prefix: `WEATHER_`
 - [ ] Boolean values: true/false, yes/no, 1/0, on/off all work
 - [ ] All config values have sane defaults
 - [ ] Unknown config keys are ERRORS, not ignored
@@ -54083,8 +54083,8 @@ make docker # Build Docker image
 - [ ] Backup includes: database, config, uploads
 - [ ] Restore is atomic (all or nothing)
 - [ ] **Backup verification after creation** (checksum, decrypt, extract, DB integrity)
-- [ ] **Daily incremental** `{projectname}-daily.tar.gz[.enc]` always valid
-- [ ] **Hourly incremental** `{projectname}-hourly.tar.gz[.enc]` (if enabled)
+- [ ] **Daily incremental** `weather-daily.tar.gz[.enc]` always valid
+- [ ] **Hourly incremental** `weather-hourly.tar.gz[.enc]` (if enabled)
 - [ ] **Cluster mode**: each node maintains own valid backups (max_backups per node)
 
 ### Phase 8: Maintenance (PARTS 23-26)
@@ -54222,12 +54222,12 @@ make docker # Build Docker image
 **PART 33: Client & Agent**
 
 *Client (REQUIRED for all projects):*
-- [ ] Binary: `{projectname}-cli`
+- [ ] Binary: `weather-cli`
 - [ ] `src/client/` directory exists
 - [ ] Same version as server
 - [ ] CLI mode (standard commands)
 - [ ] TUI mode (interactive)
-- [ ] Config: `~/.config/{projectorg}/{projectname}/cli.yml`
+- [ ] Config: `~/.config/apimgr/weather/cli.yml`
 - [ ] Theme matching server (dark default)
 - [ ] Shell completions (bash, zsh, fish, powershell)
 - [ ] All server API operations accessible via CLI
@@ -54238,12 +54238,12 @@ make docker # Build Docker image
   - [ ] Automatic failover to next node if primary fails
 
 *Agent (only for monitoring/remote management projects):*
-- [ ] Binary: `{projectname}-agent`
+- [ ] Binary: `weather-agent`
 - [ ] `src/agent/` directory exists
 - [ ] Runs directly on system, NOT in container
 - [ ] Same version as server
 - [ ] Systemd/launchd/Windows service support
-- [ ] Config: `/etc/{projectorg}/{projectname}/agent.yml`
+- [ ] Config: `/etc/apimgr/weather/agent.yml`
 - [ ] Connects to central server
 - [ ] Same flags as server EXCEPT no `--port`/`--address` (agents don't serve HTTP)
 - [ ] Communication pattern documented:
@@ -54455,7 +54455,7 @@ make docker # Build Docker image
 ### Client Type Detection & Response 
 
 **Three Types of CLI Tools:**
-- [ ] **Our Client** (`{projectname}-cli`) - INTERACTIVE, receives JSON, renders own TUI/GUI
+- [ ] **Our Client** (`weather-cli`) - INTERACTIVE, receives JSON, renders own TUI/GUI
 - [ ] **Text Browsers** (lynx, w3m, links, elinks) - INTERACTIVE, receive no-JS HTML via `renderNoJSHTML()`, NO JavaScript
 - [ ] **HTTP Tools** (curl, wget, httpie) - NON-INTERACTIVE, receive formatted text via `HTML2TextConverter()`
 
@@ -54761,7 +54761,7 @@ make docker # Build Docker image
 - [ ] `{smtp_port}` - SMTP server port
 - [ ] `{startup_datetime}` - Server start timestamp
 - [ ] `{setup_token}` - First-run setup token (shown ONCE)
-- [ ] `{PROJECTNAME}` - Project name (uppercase for display)
+- [ ] `WEATHER` - Project name (uppercase for display)
 - [ ] `{projectversion}` - Current version
 
 ### Client TUI/GUI Dynamic Sizing
@@ -54953,7 +54953,7 @@ Before starting integration:
 ## Example TODO.AI.md for Integration
 
 ```markdown
-# Integration Tasks for {projectname}
+# Integration Tasks for weather
 
 ## Critical (P0) - Do First
 
@@ -55030,15 +55030,15 @@ When bootstrapping a new project from this specification:
 ### Phase 1: Project Initialization
 
 1. **Confirm project details:**
-   - Project name: `{projectname}`
-   - Organization: `{projectorg}`
+   - Project name: `weather`
+   - Organization: `apimgr`
    - Description: What does this project do?
    - Primary purpose: What problem does it solve?
 
 2. **Create directory structure:**
    ```bash
-   mkdir -p {projectname}
-   cd {projectname}
+   mkdir -p weather
+   cd weather
 
    # Create all required directories
    mkdir -p src/{config,server,swagger,graphql,mode,paths,ssl,scheduler,service,admin}
@@ -55101,7 +55101,7 @@ When bootstrapping a new project from this specification:
 
 1. **Initialize Go module:**
    ```bash
-   go mod init github.com/{projectorg}/{projectname}
+   go mod init github.com/apimgr/weather
    ```
 
 2. **Create src/main.go** - Minimal entry point

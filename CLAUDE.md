@@ -85,14 +85,14 @@ On EVERY new conversation or after "context compacted" message:
 - AI behavior: `.claude/rules/ai-rules.md` (PART 0, 1)
 - Project structure: `.claude/rules/project-rules.md` (PART 2, 3, 4)
 - Frontend/WebUI: `.claude/rules/frontend-rules.md` (PART 16, 17)
-- Full spec: `AI.md` (~5500 lines) ← **SOURCE OF TRUTH**
+- Full spec: `AI.md` (~55k lines) ← **SOURCE OF TRUTH**
 
 ## Current Project State
 [AI updates this section as work progresses]
-- Last read AI.md: 2026-02-02 (REFRESHED from TEMPLATE.md)
-- Current task: AI.md refresh complete, rules files regenerated
-- Completed: AI.md refreshed, .claude/rules/*.md (14 files) regenerated
-- Relevant PARTs: PART 0, 1, 2, 3, 4, 5
+- Last read AI.md: 2026-02-03
+- Current task: Completed spec compliance review
+- Completed: .claude/rules/*.md (14 files), CLAUDE.md, CI/CD 8-platform builds
+- Relevant PARTs: PART 0, 1, 26, 28
 
 ---
 **Full specification: AI.md**
