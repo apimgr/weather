@@ -52,12 +52,20 @@ strategy:
 
 ## BINARY NAMING
 ```bash
-# Linux/macOS/FreeBSD
-weather-$GOOS-$GOARCH
+# Server binary
+weather-$GOOS-$GOARCH          # Linux/macOS/FreeBSD
+weather-$GOOS-$GOARCH.exe      # Windows
 
-# Windows (add .exe)
-weather-$GOOS-$GOARCH.exe
+# CLI binary (REQUIRED)
+weather-cli-$GOOS-$GOARCH      # Linux/macOS/FreeBSD
+weather-cli-$GOOS-$GOARCH.exe  # Windows
+
+# Agent binary (OPTIONAL - only if src/agent/ exists)
+weather-agent-$GOOS-$GOARCH
+weather-agent-$GOOS-$GOARCH.exe
 ```
+
+**Pattern:** `{project}-{type}-{os}-{arch}` where type is `cli` or `agent`
 
 ## WORKFLOW FILES
 ```

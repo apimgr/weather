@@ -236,12 +236,13 @@ New files (AI.md compliance):
 - .claude/rules/optional-rules.md - PART 34, 35, 36
 
 CI/CD fixes (AI.md PART 28 compliance):
-- .github/workflows/daily.yml - Added all 8 platforms + .exe extension + OfficialSite LDFLAGS
-- .github/workflows/beta.yml - Added OfficialSite LDFLAGS
-- .github/workflows/release.yml - Added OfficialSite LDFLAGS
-- .gitea/workflows/daily.yml - Added all 8 platforms + .exe extension + OfficialSite LDFLAGS
-- .gitea/workflows/beta.yml - Added OfficialSite LDFLAGS
-- .gitea/workflows/release.yml - Added OfficialSite LDFLAGS
+- .github/workflows/daily.yml - All 8 platforms, OfficialSite LDFLAGS, CLI naming fixed
+- .github/workflows/beta.yml - All 8 platforms, OfficialSite LDFLAGS, CLI naming fixed
+- .github/workflows/release.yml - All 8 platforms, OfficialSite LDFLAGS, CLI naming fixed
+- .gitea/workflows/daily.yml - All 8 platforms, OfficialSite LDFLAGS, CLI naming fixed
+- .gitea/workflows/beta.yml - All 8 platforms, OfficialSite LDFLAGS, CLI naming fixed
+- .gitea/workflows/release.yml - All 8 platforms, OfficialSite LDFLAGS, CLI naming fixed
+- CLI binary naming: weather-cli-{os}-{arch} (not weather-{os}-{arch}-cli)
 
 Files modified:
 - TODO.AI.md - Updated to reflect completed work
@@ -291,7 +292,8 @@ Previously created:
   - No bcrypt usage (Argon2id correctly used)
   - No strconv.ParseBool (config.ParseBool used)
   - modernc.org/sqlite used (not mattn/go-sqlite3)
-  - CI/CD workflows: all 8 platforms + OfficialSite LDFLAGS
+  - CI/CD workflows: all 8 platforms + OfficialSite LDFLAGS + CLI naming fixed
+  - CLI binary naming: weather-cli-{os}-{arch} per PART 28
   - Platform-specific disk monitoring (disk_unix.go, disk_windows.go)
   - PART 34 (Multi-User) compliance verified and updated:
     - Database schema updated with profile fields (visibility, avatar, bio, website, etc.)
