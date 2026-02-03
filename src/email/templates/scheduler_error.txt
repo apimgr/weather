@@ -1,0 +1,40 @@
+Subject: Scheduled Task Failed - {app_name}
+---
+SCHEDULED TASK FAILED
+
+This alert was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Time: {timestamp}
+
+⚠️  A scheduled task has failed and may require your attention.
+
+────────────────────────────────────────────────────────────────────────
+TASK DETAILS
+
+Task: {task_name}
+Schedule: {schedule}
+Started: {start_time}
+Failed: {timestamp}
+Duration: {duration}
+
+Error: {error}
+
+────────────────────────────────────────────────────────────────────────
+RECOMMENDED ACTIONS
+
+1. Review the error message above
+2. Check server logs for more details:
+   {admin_url}/server/logs
+
+3. Verify task configuration:
+   {admin_url}/server/scheduler
+
+4. The task will retry at the next scheduled time
+
+If this task is critical, you may want to run it manually or investigate
+the root cause before the next scheduled execution.
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

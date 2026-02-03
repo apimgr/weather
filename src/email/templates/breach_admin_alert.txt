@@ -1,0 +1,52 @@
+Subject: [{severity}] Security Breach Detected - {app_name}
+---
+🚨 SECURITY BREACH DETECTED
+
+This alert was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Severity: {severity}
+Time: {timestamp}
+
+A potential security breach has been detected and requires immediate attention.
+
+────────────────────────────────────────────────────────────────────────
+DETECTION DETAILS
+
+Type: {breach_type}
+Detected: {timestamp}
+Source: {source}
+Affected: {affected_count} accounts
+
+Description:
+{description}
+
+────────────────────────────────────────────────────────────────────────
+INDICATORS
+
+{indicators}
+
+────────────────────────────────────────────────────────────────────────
+⚠️  IMMEDIATE ACTIONS REQUIRED
+
+1. Assess the scope and severity of the breach
+2. Contain the breach (block IPs, disable compromised accounts, etc.)
+3. Preserve evidence for investigation
+4. Determine if user notification is required
+5. Document all findings and actions taken
+
+────────────────────────────────────────────────────────────────────────
+ADMIN PANEL ACCESS
+
+Security Dashboard:
+{admin_url}/server/security
+
+Audit Logs:
+{admin_url}/server/logs?type=audit
+
+Active Sessions:
+{admin_url}/server/sessions
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

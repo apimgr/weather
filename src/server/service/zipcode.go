@@ -175,3 +175,33 @@ func (zs *ZipcodeService) IsLoaded() bool {
 	defer zs.mu.RUnlock()
 	return zs.loaded
 }
+
+// Reload reloads the zipcode database from external source
+// This is used by the scheduler for periodic data refresh
+func (zs *ZipcodeService) Reload() error {
+	fmt.Println("🔄 Reloading US zipcode database...")
+	startTime := time.Now()
+
+	// Clear current data
+	zs.mu.Lock()
+	zs.zipcodes = make(map[int]*ZipcodeData)
+	zs.loaded = false
+	zs.mu.Unlock()
+
+	// Reload data (call the same loading logic)
+	zs.loadZipcodes()
+
+	// Check if loading succeeded
+	zs.mu.RLock()
+	loaded := zs.loaded
+	count := len(zs.zipcodes)
+	zs.mu.RUnlock()
+
+	if !loaded || count == 0 {
+		return fmt.Errorf("failed to reload zipcode database")
+	}
+
+	elapsed := time.Since(startTime)
+	fmt.Printf("✅ Zipcode database reloaded in %s (%d entries)\n", elapsed, count)
+	return nil
+}

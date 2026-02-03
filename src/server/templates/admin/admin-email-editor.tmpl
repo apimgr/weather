@@ -221,7 +221,7 @@
 
         // Reload template
         async function reloadTemplate() {
-            if (confirm('Reload template from disk? Any unsaved changes will be lost.')) {
+            if (await showConfirm('Reload template from disk? Any unsaved changes will be lost.', 'Reload Template')) {
                 await loadTemplate(currentTemplate);
                 showSuccess('Template reloaded from disk');
             }

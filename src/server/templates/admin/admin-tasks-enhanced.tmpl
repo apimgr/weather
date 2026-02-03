@@ -286,7 +286,7 @@
 
         // Trigger task
         async function triggerTask(name) {
-            if (!confirm(`Manually trigger task: ${name}?`)) return;
+            if (!await showConfirm(`Manually trigger task: ${name}?`, 'Trigger Task')) return;
 
             try {
                 const response = await fetch(`/api/v1/admin/tasks/${name}/trigger`, { method: 'POST' });

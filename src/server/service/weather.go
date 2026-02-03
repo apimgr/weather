@@ -1647,6 +1647,24 @@ func calculateHistoricalStats(years []HistoricalDay) HistoricalStats {
 	return stats
 }
 
+// LookupIP returns GeoIP data for an IP address
+// Wraps the internal geoipService for external access
+func (ws *WeatherService) LookupIP(ip string) (*GeoIPData, error) {
+	if ws.geoipService == nil {
+		return nil, fmt.Errorf("GeoIP service not initialized")
+	}
+	return ws.geoipService.LookupIP(ip)
+}
+
+// LookupZipcode returns coordinates and location data for a US zip code
+// Wraps the internal zipcodeService for external access
+func (ws *WeatherService) LookupZipcode(zipcode int) (*Coordinates, error) {
+	if ws.zipcodeService == nil {
+		return nil, fmt.Errorf("zipcode service not initialized")
+	}
+	return ws.zipcodeService.LookupZipcode(zipcode)
+}
+
 // safeFloatAt safely retrieves a float64 from a slice at the given index
 func safeFloatAt(slice []float64, index int) float64 {
 	if index >= 0 && index < len(slice) {

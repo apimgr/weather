@@ -628,6 +628,15 @@ func main() {
 	// Initialize channels in database
 	_ = channelManager.InitializeChannels()
 
+	// Register email channel with the channel manager
+	smtpService = service.NewSMTPService(db.DB)
+	_ = smtpService.LoadConfig()
+	emailChannel := service.NewEmailChannel(smtpService)
+	channelManager.RegisterChannel(emailChannel)
+	if emailChannel.IsEnabled() {
+		fmt.Println("📧 Email channel registered and enabled")
+	}
+
 	// Create weather notification service
 	weatherNotifications := service.NewWeatherNotificationService(db.DB, weatherService, deliverySystem, templateEngine)
 
@@ -636,6 +645,9 @@ func main() {
 
 	// Initialize Tor hidden service (TEMPLATE.md PART 32 - NON-NEGOTIABLE)
 	torService := service.NewTorService(db, dirPaths.Data)
+
+	// Set Tor status provider for health checks (AI.md PART 32)
+	handler.SetTorStatusProvider(torService)
 
 	// Initialize config file watcher for live reload (TEMPLATE.md PART 1)
 	configPath := filepath.Join(dirPaths.Config, "server.yml")
@@ -673,58 +685,58 @@ func main() {
 	// Initialize scheduler for periodic tasks
 	taskScheduler := scheduler.NewScheduler(db.DB)
 
-	// Register log rotation task - run daily at midnight
-	taskScheduler.AddTask("rotate-logs", 24*time.Hour, func() error {
+	// Register log rotation task - AI.md PART 19: daily at midnight
+	taskScheduler.AddTask("rotate-logs", "0 0 * * *", func() error {
 		return appLogger.RotateLogs()
 	})
 
 	// Register cleanup tasks - AI.md PART 19: session cleanup every 15 minutes
-	taskScheduler.AddTask("cleanup-sessions", 15*time.Minute, func() error {
+	taskScheduler.AddTask("cleanup-sessions", "@every 15m", func() error {
 		return scheduler.CleanupOldSessions(db.DB)
 	})
 
 	// AI.md PART 19: token cleanup every 15 minutes
-	taskScheduler.AddTask("cleanup-tokens", 15*time.Minute, func() error {
+	taskScheduler.AddTask("cleanup-tokens", "@every 15m", func() error {
 		return scheduler.CleanupExpiredTokens(db.DB)
 	})
 
-	taskScheduler.AddTask("cleanup-rate-limits", 1*time.Hour, func() error {
+	taskScheduler.AddTask("cleanup-rate-limits", "@hourly", func() error {
 		return scheduler.CleanupRateLimitCounters(db.DB)
 	})
 
-	taskScheduler.AddTask("cleanup-audit-logs", 24*time.Hour, func() error {
+	taskScheduler.AddTask("cleanup-audit-logs", "@daily", func() error {
 		return scheduler.CleanupOldAuditLogs(db.DB)
 	})
 
 	// Register weather alert checks - run every 5 minutes per IDEA.md
-	taskScheduler.AddTask("check-weather-alerts", 5*time.Minute, func() error {
+	taskScheduler.AddTask("check-weather-alerts", "@every 5m", func() error {
 		return weatherNotifications.CheckWeatherAlerts()
 	})
 
-	// Register daily forecast - run once per day at 7 AM
-	taskScheduler.AddTask("daily-forecast", 24*time.Hour, func() error {
+	// Register daily forecast - AI.md PART 19: run once per day at 7 AM
+	taskScheduler.AddTask("daily-forecast", "0 7 * * *", func() error {
 		return weatherNotifications.SendDailyForecast()
 	})
 
 	// Register notification queue processing - run every 2 minutes
-	taskScheduler.AddTask("process-notification-queue", 2*time.Minute, func() error {
+	taskScheduler.AddTask("process-notification-queue", "@every 2m", func() error {
 		return deliverySystem.ProcessQueue()
 	})
 
-	// Register cleanup of old delivered notifications - run daily
+	// Register cleanup of old delivered notifications - daily
 	// Keep 30 days
-	taskScheduler.AddTask("cleanup-notifications", 24*time.Hour, func() error {
+	taskScheduler.AddTask("cleanup-notifications", "@daily", func() error {
 		return deliverySystem.CleanupOld(30)
 	})
 
-	// AI.md PART 19: backup daily at 02:00 (using 24h interval for now)
-	taskScheduler.AddTask("backup-daily", 24*time.Hour, func() error {
+	// AI.md PART 19: backup daily at 02:00
+	taskScheduler.AddTask("backup-daily", "0 2 * * *", func() error {
 		return scheduler.CreateSystemBackup(db.DB)
 	})
 
 	// AI.md PART 19 line 27050: backup_hourly - hourly incremental (disabled by default)
 	// Only runs if backup.hourly_enabled is true in config
-	taskScheduler.AddTask("backup-hourly", 1*time.Hour, func() error {
+	taskScheduler.AddTask("backup-hourly", "@hourly", func() error {
 		if !cfg.Server.Maintenance.Backup.HourlyEnabled {
 			return nil
 		}
@@ -736,27 +748,27 @@ func main() {
 	})
 
 	// AI.md PART 19: SSL renewal check daily at 03:00
-	taskScheduler.AddTask("ssl-renewal", 24*time.Hour, func() error {
+	taskScheduler.AddTask("ssl-renewal", "0 3 * * *", func() error {
 		return scheduler.CheckSSLRenewal()
 	})
 
 	// AI.md PART 19: self health check every 5 minutes
-	taskScheduler.AddTask("healthcheck-self", 5*time.Minute, func() error {
+	taskScheduler.AddTask("healthcheck-self", "@every 5m", func() error {
 		return scheduler.SelfHealthCheck()
 	})
 
 	// AI.md PART 19: Tor health check every 10 minutes (when Tor installed)
-	taskScheduler.AddTask("tor-health", 10*time.Minute, func() error {
+	taskScheduler.AddTask("tor-health", "@every 10m", func() error {
 		return scheduler.CheckTorHealth()
 	})
 
 	// Register weather cache refresh - run every 15 minutes per IDEA.md
-	taskScheduler.AddTask("refresh-weather-cache", 15*time.Minute, func() error {
+	taskScheduler.AddTask("refresh-weather-cache", "@every 15m", func() error {
 		return scheduler.RefreshWeatherCache(db.DB)
 	})
 
-	// Register GeoIP database update - run weekly
-	taskScheduler.AddTask("update-geoip-database", 7*24*time.Hour, func() error {
+	// Register GeoIP database update - AI.md PART 19: weekly Sunday at 03:00
+	taskScheduler.AddTask("update-geoip-database", "0 3 * * 0", func() error {
 		fmt.Println("🌍 Weekly GeoIP database update starting...")
 		if err := geoipService.UpdateDatabase(); err != nil {
 			fmt.Printf("⚠️ GeoIP update failed: %v\n", err)
@@ -766,12 +778,12 @@ func main() {
 	})
 
 	// AI.md PART 19: blocklist update daily at 04:00
-	taskScheduler.AddTask("blocklist-update", 24*time.Hour, func() error {
+	taskScheduler.AddTask("blocklist-update", "0 4 * * *", func() error {
 		return scheduler.UpdateBlocklist()
 	})
 
 	// AI.md PART 19: CVE database update daily at 05:00
-	taskScheduler.AddTask("cve-update", 24*time.Hour, func() error {
+	taskScheduler.AddTask("cve-update", "0 5 * * *", func() error {
 		return scheduler.UpdateCVEDatabase()
 	})
 
@@ -781,7 +793,7 @@ func main() {
 	if nodeIDForHeartbeat == "" {
 		nodeIDForHeartbeat = "default"
 	}
-	taskScheduler.AddTask("cluster-heartbeat", 30*time.Second, func() error {
+	taskScheduler.AddTask("cluster-heartbeat", "@every 30s", func() error {
 		return scheduler.ClusterHeartbeat(nodeIDForHeartbeat)
 	})
 
@@ -880,6 +892,12 @@ func main() {
 	adminNotificationsHandler := &handler.AdminNotificationsHandler{ConfigPath: configPath}
 	adminGeoIPHandler := &handler.AdminGeoIPHandler{ConfigPath: configPath}
 
+	// Create user settings handler (AI.md PART 34: Multi-user support)
+	userSettingsHandler := handler.NewUserSettingsHandler(db.DB)
+
+	// Create user public handler (AI.md PART 34: Public profiles, avatars)
+	userPublicHandler := handler.NewUserPublicHandler(db.DB)
+
 	// Create domain handler (TEMPLATE.md PART 34: Custom domain support)
 	domainHandler := handler.NewDomainHandlers(db.DB, appLogger)
 
@@ -966,8 +984,9 @@ func main() {
 	sslManager := utils.NewSSLManager(db.DB, sslCertsDir)
 	httpsPort := httpsPortInt
 
-	// Create SSL handler
-	sslHandler := handler.NewSSLHandler(sslCertsDir, db.DB)
+	// Create SSL handler with runtime-detected HTTPS address
+	httpsAddr := fmt.Sprintf("127.0.0.1:%d", httpsPortInt)
+	sslHandler := handler.NewSSLHandler(sslCertsDir, db.DB, httpsAddr)
 
 	// Create metrics handler
 	metricsConfigHandler := handler.NewMetricsHandler()
@@ -1179,6 +1198,14 @@ func main() {
 		usersRoutes.GET("", dashboardHandler.ShowDashboard)
 		// /users/dashboard -> user dashboard
 		usersRoutes.GET("/dashboard", dashboardHandler.ShowDashboard)
+
+		// User settings pages per AI.md PART 34
+		usersRoutes.GET("/settings", userSettingsHandler.ShowAccountSettings)
+		usersRoutes.GET("/settings/privacy", userSettingsHandler.ShowPrivacySettings)
+		usersRoutes.GET("/settings/notifications", userSettingsHandler.ShowNotificationSettings)
+		usersRoutes.GET("/settings/appearance", userSettingsHandler.ShowAppearanceSettings)
+		// /users/tokens per AI.md PART 34 spec (separate from settings)
+		usersRoutes.GET("/tokens", userSettingsHandler.ShowTokensSettings)
 	}
 
 	// Admin routes (require admin role + stricter rate limiting)
@@ -1494,6 +1521,21 @@ func main() {
 		usersAPI.GET("", authHandler.GetCurrentUser)
 		usersAPI.PATCH("", authHandler.UpdateProfile)
 
+		// User settings API per AI.md PART 34
+		usersAPI.GET("/settings", userSettingsHandler.GetSettings)
+		usersAPI.PATCH("/settings", userSettingsHandler.UpdateSettings)
+
+		// User tokens API per AI.md PART 34
+		usersAPI.GET("/tokens", userSettingsHandler.ListTokens)
+		usersAPI.POST("/tokens", userSettingsHandler.CreateToken)
+		usersAPI.DELETE("/tokens/:id", userSettingsHandler.RevokeToken)
+
+		// Avatar API per AI.md PART 34
+		usersAPI.GET("/avatar", userPublicHandler.GetCurrentUserAvatar)
+		usersAPI.POST("/avatar", userPublicHandler.UploadAvatar)
+		usersAPI.PATCH("/avatar", userPublicHandler.UpdateAvatarSettings)
+		usersAPI.DELETE("/avatar", userPublicHandler.ResetAvatar)
+
 		// Security endpoints
 		usersAPI.GET("/security/2fa", twoFAHandler.GetTwoFactorStatus)
 		usersAPI.GET("/security/2fa/setup", twoFAHandler.SetupTwoFactor)
@@ -1501,9 +1543,17 @@ func main() {
 		usersAPI.POST("/security/2fa/disable", twoFAHandler.DisableTwoFactor)
 		usersAPI.POST("/security/2fa/verify", twoFAHandler.VerifyTwoFactorCode)
 		usersAPI.POST("/security/recovery/regenerate", twoFAHandler.RegenerateRecoveryKeys)
+
+		// Password change per AI.md PART 34
+		usersAPI.POST("/security/password", userPublicHandler.ChangePassword)
 	}
 
 	// Note: 2FA routes already registered under usersAPI (/users/security/2fa/*)
+
+	// Public user profile endpoint per AI.md PART 34
+	// Uses OptionalAuth to support both authenticated and anonymous requests
+	// Private profiles return 404 to prevent existence leakage
+	apiV1.GET("/public/users/:username", middleware.OptionalAuth(db.DB), userPublicHandler.GetPublicProfile)
 
 	// Location API routes (require auth)
 	// Public location endpoints (no auth required)
@@ -1859,6 +1909,67 @@ func main() {
 			"openapi":         "http://" + c.Request.Host + "/openapi.json",
 			"swagger":         "http://" + c.Request.Host + "/openapi",
 			"graphql":         "http://" + c.Request.Host + cfg.GetAPIPath() + "/graphql",
+		})
+	})
+
+	// /api/autodiscover - Client/Agent auto-configuration endpoint
+	// AI.md PART 33/34: Non-versioned endpoint for CLI/agent self-configuration
+	// SECURITY: NEVER include admin_path, secrets, or internal IPs
+	r.GET("/api/autodiscover", func(c *gin.Context) {
+		// Build public URL from request
+		scheme := "http"
+		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+			scheme = "https"
+		}
+		publicURL := scheme + "://" + c.Request.Host
+
+		// Get cluster nodes (empty array if single-node)
+		clusterNodes := []string{publicURL}
+
+		// Cache for 1 hour per AI.md
+		c.Header("Cache-Control", "public, max-age=3600")
+
+		c.JSON(http.StatusOK, gin.H{
+			"primary":     publicURL,
+			"cluster":     clusterNodes,
+			"api_version": cfg.GetAPIVersion(),
+			"timeout":     30,
+			"retry":       3,
+			"retry_delay": 1,
+			"config": gin.H{
+				"database": gin.H{
+					"drivers": []string{"file", "sqlite", "libsql", "postgres", "mysql", "mssql", "mongodb"},
+					"aliases": gin.H{
+						"sqlite2":    "sqlite",
+						"sqlite3":    "sqlite",
+						"turso":      "libsql",
+						"pgsql":      "postgres",
+						"postgresql": "postgres",
+						"mariadb":    "mysql",
+						"mongo":      "mongodb",
+					},
+					"ssl_modes": []string{"disable", "require", "verify-full"},
+				},
+				"cache": gin.H{
+					"types": []string{"none", "memory", "valkey", "redis"},
+				},
+				"formats": gin.H{
+					"duration": []string{"s", "m", "h", "d"},
+					"size":     []string{"KB", "MB", "GB"},
+				},
+				"logging": gin.H{
+					"levels": []string{"debug", "info", "warn", "error"},
+				},
+				"smtp": gin.H{
+					"tls_modes": []string{"auto", "starttls", "tls", "none"},
+				},
+				"features": gin.H{
+					"clustering": false,
+					"tor":        cfg.Server.Tor.Enabled,
+					"webauthn":   false,
+					"oauth":      []string{},
+				},
+			},
 		})
 	})
 

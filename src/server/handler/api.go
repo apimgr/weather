@@ -752,13 +752,34 @@ func (h *APIHandler) GetHistoricalWeather(c *gin.Context) {
 	var coords *service.Coordinates
 	var err error
 
-	if lat != "" && lon != "" {
-		// Use provided coordinates
-		latitude, err1 := strconv.ParseFloat(lat, 64)
-		longitude, err2 := strconv.ParseFloat(lon, 64)
+	if lat != "" || lon != "" {
+		// Validate that both lat and lon are provided
+		if lat == "" || lon == "" {
+			InvalidInput(c, "Both 'lat' and 'lon' parameters are required")
+			return
+		}
 
-		if err1 != nil || err2 != nil {
-			InvalidInput(c, "Invalid latitude or longitude")
+		// Use provided coordinates
+		latitude, latErr := strconv.ParseFloat(lat, 64)
+		longitude, lonErr := strconv.ParseFloat(lon, 64)
+
+		// Validate coordinate parsing
+		if latErr != nil {
+			InvalidInput(c, "Invalid latitude format")
+			return
+		}
+		if lonErr != nil {
+			InvalidInput(c, "Invalid longitude format")
+			return
+		}
+
+		// Validate coordinate ranges per AI.md
+		if latitude < -90 || latitude > 90 {
+			InvalidInput(c, "Latitude must be between -90 and 90")
+			return
+		}
+		if longitude < -180 || longitude > 180 {
+			InvalidInput(c, "Longitude must be between -180 and 180")
 			return
 		}
 

@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -170,6 +172,17 @@ func performUpdate(branch string) error {
 		return fmt.Errorf("failed to download: %w", err)
 	}
 
+	// Verify checksum per AI.md PART 23 line 32321
+	// Checksum file is expected at {binary}.sha256
+	checksumURL := downloadURL + ".sha256"
+	fmt.Println("Verifying checksum...")
+	if err := verifyChecksum(tmpFile, checksumURL); err != nil {
+		// Clean up failed download
+		os.Remove(tmpFile)
+		return fmt.Errorf("checksum verification failed: %w", err)
+	}
+	fmt.Println("✓ Checksum verified")
+
 	// Make executable
 	if err := os.Chmod(tmpFile, 0755); err != nil {
 		return fmt.Errorf("failed to make executable: %w", err)
@@ -332,4 +345,53 @@ func isNewer(a, b string) bool {
 	// Simple string comparison for now
 	// Could be enhanced with proper semantic versioning
 	return a > b
+}
+
+// verifyChecksum verifies the SHA256 checksum of a file
+// Per AI.md PART 23 line 32321: Update flow must verify checksum (SHA256)
+func verifyChecksum(filepath, checksumURL string) error {
+	// Download checksum file
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(checksumURL)
+	if err != nil {
+		return fmt.Errorf("failed to download checksum: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("checksum file not found (status %d)", resp.StatusCode)
+	}
+
+	// Read expected checksum (format: "hash  filename" or just "hash")
+	checksumData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read checksum: %w", err)
+	}
+
+	expectedChecksum := strings.TrimSpace(string(checksumData))
+	// Handle "hash  filename" format
+	if parts := strings.Fields(expectedChecksum); len(parts) > 0 {
+		expectedChecksum = parts[0]
+	}
+
+	// Calculate actual checksum of downloaded file
+	file, err := os.Open(filepath)
+	if err != nil {
+		return fmt.Errorf("failed to open file for checksum: %w", err)
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return fmt.Errorf("failed to calculate checksum: %w", err)
+	}
+
+	actualChecksum := hex.EncodeToString(hasher.Sum(nil))
+
+	// Compare checksums (case-insensitive)
+	if !strings.EqualFold(actualChecksum, expectedChecksum) {
+		return fmt.Errorf("checksum mismatch: expected %s, got %s", expectedChecksum, actualChecksum)
+	}
+
+	return nil
 }

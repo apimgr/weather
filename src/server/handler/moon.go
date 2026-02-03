@@ -29,7 +29,25 @@ func NewMoonHandler(ws *service.WeatherService, le *service.LocationEnhancer) *M
 	}
 }
 
+// GetMoonData returns moon data for a given date at a specific location
+// Used by GraphQL resolvers to access MoonService
+func (h *MoonHandler) GetMoonData(lat, lon float64, date time.Time) *service.MoonData {
+	return h.moonService.Calculate(lat, lon, date)
+}
+
 // HandleMoonAPI handles GET /api/v1/moon
+// @Summary Get moon phase data
+// @Description Get current moon phase, illumination, rise/set times, and sun data for a location
+// @Tags moon
+// @Accept json
+// @Produce json
+// @Param location query string false "Location (city name, zip code, or coordinates)"
+// @Param lat query number false "Latitude (use with lon instead of location)"
+// @Param lon query number false "Longitude (use with lat instead of location)"
+// @Success 200 {object} map[string]interface{} "Moon and sun data for location"
+// @Failure 400 {object} map[string]interface{} "Bad request - invalid coordinates"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/moon [get]
 func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 	coords, enhanced, err := h.getLocationFromRequest(c)
 	if err != nil {
@@ -72,7 +90,20 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 }
 
 // HandleMoonCalendarAPI handles GET /api/v1/moon/calendar
-// Returns moon phases for a month
+// @Summary Get moon phase calendar
+// @Description Get moon phases for each day of a month
+// @Tags moon
+// @Accept json
+// @Produce json
+// @Param location query string false "Location (city name, zip code, or coordinates)"
+// @Param lat query number false "Latitude (use with lon instead of location)"
+// @Param lon query number false "Longitude (use with lat instead of location)"
+// @Param year query integer false "Year (1900-2100)" default(current year)
+// @Param month query integer false "Month (1-12)" default(current month)
+// @Success 200 {object} map[string]interface{} "Moon calendar with daily phases"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/moon/calendar [get]
 func (h *MoonHandler) HandleMoonCalendarAPI(c *gin.Context) {
 	coords, enhanced, err := h.getLocationFromRequest(c)
 	if err != nil {
@@ -133,7 +164,19 @@ func (h *MoonHandler) HandleMoonCalendarAPI(c *gin.Context) {
 }
 
 // HandleSunAPI handles GET /api/v1/sun
-// Returns sun times for a location
+// @Summary Get sun times
+// @Description Get sunrise, sunset, solar noon, and day length for a location
+// @Tags sun
+// @Accept json
+// @Produce json
+// @Param location query string false "Location (city name, zip code, or coordinates)"
+// @Param lat query number false "Latitude (use with lon instead of location)"
+// @Param lon query number false "Longitude (use with lat instead of location)"
+// @Param date query string false "Date in YYYY-MM-DD format" default(today)
+// @Success 200 {object} map[string]interface{} "Sun times for location"
+// @Failure 400 {object} map[string]interface{} "Bad request"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/sun [get]
 func (h *MoonHandler) HandleSunAPI(c *gin.Context) {
 	coords, enhanced, err := h.getLocationFromRequest(c)
 	if err != nil {

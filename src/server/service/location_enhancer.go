@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -210,6 +211,29 @@ func (le *LocationEnhancer) SetOnInitComplete(callback func(countries, cities bo
 	le.mu.Lock()
 	defer le.mu.Unlock()
 	le.onInitComplete = callback
+}
+
+// Reload reloads all location data (countries and cities) from external sources
+// This is used by the scheduler for periodic data refresh
+func (le *LocationEnhancer) Reload() error {
+	log.Println("🔄 Reloading location databases...")
+	startTime := time.Now()
+
+	// Reload countries (blocking)
+	if err := le.loadCountriesData(); err != nil {
+		return fmt.Errorf("failed to reload countries: %w", err)
+	}
+	log.Printf("✅ Countries reloaded (%d entries)", len(le.countriesData))
+
+	// Reload cities (blocking for reload)
+	if err := le.loadCitiesData(); err != nil {
+		return fmt.Errorf("failed to reload cities: %w", err)
+	}
+	log.Printf("✅ Cities reloaded (%d entries)", len(le.citiesData))
+
+	elapsed := time.Since(startTime)
+	log.Printf("✅ Location databases reloaded in %s", elapsed)
+	return nil
 }
 
 // EnhanceLocationData enhances geocode result with external data

@@ -13,15 +13,22 @@ import (
 )
 
 type SSLHandler struct {
-	certsDir  string
-	leService *service.LetsEncryptService
-	db        *sql.DB
+	certsDir    string
+	leService   *service.LetsEncryptService
+	db          *sql.DB
+	httpsAddr   string // Runtime-detected HTTPS address (e.g., "localhost:443" or "0.0.0.0:443")
 }
 
-func NewSSLHandler(certsDir string, db *sql.DB) *SSLHandler {
+// NewSSLHandler creates a new SSL handler
+// httpsAddr should be the local HTTPS address to check certificates (e.g., "127.0.0.1:443")
+func NewSSLHandler(certsDir string, db *sql.DB, httpsAddr string) *SSLHandler {
+	if httpsAddr == "" {
+		httpsAddr = "127.0.0.1:443" // Default for local cert checking
+	}
 	return &SSLHandler{
-		certsDir: certsDir,
-		db:       db,
+		certsDir:  certsDir,
+		db:        db,
+		httpsAddr: httpsAddr,
 	}
 }
 
@@ -431,8 +438,8 @@ func (h *SSLHandler) getCertificateInfo() (*CertificateInfo, error) {
 	// In a real implementation, load certificate from file
 	// For now, return a placeholder
 
-	// Try to get cert from system
-	conn, err := tls.Dial("tcp", "localhost:443", &tls.Config{
+	// Try to get cert from the local HTTPS server
+	conn, err := tls.Dial("tcp", h.httpsAddr, &tls.Config{
 		InsecureSkipVerify: true,
 	})
 	if err != nil {

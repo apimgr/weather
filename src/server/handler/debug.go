@@ -133,7 +133,8 @@ func (h *DebugHandlers) ShowDatabase(c *gin.Context) {
 			var tableName string
 			if err := rows.Scan(&tableName); err == nil {
 				var rowCount int
-				query := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
+				// Table name is from sqlite_master (safe), but quote for best practice
+				query := fmt.Sprintf("SELECT COUNT(*) FROM \"%s\"", tableName)
 				database.GetServerDB().QueryRow(query).Scan(&rowCount)
 
 				tables = append(tables, gin.H{

@@ -7,6 +7,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/apimgr/weather/src/server/model"
@@ -723,27 +724,75 @@ func (r *queryResolver) Weather(ctx context.Context, location *string, lat *floa
 		return nil, fmt.Errorf("either location name or coordinates (lat/lon) must be provided")
 	}
 
-	// For now, return a placeholder response
-	// TODO: Integrate with WeatherService
+	// Get coordinates from location or use provided lat/lon
+	var latitude, longitude float64
+	var locationName, country, timezone string
+
+	if lat != nil && lon != nil {
+		// Use provided coordinates
+		latitude = *lat
+		longitude = *lon
+		// Reverse geocode to get location name
+		coords, err := r.WeatherService.ReverseGeocode(latitude, longitude)
+		if err == nil && coords != nil {
+			locationName = coords.Name
+			country = coords.Country
+			timezone = coords.Timezone
+		} else {
+			locationName = fmt.Sprintf("%.4f, %.4f", latitude, longitude)
+			country = "Unknown"
+		}
+	} else if location != nil && *location != "" {
+		// Geocode location name to coordinates
+		coords, err := r.WeatherService.GetCoordinates(*location, "")
+		if err != nil {
+			return nil, fmt.Errorf("could not find location: %s", *location)
+		}
+		latitude = coords.Latitude
+		longitude = coords.Longitude
+		locationName = coords.Name
+		country = coords.Country
+		timezone = coords.Timezone
+	}
+
+	// Get current weather
+	current, err := r.WeatherService.GetCurrentWeather(latitude, longitude, "imperial")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get weather: %w", err)
+	}
+
+	// Build response
+	feelsLike := current.FeelsLike
+	pressure := current.Pressure
+	precipitation := current.Precipitation
+	cloudCover := current.CloudCover
+
 	return &Weather{
 		Location: &Location{
-			Name:    "New York",
-			Country: "United States",
-			Lat:     40.7128,
-			Lon:     -74.0060,
+			Name:     locationName,
+			Country:  country,
+			Lat:      latitude,
+			Lon:      longitude,
+			Timezone: &timezone,
 		},
 		Current: &CurrentWeather{
-			Temperature: 72.0,
-			Humidity:    60,
-			WindSpeed:   10.0,
+			Temperature:   current.Temperature,
+			FeelsLike:     &feelsLike,
+			Humidity:      current.Humidity,
+			Pressure:      &pressure,
+			WindSpeed:     current.WindSpeed,
+			Precipitation: &precipitation,
+			CloudCover:    &cloudCover,
 			Condition: &WeatherCondition{
-				Text: "Sunny",
+				Text: r.WeatherService.GetWeatherDescription(current.WeatherCode),
+				Icon: stringPtr(r.WeatherService.GetWeatherIcon(current.WeatherCode, current.IsDay == 1)),
 			},
 			LastUpdated: time.Now(),
 		},
 		Timestamp: time.Now(),
 	}, nil
 }
+
 
 // Forecast is the resolver for the forecast field.
 func (r *queryResolver) Forecast(ctx context.Context, location *string, lat *float64, lon *float64, days *int) (*Weather, error) {
@@ -756,78 +805,313 @@ func (r *queryResolver) Forecast(ctx context.Context, location *string, lat *flo
 		return nil, fmt.Errorf("either location name or coordinates (lat/lon) must be provided")
 	}
 
-	// Default to 3 days if not specified
-	_ = days // Will be used when integrated with WeatherService
+	// Default to 7 days if not specified
+	numDays := 7
+	if days != nil && *days > 0 && *days <= 16 {
+		numDays = *days
+	}
 
-	// For now, return a placeholder response
-	// TODO: Integrate with WeatherService
+	// Get coordinates from location or use provided lat/lon
+	var latitude, longitude float64
+	var locationName, country, timezone string
+
+	if lat != nil && lon != nil {
+		// Use provided coordinates
+		latitude = *lat
+		longitude = *lon
+		// Reverse geocode to get location name
+		coords, err := r.WeatherService.ReverseGeocode(latitude, longitude)
+		if err == nil && coords != nil {
+			locationName = coords.Name
+			country = coords.Country
+			timezone = coords.Timezone
+		} else {
+			locationName = fmt.Sprintf("%.4f, %.4f", latitude, longitude)
+			country = "Unknown"
+		}
+	} else if location != nil && *location != "" {
+		// Geocode location name to coordinates
+		coords, err := r.WeatherService.GetCoordinates(*location, "")
+		if err != nil {
+			return nil, fmt.Errorf("could not find location: %s", *location)
+		}
+		latitude = coords.Latitude
+		longitude = coords.Longitude
+		locationName = coords.Name
+		country = coords.Country
+		timezone = coords.Timezone
+	}
+
+	// Get forecast
+	forecast, err := r.WeatherService.GetForecast(latitude, longitude, numDays, "imperial")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get forecast: %w", err)
+	}
+
+	// Convert forecast days to GraphQL type
+	var forecastDays []*ForecastDay
+	for _, day := range forecast.Days {
+		precipitation := day.Precipitation
+		chanceOfRain := day.PrecipitationProbability
+		forecastDays = append(forecastDays, &ForecastDay{
+			Date: day.Date,
+			Day: &DayForecast{
+				MaxTemp:            day.TempMax,
+				MinTemp:            day.TempMin,
+				TotalPrecipitation: &precipitation,
+				ChanceOfRain:       &chanceOfRain,
+				Condition: &WeatherCondition{
+					Text: r.WeatherService.GetWeatherDescription(day.WeatherCode),
+					Icon: stringPtr(r.WeatherService.GetWeatherIcon(day.WeatherCode, true)),
+				},
+			},
+		})
+	}
+
 	return &Weather{
 		Location: &Location{
-			Name:    "New York",
-			Country: "United States",
-			Lat:     40.7128,
-			Lon:     -74.0060,
+			Name:     locationName,
+			Country:  country,
+			Lat:      latitude,
+			Lon:      longitude,
+			Timezone: &timezone,
 		},
-		Current: &CurrentWeather{
-			Temperature: 72.0,
-			Humidity:    60,
-			WindSpeed:   10.0,
-			Condition: &WeatherCondition{
-				Text: "Partly Cloudy",
-			},
-			LastUpdated: time.Now(),
-		},
+		Forecast:  forecastDays,
 		Timestamp: time.Now(),
 	}, nil
 }
 
 // SearchLocations is the resolver for the searchLocations field.
 func (r *queryResolver) SearchLocations(ctx context.Context, query string) ([]*LocationSearchResult, error) {
-	// Location search is not yet integrated via GraphQL
-	// Returns empty results for now
-	_ = query
-	return []*LocationSearchResult{}, nil
+	if r.WeatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	if query == "" {
+		return []*LocationSearchResult{}, nil
+	}
+
+	// Search using WeatherService (limit to 10 results)
+	locations, err := r.WeatherService.SearchLocations(query, 10)
+	if err != nil {
+		return nil, fmt.Errorf("location search failed: %w", err)
+	}
+
+	// Convert to GraphQL type
+	results := make([]*LocationSearchResult, 0, len(locations))
+	for _, loc := range locations {
+		region := loc.Admin1 // Use admin1 as region
+		results = append(results, &LocationSearchResult{
+			Name:    loc.Name,
+			Region:  &region,
+			Country: loc.Country,
+			Lat:     loc.Latitude,
+			Lon:     loc.Longitude,
+		})
+	}
+
+	return results, nil
 }
 
 // IPGeolocation is the resolver for the ipGeolocation field.
 func (r *queryResolver) IPGeolocation(ctx context.Context, ip *string) (*IPGeolocation, error) {
-	// IP geolocation is not yet integrated via GraphQL
-	// Returns nil for now - use REST API /api/v1/geoip endpoint
-	_ = ip
-	return nil, fmt.Errorf("IP geolocation not available via GraphQL - use REST API")
+	if r.WeatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	// Validate IP address is provided
+	if ip == nil || *ip == "" {
+		return nil, fmt.Errorf("IP address is required")
+	}
+
+	// Lookup IP using WeatherService
+	geoData, err := r.WeatherService.LookupIP(*ip)
+	if err != nil {
+		return nil, fmt.Errorf("IP geolocation failed: %w", err)
+	}
+
+	// Convert to GraphQL type
+	city := geoData.City
+	region := geoData.Region
+	timezone := geoData.Timezone
+
+	return &IPGeolocation{
+		IP:          geoData.IP,
+		City:        &city,
+		Region:      &region,
+		Country:     geoData.Country,
+		CountryCode: geoData.CountryCode,
+		Lat:         geoData.Latitude,
+		Lon:         geoData.Longitude,
+		Timezone:    &timezone,
+	}, nil
 }
 
 // CurrentLocation is the resolver for the currentLocation field.
 func (r *queryResolver) CurrentLocation(ctx context.Context) (*IPGeolocation, error) {
-	// Current location detection is not yet integrated via GraphQL
-	// Use REST API /api/v1/geoip endpoint
-	return nil, fmt.Errorf("current location detection not available via GraphQL - use REST API")
+	if r.WeatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	// Get client IP from context (set by middleware)
+	clientIP, ok := ctx.Value("client_ip").(string)
+	if !ok || clientIP == "" {
+		return nil, fmt.Errorf("client IP not available in context")
+	}
+
+	// Lookup IP using WeatherService
+	geoData, err := r.WeatherService.LookupIP(clientIP)
+	if err != nil {
+		return nil, fmt.Errorf("IP geolocation failed: %w", err)
+	}
+
+	// Convert to GraphQL type
+	city := geoData.City
+	region := geoData.Region
+	timezone := geoData.Timezone
+
+	return &IPGeolocation{
+		IP:          geoData.IP,
+		City:        &city,
+		Region:      &region,
+		Country:     geoData.Country,
+		CountryCode: geoData.CountryCode,
+		Lat:         geoData.Latitude,
+		Lon:         geoData.Longitude,
+		Timezone:    &timezone,
+	}, nil
 }
 
 // HistoricalWeather is the resolver for the historicalWeather field.
 func (r *queryResolver) HistoricalWeather(ctx context.Context, location string, date string) (*HistoricalWeather, error) {
-	// Historical weather is not yet integrated via GraphQL
-	// Use REST API /api/v1/weather/historical endpoint
-	_ = location
-	_ = date
-	return nil, fmt.Errorf("historical weather not available via GraphQL - use REST API")
+	if r.WeatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	// Parse the date (expected format: YYYY-MM-DD or MM-DD)
+	var month, day, year int
+	var err error
+
+	// Try YYYY-MM-DD format first
+	parsedDate, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		// Try MM-DD format
+		parsedDate, err = time.Parse("01-02", date)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format: %s (use YYYY-MM-DD or MM-DD)", date)
+		}
+		// Use current year if not specified
+		year = time.Now().Year() - 1
+	} else {
+		year = parsedDate.Year()
+	}
+	month = int(parsedDate.Month())
+	day = parsedDate.Day()
+
+	// Get coordinates for location
+	coords, err := r.WeatherService.GetCoordinates(location, "")
+	if err != nil {
+		return nil, fmt.Errorf("could not find location: %s", location)
+	}
+
+	// Get historical weather data for 1 year
+	historical, err := r.WeatherService.GetHistoricalWeather(coords.Latitude, coords.Longitude, month, day, year, 1)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get historical weather: %w", err)
+	}
+
+	// Check if we got any data
+	if len(historical.Years) == 0 {
+		return nil, fmt.Errorf("no historical data available for %s on %s", location, date)
+	}
+
+	// Use the first (and only) year's data
+	histDay := historical.Years[0]
+
+	// Build the response
+	precipitation := histDay.Precipitation
+	humidity := histDay.HumidityMean
+	timezone := coords.Timezone
+
+	return &HistoricalWeather{
+		Location: &Location{
+			Name:     coords.Name,
+			Country:  coords.Country,
+			Lat:      coords.Latitude,
+			Lon:      coords.Longitude,
+			Timezone: &timezone,
+		},
+		Date: histDay.Date,
+		Day: &DayForecast{
+			MaxTemp:            histDay.TempMax,
+			MinTemp:            histDay.TempMin,
+			TotalPrecipitation: &precipitation,
+			ChanceOfRain:       &humidity, // Use humidity as proxy since historical data doesn't have chance of rain
+			Condition: &WeatherCondition{
+				Text: r.WeatherService.GetWeatherDescription(histDay.WeatherCode),
+				Icon: stringPtr(r.WeatherService.GetWeatherIcon(histDay.WeatherCode, true)),
+			},
+		},
+	}, nil
 }
 
 // LookupZipCode is the resolver for the lookupZipCode field.
 func (r *queryResolver) LookupZipCode(ctx context.Context, code string) (*ZipCodeLookup, error) {
-	// Zip code lookup is not yet integrated via GraphQL
-	// Use REST API /api/v1/location/zipcode endpoint
-	_ = code
-	return nil, fmt.Errorf("zip code lookup not available via GraphQL - use REST API")
+	if r.WeatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	// Parse zipcode string to int
+	zipcode, err := strconv.Atoi(code)
+	if err != nil {
+		return nil, fmt.Errorf("invalid zipcode format: %s", code)
+	}
+
+	// Lookup zipcode using WeatherService
+	coords, err := r.WeatherService.LookupZipcode(zipcode)
+	if err != nil {
+		return nil, fmt.Errorf("zipcode lookup failed: %w", err)
+	}
+
+	return &ZipCodeLookup{
+		ZipCode: code,
+		City:    coords.Name,
+		State:   coords.Admin1,
+		Country: coords.Country,
+		Lat:     coords.Latitude,
+		Lon:     coords.Longitude,
+	}, nil
 }
 
 // LookupCoordinates is the resolver for the lookupCoordinates field.
 func (r *queryResolver) LookupCoordinates(ctx context.Context, lat float64, lon float64) (*CoordinatesLookup, error) {
-	// Coordinates lookup is not yet integrated via GraphQL
-	// Use REST API /api/v1/location/coordinates endpoint
-	_ = lat
-	_ = lon
-	return nil, fmt.Errorf("coordinates lookup not available via GraphQL - use REST API")
+	if r.WeatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	// Validate coordinate ranges
+	if lat < -90 || lat > 90 {
+		return nil, fmt.Errorf("latitude must be between -90 and 90")
+	}
+	if lon < -180 || lon > 180 {
+		return nil, fmt.Errorf("longitude must be between -180 and 180")
+	}
+
+	// Perform reverse geocoding
+	coords, err := r.WeatherService.ReverseGeocode(lat, lon)
+	if err != nil {
+		return nil, fmt.Errorf("reverse geocoding failed: %w", err)
+	}
+
+	// Build result
+	return &CoordinatesLookup{
+		Lat:      coords.Latitude,
+		Lon:      coords.Longitude,
+		City:     &coords.Name,
+		Region:   &coords.Admin1,
+		Country:  coords.Country,
+		Timezone: &coords.Timezone,
+	}, nil
 }
 
 // Earthquakes is the resolver for the earthquakes field.
@@ -866,15 +1150,48 @@ func (r *queryResolver) SevereWeather(ctx context.Context, location *string) ([]
 
 // MoonPhase is the resolver for the moonPhase field.
 func (r *queryResolver) MoonPhase(ctx context.Context, date *string) (*MoonPhase, error) {
-	// Use MoonHandler instead of WeatherService
 	if r.MoonHandler == nil {
 		return nil, fmt.Errorf("moon service not initialized")
 	}
-	_ = date
-	// Return placeholder for now - use REST API /api/v1/moon for moon phase data
+
+	// Parse date or use current time
+	targetDate := time.Now()
+	if date != nil && *date != "" {
+		// Try parsing common date formats
+		formats := []string{"2006-01-02", "2006-01-02T15:04:05Z", time.RFC3339}
+		for _, format := range formats {
+			if parsed, err := time.Parse(format, *date); err == nil {
+				targetDate = parsed
+				break
+			}
+		}
+	}
+
+	// Get moon data (using 0,0 as default location since GraphQL query doesn't provide location)
+	moonData := r.MoonHandler.GetMoonData(0, 0, targetDate)
+
+	// Parse next moon dates from RFC3339 strings to time.Time
+	var nextNewMoon, nextFullMoon *time.Time
+	if nnn, err := time.Parse(time.RFC3339, moonData.NextNewMoon); err == nil {
+		nextNewMoon = &nnn
+	}
+	if nfm, err := time.Parse(time.RFC3339, moonData.NextFullMoon); err == nil {
+		nextFullMoon = &nfm
+	}
+
+	// Convert illumination from percentage (0-100) to fraction (0-1)
+	illumination := moonData.Illumination / 100.0
+
 	return &MoonPhase{
-		Phase:        "Waxing Gibbous",
-		Illumination: 0.75,
+		Phase:        moonData.Phase,
+		Illumination: illumination,
+		Age:          &moonData.Age,
+		Distance:     &moonData.Distance,
+		Angle:        &moonData.AngularSize,
+		Moonrise:     &moonData.Rise,
+		Moonset:      &moonData.Set,
+		NextNewMoon:  nextNewMoon,
+		NextFullMoon: nextFullMoon,
 	}, nil
 }
 

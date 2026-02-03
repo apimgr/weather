@@ -277,7 +277,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
     }
 
     async function disableTor() {
-        if (!confirm('Are you sure you want to disable Tor?')) return;
+        if (!await showConfirm('Are you sure you want to disable Tor?', 'Disable Tor')) return;
 
         try {
             const response = await fetch('/api/v1/admin/server/tor/disable', {
@@ -402,7 +402,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
     }
 
     async function applyVanity() {
-        if (!confirm('Apply this vanity address? Your current address will be replaced.')) return;
+        if (!await showConfirm('Apply this vanity address? Your current address will be replaced.', 'Apply Vanity Address')) return;
 
         try {
             const response = await fetch('/api/v1/admin/server/tor/vanity/apply', { method: 'POST' });

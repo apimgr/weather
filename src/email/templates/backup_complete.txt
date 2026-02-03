@@ -1,0 +1,31 @@
+Subject: Backup Complete - {app_name}
+---
+BACKUP COMPLETE
+
+This notification was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Time: {timestamp}
+
+Your backup completed successfully.
+
+────────────────────────────────────────────────────────────────────────
+BACKUP DETAILS
+
+Filename: {filename}
+Size: {size}
+Duration: {duration}
+Type: {backup_type}
+Location: {backup_location}
+
+────────────────────────────────────────────────────────────────────────
+NEXT SCHEDULED BACKUP
+
+{next_backup}
+
+Manage backup settings:
+{admin_url}/server/backup
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

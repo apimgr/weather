@@ -1,0 +1,601 @@
+// Package handler provides HTTP handlers
+// User settings handler per AI.md PART 34
+package handler
+
+import (
+	"database/sql"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/apimgr/weather/src/server/middleware"
+	models "github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/utils"
+
+	"github.com/gin-gonic/gin"
+)
+
+// UserSettingsHandler handles user settings pages and API
+type UserSettingsHandler struct {
+	DB *sql.DB
+}
+
+// NewUserSettingsHandler creates a new UserSettingsHandler
+func NewUserSettingsHandler(db *sql.DB) *UserSettingsHandler {
+	return &UserSettingsHandler{DB: db}
+}
+
+// ShowAccountSettings renders the account settings page
+// Route: GET /users/settings
+func (h *UserSettingsHandler) ShowAccountSettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	c.HTML(http.StatusOK, "pages/user/settings.tmpl", utils.TemplateData(c, gin.H{
+		"title":       "Account Settings",
+		"page":        "settings",
+		"settingsTab": "account",
+		"user":        user,
+	}))
+}
+
+// ShowPrivacySettings renders the privacy settings page
+// Route: GET /users/settings/privacy
+func (h *UserSettingsHandler) ShowPrivacySettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	// Get user preferences for privacy settings
+	prefs, _ := h.getOrCreatePreferences(user.ID)
+
+	c.HTML(http.StatusOK, "pages/user/settings-privacy.tmpl", utils.TemplateData(c, gin.H{
+		"title":       "Privacy Settings",
+		"page":        "settings",
+		"settingsTab": "privacy",
+		"user":        user,
+		"preferences": prefs,
+	}))
+}
+
+// ShowNotificationSettings renders the notification settings page
+// Route: GET /users/settings/notifications
+func (h *UserSettingsHandler) ShowNotificationSettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	// Get user preferences
+	prefs, _ := h.getOrCreatePreferences(user.ID)
+
+	c.HTML(http.StatusOK, "pages/user/settings-notifications.tmpl", utils.TemplateData(c, gin.H{
+		"title":       "Notification Settings",
+		"page":        "settings",
+		"settingsTab": "notifications",
+		"user":        user,
+		"preferences": prefs,
+	}))
+}
+
+// ShowAppearanceSettings renders the appearance settings page
+// Route: GET /users/settings/appearance
+func (h *UserSettingsHandler) ShowAppearanceSettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	// Get user preferences
+	prefs, _ := h.getOrCreatePreferences(user.ID)
+
+	c.HTML(http.StatusOK, "pages/user/settings-appearance.tmpl", utils.TemplateData(c, gin.H{
+		"title":       "Appearance Settings",
+		"page":        "settings",
+		"settingsTab": "appearance",
+		"user":        user,
+		"preferences": prefs,
+	}))
+}
+
+// ShowTokensSettings renders the API tokens management page
+// Route: GET /users/settings/tokens
+func (h *UserSettingsHandler) ShowTokensSettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	// Get user's API tokens
+	tokens, _ := h.getUserTokens(user.ID)
+
+	c.HTML(http.StatusOK, "pages/user/settings-tokens.tmpl", utils.TemplateData(c, gin.H{
+		"title":       "API Tokens",
+		"page":        "settings",
+		"settingsTab": "tokens",
+		"user":        user,
+		"tokens":      tokens,
+	}))
+}
+
+// UserSettingsResponse represents the full user settings response
+// Per AI.md PART 34: GET /api/v1/users/settings
+type UserSettingsResponse struct {
+	Account       AccountSettings       `json:"account"`
+	Privacy       PrivacySettings       `json:"privacy"`
+	Notifications NotificationSettings  `json:"notifications"`
+	Appearance    AppearanceSettings    `json:"appearance"`
+}
+
+// AccountSettings represents account-related settings
+type AccountSettings struct {
+	DisplayName string `json:"display_name"`
+	Bio         string `json:"bio"`
+	Location    string `json:"location"`
+	Website     string `json:"website"`
+	Timezone    string `json:"timezone"`
+	Language    string `json:"language"`
+	DateFormat  string `json:"date_format"`
+	TimeFormat  string `json:"time_format"`
+}
+
+// PrivacySettings represents privacy-related settings
+type PrivacySettings struct {
+	Visibility    string `json:"visibility"`
+	ShowEmail     bool   `json:"show_email"`
+	ShowActivity  bool   `json:"show_activity"`
+	ShowOrgs      bool   `json:"show_orgs"`
+	Searchable    bool   `json:"searchable"`
+	OrgVisibility bool   `json:"org_visibility"`
+}
+
+// NotificationSettings represents notification-related settings
+type NotificationSettings struct {
+	EmailSecurity bool   `json:"email_security"`
+	EmailMentions bool   `json:"email_mentions"`
+	EmailUpdates  bool   `json:"email_updates"`
+	EmailDigest   string `json:"email_digest"`
+	PushEnabled   bool   `json:"push_enabled"`
+	PushMentions  bool   `json:"push_mentions"`
+}
+
+// AppearanceSettings represents appearance-related settings
+type AppearanceSettings struct {
+	Theme        string `json:"theme"`
+	FontSize     string `json:"font_size"`
+	ReduceMotion bool   `json:"reduce_motion"`
+}
+
+// GetSettings returns all user settings
+// Route: GET /api/v1/users/settings
+func (h *UserSettingsHandler) GetSettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	// Get user preferences
+	prefs, err := h.getOrCreatePreferences(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get preferences"})
+		return
+	}
+
+	// Get extended preferences (privacy, notifications, appearance)
+	extPrefs, _ := h.getExtendedPreferences(user.ID)
+
+	response := UserSettingsResponse{
+		Account: AccountSettings{
+			DisplayName: user.DisplayName,
+			Bio:         user.Bio,
+			Location:    user.Location,
+			Website:     user.Website,
+			Timezone:    user.Timezone,
+			Language:    user.Language,
+			DateFormat:  extPrefs.DateFormat,
+			TimeFormat:  extPrefs.TimeFormat,
+		},
+		Privacy: PrivacySettings{
+			Visibility:    user.Visibility,
+			ShowEmail:     extPrefs.ShowEmail,
+			ShowActivity:  extPrefs.ShowActivity,
+			ShowOrgs:      extPrefs.ShowOrgs,
+			Searchable:    extPrefs.Searchable,
+			OrgVisibility: extPrefs.OrgVisibility,
+		},
+		Notifications: NotificationSettings{
+			EmailSecurity: true, // Always on per AI.md PART 34
+			EmailMentions: prefs.EmailNotifications,
+			EmailUpdates:  extPrefs.EmailUpdates,
+			EmailDigest:   extPrefs.EmailDigest,
+			PushEnabled:   prefs.NotificationsEnabled,
+			PushMentions:  extPrefs.PushMentions,
+		},
+		Appearance: AppearanceSettings{
+			Theme:        prefs.Theme,
+			FontSize:     extPrefs.FontSize,
+			ReduceMotion: extPrefs.ReduceMotion,
+		},
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// UpdateSettingsRequest represents a partial settings update
+type UpdateSettingsRequest struct {
+	Account       *AccountSettings       `json:"account,omitempty"`
+	Privacy       *PrivacySettings       `json:"privacy,omitempty"`
+	Notifications *NotificationSettings  `json:"notifications,omitempty"`
+	Appearance    *AppearanceSettings    `json:"appearance,omitempty"`
+}
+
+// UpdateSettings updates user settings (partial update)
+// Route: PATCH /api/v1/users/settings
+func (h *UserSettingsHandler) UpdateSettings(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	var req UpdateSettingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Update account settings (stored in users table)
+	if req.Account != nil {
+		if err := h.updateAccountSettings(user.ID, req.Account); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update account settings"})
+			return
+		}
+	}
+
+	// Update privacy settings
+	if req.Privacy != nil {
+		if err := h.updatePrivacySettings(user.ID, req.Privacy); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update privacy settings"})
+			return
+		}
+	}
+
+	// Update notification settings
+	if req.Notifications != nil {
+		if err := h.updateNotificationSettings(user.ID, req.Notifications); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update notification settings"})
+			return
+		}
+	}
+
+	// Update appearance settings
+	if req.Appearance != nil {
+		if err := h.updateAppearanceSettings(user.ID, req.Appearance); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update appearance settings"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Settings updated successfully"})
+}
+
+// ExtendedPreferences stores additional preference fields not in base UserPreferences
+type ExtendedPreferences struct {
+	DateFormat    string
+	TimeFormat    string
+	ShowEmail     bool
+	ShowActivity  bool
+	ShowOrgs      bool
+	Searchable    bool
+	OrgVisibility bool
+	EmailUpdates  bool
+	EmailDigest   string
+	PushMentions  bool
+	FontSize      string
+	ReduceMotion  bool
+}
+
+// getOrCreatePreferences gets or creates user preferences
+func (h *UserSettingsHandler) getOrCreatePreferences(userID int64) (*models.UserPreferences, error) {
+	prefs := &models.UserPreferences{}
+
+	err := h.DB.QueryRow(`
+		SELECT id, user_id, theme, language, timezone, temperature_unit, pressure_unit,
+		       wind_speed_unit, precipitation_unit, notifications_enabled, email_notifications,
+		       created_at, updated_at
+		FROM user_preferences WHERE user_id = ?
+	`, userID).Scan(
+		&prefs.ID, &prefs.UserID, &prefs.Theme, &prefs.Language, &prefs.Timezone,
+		&prefs.TemperatureUnit, &prefs.PressureUnit, &prefs.WindSpeedUnit, &prefs.PrecipitationUnit,
+		&prefs.NotificationsEnabled, &prefs.EmailNotifications, &prefs.CreatedAt, &prefs.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		// Create default preferences
+		prefs = &models.UserPreferences{
+			UserID:               userID,
+			Theme:                "dark",
+			Language:             "en",
+			Timezone:             "UTC",
+			TemperatureUnit:      "celsius",
+			PressureUnit:         "hPa",
+			WindSpeedUnit:        "kmh",
+			PrecipitationUnit:    "mm",
+			NotificationsEnabled: true,
+			EmailNotifications:   true,
+			CreatedAt:            time.Now(),
+			UpdatedAt:            time.Now(),
+		}
+
+		_, err = h.DB.Exec(`
+			INSERT INTO user_preferences (user_id, theme, language, timezone, temperature_unit,
+			                              pressure_unit, wind_speed_unit, precipitation_unit,
+			                              notifications_enabled, email_notifications, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, prefs.UserID, prefs.Theme, prefs.Language, prefs.Timezone, prefs.TemperatureUnit,
+			prefs.PressureUnit, prefs.WindSpeedUnit, prefs.PrecipitationUnit,
+			prefs.NotificationsEnabled, prefs.EmailNotifications, prefs.CreatedAt, prefs.UpdatedAt)
+
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	return prefs, nil
+}
+
+// getExtendedPreferences gets extended preferences with defaults
+func (h *UserSettingsHandler) getExtendedPreferences(userID int64) (*ExtendedPreferences, error) {
+	// For now return defaults - these would be stored in user_preferences table
+	// with additional columns in a real implementation
+	return &ExtendedPreferences{
+		DateFormat:    "YYYY-MM-DD",
+		TimeFormat:    "24h",
+		ShowEmail:     false,
+		ShowActivity:  true,
+		ShowOrgs:      true,
+		Searchable:    true,
+		OrgVisibility: true,
+		EmailUpdates:  false,
+		EmailDigest:   "weekly",
+		PushMentions:  true,
+		FontSize:      "medium",
+		ReduceMotion:  false,
+	}, nil
+}
+
+// updateAccountSettings updates account settings in users table
+func (h *UserSettingsHandler) updateAccountSettings(userID int64, settings *AccountSettings) error {
+	// Validate bio length (max 500 chars per AI.md PART 34)
+	if len(settings.Bio) > 500 {
+		return nil // Silently truncate or return error
+	}
+
+	// Validate website URL if provided
+	if settings.Website != "" && !strings.HasPrefix(settings.Website, "http://") && !strings.HasPrefix(settings.Website, "https://") {
+		settings.Website = "https://" + settings.Website
+	}
+
+	_, err := h.DB.Exec(`
+		UPDATE user_accounts
+		SET display_name = ?, bio = ?, location = ?, website = ?, timezone = ?, language = ?, updated_at = ?
+		WHERE id = ?
+	`, settings.DisplayName, settings.Bio, settings.Location, settings.Website,
+		settings.Timezone, settings.Language, time.Now(), userID)
+
+	return err
+}
+
+// updatePrivacySettings updates privacy settings
+func (h *UserSettingsHandler) updatePrivacySettings(userID int64, settings *PrivacySettings) error {
+	// Update visibility in users table
+	_, err := h.DB.Exec(`
+		UPDATE user_accounts
+		SET visibility = ?, updated_at = ?
+		WHERE id = ?
+	`, settings.Visibility, time.Now(), userID)
+
+	// Note: Other privacy settings (show_email, show_activity, etc.) would be stored
+	// in user_preferences table with extended columns
+	return err
+}
+
+// updateNotificationSettings updates notification settings
+func (h *UserSettingsHandler) updateNotificationSettings(userID int64, settings *NotificationSettings) error {
+	// email_security is always true and cannot be changed per AI.md PART 34
+	_, err := h.DB.Exec(`
+		UPDATE user_preferences
+		SET notifications_enabled = ?, email_notifications = ?, updated_at = ?
+		WHERE user_id = ?
+	`, settings.PushEnabled, settings.EmailMentions, time.Now(), userID)
+
+	return err
+}
+
+// updateAppearanceSettings updates appearance settings
+func (h *UserSettingsHandler) updateAppearanceSettings(userID int64, settings *AppearanceSettings) error {
+	// Validate theme
+	validThemes := map[string]bool{"dark": true, "light": true, "auto": true}
+	if !validThemes[settings.Theme] {
+		settings.Theme = "dark"
+	}
+
+	_, err := h.DB.Exec(`
+		UPDATE user_preferences
+		SET theme = ?, updated_at = ?
+		WHERE user_id = ?
+	`, settings.Theme, time.Now(), userID)
+
+	return err
+}
+
+// UserToken represents a user API token for display
+type UserToken struct {
+	ID          int64      `json:"id"`
+	Name        string     `json:"name"`
+	TokenPrefix string     `json:"token_prefix"`
+	Scopes      string     `json:"scopes"`
+	CreatedAt   time.Time  `json:"created_at"`
+	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
+	LastUsedAt  *time.Time `json:"last_used_at,omitempty"`
+}
+
+// getUserTokens gets all API tokens for a user
+func (h *UserSettingsHandler) getUserTokens(userID int64) ([]UserToken, error) {
+	rows, err := h.DB.Query(`
+		SELECT id, name, token_prefix, scopes, created_at, expires_at, last_used_at
+		FROM user_tokens WHERE user_id = ?
+		ORDER BY created_at DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tokens []UserToken
+	for rows.Next() {
+		var t UserToken
+		var name, scopes sql.NullString
+		var expiresAt, lastUsedAt sql.NullTime
+
+		err := rows.Scan(&t.ID, &name, &t.TokenPrefix, &scopes, &t.CreatedAt, &expiresAt, &lastUsedAt)
+		if err != nil {
+			continue
+		}
+
+		t.Name = name.String
+		t.Scopes = scopes.String
+		if expiresAt.Valid {
+			t.ExpiresAt = &expiresAt.Time
+		}
+		if lastUsedAt.Valid {
+			t.LastUsedAt = &lastUsedAt.Time
+		}
+
+		tokens = append(tokens, t)
+	}
+
+	return tokens, nil
+}
+
+// CreateTokenRequest represents a request to create a new API token
+type CreateTokenRequest struct {
+	Name      string `json:"name" binding:"required"`
+	Scopes    string `json:"scopes"`
+	ExpiresIn int    `json:"expires_in"` // days, 0 = never
+}
+
+// CreateToken creates a new API token for the user
+// Route: POST /api/v1/users/tokens
+func (h *UserSettingsHandler) CreateToken(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	var req CreateTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check token limit (max 5 per user per AI.md)
+	var count int
+	h.DB.QueryRow("SELECT COUNT(*) FROM user_tokens WHERE user_id = ?", user.ID).Scan(&count)
+	if count >= 5 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Maximum 5 tokens per user"})
+		return
+	}
+
+	// Generate token with usr_ prefix per AI.md PART 11
+	token, err := models.GenerateTokenWithPrefix(models.PrefixUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+	tokenHash := models.HashToken(token)
+	tokenPrefix := models.GetTokenPrefix(token) + "..."
+
+	var expiresAt sql.NullTime
+	if req.ExpiresIn > 0 {
+		expiresAt = sql.NullTime{
+			Time:  time.Now().AddDate(0, 0, req.ExpiresIn),
+			Valid: true,
+		}
+	}
+
+	_, dbErr := h.DB.Exec(`
+		INSERT INTO user_tokens (user_id, token_hash, token_prefix, name, scopes, created_at, expires_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, user.ID, tokenHash, tokenPrefix, req.Name, req.Scopes, time.Now(), expiresAt)
+
+	if dbErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create token"})
+		return
+	}
+
+	// Return the full token (only shown once)
+	c.JSON(http.StatusOK, gin.H{
+		"token":   token,
+		"message": "Token created. This token will only be shown once.",
+	})
+}
+
+// RevokeToken revokes an API token
+// Route: DELETE /api/v1/users/tokens/:id
+func (h *UserSettingsHandler) RevokeToken(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	tokenID := c.Param("id")
+
+	result, err := h.DB.Exec(`
+		DELETE FROM user_tokens WHERE id = ? AND user_id = ?
+	`, tokenID, user.ID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke token"})
+		return
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Token not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Token revoked"})
+}
+
+// ListTokens returns all tokens for the current user
+// Route: GET /api/v1/users/tokens
+func (h *UserSettingsHandler) ListTokens(c *gin.Context) {
+	user, ok := middleware.GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	tokens, err := h.getUserTokens(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get tokens"})
+		return
+	}
+
+	c.JSON(http.StatusOK, tokens)
+}

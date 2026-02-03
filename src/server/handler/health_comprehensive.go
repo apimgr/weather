@@ -272,22 +272,118 @@ func getSSLStatus(sslManager interface{}) gin.H {
 }
 
 func getSchedulerStatus() gin.H {
-	// Placeholder - will integrate with actual scheduler
-	return gin.H{
-		"status":        "running",
-		"tasks_total":   6,
-		"tasks_enabled": 6,
-		"next_run":      time.Now().Add(5 * time.Minute).Format(time.RFC3339),
+	db := database.GetServerDB()
+	if db == nil {
+		return gin.H{
+			"status":        "unknown",
+			"tasks_total":   0,
+			"tasks_enabled": 0,
+			"next_run":      nil,
+		}
 	}
+
+	// Count total tasks
+	var totalTasks int
+	err := db.QueryRow("SELECT COUNT(*) FROM server_scheduler_state").Scan(&totalTasks)
+	if err != nil {
+		totalTasks = 0
+	}
+
+	// Count enabled tasks
+	var enabledTasks int
+	err = db.QueryRow("SELECT COUNT(*) FROM server_scheduler_state WHERE enabled = 1").Scan(&enabledTasks)
+	if err != nil {
+		enabledTasks = 0
+	}
+
+	// Get next scheduled run
+	var nextRun *string
+	err = db.QueryRow("SELECT MIN(next_run) FROM server_scheduler_state WHERE enabled = 1 AND next_run IS NOT NULL").Scan(&nextRun)
+
+	// Count running tasks (locked)
+	var runningTasks int
+	err = db.QueryRow("SELECT COUNT(*) FROM server_scheduler_state WHERE locked_by IS NOT NULL").Scan(&runningTasks)
+	if err != nil {
+		runningTasks = 0
+	}
+
+	// Determine scheduler status
+	status := "running"
+	if totalTasks == 0 {
+		status = "no_tasks"
+	} else if enabledTasks == 0 {
+		status = "all_disabled"
+	}
+
+	result := gin.H{
+		"status":        status,
+		"tasks_total":   totalTasks,
+		"tasks_enabled": enabledTasks,
+		"tasks_running": runningTasks,
+	}
+
+	if nextRun != nil && *nextRun != "" {
+		result["next_run"] = *nextRun
+	}
+
+	return result
 }
 
 func getRequestStats() gin.H {
-	// Placeholder - will track in middleware
+	db := database.GetServerDB()
+	if db == nil {
+		return gin.H{
+			"total_today":     0,
+			"rate_per_minute": 0,
+			"errors_today":    0,
+			"error_rate":      0.0,
+			"source":          "unavailable",
+		}
+	}
+
+	// Count audit log entries for today (gives us a proxy for activity)
+	var totalToday int
+	err := db.QueryRow(`
+		SELECT COUNT(*) FROM server_audit_log
+		WHERE timestamp >= date('now', 'start of day')
+	`).Scan(&totalToday)
+	if err != nil {
+		totalToday = 0
+	}
+
+	// Count errors today
+	var errorsToday int
+	err = db.QueryRow(`
+		SELECT COUNT(*) FROM server_audit_log
+		WHERE timestamp >= date('now', 'start of day')
+		AND status = 'error'
+	`).Scan(&errorsToday)
+	if err != nil {
+		errorsToday = 0
+	}
+
+	// Count entries in last minute for rate
+	var lastMinute int
+	err = db.QueryRow(`
+		SELECT COUNT(*) FROM server_audit_log
+		WHERE timestamp >= datetime('now', '-1 minute')
+	`).Scan(&lastMinute)
+	if err != nil {
+		lastMinute = 0
+	}
+
+	// Calculate error rate
+	errorRate := 0.0
+	if totalToday > 0 {
+		errorRate = float64(errorsToday) / float64(totalToday) * 100
+	}
+
 	return gin.H{
-		"total_today":     0,
-		"rate_per_minute": 0,
-		"errors_today":    0,
-		"error_rate":      0.0,
+		"total_today":     totalToday,
+		"rate_per_minute": lastMinute,
+		"errors_today":    errorsToday,
+		"error_rate":      errorRate,
+		"source":          "audit_log",
 	}
 }
 

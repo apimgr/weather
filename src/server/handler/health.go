@@ -23,7 +23,34 @@ var (
 		Started:   time.Now(),
 	}
 	initMutex sync.RWMutex
+
+	// TorStatusGetter interface for getting Tor service status
+	torStatusGetter TorStatusProvider
+	torMutex        sync.RWMutex
 )
+
+// TorStatusProvider is an interface for getting Tor service status
+type TorStatusProvider interface {
+	IsRunning() bool
+	GetOnionAddress() string
+}
+
+// SetTorStatusProvider sets the global Tor status provider
+func SetTorStatusProvider(provider TorStatusProvider) {
+	torMutex.Lock()
+	defer torMutex.Unlock()
+	torStatusGetter = provider
+}
+
+// GetTorStatus returns the current Tor service status
+func GetTorStatus() (running bool, onionAddress string) {
+	torMutex.RLock()
+	defer torMutex.RUnlock()
+	if torStatusGetter == nil {
+		return false, ""
+	}
+	return torStatusGetter.IsRunning(), torStatusGetter.GetOnionAddress()
+}
 
 // SetInitStatus updates initialization status
 func SetInitStatus(countries, cities, weather bool) {
@@ -306,17 +333,16 @@ func APIHealthCheck(db *database.DB, startTime time.Time) gin.HandlerFunc {
 		}
 
 		// Check for Tor service status
-		torEnabled := false
-		torRunning := false
+		// Get actual status from TorService via global provider (set in main.go)
+		torRunning, torHostname := GetTorStatus()
+		torEnabled := torHostname != "" || torRunning
 		torStatus := ""
-		torHostname := ""
-		
-		// TODO: Get actual Tor status from service
-		// For now, check if tor binary exists
-		if _, err := exec.LookPath("tor"); err == nil {
-			torEnabled = true
-			// Check if tor service is actually running
-			// This is a placeholder - actual implementation in PART 32
+
+		// Also check if tor binary exists as fallback
+		if !torEnabled {
+			if _, err := exec.LookPath("tor"); err == nil {
+				torEnabled = true
+			}
 		}
 
 		// Check tor status for checks object

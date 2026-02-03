@@ -1,0 +1,223 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="profile-page-header-title">Account Settings</h1>
+        <p class="text-comment">Manage your account information and preferences</p>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="settings-nav">
+        <a href="/users/settings" class="settings-nav-item active">Account</a>
+        <a href="/users/settings/privacy" class="settings-nav-item">Privacy</a>
+        <a href="/users/settings/notifications" class="settings-nav-item">Notifications</a>
+        <a href="/users/settings/appearance" class="settings-nav-item">Appearance</a>
+        <a href="/users/security" class="settings-nav-item">Security</a>
+        <a href="/users/tokens" class="settings-nav-item">API Tokens</a>
+    </div>
+
+    <!-- Account Settings Form -->
+    <div class="card profile-card">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Profile Information</h2>
+        </div>
+        <div class="card-body">
+            <form id="accountSettingsForm">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+
+                <div class="form-group">
+                    <label for="displayName" class="form-label">Display Name</label>
+                    <input type="text" id="displayName" class="form-input" value="{{.user.DisplayName}}" placeholder="{{.user.Username}}">
+                    <small class="text-comment">Shown in the navigation bar and on your profile</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="bio" class="form-label">Bio</label>
+                    <textarea id="bio" class="form-input" rows="3" maxlength="500" placeholder="Tell us about yourself">{{.user.Bio}}</textarea>
+                    <small class="text-comment"><span id="bioCount">{{len .user.Bio}}</span>/500 characters</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="location" class="form-label">Location</label>
+                    <input type="text" id="location" class="form-input" value="{{.user.Location}}" placeholder="San Francisco, CA">
+                    <small class="text-comment">Where you're based (free text)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="website" class="form-label">Website</label>
+                    <input type="url" id="website" class="form-input" value="{{.user.Website}}" placeholder="https://example.com">
+                    <small class="text-comment">Your personal website or portfolio</small>
+                </div>
+
+                <hr class="settings-divider">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="timezone" class="form-label">Timezone</label>
+                        <select id="timezone" class="form-input">
+                            <option value="UTC" {{if eq .user.Timezone "UTC"}}selected{{end}}>UTC</option>
+                            <option value="America/New_York" {{if eq .user.Timezone "America/New_York"}}selected{{end}}>America/New_York (UTC-5)</option>
+                            <option value="America/Chicago" {{if eq .user.Timezone "America/Chicago"}}selected{{end}}>America/Chicago (UTC-6)</option>
+                            <option value="America/Denver" {{if eq .user.Timezone "America/Denver"}}selected{{end}}>America/Denver (UTC-7)</option>
+                            <option value="America/Los_Angeles" {{if eq .user.Timezone "America/Los_Angeles"}}selected{{end}}>America/Los_Angeles (UTC-8)</option>
+                            <option value="Europe/London" {{if eq .user.Timezone "Europe/London"}}selected{{end}}>Europe/London (UTC+0)</option>
+                            <option value="Europe/Paris" {{if eq .user.Timezone "Europe/Paris"}}selected{{end}}>Europe/Paris (UTC+1)</option>
+                            <option value="Europe/Berlin" {{if eq .user.Timezone "Europe/Berlin"}}selected{{end}}>Europe/Berlin (UTC+1)</option>
+                            <option value="Asia/Tokyo" {{if eq .user.Timezone "Asia/Tokyo"}}selected{{end}}>Asia/Tokyo (UTC+9)</option>
+                            <option value="Asia/Shanghai" {{if eq .user.Timezone "Asia/Shanghai"}}selected{{end}}>Asia/Shanghai (UTC+8)</option>
+                            <option value="Australia/Sydney" {{if eq .user.Timezone "Australia/Sydney"}}selected{{end}}>Australia/Sydney (UTC+10)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language" class="form-label">Language</label>
+                        <select id="language" class="form-input">
+                            <option value="en" {{if eq .user.Language "en"}}selected{{end}}>English</option>
+                            <option value="es" {{if eq .user.Language "es"}}selected{{end}}>Spanish</option>
+                            <option value="fr" {{if eq .user.Language "fr"}}selected{{end}}>French</option>
+                            <option value="de" {{if eq .user.Language "de"}}selected{{end}}>German</option>
+                            <option value="ja" {{if eq .user.Language "ja"}}selected{{end}}>Japanese</option>
+                            <option value="zh" {{if eq .user.Language "zh"}}selected{{end}}>Chinese</option>
+                            <option value="ar" {{if eq .user.Language "ar"}}selected{{end}}>Arabic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date Format</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="dateFormat" value="YYYY-MM-DD" checked>
+                            <span>YYYY-MM-DD (2025-01-15)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="dateFormat" value="MM/DD/YYYY">
+                            <span>MM/DD/YYYY (01/15/2025)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="dateFormat" value="DD/MM/YYYY">
+                            <span>DD/MM/YYYY (15/01/2025)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Time Format</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="timeFormat" value="24h" checked>
+                            <span>24-hour (14:30)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="timeFormat" value="12h">
+                            <span>12-hour (2:30 PM)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="profile-form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+.settings-nav-item {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    color: var(--text);
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.settings-nav-item:hover {
+    background: var(--bg);
+}
+.settings-nav-item.active {
+    background: var(--accent);
+    color: var(--bg);
+}
+.settings-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+}
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.radio-label input[type="radio"] {
+    accent-color: var(--accent);
+}
+</style>
+
+<script>
+// Bio character counter
+document.getElementById('bio').addEventListener('input', function() {
+    document.getElementById('bioCount').textContent = this.value.length;
+});
+
+// Save settings
+document.getElementById('accountSettingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const data = {
+        account: {
+            display_name: document.getElementById('displayName').value,
+            bio: document.getElementById('bio').value,
+            location: document.getElementById('location').value,
+            website: document.getElementById('website').value,
+            timezone: document.getElementById('timezone').value,
+            language: document.getElementById('language').value,
+            date_format: document.querySelector('input[name="dateFormat"]:checked').value,
+            time_format: document.querySelector('input[name="timeFormat"]:checked').value
+        }
+    };
+
+    try {
+        const response = await fetch('/api/v1/users/settings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save settings');
+        }
+
+        Toast.success('Settings saved successfully!');
+    } catch (error) {
+        Toast.error('Failed to save settings: ' + error.message);
+    }
+});
+
+function resetForm() {
+    document.getElementById('accountSettingsForm').reset();
+}
+</script>
+
+{{template "footer" .}}
+</body>
+</html>

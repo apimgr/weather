@@ -1,0 +1,57 @@
+Subject: Important Security Notice - {app_name}
+---
+IMPORTANT SECURITY NOTICE
+
+This email was sent to: {recipient_email}
+Account: {recipient_username}
+From: {app_name} ({fqdn})
+Date: {timestamp}
+
+We are writing to inform you of a security incident that may have affected
+your account on {app_name}.
+
+────────────────────────────────────────────────────────────────────────
+WHAT HAPPENED
+
+{breach_description}
+
+Date of Incident: {incident_date}
+Date Discovered: {discovery_date}
+
+────────────────────────────────────────────────────────────────────────
+WHAT INFORMATION WAS INVOLVED
+
+{affected_data}
+
+────────────────────────────────────────────────────────────────────────
+WHAT WE ARE DOING
+
+{remediation_steps}
+
+────────────────────────────────────────────────────────────────────────
+WHAT YOU CAN DO
+
+We recommend taking the following steps to protect your account:
+
+1. Change your password immediately:
+   {app_url}/auth/password/forgot
+
+2. Enable two-factor authentication if not already enabled:
+   {app_url}/settings/security
+
+3. Review your account for any unauthorized activity
+
+4. If you used the same password elsewhere, change those passwords too
+
+────────────────────────────────────────────────────────────────────────
+CONTACT US
+
+If you have any questions or concerns, please contact us:
+{admin_email}
+
+We sincerely apologize for any inconvenience this may cause.
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

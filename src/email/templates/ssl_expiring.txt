@@ -1,0 +1,37 @@
+Subject: SSL Certificate Expiring - {app_name}
+---
+SSL CERTIFICATE EXPIRING
+
+This alert was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Time: {timestamp}
+
+⚠️  Your SSL certificate is expiring soon and requires renewal.
+
+────────────────────────────────────────────────────────────────────────
+CERTIFICATE DETAILS
+
+Domain: {domain}
+Expires: {expiry_date}
+Days Remaining: {days_remaining}
+Issuer: {issuer}
+
+────────────────────────────────────────────────────────────────────────
+ACTION REQUIRED
+
+Your SSL certificate will expire in {days_remaining} days. After expiration:
+
+- Browsers will show security warnings
+- API clients may refuse to connect
+- Users may be unable to access your service
+
+If auto-renewal is enabled, no action is needed.
+If not, please renew your certificate before {expiry_date}.
+
+Manage SSL settings:
+{admin_url}/server/ssl
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

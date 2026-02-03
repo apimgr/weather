@@ -11,11 +11,15 @@ BUILD_DATE := $(shell date +"%a %b %d, %Y at %H:%M:%S %Z")
 COMMIT_ID := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 # COMMIT_ID used directly - no VCS_REF alias
 
+# Official site URL (set per project)
+OFFICIALSITE := https://wthr.top
+
 # Linker flags to embed build info
 LDFLAGS := -s -w \
 	-X 'main.Version=$(VERSION)' \
 	-X 'main.CommitID=$(COMMIT_ID)' \
-	-X 'main.BuildDate=$(BUILD_DATE)'
+	-X 'main.BuildDate=$(BUILD_DATE)' \
+	-X 'main.OfficialSite=$(OFFICIALSITE)'
 
 # Directories
 BINDIR := binaries
@@ -242,25 +246,27 @@ test:
 	@echo "Tests complete"
 
 # =============================================================================
-# DEV - Quick build for local development/testing (to binaries/ dir)
+# DEV - Quick build for local development/testing (to temp dir)
 # =============================================================================
-# Fast: host platform only, no ldflags, outputs to binaries/
+# Fast: local platform only, no ldflags, random temp dir for isolation
 # Builds server + CLI + agent (if they exist)
 dev:
-	@mkdir -p $(GOCACHE) $(GODIR) $(BINDIR)
+	@mkdir -p $(GOCACHE) $(GODIR)
 	@$(GO_DOCKER) go mod tidy
-	@echo "Quick dev build to $(BINDIR)/..."
-	@$(GO_DOCKER) go build -o $(BINDIR)/$(PROJECTNAME) ./src
-	@echo "Built: $(BINDIR)/$(PROJECTNAME)"
-	@if [ -d "src/client" ]; then \
-		$(GO_DOCKER) go build -o $(BINDIR)/$(PROJECTNAME)-cli ./src/client && \
-		echo "Built: $(BINDIR)/$(PROJECTNAME)-cli"; \
-	fi
-	@if [ -d "src/agent" ]; then \
-		$(GO_DOCKER) go build -o $(BINDIR)/$(PROJECTNAME)-agent ./src/agent && \
-		echo "Built: $(BINDIR)/$(PROJECTNAME)-agent"; \
-	fi
-	@echo "Test:  docker run --rm -v $(PWD)/$(BINDIR):/app alpine:latest /app/$(PROJECTNAME) --help"
+	@mkdir -p "$${TMPDIR:-/tmp}/$(PROJECTORG)" && \
+		BUILD_DIR=$$(mktemp -d "$${TMPDIR:-/tmp}/$(PROJECTORG)/$(PROJECTNAME)-XXXXXX") && \
+		echo "Quick dev build to $$BUILD_DIR..." && \
+		$(GO_DOCKER) go build -o $$BUILD_DIR/$(PROJECTNAME) ./src && \
+		echo "Built: $$BUILD_DIR/$(PROJECTNAME)" && \
+		if [ -d "src/client" ]; then \
+			$(GO_DOCKER) go build -o $$BUILD_DIR/$(PROJECTNAME)-cli ./src/client && \
+			echo "Built: $$BUILD_DIR/$(PROJECTNAME)-cli"; \
+		fi && \
+		if [ -d "src/agent" ]; then \
+			$(GO_DOCKER) go build -o $$BUILD_DIR/$(PROJECTNAME)-agent ./src/agent && \
+			echo "Built: $$BUILD_DIR/$(PROJECTNAME)-agent"; \
+		fi && \
+		echo "Test:  docker run --rm -v $$BUILD_DIR:/app alpine:latest /app/$(PROJECTNAME) --help"
 
 # =============================================================================
 # CLEAN - Remove build artifacts

@@ -11,15 +11,16 @@ import (
 
 // User represents a user account (stored in users.db)
 // Per AI.md PART 9: Users MUST be in users.db, NOT server.db
+// Per AI.md PART 34: Multi-user support with full profile fields
 type User struct {
 	ID              int64      `json:"id"`
 	Username        string     `json:"username"`
 	DisplayName     string     `json:"display_name,omitempty"`
 	// Account email - used for security & account recovery
-	// Per AI.md PART 33: Password reset, 2FA recovery, security alerts
+	// Per AI.md PART 34: Password reset, 2FA recovery, security alerts
 	Email           string     `json:"email"`
 	// Notification email - used for non-security communications
-	// Per AI.md PART 33: Newsletters, updates, marketing, general notifications
+	// Per AI.md PART 34: Newsletters, updates, marketing, general notifications
 	NotificationEmail string   `json:"notification_email,omitempty"`
 	Phone           string     `json:"phone,omitempty"`
 	// Never serialize password hash
@@ -31,14 +32,20 @@ type User struct {
 	// user or admin
 	Role            string     `json:"role"`
 	// Profile visibility: public or private
-	// Per AI.md PART 33: Private profiles hidden from search/listings/public pages
+	// Per AI.md PART 34: Private profiles hidden from search/listings/public pages
 	Visibility      string     `json:"visibility"`
 	TwoFactorEnabled bool      `json:"two_factor_enabled"`
 	// Never serialize 2FA secret
 	TwoFactorSecret string     `json:"-"`
-	// Avatar settings per AI.md PART 33
+	// Avatar settings per AI.md PART 34
 	AvatarType      string     `json:"avatar_type,omitempty"`  // gravatar, upload, url
 	AvatarURL       string     `json:"avatar_url,omitempty"`   // URL or path
+	// Profile fields per AI.md PART 34
+	Bio             string     `json:"bio,omitempty"`          // Short biography (max 500 chars)
+	Location        string     `json:"location,omitempty"`     // Location (free text)
+	Website         string     `json:"website,omitempty"`      // Personal website URL
+	Timezone        string     `json:"timezone,omitempty"`     // IANA timezone
+	Language        string     `json:"language,omitempty"`     // Preferred language
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 	LastLoginAt     *time.Time `json:"last_login_at,omitempty"`

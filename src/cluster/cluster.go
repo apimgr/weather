@@ -32,6 +32,7 @@ type ClusterManager struct {
 	mu            sync.RWMutex
 	db            *sql.DB
 	nodeID        string
+	nodeAddress   string // Runtime-detected node address (host:port)
 	currentState  NodeState
 	nodes         map[string]*Node
 	heartbeatTick *time.Ticker
@@ -40,10 +41,12 @@ type ClusterManager struct {
 }
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(db *sql.DB, nodeID string, enabled bool) *ClusterManager {
+// nodeAddress should be the runtime-detected address (e.g., "192.168.1.100:8080")
+func NewClusterManager(db *sql.DB, nodeID, nodeAddress string, enabled bool) *ClusterManager {
 	return &ClusterManager{
 		db:           db,
 		nodeID:       nodeID,
+		nodeAddress:  nodeAddress,
 		currentState: NodeStateUnknown,
 		nodes:        make(map[string]*Node),
 		stopChan:     make(chan struct{}),
@@ -393,7 +396,7 @@ func (cm *ClusterManager) registerNode() error {
 	_, err := cm.db.Exec(`
 		INSERT OR REPLACE INTO cluster_nodes (node_id, address, state, last_heartbeat, is_healthy)
 		VALUES (?, ?, ?, ?, 1)
-	`, cm.nodeID, "localhost:8080", NodeStateSecondary, time.Now())
+	`, cm.nodeID, cm.nodeAddress, NodeStateSecondary, time.Now())
 
 	return err
 }

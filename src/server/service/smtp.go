@@ -118,6 +118,14 @@ func (s *SMTPService) GetConfig() *SMTPConfig {
 	return s.config
 }
 
+// IsEnabled returns whether SMTP is configured and ready to send
+func (s *SMTPService) IsEnabled() bool {
+	if s.config == nil {
+		_ = s.LoadConfig()
+	}
+	return s.config != nil && s.config.Host != "" && s.config.FromAddress != ""
+}
+
 // LoadConfig loads SMTP configuration from database and environment
 func (s *SMTPService) LoadConfig() error {
 	config := &SMTPConfig{}

@@ -1,0 +1,34 @@
+Subject: Secure Your Account - {app_name}
+---
+SECURE YOUR ACCOUNT
+
+This email was sent to: {recipient_email}
+Account: {recipient_username}
+From: {app_name} ({fqdn})
+
+Your account does not have two-factor authentication (2FA) enabled.
+
+We strongly recommend enabling 2FA to protect your account from unauthorized
+access. Even if someone obtains your password, they won't be able to log in
+without your second factor.
+
+Set up 2FA now:
+
+{setup_url}
+
+────────────────────────────────────────────────────────────────────────
+WHY ENABLE 2FA?
+
+- Protects against password breaches
+- Prevents unauthorized access even if your password is compromised
+- Adds an extra layer of security to your account
+- Takes only a few minutes to set up
+
+Don't want these reminders?
+
+{dismiss_url}
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

@@ -435,6 +435,15 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 }
 
 // HandleSevereWeatherAPI handles JSON API requests for severe weather data
+// @Summary Get severe weather alerts
+// @Description Get active severe weather alerts including hurricanes, tornadoes, floods, and winter storms
+// @Tags severe-weather
+// @Accept json
+// @Produce json
+// @Param location query string false "Location (city name, zip code, or coordinates)"
+// @Success 200 {object} map[string]interface{} "Severe weather data with categorized alerts"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/severe-weather [get]
 func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 	locationParam := c.Query("location")
 
@@ -467,7 +476,17 @@ func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 }
 
 // HandleAlertByIDAPI handles JSON API requests for a specific alert by ID
-// GET /{api_version}/severe-weather/:id
+// @Summary Get alert by ID
+// @Description Get detailed information for a specific weather alert by its ID
+// @Tags severe-weather
+// @Accept json
+// @Produce json
+// @Param id path string true "Alert ID"
+// @Success 200 {object} map[string]interface{} "Alert details"
+// @Failure 400 {object} map[string]interface{} "Bad request - ID required"
+// @Failure 404 {object} map[string]interface{} "Alert not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/severe-weather/{id} [get]
 func (h *SevereWeatherHandler) HandleAlertByIDAPI(c *gin.Context) {
 	alertID := c.Param("id")
 	if alertID == "" {

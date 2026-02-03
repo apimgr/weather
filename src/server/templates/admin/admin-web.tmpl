@@ -402,8 +402,8 @@ Sitemap: {app_url}/sitemap.xml</textarea>
         window.open('/.well-known/security.txt', '_blank');
     }
 
-    function resetRobotsTxt() {
-        if (confirm('Reset robots.txt to default configuration?')) {
+    async function resetRobotsTxt() {
+        if (await showConfirm('Reset robots.txt to default configuration?', 'Reset Robots.txt')) {
             document.getElementById('robots_txt').value = `User-agent: *
 Allow: /
 Disallow: /admin/

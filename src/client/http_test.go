@@ -9,20 +9,25 @@ import (
 )
 
 func TestNewHTTPClient(t *testing.T) {
+	// Per AI.md PART 33 line 45267-45326: Nested config structure
 	config := &CLIConfig{
-		Server:  "http://localhost:8080",
-		Token:   "test-token",
-		Timeout: 10,
+		Server: ServerConfig{
+			Primary: "http://localhost:8080",
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 
 	client := NewHTTPClient(config)
 
-	if client.CLIConfig.Server != config.Server {
-		t.Errorf("Expected server %s, got %s", config.Server, client.CLIConfig.Server)
+	if client.CLIConfig.Server.Primary != config.Server.Primary {
+		t.Errorf("Expected server %s, got %s", config.Server.Primary, client.CLIConfig.Server.Primary)
 	}
 
-	if client.HTTPClient.Timeout != time.Duration(10)*time.Second {
-		t.Errorf("Expected timeout 10s, got %v", client.HTTPClient.Timeout)
+	// DefaultTimeout is used (30s)
+	if client.HTTPClient.Timeout != DefaultTimeout {
+		t.Errorf("Expected timeout %v, got %v", DefaultTimeout, client.HTTPClient.Timeout)
 	}
 }
 
@@ -49,11 +54,14 @@ func TestHTTPClientGet(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create client
+	// Create client with nested config
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -82,9 +90,12 @@ func TestHTTPClientGetJSON(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -114,9 +125,12 @@ func TestHTTPClientAuthError(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "invalid-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "invalid-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -145,9 +159,12 @@ func TestHTTPClientForbiddenError(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -176,9 +193,12 @@ func TestHTTPClientNotFoundError(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -208,9 +228,12 @@ func TestHTTPClientServerError(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -233,11 +256,13 @@ func TestHTTPClientServerError(t *testing.T) {
 func TestHTTPClientConnectionError(t *testing.T) {
 	// Create client with invalid server URL
 	config := &CLIConfig{
-		// Invalid port
-		Server:  "http://localhost:1",
-		Token:   "test-token",
-		// Short timeout
-		Timeout: 1,
+		Server: ServerConfig{
+			// Invalid port
+			Primary: "http://localhost:1",
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -265,14 +290,18 @@ func TestHTTPClientTimeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create client with short timeout
+	// Create client - uses DefaultTimeout (30s) but we need shorter for test
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		// 1 second timeout
-		Timeout: 1,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
+	// Override timeout for test
+	client.HTTPClient.Timeout = 1 * time.Second
 
 	// Make request
 	_, err := client.Get("/test")
@@ -298,9 +327,12 @@ func TestHTTPClientInvalidJSON(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -336,10 +368,13 @@ func TestHTTPClientNoToken(t *testing.T) {
 
 	// Create client without token
 	config := &CLIConfig{
-		Server:  server.URL,
-		// No token
-		Token:   "",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary: server.URL,
+		},
+		Auth: AuthConfig{
+			// No token
+			Token: "",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -368,9 +403,13 @@ func TestCheckServerVersion(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary:    server.URL,
+			APIVersion: "v1",
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 
@@ -390,9 +429,13 @@ func TestCheckServerVersionNoEndpoint(t *testing.T) {
 
 	// Create client
 	config := &CLIConfig{
-		Server:  server.URL,
-		Token:   "test-token",
-		Timeout: 30,
+		Server: ServerConfig{
+			Primary:    server.URL,
+			APIVersion: "v1",
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
 	}
 	client := NewHTTPClient(config)
 

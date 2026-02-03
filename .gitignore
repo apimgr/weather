@@ -251,8 +251,13 @@ TODO.md
 *.swp
 *.swo
 
-# AI config directories (regenerated from AI.md rules, not committed)
-.claude/
+# AI config directories per AI.md PART 0
+# .claude/rules/ and .claude/settings.json are TRACKED (committed)
+# .claude/settings.local.json is personal (gitignored)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Other AI tools (not used in this project)
 .cursor/
 .aider/
 .ai/

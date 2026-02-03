@@ -209,6 +209,15 @@ func (h *EarthquakeHandler) HandleEarthquakesByLocation(c *gin.Context) {
 }
 
 // HandleEarthquakeAPI serves JSON earthquake data
+// @Summary Get earthquake data
+// @Description Get recent earthquake data from USGS
+// @Tags earthquakes
+// @Accept json
+// @Produce json
+// @Param feed query string false "Feed type (all_hour, all_day, all_week, all_month, 1.0_day, 2.5_day, 4.5_day, significant_day)" default(all_day)
+// @Success 200 {object} map[string]interface{} "Earthquake collection with metadata"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/earthquakes [get]
 func (h *EarthquakeHandler) HandleEarthquakeAPI(c *gin.Context) {
 	feedType := c.DefaultQuery("feed", "all_day")
 
@@ -224,7 +233,16 @@ func (h *EarthquakeHandler) HandleEarthquakeAPI(c *gin.Context) {
 }
 
 // HandleEarthquakeByIDAPI serves JSON data for a specific earthquake by ID
-// GET /{api_version}/earthquakes/:id
+// @Summary Get earthquake by ID
+// @Description Get detailed information for a specific earthquake by its USGS ID
+// @Tags earthquakes
+// @Accept json
+// @Produce json
+// @Param id path string true "Earthquake ID from USGS"
+// @Success 200 {object} map[string]interface{} "Earthquake details"
+// @Failure 400 {object} map[string]interface{} "Bad request - ID required"
+// @Failure 404 {object} map[string]interface{} "Earthquake not found"
+// @Router /api/v1/earthquakes/{id} [get]
 func (h *EarthquakeHandler) HandleEarthquakeByIDAPI(c *gin.Context) {
 	earthquakeID := c.Param("id")
 	if earthquakeID == "" {

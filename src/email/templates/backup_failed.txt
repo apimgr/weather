@@ -1,0 +1,37 @@
+Subject: Backup Failed - {app_name}
+---
+BACKUP FAILED
+
+This alert was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Time: {timestamp}
+
+⚠️  A backup operation has failed and requires your attention.
+
+────────────────────────────────────────────────────────────────────────
+ERROR DETAILS
+
+Backup Type: {backup_type}
+Started: {start_time}
+Failed: {timestamp}
+Error: {error}
+
+────────────────────────────────────────────────────────────────────────
+RECOMMENDED ACTIONS
+
+1. Check available disk space
+2. Verify backup destination is accessible
+3. Review the error message above
+4. Check server logs for more details
+5. Retry the backup manually if needed
+
+Manage backup settings:
+{admin_url}/server/backup
+
+View logs:
+{admin_url}/server/logs
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}

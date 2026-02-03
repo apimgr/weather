@@ -9,14 +9,27 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 
 -- User Accounts table (regular users only, NO admins)
+-- Per AI.md PART 34: Multi-user support with profile fields
 CREATE TABLE IF NOT EXISTS user_accounts (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	username TEXT UNIQUE NOT NULL,
 	email TEXT UNIQUE NOT NULL,
+	notification_email TEXT,
 	phone TEXT UNIQUE,
 	display_name TEXT,
 	password_hash TEXT NOT NULL,
 	role TEXT DEFAULT 'user',
+	-- Profile visibility per AI.md PART 34: public or private
+	visibility TEXT DEFAULT 'public',
+	-- Avatar settings per AI.md PART 34: gravatar, upload, or url
+	avatar_type TEXT DEFAULT 'gravatar',
+	avatar_url TEXT,
+	-- Profile fields per AI.md PART 34
+	bio TEXT,
+	website TEXT,
+	location TEXT,
+	timezone TEXT,
+	language TEXT DEFAULT 'en',
 	email_verified BOOLEAN DEFAULT 0,
 	phone_verified BOOLEAN DEFAULT 0,
 	is_active BOOLEAN DEFAULT 1,
@@ -296,4 +309,4 @@ CREATE INDEX IF NOT EXISTS idx_activity_type ON user_activity_log(activity_type)
 CREATE INDEX IF NOT EXISTS idx_activity_created ON user_activity_log(created_at);
 `
 
-const UsersSchemaVersion = 4
+const UsersSchemaVersion = 5

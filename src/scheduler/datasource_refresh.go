@@ -39,18 +39,16 @@ func (dsr *DataSourceRefresher) RefreshAllDataSources() error {
 	errors := make([]error, 0)
 
 	// Refresh countries and cities (location enhancer)
-	// Note: Reload method not yet implemented
-	// if err := dsr.locationEnhancer.Reload(); err != nil {
-	// 	log.Printf("❌ Failed to refresh countries/cities: %v", err)
-	// 	errors = append(errors, fmt.Errorf("countries/cities: %w", err))
-	// }
+	if err := dsr.locationEnhancer.Reload(); err != nil {
+		log.Printf("❌ Failed to refresh countries/cities: %v", err)
+		errors = append(errors, fmt.Errorf("countries/cities: %w", err))
+	}
 
 	// Refresh zipcodes
-	// Note: Reload method not yet implemented
-	// if err := dsr.zipcodeService.Reload(); err != nil {
-	// 	log.Printf("❌ Failed to refresh zipcodes: %v", err)
-	// 	errors = append(errors, fmt.Errorf("zipcodes: %w", err))
-	// }
+	if err := dsr.zipcodeService.Reload(); err != nil {
+		log.Printf("❌ Failed to refresh zipcodes: %v", err)
+		errors = append(errors, fmt.Errorf("zipcodes: %w", err))
+	}
 
 	// Refresh airports
 	if err := dsr.airportService.Reload(); err != nil {

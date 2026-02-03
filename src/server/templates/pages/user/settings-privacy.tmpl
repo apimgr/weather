@@ -1,0 +1,251 @@
+{{template "head" .}}
+
+{{template "navbar" .}}
+
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="profile-page-header-title">Privacy Settings</h1>
+        <p class="text-comment">Control your profile visibility and data sharing</p>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="settings-nav">
+        <a href="/users/settings" class="settings-nav-item">Account</a>
+        <a href="/users/settings/privacy" class="settings-nav-item active">Privacy</a>
+        <a href="/users/settings/notifications" class="settings-nav-item">Notifications</a>
+        <a href="/users/settings/appearance" class="settings-nav-item">Appearance</a>
+        <a href="/users/security" class="settings-nav-item">Security</a>
+        <a href="/users/tokens" class="settings-nav-item">API Tokens</a>
+    </div>
+
+    <!-- Privacy Settings Form -->
+    <div class="card profile-card">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Profile Visibility</h2>
+        </div>
+        <div class="card-body">
+            <form id="privacySettingsForm">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+
+                <div class="visibility-options">
+                    <label class="visibility-option {{if eq .user.Visibility "public"}}selected{{end}}">
+                        <input type="radio" name="visibility" value="public" {{if eq .user.Visibility "public"}}checked{{end}}>
+                        <div class="visibility-content">
+                            <strong>Public</strong>
+                            <p class="text-comment">Anyone can view your profile and find you in search results.</p>
+                        </div>
+                    </label>
+
+                    <label class="visibility-option {{if eq .user.Visibility "private"}}selected{{end}}">
+                        <input type="radio" name="visibility" value="private" {{if eq .user.Visibility "private"}}checked{{end}}>
+                        <div class="visibility-content">
+                            <strong>Private</strong>
+                            <p class="text-comment">Your profile is hidden from public view and search results. Only you can see your profile.</p>
+                        </div>
+                    </label>
+                </div>
+
+                <hr class="settings-divider">
+
+                <h3 class="section-title">When Profile is Public</h3>
+
+                <div class="toggle-group">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="showEmail">
+                        <div class="toggle-content">
+                            <strong>Show email address on profile</strong>
+                            <p class="text-comment">Your email will be visible to anyone viewing your profile.</p>
+                        </div>
+                    </label>
+
+                    <label class="toggle-item">
+                        <input type="checkbox" id="showActivity" checked>
+                        <div class="toggle-content">
+                            <strong>Show activity on profile</strong>
+                            <p class="text-comment">Recent activity will appear on your public profile.</p>
+                        </div>
+                    </label>
+
+                    <label class="toggle-item">
+                        <input type="checkbox" id="showOrgs" checked>
+                        <div class="toggle-content">
+                            <strong>Show organization memberships</strong>
+                            <p class="text-comment">Organizations you belong to will be listed on your profile.</p>
+                        </div>
+                    </label>
+
+                    <label class="toggle-item">
+                        <input type="checkbox" id="searchable" checked>
+                        <div class="toggle-content">
+                            <strong>Appear in search results</strong>
+                            <p class="text-comment">Others can find you when searching for users.</p>
+                        </div>
+                    </label>
+                </div>
+
+                <hr class="settings-divider">
+
+                <h3 class="section-title">When Profile is Private</h3>
+
+                <div class="toggle-group">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="orgVisibility" checked>
+                        <div class="toggle-content">
+                            <strong>Show basic info in organizations</strong>
+                            <p class="text-comment">Members of organizations you belong to can see your username, name, and avatar. Your full profile remains private.</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="profile-form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+.settings-nav-item {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    color: var(--text);
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.settings-nav-item:hover {
+    background: var(--bg);
+}
+.settings-nav-item.active {
+    background: var(--accent);
+    color: var(--bg);
+}
+.settings-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+}
+.section-title {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+.visibility-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.visibility-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+.visibility-option:hover {
+    background: var(--bg-dark);
+}
+.visibility-option.selected {
+    border-color: var(--accent);
+    background: var(--bg-dark);
+}
+.visibility-option input[type="radio"] {
+    accent-color: var(--accent);
+    margin-top: 4px;
+}
+.visibility-content {
+    flex: 1;
+}
+.visibility-content p {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.9rem;
+}
+.toggle-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.toggle-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    cursor: pointer;
+}
+.toggle-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent);
+    margin-top: 2px;
+}
+.toggle-content {
+    flex: 1;
+}
+.toggle-content strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.toggle-content p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+// Update visibility option styling
+document.querySelectorAll('input[name="visibility"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.visibility-option').forEach(opt => opt.classList.remove('selected'));
+        this.closest('.visibility-option').classList.add('selected');
+    });
+});
+
+// Save settings
+document.getElementById('privacySettingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const data = {
+        privacy: {
+            visibility: document.querySelector('input[name="visibility"]:checked').value,
+            show_email: document.getElementById('showEmail').checked,
+            show_activity: document.getElementById('showActivity').checked,
+            show_orgs: document.getElementById('showOrgs').checked,
+            searchable: document.getElementById('searchable').checked,
+            org_visibility: document.getElementById('orgVisibility').checked
+        }
+    };
+
+    try {
+        const response = await fetch('/api/v1/users/settings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save settings');
+        }
+
+        Toast.success('Privacy settings saved!');
+    } catch (error) {
+        Toast.error('Failed to save settings: ' + error.message);
+    }
+});
+</script>
+
+{{template "footer" .}}
+</body>
+</html>

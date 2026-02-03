@@ -5,7 +5,6 @@ package scheduler
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/apimgr/weather/src/backup"
 	"github.com/apimgr/weather/src/paths"
@@ -97,15 +96,15 @@ func RegisterBackupTask(s *Scheduler, enabled bool) {
 		return
 	}
 
-	// Schedule: Daily at 01:00 per AI.md PART 27 line 24184
+	// Schedule: Daily at 01:00 per AI.md PART 19
 	// Disabled by default per AI.md PART 27 line 24185
-	interval := 24 * time.Hour
+	schedule := "0 1 * * *" // Cron: daily at 01:00
 
 	// Create task function
 	taskFn := BackupTask(p.ConfigDir, p.DataDir)
 
 	// Add to scheduler
-	s.AddTask("backup_auto", interval, taskFn)
+	s.AddTask("backup_auto", schedule, taskFn)
 
 	if enabled {
 		log.Println("📅 Automated backup task scheduled (daily at 01:00)")

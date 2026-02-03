@@ -266,7 +266,7 @@ func RestoreBackup(c *gin.Context) {
 func ListBackups(c *gin.Context) {
 	dataDir := os.Getenv("DATA_DIR")
 	if dataDir == "" {
-		dataDir = "/var/lib/weather"
+		dataDir = "/var/lib/apimgr/weather"
 	}
 
 	backupDir := filepath.Join(dataDir, "backups")
@@ -315,7 +315,7 @@ func DownloadBackup(c *gin.Context) {
 
 	dataDir := os.Getenv("DATA_DIR")
 	if dataDir == "" {
-		dataDir = "/var/lib/weather"
+		dataDir = "/var/lib/apimgr/weather"
 	}
 
 	backupPath := filepath.Join(dataDir, "backups", filename)
@@ -344,7 +344,7 @@ func DeleteBackup(c *gin.Context) {
 
 	dataDir := os.Getenv("DATA_DIR")
 	if dataDir == "" {
-		dataDir = "/var/lib/weather"
+		dataDir = "/var/lib/apimgr/weather"
 	}
 
 	backupPath := filepath.Join(dataDir, "backups", filename)

@@ -297,7 +297,7 @@
 
     // Renew certificate
     document.getElementById('renewBtn').addEventListener('click', async () => {
-        if (!confirm('Renew the SSL certificate now?')) return;
+        if (!await showConfirm('Renew the SSL certificate now?', 'Renew Certificate')) return;
 
         const renewBtn = document.getElementById('renewBtn');
         renewBtn.disabled = true;

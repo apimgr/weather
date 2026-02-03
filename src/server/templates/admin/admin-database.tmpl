@@ -539,7 +539,7 @@
     }
 
     async function clearCache() {
-        if (!confirm('Clear all cached data? This will temporarily slow down the application until cache rebuilds.')) {
+        if (!await showConfirm('Clear all cached data? This will temporarily slow down the application until cache rebuilds.', 'Clear Cache')) {
             return;
         }
 

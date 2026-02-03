@@ -232,7 +232,7 @@
 
         // Restore backup
         async function restoreBackup(filename) {
-            if (!confirm(`Restore from backup: ${filename}?\n\nThis will overwrite current data!`)) {
+            if (!await showConfirm(`Restore from backup: ${filename}?\n\nThis will overwrite current data!`, 'Restore Backup')) {
                 return;
             }
 
@@ -253,7 +253,7 @@
 
         // Delete backup
         async function deleteBackup(filename) {
-            if (!confirm(`Delete backup: ${filename}?`)) return;
+            if (!await showConfirm(`Delete backup: ${filename}?`, 'Delete Backup')) return;
 
             try {
                 const response = await fetch(`/api/v1/admin/backup/delete/${filename}`, {

@@ -65,6 +65,15 @@ func (h *HurricaneHandler) HandleHurricaneRequest(c *gin.Context) {
 }
 
 // HandleHurricaneAPI handles JSON API requests for hurricane data
+// @Summary Get active hurricanes (deprecated)
+// @Description Get active hurricanes and tropical storms from NOAA NHC. Deprecated: use /api/v1/severe-weather instead
+// @Tags hurricanes
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Active storms data"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Deprecated
+// @Router /api/v1/hurricanes [get]
 func (h *HurricaneHandler) HandleHurricaneAPI(c *gin.Context) {
 	data, err := h.hurricaneService.GetActiveStorms()
 	if err != nil {
@@ -76,7 +85,18 @@ func (h *HurricaneHandler) HandleHurricaneAPI(c *gin.Context) {
 }
 
 // HandleHurricaneByIDAPI handles JSON API requests for a specific hurricane by ID
-// GET /{api_version}/hurricanes/:id
+// @Summary Get hurricane by ID (deprecated)
+// @Description Get detailed information for a specific hurricane by ID or name. Deprecated: use /api/v1/severe-weather instead
+// @Tags hurricanes
+// @Accept json
+// @Produce json
+// @Param id path string true "Hurricane ID or name"
+// @Success 200 {object} map[string]interface{} "Hurricane details"
+// @Failure 400 {object} map[string]interface{} "Bad request - ID required"
+// @Failure 404 {object} map[string]interface{} "Hurricane not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Deprecated
+// @Router /api/v1/hurricanes/{id} [get]
 func (h *HurricaneHandler) HandleHurricaneByIDAPI(c *gin.Context) {
 	hurricaneID := c.Param("id")
 	if hurricaneID == "" {

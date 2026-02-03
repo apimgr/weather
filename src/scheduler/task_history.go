@@ -156,19 +156,18 @@ func (s *Scheduler) GetAllTaskInfo() ([]TaskInfo, error) {
 
 		taskInfo := TaskInfo{
 			Name:     task.Name,
-			Interval: task.Interval.String(),
+			Interval: task.Schedule, // Now uses cron schedule string
 			Enabled:  task.enabled,
-			Running:  task.running,
+			Running:  false, // Cron handles running state internally
 		}
 
-		// Calculate next run time
-		if task.enabled && task.lastRun != nil {
-			nextRun := task.lastRun.Add(task.Interval)
-			taskInfo.NextRun = &nextRun
-		} else if task.enabled {
-			// First run
-			nextRun := time.Now().Add(task.Interval)
-			taskInfo.NextRun = &nextRun
+		// Get next run time from cron entry
+		if task.enabled {
+			entry := s.cron.Entry(task.entryID)
+			if entry.ID != 0 {
+				nextRun := entry.Next
+				taskInfo.NextRun = &nextRun
+			}
 		}
 
 		task.mu.Unlock()

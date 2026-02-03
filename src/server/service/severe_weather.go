@@ -366,8 +366,6 @@ func (s *SevereWeatherService) filterStormsByDistance(storms []Storm, lat, lon, 
 func (s *SevereWeatherService) filterAlertsByDistance(alerts []Alert, lat, lon, maxMiles float64) []Alert {
 	filtered := []Alert{}
 
-	fmt.Printf("DEBUG: Filtering %d alerts for location (%.4f, %.4f) within %.0f miles\n", len(alerts), lat, lon, maxMiles)
-
 	for _, alert := range alerts {
 		// Try to extract coordinates from geometry
 		if alert.Geometry != nil {
@@ -375,21 +373,15 @@ func (s *SevereWeatherService) filterAlertsByDistance(alerts []Alert, lat, lon, 
 			nearLocation := isAlertNearLocation(alert.Geometry, lat, lon, maxMiles)
 			distance := getAlertDistance(alert.Geometry, lat, lon)
 
-			fmt.Printf("DEBUG: Alert '%s' in %s - Distance: %.1f miles, Within range: %v\n",
-				alert.Event, alert.AreaDesc, distance, nearLocation)
-
 			if nearLocation {
 				alert.DistanceMiles = distance
 				filtered = append(filtered, alert)
 			}
-		} else {
-			// If no geometry and we're filtering by location, EXCLUDE it
-			// Only include alerts without geometry if showing all alerts (no location filter)
-			fmt.Printf("DEBUG: Alert '%s' in %s has no geometry, EXCLUDING (location filtering active)\n", alert.Event, alert.AreaDesc)
 		}
+		// If no geometry and we're filtering by location, exclude it
+		// Only alerts without geometry are included when showing all alerts (no location filter)
 	}
 
-	fmt.Printf("DEBUG: Filtered to %d alerts within range\n", len(filtered))
 	return filtered
 }
 

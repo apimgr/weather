@@ -146,16 +146,51 @@ cache:
 
 ## API
 
-API documentation available at `/api/v1/` when running.
+Full API documentation available at `/openapi` when running. Interactive GraphQL at `/api/v1/graphql`.
+
+### Health Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /healthz` | Health check |
-| `GET /api/v1/weather/:location` | Weather forecast |
-| `GET /api/v1/severe-weather` | Severe weather alerts |
-| `GET /api/v1/earthquakes` | Earthquake data |
-| `GET /api/v1/hurricanes` | Hurricane tracking |
-| `GET /api/v1/moon` | Moon phase |
+| `GET /healthz` | Comprehensive health check |
+| `GET /readyz` | Readiness probe (Kubernetes) |
+| `GET /livez` | Liveness probe (Kubernetes) |
+
+### Weather Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/weather` | Current weather (auto-detect location) |
+| `GET /api/v1/weather/:location` | Weather for specific location |
+| `GET /api/v1/forecast` | Multi-day forecast (up to 16 days) |
+| `GET /api/v1/ip` | Client IP and geolocation info |
+| `GET /api/v1/location` | Auto-detect location from IP |
+
+### Severe Weather & Natural Events
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/severe-weather` | Active severe weather alerts |
+| `GET /api/v1/severe-weather/:id` | Get specific alert by ID |
+| `GET /api/v1/earthquakes` | Recent earthquake data (USGS) |
+| `GET /api/v1/earthquakes/:id` | Get specific earthquake by ID |
+| `GET /api/v1/hurricanes` | Active hurricanes (deprecated) |
+
+### Astronomical Data
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/moon` | Moon phase, illumination, rise/set |
+| `GET /api/v1/moon/calendar` | Moon phases for a month |
+| `GET /api/v1/sun` | Sunrise, sunset, day length |
+
+### Location Management (authenticated)
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/locations` | List saved locations |
+| `POST /api/v1/locations` | Save a new location |
+| `GET /api/v1/locations/search` | Search for locations |
 
 ### Examples
 
@@ -225,6 +260,18 @@ tests/         # Test files
 docker/        # Docker files
 binaries/      # Built binaries (gitignored)
 ```
+
+## Disclaimer
+
+This software is provided "as is" without warranty of any kind. Use at your own risk.
+
+- **No Warranty**: The authors are not responsible for any damages, data loss, or issues arising from use of this software
+- **Not Professional Advice**: Weather data is provided for informational purposes only and should not be used as the sole basis for safety decisions during severe weather
+- **Third-Party Services**: This software aggregates data from external APIs (Open-Meteo, NOAA, USGS, etc.) - their terms of service and data accuracy apply separately
+- **Security**: While we strive to follow security best practices, no software is guaranteed to be free of vulnerabilities
+- **Production Use**: Evaluate thoroughly before deploying in production environments
+
+By using this software, you acknowledge that you have read and understood this disclaimer.
 
 ## License
 

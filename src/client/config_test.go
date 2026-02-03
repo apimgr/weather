@@ -9,24 +9,25 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
 
-	if config.Server != "http://localhost:64948" {
-		t.Errorf("Expected default server to be http://localhost:64948, got %s", config.Server)
+	// Per AI.md PART 33 line 45267-45326: Nested YAML structure
+	if config.Server.Primary != OfficialSite {
+		t.Errorf("Expected default server to be %s, got %s", OfficialSite, config.Server.Primary)
 	}
 
-	if config.Token != "" {
-		t.Errorf("Expected default token to be empty, got %s", config.Token)
+	if config.Auth.Token != "" {
+		t.Errorf("Expected default token to be empty, got %s", config.Auth.Token)
 	}
 
-	if config.Output != "table" {
-		t.Errorf("Expected default output to be table, got %s", config.Output)
+	if config.Output.Format != "table" {
+		t.Errorf("Expected default output format to be table, got %s", config.Output.Format)
 	}
 
-	if config.Timeout != 30 {
-		t.Errorf("Expected default timeout to be 30, got %d", config.Timeout)
+	if config.Output.Color != "auto" {
+		t.Errorf("Expected default output color to be auto, got %s", config.Output.Color)
 	}
 
-	if config.NoColor {
-		t.Error("Expected default NoColor to be false")
+	if config.Server.Timeout != "30s" {
+		t.Errorf("Expected default timeout to be 30s, got %s", config.Server.Timeout)
 	}
 }
 
@@ -58,9 +59,9 @@ func TestLoadConfigNonExistent(t *testing.T) {
 		t.Fatalf("LoadConfig() failed: %v", err)
 	}
 
-	// Should return default config
-	if config.Server != "http://localhost:64948" {
-		t.Errorf("Expected default server, got %s", config.Server)
+	// Should return default config with OfficialSite
+	if config.Server.Primary != OfficialSite {
+		t.Errorf("Expected default server %s, got %s", OfficialSite, config.Server.Primary)
 	}
 }
 
@@ -72,13 +73,20 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("HOME", tempDir)
 
-	// Create config
+	// Create config with nested structure per AI.md PART 33
 	config := &CLIConfig{
-		Server:  "http://test.example.com",
-		Token:   "test-token",
-		Output:  "json",
-		Timeout: 60,
-		NoColor: true,
+		Server: ServerConfig{
+			Primary:    "http://test.example.com",
+			APIVersion: "v1",
+			Timeout:    "60s",
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
+		Output: OutputConfig{
+			Format: "json",
+			Color:  "never",
+		},
 	}
 
 	// Save config
@@ -93,20 +101,17 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	}
 
 	// Verify all fields
-	if loaded.Server != config.Server {
-		t.Errorf("Expected server %s, got %s", config.Server, loaded.Server)
+	if loaded.Server.Primary != config.Server.Primary {
+		t.Errorf("Expected server %s, got %s", config.Server.Primary, loaded.Server.Primary)
 	}
-	if loaded.Token != config.Token {
-		t.Errorf("Expected token %s, got %s", config.Token, loaded.Token)
+	if loaded.Auth.Token != config.Auth.Token {
+		t.Errorf("Expected token %s, got %s", config.Auth.Token, loaded.Auth.Token)
 	}
-	if loaded.Output != config.Output {
-		t.Errorf("Expected output %s, got %s", config.Output, loaded.Output)
+	if loaded.Output.Format != config.Output.Format {
+		t.Errorf("Expected output format %s, got %s", config.Output.Format, loaded.Output.Format)
 	}
-	if loaded.Timeout != config.Timeout {
-		t.Errorf("Expected timeout %d, got %d", config.Timeout, loaded.Timeout)
-	}
-	if loaded.NoColor != config.NoColor {
-		t.Errorf("Expected NoColor %t, got %t", config.NoColor, loaded.NoColor)
+	if loaded.Output.Color != config.Output.Color {
+		t.Errorf("Expected output color %s, got %s", config.Output.Color, loaded.Output.Color)
 	}
 }
 
@@ -151,13 +156,21 @@ func TestGetConfigValue(t *testing.T) {
 	tempDir := t.TempDir()
 	os.Setenv("HOME", tempDir)
 
-	// Save test config
+	// Save test config with nested structure
 	config := &CLIConfig{
-		Server:  "http://test.example.com",
-		Token:   "test-token",
-		Output:  "json",
-		Timeout: 45,
-		NoColor: true,
+		Server: ServerConfig{
+			Primary:    "http://test.example.com",
+			APIVersion: "v1",
+			Timeout:    "45s",
+		},
+		Auth: AuthConfig{
+			Token: "test-token",
+		},
+		Output: OutputConfig{
+			Format: "json",
+			Color:  "never",
+		},
+		Debug: true,
 	}
 	SaveConfig(config)
 
@@ -165,11 +178,11 @@ func TestGetConfigValue(t *testing.T) {
 		key      string
 		expected string
 	}{
-		{"server", "http://test.example.com"},
-		{"token", "test-token"},
-		{"output", "json"},
-		{"timeout", "45"},
-		{"no_color", "true"},
+		{"server.primary", "http://test.example.com"},
+		{"auth.token", "test-token"},
+		{"output.format", "json"},
+		{"output.color", "never"},
+		{"debug", "true"},
 	}
 
 	for _, tt := range tests {
@@ -206,11 +219,11 @@ func TestSetConfigValue(t *testing.T) {
 		key   string
 		value string
 	}{
-		{"server", "http://new.example.com"},
-		{"token", "new-token"},
-		{"output", "json"},
-		{"timeout", "60"},
-		{"no_color", "true"},
+		{"server.primary", "http://new.example.com"},
+		{"auth.token", "new-token"},
+		{"output.format", "json"},
+		{"output.color", "never"},
+		{"debug", "true"},
 	}
 
 	for _, tt := range tests {
@@ -243,27 +256,21 @@ func TestSetConfigValueValidation(t *testing.T) {
 	InitConfig()
 
 	// Test invalid output format
-	err := SetConfigValue("output", "invalid")
+	err := SetConfigValue("output.format", "invalid")
 	if err == nil {
 		t.Error("Expected error for invalid output format")
 	}
 
-	// Test invalid timeout
-	err = SetConfigValue("timeout", "abc")
+	// Test invalid output color
+	err = SetConfigValue("output.color", "invalid")
 	if err == nil {
-		t.Error("Expected error for invalid timeout")
+		t.Error("Expected error for invalid output color")
 	}
 
-	// Test timeout out of range
-	err = SetConfigValue("timeout", "500")
+	// Test invalid tui theme
+	err = SetConfigValue("tui.theme", "invalid")
 	if err == nil {
-		t.Error("Expected error for timeout out of range")
-	}
-
-	// Test invalid no_color
-	err = SetConfigValue("no_color", "maybe")
-	if err == nil {
-		t.Error("Expected error for invalid no_color value")
+		t.Error("Expected error for invalid tui theme")
 	}
 
 	// Test invalid key

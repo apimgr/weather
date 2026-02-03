@@ -13,6 +13,7 @@ env:
   PROJECTNAME: weather
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  OFFICIALSITE: https://wthr.top
 
 jobs:
   build:
@@ -86,6 +87,7 @@ jobs:
             VERSION="${{ env.VERSION }}"
             BUILD_DATE="${{ env.BUILD_DATE }}"
             COMMIT_ID="${{ env.COMMIT_ID }}"
+            OFFICIALSITE="${{ env.OFFICIALSITE }}"
           # OCI Image Labels (applied to image config)
           labels: |
             org.opencontainers.image.vendor="apimgr"

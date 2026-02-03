@@ -418,10 +418,22 @@ func SetConfigValue(key, value string) error {
 	case "user":
 		config.User = value
 	case "debug":
-		config.Debug = value == "true" || value == "1" || value == "yes"
+		config.Debug = parseBoolValue(value)
 	default:
 		return NewConfigError(fmt.Sprintf("unknown config key: %s", key))
 	}
 
 	return SaveConfig(config)
+}
+
+// parseBoolValue parses a boolean string value
+// Supports: true/false, yes/no, 1/0, on/off, enable/disable per AI.md PART 5
+func parseBoolValue(value string) bool {
+	v := strings.ToLower(strings.TrimSpace(value))
+	switch v {
+	case "true", "yes", "1", "on", "enable", "enabled", "yep", "yup", "yeah", "aye", "si", "oui", "da", "hai", "affirmative":
+		return true
+	default:
+		return false
+	}
 }

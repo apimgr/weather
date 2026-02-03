@@ -1,0 +1,32 @@
+Subject: SSL Certificate Renewed - {app_name}
+---
+SSL CERTIFICATE RENEWED
+
+This notification was sent to: {recipient_email}
+From: {app_name} ({fqdn})
+Time: {timestamp}
+
+Your SSL certificate has been successfully renewed.
+
+────────────────────────────────────────────────────────────────────────
+CERTIFICATE DETAILS
+
+Domain: {domain}
+New Expiry: {expiry_date}
+Valid For: {days_valid} days
+Issuer: {issuer}
+
+────────────────────────────────────────────────────────────────────────
+STATUS
+
+✓ Certificate renewed successfully
+✓ New certificate is now active
+✓ No action required
+
+Manage SSL settings:
+{admin_url}/server/ssl
+────────────────────────────────────────────────────────────────────────
+
+--
+{app_name}
+{app_url}
