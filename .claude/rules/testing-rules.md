@@ -3,56 +3,86 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Run Go locally → use containers
-- ❌ Test on host machine → use Docker/Incus
-- ❌ Skip content negotiation tests
-- ❌ Skip accessibility testing
+- ❌ Run tests on local machine (use containers)
+- ❌ Run `go test` directly (use `make test`)
+- ❌ Skip integration tests
+- ❌ Test with hardcoded hostnames/IPs
+- ❌ Commit code without testing
 
-## REQUIRED - ALWAYS DO
-- ✅ Container-only development
-- ✅ Test all response formats (HTML, JSON, text)
-- ✅ WCAG 2.1 AA compliance
-- ✅ ReadTheDocs documentation
+## CRITICAL - ALWAYS DO
+- ✅ All testing in containers (Docker or Incus)
+- ✅ Use `make test` for unit tests
+- ✅ Use `./tests/run_tests.sh` for integration tests
+- ✅ Prefer Incus for full OS testing (systemd support)
+- ✅ Test content negotiation (HTML, JSON, text)
+- ✅ Test all 8 platforms before release
 
-## TESTING WORKFLOW
-```bash
-# Unit tests (via Makefile)
-make test
+## TEST SCRIPTS
+| Script | Purpose | Container |
+|--------|---------|-----------|
+| `make test` | Unit tests | Docker golang:alpine |
+| `tests/run_tests.sh` | Auto-detect and run | Incus or Docker |
+| `tests/docker.sh` | Quick Docker tests | Docker alpine |
+| `tests/incus.sh` | Full OS tests | Incus debian/ubuntu |
 
-# Integration tests
-./tests/run_tests.sh        # Auto-detects incus/docker
-
-# Full OS testing (PREFERRED)
-./tests/incus.sh            # Systemd, real services
+## TESTING PREFERENCE
+```
+Incus (PREFERRED) > Docker
 ```
 
-## CONTAINER PREFERENCE
-| Container | Use For |
-|-----------|---------|
-| **Incus** (preferred) | Full OS, systemd, SSH |
-| Docker | Quick checks, ephemeral |
+- **Incus**: Full OS, systemd, persistent, SSH-able
+- **Docker**: Ephemeral, fast, limited environment
+
+## CONTAINER TESTING WORKFLOW
+```bash
+# 1. Build
+make dev
+
+# 2. Quick test (Docker)
+./tests/docker.sh
+
+# 3. Full test (Incus - PREFERRED)
+./tests/incus.sh
+
+# 4. Unit tests
+make test
+```
+
+## AI AS BETA TESTER
+| Role | Description |
+|------|-------------|
+| Find bugs | Try edge cases, invalid inputs |
+| Break it | Stress test, race conditions |
+| Fix it | Implement the fix immediately |
+| Verify | Re-test to confirm fix |
 
 ## CONTENT NEGOTIATION TESTING
-Test all Accept headers:
-- `text/html` → HTML response
-- `application/json` → JSON response
-- `text/plain` → Plain text
-- `*/*` (browsers) → HTML
-- No Accept (curl) → Plain text
+```bash
+# HTML (browser)
+curl -H "Accept: text/html" http://localhost/healthz
 
-## READTHEDOCS (PART 30)
-- MkDocs with Material theme
-- mkdocs.yml in project root
-- docs/ directory structure
-- .readthedocs.yaml config
+# JSON (API)
+curl -H "Accept: application/json" http://localhost/healthz
+
+# Plain text (CLI)
+curl -H "Accept: text/plain" http://localhost/healthz
+```
+
+## DOCUMENTATION (PART 30)
+- MkDocs for ReadTheDocs
+- Keep docs/ in sync with code
+- Required pages: index, installation, configuration, api, cli, admin
 
 ## I18N & A11Y (PART 31)
+- Support multiple locales (AI.md + IDEA.md languages)
 - WCAG 2.1 AA compliance
-- 7 locales minimum: en, es, fr, de, ar, ja, zh
-- RTL support for Arabic
-- Semantic HTML
-- ARIA labels where needed
-- 44x44px touch targets
+- Touch targets minimum 44x44px
+- Screen reader compatibility
+
+## DEBUG TOOLS IN CONTAINERS
+```bash
+apk add --no-cache curl bash file jq
+```
 
 ---
-**Full details: AI.md PART 29, PART 30, PART 31**
+For complete details, see AI.md PART 29, 30, 31

@@ -1,42 +1,87 @@
 # Makefile Rules (PART 26)
 
-⚠️ **Makefile is for LOCAL DEVELOPMENT ONLY. Never used in CI/CD.** ⚠️
+⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use Makefile in CI/CD workflows
-- ❌ Run Go commands locally → use make targets
-- ❌ Skip CGO_ENABLED=0
+- ❌ Use Makefile in CI/CD (explicit commands only)
+- ❌ Run `go` commands directly on local machine
+- ❌ Skip any of the 8 platform builds
+- ❌ Use CGO in builds (CGO_ENABLED=0 always)
+- ❌ Hardcode Go version
 
-## REQUIRED - ALWAYS DO
-- ✅ Use `make dev` for quick builds
-- ✅ Use `make test` for unit tests
-- ✅ Use `make build` for release builds
-- ✅ All builds via Docker (golang:alpine)
+## CRITICAL - ALWAYS DO
+- ✅ Makefile is for LOCAL development ONLY
+- ✅ All builds use Docker (`golang:alpine`)
+- ✅ CI/CD uses explicit commands with all env vars
+- ✅ Support GODIR/GOCACHE for faster rebuilds
+- ✅ Include all required targets
 
 ## MAKEFILE TARGETS
 | Target | Purpose | Output |
 |--------|---------|--------|
-| `make dev` | Quick development build | `${TMPDIR}/apimgr/weather-XXXXXX/` |
-| `make local` | Production test build | `binaries/` with version |
-| `make build` | Full release (all 8) | `binaries/` all platforms |
-| `make test` | Unit tests | Coverage report |
-| `make clean` | Remove build artifacts | - |
+| `make dev` | Quick development build | `${TMPDIR}/${PROJECTORG}/${PROJECTNAME}-XXXXXX/` |
+| `make local` | Production test build | `binaries/` (with version) |
+| `make build` | Full release build | `binaries/` (all 8 platforms) |
+| `make test` | Run unit tests | Coverage report |
 | `make docker` | Build Docker image | Local image |
+| `make clean` | Clean build artifacts | - |
 
-## BUILD ENVIRONMENT
-```makefile
-CGO_ENABLED=0
-GOOS={target}
-GOARCH={arch}
+## BUILD WORKFLOW
+```bash
+# 1. Active development
+make dev                # Quick build to temp dir
+
+# 2. Debug in Docker (with tools)
+BUILD_DIR=$(ls -td ${TMPDIR:-/tmp}/${PROJECTORG}/${PROJECTNAME}-*/ 2>/dev/null | head -1)
+docker run --rm -it -v "$BUILD_DIR:/app" alpine:latest sh -c "
+  apk add --no-cache curl bash file jq
+  /app/weather --help
+"
+
+# 3. Unit tests
+make test
+
+# 4. Integration tests
+./tests/run_tests.sh    # Auto-detects incus/docker
+
+# 5. Production test
+make local              # Build with version info
+./tests/incus.sh        # Full systemd testing (PREFERRED)
+
+# 6. Full release build
+make build              # All 8 platforms
 ```
 
-All builds use Docker `golang:alpine` internally.
+## LDFLAGS (VERSION INFO)
+```makefile
+LDFLAGS := -s -w \
+    -X 'main.Version=$(VERSION)' \
+    -X 'main.CommitID=$(COMMIT)' \
+    -X 'main.BuildDate=$(DATE)' \
+    -X 'main.OfficialSite=$(SITE)'
+```
 
-## WHY NOT IN CI/CD?
-- CI/CD needs explicit env vars for reproducibility
-- CI/CD has different paths/permissions
-- CI/CD needs matrix builds (parallel platforms)
-- Makefile abstracts away details needed for debugging
+## 8 PLATFORM MATRIX
+| OS | Architectures |
+|----|---------------|
+| linux | amd64, arm64 |
+| darwin | amd64, arm64 |
+| windows | amd64, arm64 |
+| freebsd | amd64, arm64 |
+
+## BINARY NAMING
+```
+weather-linux-amd64
+weather-linux-arm64
+weather-darwin-amd64
+weather-darwin-arm64
+weather-windows-amd64.exe
+weather-windows-arm64.exe
+weather-freebsd-amd64
+weather-freebsd-arm64
+```
+
+CLI binaries use `weather-cli-{os}-{arch}` format.
 
 ---
-**Full details: AI.md PART 26**
+For complete details, see AI.md PART 26

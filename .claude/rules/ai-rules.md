@@ -17,7 +17,7 @@
 - ❌ Partial implementations - every feature must be 100% complete
 - ❌ "I'll come back to this later" - there is no later, do it NOW
 
-## REQUIRED - ALWAYS DO
+## CRITICAL - ALWAYS DO
 - ✅ Read AI.md PART 0, 1 at start of EVERY conversation
 - ✅ Read relevant PART before implementing ANY feature
 - ✅ Search AI.md before asking questions (answer is likely there)
@@ -57,4 +57,4 @@ Before completing ANY task:
 - [ ] Docs updated if code changed
 
 ---
-**Full details: AI.md PART 0, PART 1**
+For complete details, see AI.md PART 0, 1

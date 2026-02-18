@@ -3,53 +3,56 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use strconv.ParseBool() → use config.ParseBool()
-- ❌ Inline YAML comments → comments go ABOVE the setting
-- ❌ Hardcode dev machine values → detect at runtime
-- ❌ Accept path traversal (../) in any path input
-- ❌ Use server.yaml → use server.yml
+- ❌ Use `strconv.ParseBool()` - use `config.ParseBool()` for ALL booleans
+- ❌ Inline YAML comments (must be above the setting)
+- ❌ Use `.yaml` extension (always `.yml`)
+- ❌ Hardcode dev machine values (hostname, IP, etc.)
+- ❌ Store passwords in config files (database only)
+- ❌ Skip path validation (traversal attacks)
+- ❌ Use external cron/scheduler
 
-## REQUIRED - ALWAYS DO
-- ✅ Use config.ParseBool() for ALL boolean parsing
-- ✅ Use path.Clean() and validate all paths
-- ✅ Detect hostname/IP/cores/memory at runtime
-- ✅ YAML comments ABOVE settings, never inline
-- ✅ Support MODE env var (production/development)
-- ✅ Auto-migrate server.yaml → server.yml
+## CRITICAL - ALWAYS DO
+- ✅ All booleans via `config.ParseBool()` - accepts yes/no, true/false, 1/0, etc.
+- ✅ YAML comments above settings, never inline
+- ✅ Use `server.yml` for config file
+- ✅ Detect machine settings at runtime (hostname, IP, CPU, memory)
+- ✅ Validate and normalize ALL paths (prevent traversal)
+- ✅ Support both single instance (SQLite) and cluster (remote DB) modes
+- ✅ Implement self-healing for critical errors
 
-## BOOLEAN HANDLING
-Accept ALL of these (case-insensitive):
+## BOOLEAN VALUES (config.ParseBool)
 | Truthy | Falsy |
 |--------|-------|
 | 1, yes, true, on, enable, enabled | 0, no, false, off, disable, disabled |
-| yep, yup, yeah, aye, si, oui, da | nope, nah, nay, nein, non, niet |
-| affirmative, accept, allow, grant | negative, reject, block, revoke |
+| y, yep, yup, yeah, affirmative | n, nope, nah, nay, negative |
+| aye, si, oui, da, hai | nein, non, niet, iie |
 
-## APPLICATION MODES
-| Mode | Detection | Behavior |
-|------|-----------|----------|
-| **production** | Default, `MODE=production` | Secure defaults, minimal logging |
-| **development** | `MODE=development` | Debug endpoints, verbose logging |
+## YAML COMMENT STYLE
+```yaml
+# CORRECT - comment above
+enabled: true
 
-## PATH SECURITY
-```go
-// REQUIRED for ALL path inputs
-safe, err := SafePath(input)
-if err != nil {
-    return fmt.Errorf("invalid path: %w", err)
-}
+# WRONG - inline comment
+enabled: true  # this is wrong
 ```
 
-Block: `..`, `%2e`, uppercase letters, special chars
+## APPLICATION MODES (PART 6)
+| Mode | Value | Purpose |
+|------|-------|---------|
+| Production | `production` | Default, no debug endpoints |
+| Development | `development` | Debug endpoints enabled |
 
-## ENV VARIABLES
-| Variable | Description |
-|----------|-------------|
-| MODE | production (default) or development |
-| NO_COLOR | Disable ANSI colors when set |
-| TERM=dumb | Disable ALL ANSI escapes |
-| DOMAIN | FQDN override |
-| DATABASE_URL | Database connection string |
+## PATH SECURITY
+- Use `SafePath()` for all user-provided paths
+- Block path traversal (`..`)
+- Normalize paths (`//` → `/`)
+- Validate path segments (lowercase alphanumeric, hyphens, underscores)
+
+## CONFIG STORAGE
+| Mode | Source of Truth | server.yml Role |
+|------|-----------------|-----------------|
+| Single Instance | server.yml | Primary configuration |
+| Cluster Mode | Database | Bootstrap + cache/backup |
 
 ---
-**Full details: AI.md PART 5, PART 6, PART 12**
+For complete details, see AI.md PART 5, 6, 12

@@ -3,56 +3,69 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use external cron → use internal scheduler
-- ❌ Skip email verification
-- ❌ Store backups unencrypted
-- ❌ Skip GeoIP for geolocation
+- ❌ Use external cron/scheduler (built-in only)
+- ❌ Skip backup encryption for sensitive data
+- ❌ Store GeoIP database in repo (download at runtime)
+- ❌ Hardcode SMTP settings (support multiple providers)
+- ❌ Skip audit logging for admin actions
 
-## REQUIRED - ALWAYS DO
-- ✅ Built-in scheduler for all background tasks
-- ✅ SMTP email with 40+ provider presets
-- ✅ GeoIP database with monthly updates
-- ✅ Prometheus metrics on /metrics
-- ✅ Encrypted backups with compression
-- ✅ Self-update capability
-
-## EMAIL (PART 18)
-- SMTP auto-detection from domain MX records
-- 40+ provider presets (Gmail, Outlook, etc.)
-- Template-based emails
-- Queue with retry logic
+## CRITICAL - ALWAYS DO
+- ✅ Built-in scheduler for ALL background tasks (PART 19)
+- ✅ SMTP with auto-detection and 40+ provider presets (PART 18)
+- ✅ GeoIP with embedded database and auto-updates (PART 20)
+- ✅ Prometheus metrics at /metrics (internal only) (PART 21)
+- ✅ Automated backup with encryption support (PART 22)
+- ✅ Self-update capability with rollback (PART 23)
 
 ## SCHEDULER (PART 19)
-- Internal cron-like scheduler
-- NO external cron/systemd timers
-- Persistent task history
-- Admin panel management
+| Task Type | Examples |
+|-----------|----------|
+| Cleanup | Sessions, tokens, rate limits, audit logs |
+| Maintenance | Log rotation, backups, health checks |
+| Updates | GeoIP database, blocklists, CVE database |
+| External | Weather alerts, SSL renewal |
+
+## EMAIL (PART 18)
+- SMTP auto-detection from MX records
+- 40+ provider presets (Gmail, Outlook, etc.)
+- TLS modes: auto, starttls, tls, none
+- Notification queue with retry and dead letter
 
 ## GEOIP (PART 20)
-- Embedded ip-location-db (sapics)
-- Monthly database updates
-- Country blocking support
-- IP geolocation API
+- Embedded database (sapics/ip-location-db)
+- Monthly auto-updates via scheduler
+- IP → Country, City, Timezone
+- Integration with rate limiting and blocking
 
 ## METRICS (PART 21)
-- Prometheus format on /metrics
-- INTERNAL only (not public)
-- Bearer token authentication
-- All app metrics exposed
+- Prometheus format at /metrics
+- INTERNAL only (never expose publicly)
+- Include: requests, latency, cache stats, DB connections
+- Go runtime stats, custom application metrics
 
-## BACKUP & RESTORE (PART 22)
-- Automated daily/hourly backups
-- AES-256-GCM encryption
-- Gzip compression
-- Config + database + uploads
-- Cluster-aware (coordinator backup)
+## BACKUP (PART 22)
+| Type | Frequency | Retention |
+|------|-----------|-----------|
+| Daily | 24h | 7 days |
+| Hourly | 1h | 24 hours |
+| Manual | On-demand | Forever |
+
+- Format: .tar.gz with optional encryption
+- Include: database, config, certificates
+- Cluster-aware: coordinated backups
 
 ## UPDATE (PART 23)
-- `--update check` - check for updates
-- `--update yes` - download and apply
-- `--update branch stable|beta|daily`
-- Semantic versioning
-- Rollback support
+```
+--update check         # Check for updates
+--update yes           # Install update
+--update branch stable # Switch branch
+--update branch beta
+--update branch daily
+```
+
+- Automatic rollback on failure
+- Preserve configuration
+- Verify checksums
 
 ---
-**Full details: AI.md PART 18, PART 19, PART 20, PART 21, PART 22, PART 23**
+For complete details, see AI.md PART 18-23

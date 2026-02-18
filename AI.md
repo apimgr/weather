@@ -869,7 +869,7 @@ paths:
 - ❌ Partial implementations - every feature must be 100% complete
 - ❌ "I'll come back to this later" - there is no later, do it NOW
 
-## REQUIRED - ALWAYS DO
+## CRITICAL - ALWAYS DO
 - ✅ Read AI.md PART 0, 1 at start of EVERY conversation
 - ✅ Read relevant PART before implementing ANY feature
 - ✅ Search AI.md before asking questions (answer is likely there)
@@ -909,7 +909,7 @@ Before completing ANY task:
 - [ ] Docs updated if code changed
 
 ---
-**Full details: AI.md PART 0, PART 1**
+For complete details, see AI.md PART 0, 1
 ```
 
 **Example Rules File Content (frontend-rules.md):**
@@ -917,7 +917,7 @@ Before completing ANY task:
 ```markdown
 # Frontend Rules (PART 16, 17)
 
-⚠️ **Server does the work. Client displays the result.** ⚠️
+⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
 - ❌ Client-side rendering (React, Vue, Angular, etc.)
@@ -933,7 +933,7 @@ Before completing ANY task:
 - ❌ Stub templates or "coming soon" pages
 - ❌ Empty handlers or placeholder routes
 
-## REQUIRED - ALWAYS DO
+## CRITICAL - ALWAYS DO
 - ✅ Server-side rendering (Go templates)
 - ✅ Progressive enhancement (works without JS)
 - ✅ Mobile-first responsive CSS
@@ -985,7 +985,7 @@ Apply to: IPv6, Tor .onion, API tokens, hashes, UUIDs, Base64
 | Desktop+ | `@media (min-width: 1024px)` |
 
 ---
-**Full details: AI.md PART 16, PART 17**
+For complete details, see AI.md PART 16, 17
 ```
 
 **Cursor Rules (.cursor/rules/):**
@@ -1186,10 +1186,12 @@ Each `.claude/rules/*.md` file should contain:
 ```markdown
 # {Topic} Rules (PART X, Y, Z)
 
+⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
+
 ## CRITICAL - NEVER DO
 - [List of prohibited actions from these PARTs]
 
-## REQUIRED - ALWAYS DO
+## CRITICAL - ALWAYS DO
 - [List of mandatory requirements from these PARTs]
 
 ## KEY DECISIONS (pre-answered)
@@ -1206,7 +1208,7 @@ Each `.claude/rules/*.md` file should contain:
 [Condensed rules table or checklist]
 
 ---
-**Full details: AI.md PART X, Y, Z**
+For complete details, see AI.md PART X, Y, Z
 ```
 
 **3. Context Compaction Survival:**
@@ -1783,14 +1785,14 @@ This distinction exists for clarity. When referring to OS-level resources that b
 
 ## How to Read This Large File
 
-**AI.md is ~2.0MB and ~55,300 lines. You CANNOT read it all at once. Follow these procedures.**
+**AI.md is ~2.0MB and ~55,580 lines. You CANNOT read it all at once. Follow these procedures.**
 
 ### File Size Reality
 
 | Constraint | Value |
 |------------|-------|
 | File size | ~2.0MB |
-| Line count | ~55,300 lines |
+| Line count | ~55,580 lines |
 | Read limit | ~500 lines per read |
 | Full reads needed | ~110 reads (impractical) |
 
@@ -1802,45 +1804,45 @@ This distinction exists for clarity. When referring to OS-level resources that b
 
 | PART | Line | Topic | When to Read |
 |------|------|-------|--------------|
-| 0 | ~1932 | AI Assistant Rules | **ALWAYS READ FIRST**, **AI Behavior Rules** |
-| 1 | ~3677 | Critical Rules | **ALWAYS READ FIRST** |
-| 2 | ~4928 | License & Attribution | License requirements |
-| 3 | ~5262 | Project Structure | Setting up new project, **CI/CD badge detection** |
-| 4 | ~6222 | OS-Specific Paths | Path handling |
-| 5 | ~6416 | Configuration | Config file work, **Path Security**, **Privileged Ports**, **Escalation** |
-| 6 | ~8327 | Application Modes | Mode handling, debug endpoints |
-| 7 | ~8935 | Binary Requirements | Binary building, **Display detection**, **TERM=dumb**, **NO_COLOR** |
-| 8 | ~9598 | Server Binary CLI | CLI flags/commands, **NO_COLOR Support**, **--color flag** |
-| 9 | ~12767 | Error Handling & Caching | Error/cache patterns |
-| 10 | ~13144 | Database & Cluster | Database work |
-| 11 | ~13690 | Security & Logging | Security features, **Scoped Agent Tokens**, **Context Detection** |
-| 12 | ~15582 | Server Configuration | Server settings |
-| 13 | ~16644 | Health & Versioning | Health endpoints |
-| 14 | ~17395 | API Structure | REST/GraphQL/Route Compliance, **Non-Interactive Text Output** |
-| 15 | ~19028 | SSL/TLS & Let's Encrypt | SSL certificates |
-| 16 | ~19999 | Web Frontend | Frontend/UI, **Sitemap**, **Site Verification**, **Branding/SEO** |
-| 17 | ~26168 | Admin Panel | Admin UI, **Server Admin**, **Scoped Agents API** |
-| 18 | ~28205 | Email & Notifications | Email/SMTP, **SMTP Auto-Detection** |
-| 19 | ~29528 | Scheduler | Background tasks, **NO external schedulers**, **Backup tasks** |
-| 20 | ~30013 | GeoIP | GeoIP features |
-| 21 | ~30086 | Metrics | Prometheus metrics, **INTERNAL only** |
-| 22 | ~31531 | Backup & Restore | Backup features, **Compliance encryption**, **Cluster backups** |
-| 23 | ~32260 | Update Command | Update feature |
-| 24 | ~32739 | Privilege Escalation & Service | Service/privilege work |
-| 25 | ~33637 | Service Support | Systemd/runit/rc.d/launchd templates |
-| 26 | ~33821 | Makefile | Local dev/tests/debug only, **NOT used in CI/CD** |
-| 27 | ~34576 | Docker | Docker/containers, **NEVER copy/symlink binaries** |
-| 28 | ~36075 | CI/CD Workflows | GitHub/GitLab/Gitea Actions |
-| 29 | ~38929 | Testing & Development | Testing/dev workflow, **AI Docker Compose Rules**, **Content Negotiation Testing** |
-| 30 | ~40750 | ReadTheDocs Documentation | Documentation |
-| 31 | ~41482 | I18N & A11Y | Internationalization |
-| 32 | ~41903 | Tor Hidden Service | Tor support, **binary controls Tor** |
-| 33 | ~43682 | Client & Agent | Client **REQUIRED**, Agent optional - CLI/TUI/GUI, **Scoped Agent Tokens**, **Smart Context**, **First-Run Wizard** |
-| 34 | ~48097 | Multi-User | **OPTIONAL** - Regular User accounts/registration, vanity URLs |
-| 35 | ~51749 | Organizations | **OPTIONAL** - multi-user orgs, vanity URLs |
-| 36 | ~52390 | Custom Domains | **OPTIONAL** - user/org branded domains |
-| 37 | ~53413 | IDEA.md Reference | **Examples only** - NEVER modify |
-| FINAL | ~53667 | Compliance Checklist | Final verification, **AI Quick Reference Rules**, **Console/Banner Checklist** |
+| 0 | ~1939 | AI Assistant Rules | **ALWAYS READ FIRST**, **AI Behavior Rules** |
+| 1 | ~3723 | Critical Rules | **ALWAYS READ FIRST** |
+| 2 | ~4974 | License & Attribution | License requirements |
+| 3 | ~5308 | Project Structure | Setting up new project, **CI/CD badge detection** |
+| 4 | ~6269 | OS-Specific Paths | Path handling |
+| 5 | ~6463 | Configuration | Config file work, **Path Security**, **Privileged Ports**, **Escalation** |
+| 6 | ~8375 | Application Modes | Mode handling, debug endpoints |
+| 7 | ~8983 | Binary Requirements | Binary building, **Display detection**, **TERM=dumb**, **NO_COLOR** |
+| 8 | ~9646 | Server Binary CLI | CLI flags/commands, **NO_COLOR Support**, **--color flag** |
+| 9 | ~12821 | Error Handling & Caching | Error/cache patterns |
+| 10 | ~13198 | Database & Cluster | Database work |
+| 11 | ~13744 | Security & Logging | Security features, **Scoped Agent Tokens**, **Context Detection** |
+| 12 | ~15636 | Server Configuration | Server settings |
+| 13 | ~16763 | Health & Versioning | Health endpoints |
+| 14 | ~17514 | API Structure | REST/GraphQL/Route Compliance, **Non-Interactive Text Output** |
+| 15 | ~19147 | SSL/TLS & Let's Encrypt | SSL certificates |
+| 16 | ~20118 | Web Frontend | Frontend/UI, **Sitemap**, **Site Verification**, **Branding/SEO** |
+| 17 | ~26287 | Admin Panel | Admin UI, **Server Admin**, **Scoped Agents API** |
+| 18 | ~28324 | Email & Notifications | Email/SMTP, **SMTP Auto-Detection** |
+| 19 | ~29647 | Scheduler | Background tasks, **NO external schedulers**, **Backup tasks** |
+| 20 | ~30132 | GeoIP | GeoIP features |
+| 21 | ~30205 | Metrics | Prometheus metrics, **INTERNAL only** |
+| 22 | ~31650 | Backup & Restore | Backup features, **Compliance encryption**, **Cluster backups** |
+| 23 | ~32379 | Update Command | Update feature |
+| 24 | ~32858 | Privilege Escalation & Service | Service/privilege work |
+| 25 | ~33756 | Service Support | Systemd/runit/rc.d/launchd templates |
+| 26 | ~33940 | Makefile | Local dev/tests/debug only, **NOT used in CI/CD** |
+| 27 | ~34717 | Docker | Docker/containers, **NEVER copy/symlink binaries** |
+| 28 | ~36223 | CI/CD Workflows | GitHub/GitLab/Gitea Actions |
+| 29 | ~39157 | Testing & Development | Testing/dev workflow, **AI Docker Compose Rules**, **Content Negotiation Testing** |
+| 30 | ~40978 | ReadTheDocs Documentation | Documentation |
+| 31 | ~41710 | I18N & A11Y | Internationalization |
+| 32 | ~42131 | Tor Hidden Service | Tor support, **binary controls Tor** |
+| 33 | ~43910 | Client & Agent | Client **REQUIRED**, Agent optional - CLI/TUI/GUI, **Scoped Agent Tokens**, **Smart Context**, **First-Run Wizard** |
+| 34 | ~48325 | Multi-User | **OPTIONAL** - Regular User accounts/registration, vanity URLs |
+| 35 | ~51977 | Organizations | **OPTIONAL** - multi-user orgs, vanity URLs |
+| 36 | ~52618 | Custom Domains | **OPTIONAL** - user/org branded domains |
+| 37 | ~53641 | IDEA.md Reference | **Examples only** - NEVER modify |
+| FINAL | ~53895 | Compliance Checklist | Final verification, **AI Quick Reference Rules**, **Console/Banner Checklist** |
 
 **When Implementing OPTIONAL PARTs (34-36, Agent from 33):**
 1. Change PART title from `OPTIONAL` → `NON-NEGOTIABLE` in AI.md
@@ -1872,7 +1874,7 @@ When reading a PART and you encounter a reference like "See PART X" or "Read PAR
 2. Jump to the referenced PART and read it
 3. **Return to your original location** and continue reading
 
-Example: If you're reading PART 5 at line 5356 and it says "See PART 10", read PART 10, then **return to PART 5 line 5356** and continue.
+Example: If you're reading PART 5 at line 7000 and it says "See PART 10", read PART 10, then **return to PART 5 line 7000** and continue.
 
 **Never abandon your current PART after following a reference.**
 
@@ -2610,7 +2612,27 @@ Implemented core server functionality and admin panel.
 | **mkdocs.yml** | PART 30, docs/ structure | Nav matches actual doc files |
 | **.readthedocs.yaml** | PART 30 | Config correct for project |
 
-### Step 4: Documentation Sync
+### Step 4: AI Tool Configuration (Rule Files)
+**Do AI rule files exist and follow the required format?**
+
+| Check | Requirement | Verify |
+|-------|-------------|--------|
+| **All 14 rule files exist** | `.claude/rules/*.md` | ai-rules, project-rules, config-rules, binary-rules, backend-rules, api-rules, frontend-rules, features-rules, service-rules, makefile-rules, docker-rules, cicd-rules, testing-rules, optional-rules |
+| **Correct PART assignments** | Each file covers correct PARTs | See PART 0 table for file→PART mapping |
+| **Required format** | Each file has all required sections | See format requirements below |
+| **Not outdated** | Rule files newer than AI.md | Regenerate if AI.md modified |
+
+**Each rule file MUST contain (in order):**
+1. Header: `# {Topic} Rules (PART X, Y, Z)`
+2. Warning: `⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️`
+3. Section: `## CRITICAL - NEVER DO`
+4. Section: `## CRITICAL - ALWAYS DO`
+5. Key rules summary (tables, lists)
+6. Reference: `For complete details, see AI.md PART X, Y, Z`
+
+**If rule files missing or incorrect:** Regenerate from AI.md using the templates in PART 0.
+
+### Step 5: Documentation Sync
 **All documentation MUST match actual code/project state AND comply with spec PART:**
 
 | Documentation | Check Against | Spec Reference | Update If |
@@ -2622,10 +2644,10 @@ Implemented core server functionality and admin panel.
 | **IDEA.md** | Actual business logic | — | Features/data models changed |
 | **CLI --help** | Actual flags/commands | PART 8 | CLI changed |
 
-### Step 5: Check Against FINAL CHECKPOINT
+### Step 6: Check Against FINAL CHECKPOINT
 Read the FINAL CHECKPOINT section and verify ALL items.
 
-### Step 6: FIX Issues (Don't Document Them)
+### Step 7: FIX Issues (Don't Document Them)
 | If Found | Action |
 |----------|--------|
 | Code doesn't match spec | Fix the code |
@@ -2641,7 +2663,7 @@ Read the FINAL CHECKPOINT section and verify ALL items.
 | Docker files wrong | Update docker/* files |
 | Makefile targets broken | Fix Makefile |
 
-### Step 7: Track Issues in AUDIT.AI.md
+### Step 8: Track Issues in AUDIT.AI.md
 
 **Use AUDIT.AI.md for audit tracking, NOT TODO.AI.md.**
 
@@ -2686,7 +2708,7 @@ Spec version: {line count or hash}
 | **Completion** | Delete AUDIT.AI.md when all issues resolved |
 | **No partial** | Don't leave AUDIT.AI.md with unchecked items |
 
-### Step 8: Report to User
+### Step 9: Report to User
 ```
 ✓ Audit complete
 ✓ Code compliant with spec
@@ -2731,6 +2753,25 @@ Spec version: {line count or hash}
 | **Required** | Write `{project_dir}/.git/COMMIT_MESS` file with commit message instead |
 
 **Since AI cannot commit, it MUST write the commit message to `{project_dir}/.git/COMMIT_MESS` so the user can commit with:** `git commit -F .git/COMMIT_MESS`
+
+### Remote Image/Screenshot Handling
+
+**When an image or screenshot is from a URL (not a local file), AI MUST:**
+
+1. Download it first using curl:
+   ```bash
+   curl -q -LSsf -o {tmp_dir}/apimgr/weather/screenshot_XXXX.png {url}
+   ```
+2. Then view the downloaded local file using the Read tool
+
+| Step | Command |
+|------|---------|
+| Download | `curl -q -LSsf -o {tmp_dir}/apimgr/weather/screenshot_XXXX.png {url}` |
+| View | Use Read tool on the downloaded file |
+
+**Path format:** `{tmp_dir}/apimgr/weather/screenshot_XXXX` where `XXXX` is an incremental number (0001, 0002, etc.)
+
+**Why:** Remote URLs may require authentication, have rate limits, or change. Downloading first ensures the image is captured and can be re-examined without re-fetching.
 
 ## Prohibited Actions
 
@@ -5423,7 +5464,7 @@ PROJECTORG=$(git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)/[^/]+(
 │       ├── backend-rules.md    # PART 9, 10, 11, 32: Error Handling & Caching, Database & Cluster, Security & Logging, Tor Hidden Service
 │       ├── api-rules.md        # PART 13, 14, 15: Health & Versioning, API Structure, SSL/TLS & Let's Encrypt
 │       ├── frontend-rules.md   # PART 16, 17: Web Frontend, Admin Panel
-│       ├── features-rules.md   # PART 18-23: Email, Scheduler, GeoIP, Metrics, Backup, Update
+│       ├── features-rules.md   # PART 18-23: Email & Notifications, Scheduler, GeoIP, Metrics, Backup & Restore, Update Command
 │       ├── service-rules.md    # PART 24, 25: Privilege Escalation & Service, Service Support
 │       ├── makefile-rules.md   # PART 26: Makefile (local dev only, NOT CI/CD)
 │       ├── docker-rules.md     # PART 27: Docker
@@ -53869,6 +53910,17 @@ A weather aggregation API that fetches data from external providers, caches it, 
 - [ ] **NEVER allow outdated files** - README, docs, Swagger, GraphQL must match current state
 - [ ] Use TODO.AI.md for tasks when 3+ items
 - [ ] Use PLAN.AI.md for implementation planning
+
+### Rule Files (.claude/rules/)
+
+- [ ] **All 14 rule files exist** - ai-rules, project-rules, config-rules, binary-rules, backend-rules, api-rules, frontend-rules, features-rules, service-rules, makefile-rules, docker-rules, cicd-rules, testing-rules, optional-rules
+- [ ] **Correct PART assignments** - each file covers PARTs specified in PART 0 table
+- [ ] **Required header format** - `# {Topic} Rules (PART X, Y, Z)`
+- [ ] **Required warning line** - `⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️`
+- [ ] **CRITICAL - NEVER DO section** - lists prohibited actions from relevant PARTs
+- [ ] **CRITICAL - ALWAYS DO section** - lists mandatory requirements from relevant PARTs
+- [ ] **Reference line** - `For complete details, see AI.md PART X, Y, Z`
+- [ ] **Not outdated** - rule files regenerated when AI.md modified
 
 ### Behavior Rules
 

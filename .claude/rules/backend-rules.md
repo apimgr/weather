@@ -3,57 +3,64 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use bcrypt → use Argon2id for passwords
-- ❌ Store passwords/tokens in plaintext
-- ❌ Use string concatenation for SQL → parameterized queries
-- ❌ Expose stack traces to users
-- ❌ Use mattn/go-sqlite3 → use modernc.org/sqlite
+- ❌ Use bcrypt for passwords - use Argon2id
+- ❌ Store plaintext passwords anywhere
+- ❌ Use `mattn/go-sqlite3` (requires CGO) - use `modernc.org/sqlite`
+- ❌ Use `lib/pq` for PostgreSQL - use `jackc/pgx/v5`
+- ❌ Log passwords or tokens (even hashed)
+- ❌ Reveal internal errors to users
+- ❌ Use external cron/scheduler
 
-## REQUIRED - ALWAYS DO
-- ✅ Argon2id for password hashing
-- ✅ SHA-256 for token hashing
-- ✅ Parameterized SQL queries
-- ✅ Rate limiting on all endpoints
-- ✅ Tor hidden service auto-enabled when Tor found
-- ✅ Pure Go SQLite (CGO_ENABLED=0)
+## CRITICAL - ALWAYS DO
+- ✅ Argon2id for password hashing (OWASP 2023 params)
+- ✅ SHA-256 for API token hashing (fast lookup needed)
+- ✅ `modernc.org/sqlite` for SQLite (pure Go, no CGO)
+- ✅ `jackc/pgx/v5` for PostgreSQL
+- ✅ Parameterized queries only (never string concatenation)
+- ✅ Separate error messages by audience (user, admin, console, log)
+- ✅ Built-in scheduler for all background tasks
+- ✅ Support Valkey/Redis for caching and clustering
 
 ## PASSWORD HASHING (Argon2id)
 ```go
-// CORRECT - Use Argon2id
-import "golang.org/x/crypto/argon2"
-
-hash := argon2.IDKey(password, salt, 1, 64*1024, 4, 32)
-
-// NEVER - No bcrypt
-import "golang.org/x/crypto/bcrypt" // ❌ FORBIDDEN
+const (
+    ArgonTime    = 3        // Iterations
+    ArgonMemory  = 64*1024  // 64 MB
+    ArgonThreads = 4        // Parallelism
+    ArgonKeyLen  = 32       // Output length
+    ArgonSaltLen = 16       // Salt length
+)
 ```
 
-## TOKEN STORAGE
-| Type | Storage | Example |
-|------|---------|---------|
-| Passwords | Argon2id hash | Admin/user passwords |
-| API tokens | SHA-256 hash | `adm_`, `usr_`, `org_` prefixed |
-| Sessions | Random + SHA-256 | Session IDs |
+## DATABASE DRIVERS
+| Database | Driver | Config Aliases |
+|----------|--------|----------------|
+| SQLite | `modernc.org/sqlite` | sqlite, sqlite2, sqlite3 |
+| PostgreSQL | `jackc/pgx/v5` | postgres, pgsql, postgresql |
+| MySQL | `go-sql-driver/mysql` | mysql, mariadb |
+| libSQL | `tursodatabase/libsql-client-go` | libsql, turso |
 
-## DATABASE
-| Driver | Use Case |
-|--------|----------|
-| SQLite | Default, single instance |
-| PostgreSQL | Cluster mode |
-| MySQL/MariaDB | Cluster mode |
+## ERROR MESSAGES BY CONTEXT
+| Audience | Detail Level | Example |
+|----------|--------------|---------|
+| User | Minimal, helpful | "Invalid credentials" |
+| Admin | Actionable | "Login failed for user@example.com" |
+| Console | Full | Stack traces, full context |
+| Log | Structured | JSON with request_id, timestamps |
 
-## ERROR MESSAGES
-| Audience | Detail Level |
-|----------|--------------|
-| User (WebUI/API) | Minimal, helpful |
-| Admin (Panel) | Actionable, no stack traces |
-| Console/Logs | Full detail with context |
+## TOR HIDDEN SERVICE (PART 32)
+- Auto-enabled when Tor binary found on system
+- Binary controls Tor startup (not Docker)
+- Generate .onion address on first run
+- Store keys in `{data_dir}/tor/`
 
-## TOR HIDDEN SERVICE
-- Auto-enabled when Tor binary found at startup
-- Binary controls Tor lifecycle
-- .onion address generated and stored
-- All routes accessible via .onion
+## RATE LIMITING
+| Endpoint | Default | Window |
+|----------|---------|--------|
+| Login | 5 attempts | 15 min |
+| Password reset | 3 attempts | 1 hour |
+| API (auth) | Configurable | 1 min |
+| API (anon) | Configurable | 1 min |
 
 ---
-**Full details: AI.md PART 9, PART 10, PART 11, PART 32**
+For complete details, see AI.md PART 9, 10, 11, 32

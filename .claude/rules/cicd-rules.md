@@ -3,54 +3,91 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use Makefile in CI/CD → explicit commands only
+- ❌ Use Makefile in CI/CD (explicit commands only)
+- ❌ Hardcode Go version (use `go-version: 'stable'`)
 - ❌ Skip any of the 8 platforms
-- ❌ Use different logic in GitHub vs Gitea
-- ❌ Include 'v' prefix in VERSION → strip it
+- ❌ Use v prefix in VERSION (strip it: v1.2.3 → 1.2.3)
+- ❌ Forget OfficialSite in LDFLAGS
 
-## REQUIRED - ALWAYS DO
-- ✅ Explicit go build commands with all env vars
-- ✅ All 8 platforms: linux/darwin/windows/freebsd × amd64/arm64
-- ✅ GitHub/Gitea/Jenkins must match exactly
-- ✅ VERSION from tag (strip 'v' prefix)
+## CRITICAL - ALWAYS DO
+- ✅ Explicit commands with all env vars
+- ✅ Same logic across GitHub, Gitea, Jenkins
+- ✅ Build all 8 platforms (linux/darwin/windows/freebsd × amd64/arm64)
 - ✅ Docker builds on EVERY push
+- ✅ Proper LDFLAGS: Version, CommitID, BuildDate, OfficialSite
 
-## LDFLAGS (REQUIRED)
+## WORKFLOW FILES
+| Platform | Location |
+|----------|----------|
+| GitHub | `.github/workflows/*.yml` |
+| Gitea | `.gitea/workflows/*.yml` |
+| GitLab | `.gitlab-ci.yml` |
+| Jenkins | `Jenkinsfile` |
+
+## REQUIRED WORKFLOWS
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `release.yml` | Tag push (v*) | Stable releases |
+| `beta.yml` | Branch: beta | Beta releases |
+| `daily.yml` | Branch: main, schedule | Daily builds |
+| `docker.yml` | Any push | Docker images |
+
+## VERSION FROM TAG
 ```bash
--ldflags "-s -w \
+# Strip 'v' prefix from semver tags only
+VERSION=$(echo $TAG | sed 's/^v//')
+# v1.2.3 → 1.2.3
+# dev → dev (unchanged)
+# beta → beta (unchanged)
+```
+
+## LDFLAGS
+```bash
+LDFLAGS="-s -w \
   -X 'main.Version=${VERSION}' \
   -X 'main.CommitID=${COMMIT}' \
   -X 'main.BuildDate=${DATE}' \
   -X 'main.OfficialSite=${SITE}'"
 ```
 
-## VERSION HANDLING
-| Git Ref | VERSION |
-|---------|---------|
-| `v1.2.3` tag | `1.2.3` (strip 'v') |
-| `dev` branch | `dev` |
-| `beta` branch | `beta` |
+## 8 PLATFORM BUILD MATRIX
+```yaml
+strategy:
+  matrix:
+    goos: [linux, darwin, windows, freebsd]
+    goarch: [amd64, arm64]
+```
 
 ## DOCKER TAGS
-| Trigger | Tags Applied |
-|---------|--------------|
+| Trigger | Tags |
+|---------|------|
 | Any push | `devel`, `{commit}` |
-| Beta branch | + `beta` |
+| Beta branch | adds `beta` |
 | Release tag | `{version}`, `latest`, `YYMM`, `{commit}` |
 
-## BUILD MATRIX
+## CLI BINARY NAMING
+```bash
+# Server binary
+weather-linux-amd64
+weather-darwin-arm64
+weather-windows-amd64.exe
+
+# CLI binary (CORRECT)
+weather-cli-linux-amd64
+weather-cli-darwin-arm64
+weather-cli-windows-amd64.exe
+
+# WRONG
+weather-linux-amd64-cli
+```
+
+## ENVIRONMENT VARIABLES
 ```yaml
-matrix:
-  include:
-    - { goos: linux, goarch: amd64 }
-    - { goos: linux, goarch: arm64 }
-    - { goos: darwin, goarch: amd64 }
-    - { goos: darwin, goarch: arm64 }
-    - { goos: windows, goarch: amd64 }
-    - { goos: windows, goarch: arm64 }
-    - { goos: freebsd, goarch: amd64 }
-    - { goos: freebsd, goarch: arm64 }
+env:
+  CGO_ENABLED: 0
+  GOOS: ${{ matrix.goos }}
+  GOARCH: ${{ matrix.goarch }}
 ```
 
 ---
-**Full details: AI.md PART 28**
+For complete details, see AI.md PART 28

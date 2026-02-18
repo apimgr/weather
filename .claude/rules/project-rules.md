@@ -3,59 +3,56 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Put Dockerfile in project root → `docker/Dockerfile`
-- ❌ Create config/, data/, logs/ in project root
-- ❌ Create TODO.md, CHANGELOG.md, SUMMARY.md, COMPLIANCE.md
-- ❌ Put CONTRIBUTING.md in root → `.github/CONTRIBUTING.md`
+- ❌ Create files not in allowed list (see PART 3)
+- ❌ Create directories not in allowed list
+- ❌ Put Dockerfile in project root (must be `docker/Dockerfile`)
+- ❌ Use `.yaml` extension (always `.yml`)
+- ❌ Create SUMMARY.md, COMPLIANCE.md, NOTES.md, CHANGELOG.md
+- ❌ Create config/, data/, logs/, tmp/ in project root
 - ❌ Use vendor/ directory (use Go modules)
-- ❌ Create *.example.*, *.sample.* files
-- ❌ Use plural directory names → singular: `handler/`, `model/`
-- ❌ Use CamelCase for directories → lowercase only
+- ❌ Use GPL/AGPL/LGPL licensed dependencies
+- ❌ Hardcode paths - use OS-specific path detection
 
-## REQUIRED - ALWAYS DO
-- ✅ Source code in `src/` directory
-- ✅ Docker files in `docker/` directory
-- ✅ Use `server.yml` (not .yaml)
-- ✅ File naming: `lowercase_snake.go`
-- ✅ Singular directory names: `handler/`, `model/`, `service/`
-- ✅ MIT License in LICENSE.md
-- ✅ All 8 platforms: linux/darwin/windows/freebsd × amd64/arm64
+## CRITICAL - ALWAYS DO
+- ✅ All source code in `src/` directory
+- ✅ Dockerfile in `docker/Dockerfile`
+- ✅ Use MIT License with embedded third-party licenses
+- ✅ Support all 4 OSes: Linux, macOS, Windows, FreeBSD
+- ✅ Support both AMD64 and ARM64 architectures
+- ✅ Use latest stable Go version
+- ✅ Use OS-specific paths (see PART 4)
+- ✅ Use `server.yml` for config files
+- ✅ All paths relative to project root
 
 ## DIRECTORY STRUCTURE
 ```
-src/                        # Go source code (REQUIRED)
-src/main.go                 # Entry point
-src/config/                 # Configuration package
-src/server/                 # HTTP server package
-src/client/                 # CLI client (REQUIRED)
-docker/                     # Docker files (REQUIRED)
-docker/Dockerfile           # Multi-stage Dockerfile
-docker/docker-compose.yml   # Production compose
-binaries/                   # Build output (gitignored)
+./                        # Project root
+├── src/                  # All Go source code
+├── docker/               # Dockerfile, compose files
+├── docs/                 # MkDocs documentation
+├── tests/                # Test scripts
+├── scripts/              # Production scripts
+├── binaries/             # Build output (gitignored)
+├── .claude/rules/        # AI rule files (this directory)
+├── AI.md, IDEA.md        # Specifications
+├── README.md, LICENSE.md # Documentation
+└── Makefile, go.mod      # Build files
 ```
 
-## OS-SPECIFIC PATHS
+## OS PATH PATTERNS
+| OS | Config | Data | Logs |
+|----|--------|------|------|
+| Linux (root) | `/etc/apimgr/weather/` | `/var/lib/apimgr/weather/` | `/var/log/apimgr/weather/` |
+| Linux (user) | `~/.config/apimgr/weather/` | `~/.local/share/apimgr/weather/` | `~/.local/log/apimgr/weather/` |
+| macOS | `/Library/Application Support/apimgr/weather/` | same | `/Library/Logs/apimgr/weather/` |
+| Windows | `%ProgramData%\apimgr\weather\` | same | `%ProgramData%\apimgr\weather\logs\` |
+| Docker | `/config/weather/` | `/data/weather/` | `/data/log/weather/` |
 
-### Linux/BSD (Root)
-| Type | Path |
-|------|------|
-| Config | `/etc/apimgr/weather/server.yml` |
-| Data | `/var/lib/apimgr/weather/` |
-| Logs | `/var/log/apimgr/weather/` |
-
-### Linux/BSD (User)
-| Type | Path |
-|------|------|
-| Config | `~/.config/apimgr/weather/server.yml` |
-| Data | `~/.local/share/apimgr/weather/` |
-| Logs | `~/.local/share/apimgr/weather/logs/` |
-
-### Docker
-| Type | Path |
-|------|------|
-| Config | `/config/server.yml` |
-| Data | `/data/` |
-| Database | `/data/db/sqlite/` |
+## LICENSE REQUIREMENTS
+- MIT License for all projects
+- LICENSE.md required in root
+- All 3rd party licenses embedded in LICENSE.md
+- NEVER use GPL/AGPL/LGPL dependencies
 
 ---
-**Full details: AI.md PART 2, PART 3, PART 4**
+For complete details, see AI.md PART 2, 3, 4

@@ -3,53 +3,74 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Require manual escalation for every start
-- ❌ Skip privilege dropping after port binding
-- ❌ Run as root for entire lifetime
+- ❌ Require manual service file creation
+- ❌ Assume user has root/admin access
+- ❌ Skip privilege detection before escalation
+- ❌ Run as root after binding privileged ports (Unix)
+- ❌ Prompt for escalation when user cannot escalate
 
-## REQUIRED - ALWAYS DO
-- ✅ `--service install` for one-time setup
-- ✅ Privilege drop after binding privileged ports
-- ✅ Platform-specific service management
-- ✅ Auto-create system user if needed
+## CRITICAL - ALWAYS DO
+- ✅ Auto-generate service files on `--service --install`
+- ✅ Detect privilege level (root vs user)
+- ✅ Check if user CAN escalate before prompting
+- ✅ Drop privileges after binding ports <1024 (Unix)
+- ✅ Support both system and user service installations
+- ✅ Support all service managers per platform
 
-## PRIVILEGE ESCALATION
-| Mode | How Started | Privilege |
-|------|-------------|-----------|
-| Service | `sudo weather --service install` | Root → drop to user |
-| User | `weather` | User-level only |
-
-## SERVICE COMMANDS
+## SERVICE MANAGEMENT
 ```bash
---service install     # Install as system service
---service uninstall   # Remove system service
---service start       # Start the service
---service stop        # Stop the service
---service restart     # Restart the service
---service reload      # Reload configuration
---service --help      # Show service help
+weather --service --install    # Install service
+weather --service --uninstall  # Remove service
+weather --service --disable    # Disable autostart
+weather --service start        # Start service
+weather --service stop         # Stop service
+weather --service restart      # Restart service
+weather --service reload       # Reload config
+weather --service status       # Show status (read-only)
+```
+
+## PLATFORM SERVICE MANAGERS
+| Platform | System Service | User Service |
+|----------|---------------|--------------|
+| Linux | systemd | systemd --user |
+| macOS | launchd (LaunchDaemons) | launchd (LaunchAgents) |
+| FreeBSD | rc.d | user crontab |
+| Windows | SCM (Services) | Task Scheduler |
+
+## PRIVILEGE ESCALATION FLOW
+```
+User runs: weather --service --install
+    │
+    ├─► Is elevated (root/admin)?
+    │   └─► YES: Install system service
+    │
+    ├─► Can escalate (sudo/UAC)?
+    │   └─► YES: Ask user, re-exec elevated
+    │
+    └─► Cannot escalate?
+        └─► Install user service OR show clear error
 ```
 
 ## UNIX PRIVILEGE DROP
-1. Start as root (via service manager)
-2. Create system user `weather` if needed
-3. Create directories, set ownership
-4. Bind privileged ports (80, 443)
-5. **DROP PRIVILEGES** to `weather` user
-6. Run application as non-root
+1. Start as root (service manager)
+2. Create `weather` user if needed
+3. Bind privileged ports (80, 443)
+4. **DROP to `weather` user**
+5. Initialize application
+6. Serve requests (as user)
 
-## WINDOWS
-- Uses Virtual Service Account (NT SERVICE\weather)
-- No privilege drop needed (already minimal)
-- Service installed via SCM
+## WINDOWS VIRTUAL SERVICE ACCOUNT
+- Auto-created: `NT SERVICE\weather`
+- No manual user creation needed
+- Minimal privileges by design
+- No privilege dropping (already minimal)
 
-## SUPPORTED SERVICE MANAGERS
-| Platform | Init System |
-|----------|-------------|
-| Linux | systemd, runit, rc.d |
-| macOS | launchd |
-| FreeBSD | rc.d |
-| Windows | SCM (Service Control Manager) |
+## OPERATIONS REQUIRING AUTH
+| Operation | Authorization |
+|-----------|---------------|
+| `--maintenance setup` | First-run OR setup token OR root |
+| `--maintenance restore` | Admin creds OR root OR empty DB |
+| `--maintenance mode` | Admin creds OR root |
 
 ---
-**Full details: AI.md PART 24, PART 25**
+For complete details, see AI.md PART 24, 25
