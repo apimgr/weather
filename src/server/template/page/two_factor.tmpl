@@ -1,0 +1,37 @@
+{{define "page/two_factor.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>Two-Factor Authentication</h1>
+            <p>Enter your authentication code</p>
+
+            {{if .error}}
+            <div class="alert alert-error">{{.error}}</div>
+            {{end}}
+
+            <form method="POST" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+                <div class="form-group">
+                    <label for="code">Authentication Code</label>
+                    <input type="text" id="code" name="code" required autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000">
+                </div>
+                <button type="submit" class="btn btn-primary">Verify</button>
+            </form>
+
+            <div class="auth-links">
+                <a href="/auth/recovery/use">Use recovery key instead</a>
+                <a href="/auth/login">Back to Login</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}

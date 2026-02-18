@@ -1,0 +1,56 @@
+{{define "page/verify_email.tmpl"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>Verify Email</h1>
+            <p>Verifying your email address...</p>
+
+            {{if .error}}
+            <div class="alert alert-error">{{.error}}</div>
+            {{end}}
+
+            <div class="auth-message">
+                <p>Please wait while we verify your email address.</p>
+            </div>
+
+            <script>
+                (function() {
+                    var code = "{{.code}}";
+                    if (code) {
+                        var form = document.createElement("form");
+                        form.method = "POST";
+                        form.action = "/auth/verify-email";
+                        var codeInput = document.createElement("input");
+                        codeInput.type = "hidden";
+                        codeInput.name = "code";
+                        codeInput.value = code;
+                        form.appendChild(codeInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                })();
+            </script>
+
+            <noscript>
+                <form method="POST" action="/auth/verify-email" class="auth-form">
+                    <input type="hidden" name="code" value="{{.code}}">
+                    <button type="submit" class="btn btn-primary">Verify Email</button>
+                </form>
+            </noscript>
+
+            <div class="auth-links">
+                <a href="/auth/login">Back to Login</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{{end}}

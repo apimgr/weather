@@ -779,9 +779,9 @@ func (m *AdminSessionModel) CreateSession(adminID int64, ipAddress, userAgent st
 	expiresAt := time.Now().Add(duration)
 
 	result, err := database.GetServerDB().Exec(`
-		INSERT INTO server_admin_sessions (admin_id, session_id, ip_address, user_agent, created_at, expires_at, last_used_at)
-		VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP)
-	`, adminID, sessionID, ipAddress, userAgent, expiresAt)
+		INSERT INTO server_admin_sessions (id, admin_id, ip_address, user_agent, created_at, expires_at)
+		VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+	`, sessionID, adminID, ipAddress, userAgent, expiresAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)

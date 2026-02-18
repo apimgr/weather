@@ -65,7 +65,7 @@ func setupNotificationAPITest(t *testing.T) (*gin.Engine, *sql.DB, *sql.DB, *ser
 	r := gin.New()
 
 	// User notification routes
-	user := r.Group("/api/v1/user/notifications")
+	user := r.Group("/api/v1/users/notifications")
 	user.Use(mockAuthMiddleware(1, false)) // Mock user ID = 1
 	{
 		user.GET("", notificationAPIHandler.GetUserNotifications)
@@ -140,7 +140,7 @@ func TestUserNotificationAPI_GetNotifications(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/user/notifications", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/users/notifications", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -177,7 +177,7 @@ func TestUserNotificationAPI_GetUnreadCount(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/user/notifications/count", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/users/notifications/count", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -210,7 +210,7 @@ func TestUserNotificationAPI_MarkAsRead(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/api/v1/user/notifications/"+notif.ID+"/read", nil)
+	req, _ := http.NewRequest("PATCH", "/api/v1/users/notifications/"+notif.ID+"/read", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -234,7 +234,7 @@ func TestUserNotificationAPI_MarkAllAsRead(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/api/v1/user/notifications/read", nil)
+	req, _ := http.NewRequest("PATCH", "/api/v1/users/notifications/read", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -257,7 +257,7 @@ func TestUserNotificationAPI_DismissNotification(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/api/v1/user/notifications/"+notif.ID+"/dismiss", nil)
+	req, _ := http.NewRequest("PATCH", "/api/v1/users/notifications/"+notif.ID+"/dismiss", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -280,7 +280,7 @@ func TestUserNotificationAPI_DeleteNotification(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/api/v1/user/notifications/"+notif.ID, nil)
+	req, _ := http.NewRequest("DELETE", "/api/v1/users/notifications/"+notif.ID, nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -300,7 +300,7 @@ func TestUserNotificationAPI_GetPreferences(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/user/notifications/preferences", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/users/notifications/preferences", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -341,7 +341,7 @@ func TestUserNotificationAPI_UpdatePreferences(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/api/v1/user/notifications/preferences", bytes.NewBuffer(body))
+	req, _ := http.NewRequest("PATCH", "/api/v1/users/notifications/preferences", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
 
@@ -391,7 +391,7 @@ func TestUserNotificationAPI_GetStatistics(t *testing.T) {
 
 	// Make request
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/user/notifications/stats", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/users/notifications/stats", nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {

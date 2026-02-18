@@ -123,6 +123,8 @@
     {{template "footer" .}}
 
     <script>
+        const apiBase = '{{.admin_api_path}}';
+
         // robots.txt form handler
         document.getElementById('robots-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -130,7 +132,7 @@
             const content = document.getElementById('robots-txt').value;
 
             try {
-                const response = await fetch('/api/v1/admin/server/web/robots', {
+                const response = await fetch(apiBase + '/server/web/robots', {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -167,7 +169,7 @@
             }
 
             try {
-                const response = await fetch('/api/v1/admin/server/web/security', {
+                const response = await fetch(apiBase + '/server/web/security', {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',

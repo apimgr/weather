@@ -3,38 +3,36 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Different response format for same endpoint
-- ❌ Expose internal paths or IPs in errors
-- ❌ Return stack traces to users
-- ❌ Skip content negotiation
-- ❌ Use inconsistent error format
+- ❌ Missing corresponding API for web pages
+- ❌ Inconsistent JSON response format
+- ❌ Skip CSRF tokens on forms
+- ❌ Missing rate limiting
 
 ## REQUIRED - ALWAYS DO
-- ✅ /healthz endpoint (web) + /api/v1/healthz (API)
-- ✅ Content negotiation (HTML for browsers, JSON for API)
-- ✅ OpenAPI/Swagger at /openapi, /openapi.json
-- ✅ GraphQL at /graphql
 - ✅ Every web page has corresponding API endpoint
+- ✅ Content negotiation (HTML for browsers, JSON for API)
+- ✅ Standard error response format
+- ✅ /healthz and /api/v1/healthz endpoints
 - ✅ SSL/TLS with Let's Encrypt support
-- ✅ Trailing newline on all responses
 
 ## ENDPOINT PATTERN
 | Web Route (HTML) | API Route (JSON) |
 |------------------|------------------|
-| / | /api/v1/ |
-| /healthz | /api/v1/healthz |
-| /{admin_path}/dashboard | /api/v1/{admin_path}/dashboard |
-| /openapi | /openapi.json |
+| `/` | `/api/v1/` |
+| `/healthz` | `/api/v1/healthz` |
+| `/admin/dashboard` | `/api/v1/admin/dashboard` |
+| `/quotes` | `/api/v1/quotes` |
 
-## HEALTH CHECK RESPONSE
+## HEALTH ENDPOINT
 ```json
 {
   "status": "healthy",
   "version": "1.0.0",
-  "uptime": "24h30m15s",
+  "mode": "production",
+  "uptime": "2d 5h 30m",
   "checks": {
     "database": "ok",
-    "cache": "ok"
+    "disk": "ok"
   }
 }
 ```
@@ -42,25 +40,27 @@
 ## ERROR RESPONSE FORMAT
 ```json
 {
-  "error": "User-friendly message",
+  "error": "Brief error message",
   "code": "ERROR_CODE",
-  "details": {}
+  "status": 400,
+  "message": "Detailed explanation"
 }
 ```
 
-## SSL/TLS (PART 15)
-- Let's Encrypt auto-renewal
-- Self-signed fallback for development
-- Certificate paths: ssl/letsencrypt/, ssl/local/
-- 7-day expiry warning
+## CONTENT NEGOTIATION
+| Accept Header | Response |
+|---------------|----------|
+| text/html | HTML page |
+| application/json | JSON |
+| text/plain | Plain text |
+| */* (browsers) | HTML |
+| curl/wget (no Accept) | Plain text |
 
-## RATE LIMITING
-| Endpoint | Limit |
-|----------|-------|
-| Login | 5/15min |
-| API (auth) | Configurable/min |
-| API (anon) | Configurable/min |
-| Registration | 5/hour |
+## SSL/TLS
+- Let's Encrypt auto-provisioning
+- HTTP-01 challenge on port 80
+- TLS-ALPN-01 challenge on port 443
+- Auto-renewal via scheduler
 
 ---
 **Full details: AI.md PART 13, PART 14, PART 15**

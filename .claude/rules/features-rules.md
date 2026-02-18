@@ -3,61 +3,56 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use external cron/Task Scheduler (built-in scheduler only)
-- ❌ Skip email validation before sending
-- ❌ Store GeoIP database in repo (download at runtime)
-- ❌ Expose Prometheus metrics without auth option
-- ❌ Create backups without encryption option
-- ❌ Skip update verification (checksum required)
+- ❌ Use external cron → use internal scheduler
+- ❌ Skip email verification
+- ❌ Store backups unencrypted
+- ❌ Skip GeoIP for geolocation
 
 ## REQUIRED - ALWAYS DO
-- ✅ Built-in scheduler for all background tasks (PART 19)
-- ✅ Email via SMTP with provider presets (PART 18)
-- ✅ GeoIP with auto-update (sapics/ip-location-db) (PART 20)
-- ✅ Prometheus metrics at /metrics (PART 21)
-- ✅ Automated backup/restore with encryption (PART 22)
-- ✅ Self-update with checksum verification (PART 23)
-
-## SCHEDULER (PART 19)
-Internal cron-like scheduler using github.com/robfig/cron/v3
-
-Common tasks:
-- Log rotation (daily)
-- Session cleanup (15min)
-- Token cleanup (15min)
-- Backup (daily/hourly)
-- GeoIP update (weekly)
-- SSL renewal check (daily)
-- Health self-check (5min)
+- ✅ Built-in scheduler for all background tasks
+- ✅ SMTP email with 40+ provider presets
+- ✅ GeoIP database with monthly updates
+- ✅ Prometheus metrics on /metrics
+- ✅ Encrypted backups with compression
+- ✅ Self-update capability
 
 ## EMAIL (PART 18)
-- SMTP with 40+ provider presets
+- SMTP auto-detection from domain MX records
+- 40+ provider presets (Gmail, Outlook, etc.)
+- Template-based emails
 - Queue with retry logic
-- Dead letter handling
-- Template support
+
+## SCHEDULER (PART 19)
+- Internal cron-like scheduler
+- NO external cron/systemd timers
+- Persistent task history
+- Admin panel management
 
 ## GEOIP (PART 20)
-- sapics/ip-location-db (free, MIT licensed)
-- Monthly automatic updates via scheduler
-- Country-level blocking support
+- Embedded ip-location-db (sapics)
+- Monthly database updates
+- Country blocking support
+- IP geolocation API
 
 ## METRICS (PART 21)
-- Prometheus format at /metrics
-- Standard metrics: requests, latency, errors
-- Custom metrics per project
+- Prometheus format on /metrics
+- INTERNAL only (not public)
+- Bearer token authentication
+- All app metrics exposed
 
-## BACKUP/RESTORE (PART 22)
+## BACKUP & RESTORE (PART 22)
 - Automated daily/hourly backups
-- Encryption option (AES-256-GCM)
-- Restore via admin panel or CLI
-- Configurable retention
+- AES-256-GCM encryption
+- Gzip compression
+- Config + database + uploads
+- Cluster-aware (coordinator backup)
 
 ## UPDATE (PART 23)
-- --update check (check for updates)
-- --update yes (install update)
-- --update branch {stable|beta|daily}
-- Checksum verification required
-- Rollback on failure
+- `--update check` - check for updates
+- `--update yes` - download and apply
+- `--update branch stable|beta|daily`
+- Semantic versioning
+- Rollback support
 
 ---
-**Full details: AI.md PART 18, 19, 20, 21, 22, 23**
+**Full details: AI.md PART 18, PART 19, PART 20, PART 21, PART 22, PART 23**

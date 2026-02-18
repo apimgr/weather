@@ -34,7 +34,7 @@ func (h *UserSettingsHandler) ShowAccountSettings(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "pages/user/settings.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/user/settings.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Account Settings",
 		"page":        "settings",
 		"settingsTab": "account",
@@ -54,7 +54,7 @@ func (h *UserSettingsHandler) ShowPrivacySettings(c *gin.Context) {
 	// Get user preferences for privacy settings
 	prefs, _ := h.getOrCreatePreferences(user.ID)
 
-	c.HTML(http.StatusOK, "pages/user/settings-privacy.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/user/settings-privacy.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Privacy Settings",
 		"page":        "settings",
 		"settingsTab": "privacy",
@@ -75,7 +75,7 @@ func (h *UserSettingsHandler) ShowNotificationSettings(c *gin.Context) {
 	// Get user preferences
 	prefs, _ := h.getOrCreatePreferences(user.ID)
 
-	c.HTML(http.StatusOK, "pages/user/settings-notifications.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/user/settings-notifications.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Notification Settings",
 		"page":        "settings",
 		"settingsTab": "notifications",
@@ -96,7 +96,7 @@ func (h *UserSettingsHandler) ShowAppearanceSettings(c *gin.Context) {
 	// Get user preferences
 	prefs, _ := h.getOrCreatePreferences(user.ID)
 
-	c.HTML(http.StatusOK, "pages/user/settings-appearance.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/user/settings-appearance.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Appearance Settings",
 		"page":        "settings",
 		"settingsTab": "appearance",
@@ -117,7 +117,7 @@ func (h *UserSettingsHandler) ShowTokensSettings(c *gin.Context) {
 	// Get user's API tokens
 	tokens, _ := h.getUserTokens(user.ID)
 
-	c.HTML(http.StatusOK, "pages/user/settings-tokens.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/user/settings-tokens.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "API Tokens",
 		"page":        "settings",
 		"settingsTab": "tokens",

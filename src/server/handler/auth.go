@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
 	"github.com/apimgr/weather/src/server/middleware"
 	"github.com/apimgr/weather/src/server/model"
@@ -39,13 +41,30 @@ type RegisterRequest struct {
 
 // ShowLoginPage renders the login page
 func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
-	// Check if already authenticated
+	// Check if already authenticated as admin (admin_session cookie)
+	cfg := config.GetGlobalConfig()
+	adminPath := "/" + cfg.GetAdminPath()
+	adminSessionID, err := c.Cookie("admin_session")
+	if err == nil && adminSessionID != "" {
+		// Validate admin session exists in database
+		var adminID int
+		err := database.GetServerDB().QueryRow(`
+			SELECT admin_id FROM server_admin_sessions
+			WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP
+		`, adminSessionID).Scan(&adminID)
+		if err == nil {
+			c.Redirect(http.StatusFound, adminPath)
+			return
+		}
+	}
+
+	// Check if already authenticated as user (weather_session cookie)
 	if middleware.IsAuthenticated(c) {
 		c.Redirect(http.StatusFound, "/users/dashboard")
 		return
 	}
 
-	c.HTML(http.StatusOK, "pages/login.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/login.tmpl", utils.TemplateData(c, gin.H{
 		"title": "Login",
 	}))
 }
@@ -62,7 +81,7 @@ func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 	userModel := &models.UserModel{DB: h.DB}
 	count, err := userModel.Count()
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "pages/error.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusInternalServerError, "page/error.tmpl", utils.TemplateData(c, gin.H{
 			"error": "Database error",
 		}))
 		return
@@ -70,13 +89,14 @@ func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
 
 	isSetup := count == 0
 
-	c.HTML(http.StatusOK, "pages/register.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/register.tmpl", utils.TemplateData(c, gin.H{
 		"title":   "Register",
 		"isSetup": isSetup,
 	}))
 }
 
 // HandleLogin processes login requests
+// Per spec: checks server_admin_credentials FIRST, then user_accounts
 func (h *AuthHandler) HandleLogin(c *gin.Context) {
 	var req LoginRequest
 
@@ -109,7 +129,59 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	// Validate credentials - try username, email, or phone
+	// Step 1: Check server_admin_credentials FIRST
+	adminModel := &models.AdminModel{DB: database.GetServerDB()}
+	admin, adminErr := adminModel.VerifyCredentials(req.Identifier, req.Password)
+
+	if adminErr == nil && admin != nil {
+		// Admin login successful - create admin session and set admin_session cookie
+		cfg := config.GetGlobalConfig()
+		adminPath := "/" + cfg.GetAdminPath()
+
+		adminSessionModel := &models.AdminSessionModel{DB: database.GetServerDB()}
+		// 30 days default, 90 days if remember-me
+		duration := 30 * 24 * time.Hour
+		adminSession, err := adminSessionModel.CreateSession(admin.ID, c.ClientIP(), c.Request.UserAgent(), duration)
+		if err != nil {
+			respondWithError(c, http.StatusInternalServerError, "Failed to create session")
+			return
+		}
+
+		// Update last login
+		adminModel.UpdateLastLogin(admin.ID)
+
+		isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+
+		// Set admin_session cookie (separate from weather_session)
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "admin_session",
+			Value:    adminSession.SessionID,
+			Path:     "/",
+			MaxAge:   int(duration.Seconds()),
+			HttpOnly: true,
+			Secure:   isHTTPS,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		// Respond based on request type
+		if strings.Contains(contentType, "application/json") {
+			c.JSON(http.StatusOK, gin.H{
+				"message":  "Login successful",
+				"type":     "admin",
+				"redirect": adminPath,
+				"admin": gin.H{
+					"id":       admin.ID,
+					"username": admin.Username,
+					"email":    admin.Email,
+				},
+			})
+		} else {
+			c.Redirect(http.StatusFound, adminPath)
+		}
+		return
+	}
+
+	// Step 2: Check user_accounts
 	userModel := &models.UserModel{DB: h.DB}
 	user, err := userModel.GetByIdentifier(req.Identifier)
 	if err != nil {
@@ -134,7 +206,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 				})
 			} else {
 				// Render login page with 2FA prompt
-				c.HTML(http.StatusOK, "pages/login.tmpl", utils.TemplateData(c, gin.H{
+				c.HTML(http.StatusOK, "page/login.tmpl", utils.TemplateData(c, gin.H{
 					"title":       "Login - Two-Factor Required",
 					"require_2fa": true,
 					"identifier":  req.Identifier,
@@ -175,7 +247,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		sessionTimeout = 2592000
 	}
 
-	// Create session
+	// Create user session
 	sessionModel := &models.SessionModel{DB: h.DB}
 	session, err := sessionModel.Create(user.ID, sessionTimeout)
 	if err != nil {
@@ -183,17 +255,14 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	// Set session cookie with proper security settings per AI.md PART 11
-	// Secure: auto (based on TLS), HttpOnly: true, SameSite: Lax
+	// Set weather_session cookie (user sessions only)
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     middleware.SessionCookieName,
 		Value:    session.ID,
 		Path:     "/",
 		MaxAge:   sessionTimeout,
 		HttpOnly: true,
-		// Secure: auto-detect based on TLS (AI.md: secure: auto)
 		Secure:   c.Request.TLS != nil,
-		// SameSite: Lax per AI.md session configuration
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -201,6 +270,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 	if strings.Contains(contentType, "application/json") {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Login successful",
+			"type":    "user",
 			"user": gin.H{
 				"id":       user.ID,
 				"username": user.Username,
@@ -209,7 +279,13 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 			},
 		})
 	} else {
-		c.Redirect(http.StatusFound, "/users/dashboard")
+		// Check for redirect parameter
+		redirect := c.Query("redirect")
+		if redirect != "" && strings.HasPrefix(redirect, "/") {
+			c.Redirect(http.StatusFound, redirect)
+		} else {
+			c.Redirect(http.StatusFound, "/users/dashboard")
+		}
 	}
 }
 
@@ -268,7 +344,7 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 	username := utils.NormalizeUsername(req.Username)
 
 	// All users created via /register are regular users
-	// Admin accounts are created through /user/setup/admin wizard (first run only)
+	// Admin accounts are created through /users/setup/admin wizard (first run only)
 	role := "user"
 
 	// Create user
@@ -441,18 +517,18 @@ func respondWithError(c *gin.Context, statusCode int, message string) {
 		path := c.Request.URL.Path
 
 		if strings.Contains(path, "login") {
-			c.HTML(statusCode, "pages/login.tmpl", utils.TemplateData(c, gin.H{
+			c.HTML(statusCode, "page/login.tmpl", utils.TemplateData(c, gin.H{
 				"title": "Login",
 				"error": message,
 			}))
 		} else if strings.Contains(path, "register") {
-			c.HTML(statusCode, "pages/register.tmpl", utils.TemplateData(c, gin.H{
+			c.HTML(statusCode, "page/register.tmpl", utils.TemplateData(c, gin.H{
 				"title": "Register",
 				"error": message,
 			}))
 		} else {
 			// Fallback to error page for other cases
-			c.HTML(statusCode, "pages/error.tmpl", gin.H{
+			c.HTML(statusCode, "page/error.tmpl", gin.H{
 				"error": message,
 			})
 		}

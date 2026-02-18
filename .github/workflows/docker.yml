@@ -12,7 +12,6 @@ env:
   PROJECTNAME: weather
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  OFFICIALSITE: https://wthr.top
 
 jobs:
   build-standard:
@@ -50,6 +49,12 @@ jobs:
             echo "IS_TAG=false" >> $GITHUB_ENV
           fi
           echo "BUILD_DATE=$(date +"%a %b %d, %Y at %H:%M:%S %Z")" >> $GITHUB_ENV
+          # OFFICIALSITE (optional): Set in repository secrets, or site.txt file, or leave empty
+          if [ -f site.txt ]; then
+            echo "OFFICIALSITE=$(cat site.txt)" >> $GITHUB_ENV
+          else
+            echo "OFFICIALSITE=${{ secrets.OFFICIALSITE }}" >> $GITHUB_ENV
+          fi
 
       - name: Determine tags (standard)
         id: tags
@@ -144,37 +149,33 @@ jobs:
             echo "IS_TAG=false" >> $GITHUB_ENV
           fi
           echo "BUILD_DATE=$(date +"%a %b %d, %Y at %H:%M:%S %Z")" >> $GITHUB_ENV
+          # OFFICIALSITE (optional): Set in repository secrets, or site.txt file, or leave empty
+          if [ -f site.txt ]; then
+            echo "OFFICIALSITE=$(cat site.txt)" >> $GITHUB_ENV
+          else
+            echo "OFFICIALSITE=${{ secrets.OFFICIALSITE }}" >> $GITHUB_ENV
+          fi
 
       - name: Determine tags (all-in-one)
         id: tags
         run: |
-          AIO_IMAGE="${{ env.IMAGE_NAME }}-aio"
-          TAGS="${{ env.REGISTRY }}/${AIO_IMAGE}:${{ env.COMMIT_ID }}"
+          # AIO uses suffix tags on same image: {repo}:{tag}-aio
+          TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.COMMIT_ID }}-aio"
 
           if [[ "${{ env.IS_TAG }}" == "true" ]]; then
-            TAGS="$TAGS,${{ env.REGISTRY }}/${AIO_IMAGE}:${{ env.VERSION }}"
-            TAGS="$TAGS,${{ env.REGISTRY }}/${AIO_IMAGE}:latest"
-            TAGS="$TAGS,${{ env.REGISTRY }}/${AIO_IMAGE}:${{ env.YYMM }}"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-aio"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-aio"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.YYMM }}-aio"
           else
-            TAGS="$TAGS,${{ env.REGISTRY }}/${AIO_IMAGE}:devel"
+            TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:devel-aio"
             if [[ "${{ github.ref }}" == refs/heads/beta ]]; then
-              TAGS="$TAGS,${{ env.REGISTRY }}/${AIO_IMAGE}:beta"
+              TAGS="$TAGS,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:beta-aio"
             fi
           fi
 
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
-      - name: Check for AIO Dockerfile
-        id: check_aio
-        run: |
-          if [ -f "docker/Dockerfile.aio" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Build and push (all-in-one)
-        if: steps.check_aio.outputs.exists == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .

@@ -3,61 +3,65 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Enable CGO (ALWAYS CGO_ENABLED=0)
+- ❌ Use CGO → CGO_ENABLED=0 always
+- ❌ Skip platforms → build all 8
 - ❌ Use -musl suffix in binary names
-- ❌ Skip any of the 8 required platforms
-- ❌ Run Go commands locally (use containers)
-- ❌ Use mattn/go-sqlite3 (requires CGO)
-- ❌ Add short flags except -h and -v
+- ❌ Run Go locally → use containers only
+- ❌ Use short flags except -h and -v
 
 ## REQUIRED - ALWAYS DO
 - ✅ CGO_ENABLED=0 for all builds
+- ✅ All 8 platforms: linux/darwin/windows/freebsd × amd64/arm64
 - ✅ Single static binary with embedded assets
-- ✅ Build all 8 platforms (4 OS × 2 arch)
-- ✅ Use container-only development (make dev/test/build)
-- ✅ Binary names: `weather-{os}-{arch}` (.exe for Windows)
-- ✅ Client binary: `weather-cli-{os}-{arch}`
+- ✅ Support NO_COLOR and TERM=dumb
+- ✅ Client binary for ALL projects
 
-## 8 REQUIRED PLATFORMS
-| OS | amd64 | arm64 |
-|----|-------|-------|
-| linux | weather-linux-amd64 | weather-linux-arm64 |
-| darwin | weather-darwin-amd64 | weather-darwin-arm64 |
-| windows | weather-windows-amd64.exe | weather-windows-arm64.exe |
-| freebsd | weather-freebsd-amd64 | weather-freebsd-arm64 |
+## BINARY NAMES
+| Binary | Name | Purpose |
+|--------|------|---------|
+| Server | `weather` | Main service |
+| Client | `weather-cli` | CLI/TUI/GUI interface |
+| Agent | `weather-agent` | Optional, remote machines |
 
-## CLI FLAGS (server binary)
+## BUILD NAMING
 ```
---help, -h               Show help
---version, -v            Show version
---mode {production|development}
+weather-linux-amd64
+weather-linux-arm64
+weather-darwin-amd64
+weather-darwin-arm64
+weather-windows-amd64.exe
+weather-windows-arm64.exe
+weather-freebsd-amd64
+weather-freebsd-arm64
+```
+
+## CLI FLAGS (Server)
+```
+--help, -h              Show help
+--version, -v           Show version
+--mode production|development
 --config {config_dir}
 --data {data_dir}
 --log {log_dir}
 --pid {pid_file}
 --address {listen}
 --port {port}
---debug                  Enable debug mode
---status                 Show status (exit 0=healthy, 1=unhealthy)
---service {start,restart,stop,reload,--install,--uninstall,--disable,--help}
---daemon                 Daemonize
---maintenance {backup,restore,update,mode,setup,--help}
---update [check|yes|branch {stable|beta|daily}]
+--baseurl {path}
+--debug                 Enable debug mode
+--status                Show health status
+--service {command}     Service management
+--daemon                Daemonize
+--maintenance {cmd}     Maintenance operations
+--update [check|yes|branch]
 ```
 
-## CLIENT (weather-cli)
-- REQUIRED for all projects
-- Auto-detect display mode (TUI vs CLI)
-- Use --server/--token for connection
-- Output formats: json, table, plain, yaml, csv
-
-## BUILD COMMANDS
-```bash
-make dev      # Quick build to temp dir
-make local    # Production build to binaries/
-make build    # All 8 platforms
-make test     # Unit tests
-```
+## NO_COLOR / TERM=dumb SUPPORT
+| Environment | Effect |
+|-------------|--------|
+| NO_COLOR set (any value) | Disable ANSI colors |
+| TERM=dumb | Disable ALL ANSI escapes, force CLI mode |
+| --color=never | Disable colors via flag |
+| --color=always | Force colors on |
 
 ---
 **Full details: AI.md PART 7, PART 8, PART 33**

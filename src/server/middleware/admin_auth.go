@@ -45,7 +45,7 @@ func RequireAdminAuth() gin.HandlerFunc {
 		}
 
 		// Validate session against database (AI.md PART 18 requirement)
-		// Check if session exists in admin_sessions table and is not expired
+		// Check if session exists in server_admin_sessions table and is not expired
 		db := GetDB(c)
 		if db == nil {
 			// Database not available - reject
@@ -60,12 +60,12 @@ func RequireAdminAuth() gin.HandlerFunc {
 			return
 		}
 
-		// Query admin_sessions table for valid session
+		// Query server_admin_sessions table for valid session
 		var adminID int
 		var expiresAt int64
 		err = db.QueryRow(`
 			SELECT admin_id, expires_at
-			FROM admin_sessions
+			FROM server_admin_sessions
 			WHERE id = ? AND expires_at > strftime('%s', 'now')
 		`, session).Scan(&adminID, &expiresAt)
 
@@ -85,7 +85,7 @@ func RequireAdminAuth() gin.HandlerFunc {
 		c.Set("admin_id", adminID)
 
 		// Update last_active timestamp
-		db.Exec("UPDATE admin_sessions SET last_active = strftime('%s', 'now') WHERE id = ?", session)
+		db.Exec("UPDATE server_admin_sessions SET last_active = strftime('%s', 'now') WHERE id = ?", session)
 
 		// Session valid - continue to admin panel
 		c.Next()
@@ -136,13 +136,13 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Query users.db admins table for username (AI.md PART 23)
+		// Query users.db server_admin_credentials table for username (AI.md PART 23)
 		var adminID int
 		var passwordHash string
 		var enabled bool
 		err := db.QueryRow(`
 			SELECT id, password, enabled
-			FROM admins
+			FROM server_admin_credentials
 			WHERE username = ?
 		`, username).Scan(&adminID, &passwordHash, &enabled)
 
@@ -208,10 +208,10 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 			maxAge = 90 * 24 * 60 * 60
 		}
 
-		// Create session in admin_sessions table (AI.md PART 5)
+		// Create session in server_admin_sessions table (AI.md PART 5)
 		expiresAt := time.Now().Unix() + int64(maxAge)
 		_, err = db.Exec(`
-			INSERT INTO admin_sessions (id, admin_id, ip_address, user_agent, expires_at, created_at, last_active)
+			INSERT INTO server_admin_sessions (id, admin_id, ip_address, user_agent, expires_at, created_at, last_active)
 			VALUES (?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'))
 		`, sessionToken, adminID, c.ClientIP(), c.Request.UserAgent(), expiresAt)
 
@@ -243,7 +243,7 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 		)
 
 		// Update last_login timestamp
-		db.Exec("UPDATE admins SET last_login = strftime('%s', 'now') WHERE id = ?", adminID)
+		db.Exec("UPDATE server_admin_credentials SET last_login = strftime('%s', 'now') WHERE id = ?", adminID)
 
 		// Redirect to admin dashboard
 		c.Redirect(http.StatusFound, "/admin/dashboard")

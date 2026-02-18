@@ -32,9 +32,9 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if admin user exists (setup is complete when any admin exists)
+		// Check if admin exists in server_admin_credentials (setup is complete when any admin exists)
 		var count int
-		err := database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts WHERE role = 'admin'").Scan(&count)
+		err := database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&count)
 		if err != nil {
 			c.Next()
 			return
@@ -72,9 +72,9 @@ func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
 // BlockSetupAfterAdminExists blocks access to admin setup if admin account already exists
 func BlockSetupAfterAdminExists(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Check if admin user exists
+		// Check if admin exists in server_admin_credentials
 		var count int
-		err := database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts WHERE role = 'admin'").Scan(&count)
+		err := database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&count)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 			c.Abort()
@@ -83,13 +83,7 @@ func BlockSetupAfterAdminExists(db *sql.DB) gin.HandlerFunc {
 
 		// If admin exists, redirect to appropriate page
 		if count > 0 {
-			// Check if current user is admin
-			user, ok := GetCurrentUser(c)
-			if ok && user.Role == "admin" {
-				c.Redirect(http.StatusFound, "/admin")
-			} else {
-				c.Redirect(http.StatusFound, "/users/dashboard")
-			}
+			c.Redirect(http.StatusFound, "/users/dashboard")
 			c.Abort()
 			return
 		}

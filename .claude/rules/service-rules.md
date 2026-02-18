@@ -3,58 +3,53 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Require manual service file creation
-- ❌ Skip privilege checks before service operations
-- ❌ Assume root/admin on first run
-- ❌ Use different service interface per OS
+- ❌ Require manual escalation for every start
+- ❌ Skip privilege dropping after port binding
+- ❌ Run as root for entire lifetime
 
 ## REQUIRED - ALWAYS DO
-- ✅ --service flag for service management
-- ✅ Auto-detect privilege level
-- ✅ Request elevation when needed
-- ✅ Support all 4 OSes with native service managers
-- ✅ PID file management
-- ✅ Graceful shutdown on signals
+- ✅ `--service install` for one-time setup
+- ✅ Privilege drop after binding privileged ports
+- ✅ Platform-specific service management
+- ✅ Auto-create system user if needed
 
-## SERVICE FLAG
+## PRIVILEGE ESCALATION
+| Mode | How Started | Privilege |
+|------|-------------|-----------|
+| Service | `sudo weather --service install` | Root → drop to user |
+| User | `weather` | User-level only |
+
+## SERVICE COMMANDS
+```bash
+--service install     # Install as system service
+--service uninstall   # Remove system service
+--service start       # Start the service
+--service stop        # Stop the service
+--service restart     # Restart the service
+--service reload      # Reload configuration
+--service --help      # Show service help
 ```
---service start      Start service
---service stop       Stop service
---service restart    Restart service
---service reload     Reload configuration
---service --install  Install as system service
---service --uninstall Remove system service
---service --disable  Disable service
---service --help     Show service help
-```
 
-## PRIVILEGE ESCALATION (PART 24)
-1. Detect if running as root/admin
-2. If not, request elevation
-3. Linux: sudo/pkexec
-4. macOS: osascript
-5. Windows: UAC prompt
+## UNIX PRIVILEGE DROP
+1. Start as root (via service manager)
+2. Create system user `weather` if needed
+3. Create directories, set ownership
+4. Bind privileged ports (80, 443)
+5. **DROP PRIVILEGES** to `weather` user
+6. Run application as non-root
 
-## NATIVE SERVICE MANAGERS (PART 25)
-| OS | Service Manager | File Location |
-|----|-----------------|---------------|
-| Linux | systemd | /etc/systemd/system/weather.service |
-| macOS | launchd | /Library/LaunchDaemons/com.apimgr.weather.plist |
-| FreeBSD | rc.d | /usr/local/etc/rc.d/weather |
-| Windows | SCM | Windows Service Manager |
+## WINDOWS
+- Uses Virtual Service Account (NT SERVICE\weather)
+- No privilege drop needed (already minimal)
+- Service installed via SCM
 
-## SIGNAL HANDLING
-| Signal | Action |
-|--------|--------|
-| SIGTERM | Graceful shutdown |
-| SIGINT | Graceful shutdown |
-| SIGHUP | Reload configuration |
-| SIGUSR1 | Reopen log files |
-
-## PID FILE
-- Created on start: {pid_dir}/weather.pid
-- Removed on clean shutdown
-- Used for status checks and signaling
+## SUPPORTED SERVICE MANAGERS
+| Platform | Init System |
+|----------|-------------|
+| Linux | systemd, runit, rc.d |
+| macOS | launchd |
+| FreeBSD | rc.d |
+| Windows | SCM (Service Control Manager) |
 
 ---
 **Full details: AI.md PART 24, PART 25**

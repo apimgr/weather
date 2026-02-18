@@ -3,7 +3,7 @@
 ⚠️ **Server does the work. Client displays the result.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Client-side rendering (React, Vue, Angular)
+- ❌ Client-side rendering (React, Vue, Angular, etc.)
 - ❌ Require JavaScript for core functionality
 - ❌ Client-side routing (SPA)
 - ❌ Business logic in JavaScript
@@ -22,9 +22,18 @@
 - ✅ Full admin panel with ALL settings
 - ✅ WCAG 2.1 AA accessibility
 - ✅ Touch targets minimum 44x44px
-- ✅ Content from IDEA.md for /server/about, /server/help
+- ✅ All pages fully functional
 
-## LONG STRINGS (REQUIRED CSS)
+## SERVER VS CLIENT
+| Task | Where | Why |
+|------|-------|-----|
+| Data validation | SERVER | Server is authoritative |
+| HTML rendering | SERVER | Works without JS |
+| Business logic | SERVER | Security, consistency |
+| Theme toggle | Client JS | UX enhancement only |
+| Copy to clipboard | Client JS | Browser API required |
+
+## LONG STRINGS CSS (REQUIRED)
 ```css
 .long-string, .ip-address, .onion-address, .api-token, .hash {
   word-break: break-all;
@@ -37,24 +46,16 @@
 | Target | CSS |
 |--------|-----|
 | Mobile (base) | No media query |
-| Tablet+ | @media (min-width: 768px) |
-| Desktop+ | @media (min-width: 1024px) |
+| Tablet+ | `@media (min-width: 768px)` |
+| Desktop+ | `@media (min-width: 1024px)` |
 
-## SERVER VS CLIENT
-| Task | Where |
-|------|-------|
-| Data validation | SERVER |
-| HTML rendering | SERVER |
-| Business logic | SERVER |
-| Theme toggle | Client JS (UX enhancement) |
-| Copy to clipboard | Client JS (browser API) |
-
-## ADMIN PANEL (PART 17)
-- ALL settings editable via WebUI
-- No SSH/CLI required for configuration
-- Grouped logically with tooltips
-- Real-time validation
-- Live reload (no restart needed)
+## ADMIN PANEL
+- Full WebUI at /{admin_path}/
+- ALL server settings configurable
+- User/session management
+- Backup/restore controls
+- Scheduler management
+- Metrics dashboard
 
 ---
 **Full details: AI.md PART 16, PART 17**

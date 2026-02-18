@@ -3,51 +3,59 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use GPL/AGPL/LGPL dependencies (copyleft)
-- ❌ Put files in wrong locations (Dockerfile in root, etc.)
-- ❌ Create forbidden directories (config/, data/, logs/, tmp/, vendor/)
-- ❌ Create forbidden files (CHANGELOG.md, SUMMARY.md, COMPLIANCE.md)
-- ❌ Use plural directory names (handlers/, models/ - use handler/, model/)
-- ❌ Hardcode dev machine paths or values
-- ❌ Put config files in repo (server.yml is runtime-generated)
+- ❌ Put Dockerfile in project root → `docker/Dockerfile`
+- ❌ Create config/, data/, logs/ in project root
+- ❌ Create TODO.md, CHANGELOG.md, SUMMARY.md, COMPLIANCE.md
+- ❌ Put CONTRIBUTING.md in root → `.github/CONTRIBUTING.md`
+- ❌ Use vendor/ directory (use Go modules)
+- ❌ Create *.example.*, *.sample.* files
+- ❌ Use plural directory names → singular: `handler/`, `model/`
+- ❌ Use CamelCase for directories → lowercase only
 
 ## REQUIRED - ALWAYS DO
-- ✅ MIT License for all projects
-- ✅ LICENSE.md with embedded third-party licenses
 - ✅ Source code in `src/` directory
 - ✅ Docker files in `docker/` directory
-- ✅ Build output to `binaries/` (gitignored)
-- ✅ Follow OS-specific paths for config/data/logs/backup
-- ✅ Use lowercase snake_case for Go files
-- ✅ Use singular directory names (handler/, model/, service/)
+- ✅ Use `server.yml` (not .yaml)
+- ✅ File naming: `lowercase_snake.go`
+- ✅ Singular directory names: `handler/`, `model/`, `service/`
+- ✅ MIT License in LICENSE.md
+- ✅ All 8 platforms: linux/darwin/windows/freebsd × amd64/arm64
 
 ## DIRECTORY STRUCTURE
 ```
-src/              # All Go source code (REQUIRED)
-docker/           # Dockerfile, compose files (REQUIRED)
-docs/             # ReadTheDocs documentation only
-tests/            # Test scripts
-binaries/         # Build output (gitignored)
+src/                        # Go source code (REQUIRED)
+src/main.go                 # Entry point
+src/config/                 # Configuration package
+src/server/                 # HTTP server package
+src/client/                 # CLI client (REQUIRED)
+docker/                     # Docker files (REQUIRED)
+docker/Dockerfile           # Multi-stage Dockerfile
+docker/docker-compose.yml   # Production compose
+binaries/                   # Build output (gitignored)
 ```
 
 ## OS-SPECIFIC PATHS
-| OS | Config | Data | Logs |
-|----|--------|------|------|
-| Linux (root) | /etc/apimgr/weather/ | /var/lib/apimgr/weather/ | /var/log/apimgr/weather/ |
-| Linux (user) | ~/.config/apimgr/weather/ | ~/.local/share/apimgr/weather/ | ~/.local/log/apimgr/weather/ |
-| macOS (root) | /Library/Application Support/apimgr/weather/ | Same | /Library/Logs/apimgr/weather/ |
-| macOS (user) | ~/Library/Application Support/apimgr/weather/ | Same | ~/Library/Logs/apimgr/weather/ |
-| Windows (admin) | %ProgramData%\apimgr\weather\ | Same | Same\logs\ |
-| Windows (user) | %AppData%\apimgr\weather\ | %LocalAppData%\apimgr\weather\ | Same\logs\ |
-| Docker | /config/weather/ | /data/weather/ | /data/log/weather/ |
 
-## FILE NAMING
-| Type | Convention | Example |
-|------|------------|---------|
-| Go files | lowercase_snake.go | user_handler.go |
-| Config | server.yml (NEVER .yaml) | server.yml |
-| Docs | UPPERCASE.md | README.md |
-| Binaries | weather-{os}-{arch} | weather-linux-amd64 |
+### Linux/BSD (Root)
+| Type | Path |
+|------|------|
+| Config | `/etc/apimgr/weather/server.yml` |
+| Data | `/var/lib/apimgr/weather/` |
+| Logs | `/var/log/apimgr/weather/` |
+
+### Linux/BSD (User)
+| Type | Path |
+|------|------|
+| Config | `~/.config/apimgr/weather/server.yml` |
+| Data | `~/.local/share/apimgr/weather/` |
+| Logs | `~/.local/share/apimgr/weather/logs/` |
+
+### Docker
+| Type | Path |
+|------|------|
+| Config | `/config/server.yml` |
+| Data | `/data/` |
+| Database | `/data/db/sqlite/` |
 
 ---
 **Full details: AI.md PART 2, PART 3, PART 4**

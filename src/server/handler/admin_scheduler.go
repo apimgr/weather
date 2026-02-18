@@ -139,7 +139,7 @@ func (h *AdminHandler) ShowSchedulerConfig(c *gin.Context) {
 		},
 	}
 
-	c.HTML(http.StatusOK, "admin/admin-scheduler.tmpl", gin.H{
+	c.HTML(http.StatusOK, "admin/admin_scheduler.tmpl", gin.H{
 		"title":  "Scheduler Configuration",
 		"user":   user,
 		"config": config,

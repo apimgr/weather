@@ -1,0 +1,93 @@
+# All-in-One Dockerfile - includes app + postgresql + valkey + tor
+# Build: golang:alpine (static binary, CGO_ENABLED=0)
+# Runtime: debian:latest (stable, broad compatibility)
+# Image name: ghcr.io/apimgr/weather:latest-aio
+# PORTS: Only 80 exposed (db/cache are internal-only)
+
+# =============================================================================
+# Stage 1: Build Go binary
+# =============================================================================
+FROM golang:alpine AS builder
+
+# Install git (required for go mod download with private repos)
+RUN apk add --no-cache git
+
+WORKDIR /build
+
+# Copy go.mod/go.sum first for better layer caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY src/ ./src/
+
+# Build static binary (CGO_ENABLED=0)
+ARG VERSION=dev
+ARG COMMIT_ID=unknown
+ARG BUILD_DATE=unknown
+ARG OFFICIALSITE=https://wthr.top
+
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'" \
+    -o weather ./src
+
+# =============================================================================
+# Stage 2: Runtime image with PostgreSQL + Valkey + Tor
+# =============================================================================
+FROM debian:latest
+
+LABEL org.opencontainers.image.source="https://github.com/apimgr/weather"
+LABEL org.opencontainers.image.description="weather - all-in-one (debian + postgresql + valkey + tor)"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Install dependencies (PostgreSQL + Valkey + Tor + Supervisor)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    postgresql \
+    postgresql-contrib \
+    valkey \
+    supervisor \
+    tor \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directories for EXTERNAL services only (PostgreSQL, Valkey)
+# NOTE: App directories (config, data, sqlite, logs, backups) created by server binary
+# External services need dirs pre-created with special ownership (postgres user)
+RUN mkdir -p /config/postgres /config/valkey \
+             /data/db/postgres /data/db/valkey \
+             /data/log/postgres \
+             /run/postgresql /run/valkey \
+    && chown -R postgres:postgres /data/db/postgres /data/log/postgres /run/postgresql
+
+# Copy configs and entrypoint (minimal version from file_system/)
+COPY docker/file_system/ /
+
+# Overwrite with AIO-specific entrypoint (supervisor-based)
+COPY docker/file_system/usr/local/bin/entrypoint-aio.sh /usr/local/bin/entrypoint.sh
+
+# Copy application binary from builder
+COPY --from=builder /build/weather /usr/local/bin/
+RUN chmod +x /usr/local/bin/weather /usr/local/bin/entrypoint.sh
+
+# Default environment
+# DATABASE_DIR: SQLite location (binary auto-detects container, but explicit is clearer)
+ENV MODE=production \
+    PORT=80 \
+    DEBUG=false \
+    TZ=America/New_York \
+    DATABASE_DIR=/data/db/sqlite \
+    PGDATA=/data/db/postgres \
+    DB_HOST=/run/postgresql \
+    DB_NAME=weather \
+    DB_USER=weather \
+    VALKEY_SOCKET=/run/valkey/valkey.sock
+
+# Only expose app port - db/cache are internal
+EXPOSE 80
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=90s --retries=3 \
+    CMD timeout 10s bash -c ':> /dev/tcp/127.0.0.1/80' || exit 1
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -9,7 +9,7 @@ import (
 // Embed all templates and static files into the binary
 // Following TEMPLATE.md specification lines 802-816
 
-//go:embed templates/**/*.tmpl
+//go:embed template/**/*.tmpl
 var templatesFS embed.FS
 
 //go:embed static/*
@@ -32,5 +32,5 @@ func GetStaticSubFS() (fs.FS, error) {
 
 // LoadTemplates loads all templates from the embedded filesystem
 func LoadTemplates() (*template.Template, error) {
-	return template.ParseFS(templatesFS, "templates/**/*.tmpl")
+	return template.ParseFS(templatesFS, "template/**/*.tmpl")
 }

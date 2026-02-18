@@ -79,7 +79,7 @@ func NewNotificationAPIHandlers(notificationService *service.NotificationService
 // ========== USER NOTIFICATION ENDPOINTS ==========
 
 // GetUserNotifications returns all notifications for the authenticated user
-// GET /{api_version}/user/notifications
+// GET /{api_version}/users/notifications
 func (h *NotificationAPIHandlers) GetUserNotifications(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -109,7 +109,7 @@ func (h *NotificationAPIHandlers) GetUserNotifications(c *gin.Context) {
 }
 
 // GetUserUnreadNotifications returns unread notifications for the authenticated user
-// GET /{api_version}/user/notifications/unread
+// GET /{api_version}/users/notifications/unread
 func (h *NotificationAPIHandlers) GetUserUnreadNotifications(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -130,7 +130,7 @@ func (h *NotificationAPIHandlers) GetUserUnreadNotifications(c *gin.Context) {
 }
 
 // GetUserUnreadCount returns the count of unread notifications
-// GET /{api_version}/user/notifications/count
+// GET /{api_version}/users/notifications/count
 func (h *NotificationAPIHandlers) GetUserUnreadCount(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -150,7 +150,7 @@ func (h *NotificationAPIHandlers) GetUserUnreadCount(c *gin.Context) {
 }
 
 // GetUserNotificationStats returns notification statistics
-// GET /{api_version}/user/notifications/stats
+// GET /{api_version}/users/notifications/stats
 func (h *NotificationAPIHandlers) GetUserNotificationStats(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -168,7 +168,7 @@ func (h *NotificationAPIHandlers) GetUserNotificationStats(c *gin.Context) {
 }
 
 // MarkUserNotificationRead marks a notification as read
-// PATCH /{api_version}/user/notifications/:id/read
+// PATCH /{api_version}/users/notifications/:id/read
 func (h *NotificationAPIHandlers) MarkUserNotificationRead(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -194,7 +194,7 @@ func (h *NotificationAPIHandlers) MarkUserNotificationRead(c *gin.Context) {
 }
 
 // MarkAllUserNotificationsRead marks all notifications as read
-// PATCH /{api_version}/user/notifications/read
+// PATCH /{api_version}/users/notifications/read
 func (h *NotificationAPIHandlers) MarkAllUserNotificationsRead(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -212,7 +212,7 @@ func (h *NotificationAPIHandlers) MarkAllUserNotificationsRead(c *gin.Context) {
 }
 
 // DismissUserNotification dismisses a notification
-// PATCH /{api_version}/user/notifications/:id/dismiss
+// PATCH /{api_version}/users/notifications/:id/dismiss
 func (h *NotificationAPIHandlers) DismissUserNotification(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -238,7 +238,7 @@ func (h *NotificationAPIHandlers) DismissUserNotification(c *gin.Context) {
 }
 
 // DeleteUserNotification deletes a notification
-// DELETE /{api_version}/user/notifications/:id
+// DELETE /{api_version}/users/notifications/:id
 func (h *NotificationAPIHandlers) DeleteUserNotification(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -264,7 +264,7 @@ func (h *NotificationAPIHandlers) DeleteUserNotification(c *gin.Context) {
 }
 
 // GetUserNotificationPreferences returns notification preferences
-// GET /{api_version}/user/notifications/preferences
+// GET /{api_version}/users/notifications/preferences
 func (h *NotificationAPIHandlers) GetUserNotificationPreferences(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -282,7 +282,7 @@ func (h *NotificationAPIHandlers) GetUserNotificationPreferences(c *gin.Context)
 }
 
 // UpdateUserNotificationPreferences updates notification preferences
-// PATCH /{api_version}/user/notifications/preferences
+// PATCH /{api_version}/users/notifications/preferences
 func (h *NotificationAPIHandlers) UpdateUserNotificationPreferences(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

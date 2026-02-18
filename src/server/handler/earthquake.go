@@ -60,7 +60,7 @@ func (h *EarthquakeHandler) HandleEarthquakes(c *gin.Context) {
 	// Fetch earthquake data
 	earthquakes, err := h.earthquakeService.GetEarthquakes(feedType)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "pages/error.tmpl", gin.H{
+		c.HTML(http.StatusInternalServerError, "page/error.tmpl", gin.H{
 			"error": "Failed to load earthquake data: " + err.Error(),
 		})
 		return
@@ -101,7 +101,7 @@ func (h *EarthquakeHandler) HandleEarthquakes(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
 	// Render earthquake page
-	c.HTML(http.StatusOK, "pages/earthquake.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/earthquake.tmpl", gin.H{
 		"Earthquakes": earthquakes.Earthquakes,
 		"Metadata":    earthquakes.Metadata,
 		"FeedType":    feedType,
@@ -142,7 +142,7 @@ func (h *EarthquakeHandler) HandleEarthquakesByLocation(c *gin.Context) {
 	clientIP := utils.GetClientIP(c)
 	coords, err := h.weatherService.ParseAndResolveLocation(locationInput, clientIP)
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "pages/error.tmpl", gin.H{
+		c.HTML(http.StatusBadRequest, "page/error.tmpl", gin.H{
 			"error": "Location not found: " + locationInput,
 		})
 		return
@@ -162,7 +162,7 @@ func (h *EarthquakeHandler) HandleEarthquakesByLocation(c *gin.Context) {
 		feedType,
 	)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "pages/error.tmpl", gin.H{
+		c.HTML(http.StatusInternalServerError, "page/error.tmpl", gin.H{
 			"error": "Failed to load earthquake data: " + err.Error(),
 		})
 		return
@@ -195,7 +195,7 @@ func (h *EarthquakeHandler) HandleEarthquakesByLocation(c *gin.Context) {
 	}
 
 	// Render earthquake page
-	c.HTML(http.StatusOK, "pages/earthquake.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/earthquake.tmpl", gin.H{
 		"Earthquakes":  earthquakes.Earthquakes,
 		"Metadata":     earthquakes.Metadata,
 		"FeedType":     feedType,
@@ -302,7 +302,7 @@ func (h *EarthquakeHandler) HandleEarthquakeDetail(c *gin.Context) {
 	earthquakes, err := h.earthquakeService.GetEarthquakes(feedType)
 	if err != nil {
 		if utils.IsBrowser(c) {
-			c.HTML(http.StatusInternalServerError, "pages/error.tmpl", gin.H{
+			c.HTML(http.StatusInternalServerError, "page/error.tmpl", gin.H{
 				"error": "Failed to load earthquake data: " + err.Error(),
 			})
 		} else {
@@ -322,7 +322,7 @@ func (h *EarthquakeHandler) HandleEarthquakeDetail(c *gin.Context) {
 
 	if earthquake == nil {
 		if utils.IsBrowser(c) {
-			c.HTML(http.StatusNotFound, "pages/error.tmpl", gin.H{
+			c.HTML(http.StatusNotFound, "page/error.tmpl", gin.H{
 				"error": "Earthquake not found",
 			})
 		} else {
@@ -343,7 +343,7 @@ func (h *EarthquakeHandler) HandleEarthquakeDetail(c *gin.Context) {
 		// Browser output
 		hostInfo := utils.GetHostInfo(c)
 		title := fmt.Sprintf("Earthquake Detail · %s", earthquake.Place)
-		c.HTML(http.StatusOK, "pages/earthquake_detail.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusOK, "page/earthquake_detail.tmpl", utils.TemplateData(c, gin.H{
 			"Earthquake": earthquake,
 			"HostInfo":   hostInfo,
 			"title":      title,

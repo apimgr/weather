@@ -97,6 +97,50 @@ func (h *SchedulerHandler) DisableTask(c *gin.Context) {
 	})
 }
 
+// UpdateTask updates task settings (enable/disable)
+func (h *SchedulerHandler) UpdateTask(c *gin.Context) {
+	taskName := c.Param("name")
+
+	task := h.Scheduler.GetTask(taskName)
+	if task == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": gin.H{"code": "TASK_NOT_FOUND", "message": "Task not found: " + taskName},
+		})
+		return
+	}
+
+	var req struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{"code": "INVALID_REQUEST", "message": "Invalid request body"},
+		})
+		return
+	}
+
+	if req.Enabled != nil {
+		var err error
+		if *req.Enabled {
+			err = h.Scheduler.EnableTask(taskName)
+		} else {
+			err = h.Scheduler.DisableTask(taskName)
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": gin.H{"code": "UPDATE_FAILED", "message": err.Error()},
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"ok":        true,
+		"message":   "Task updated successfully",
+		"task_name": taskName,
+	})
+}
+
 // TriggerTask manually triggers a task to run immediately
 func (h *SchedulerHandler) TriggerTask(c *gin.Context) {
 	taskName := c.Param("name")

@@ -253,7 +253,8 @@ func (l *Logger) Warn(format string, v ...interface{}) {
 func (l *Logger) RotateLogs() error {
 	timestamp := time.Now().Format("2006-01-02")
 
-	logFiles := []string{"access.log", "error.log", "audit.log"}
+	// AI.md PART 11: Include all log files in rotation
+	logFiles := []string{"access.log", "error.log", "audit.log", "security.log", "debug.log"}
 
 	for _, logFile := range logFiles {
 		currentPath := filepath.Join(l.logDir, logFile)

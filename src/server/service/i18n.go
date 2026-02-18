@@ -27,9 +27,9 @@ func NewI18n(fs embed.FS, defaultLang string) (*I18n, error) {
 	}
 
 	// Load all locale files from embedded FS
-	entries, err := fs.ReadDir("locales")
+	entries, err := fs.ReadDir("locale")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read locales directory: %w", err)
+		return nil, fmt.Errorf("failed to read locale directory: %w", err)
 	}
 
 	for _, entry := range entries {
@@ -38,7 +38,7 @@ func NewI18n(fs embed.FS, defaultLang string) (*I18n, error) {
 		}
 
 		lang := strings.TrimSuffix(entry.Name(), ".json")
-		data, err := fs.ReadFile(fmt.Sprintf("locales/%s", entry.Name()))
+		data, err := fs.ReadFile(fmt.Sprintf("locale/%s", entry.Name()))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read locale file %s: %w", entry.Name(), err)
 		}

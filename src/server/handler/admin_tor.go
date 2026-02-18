@@ -115,6 +115,39 @@ func (h *TorAdminHandler) Disable(c *gin.Context) {
 	})
 }
 
+// UpdateSettings handles PATCH /server/tor per AI.md spec
+// Accepts {"enabled": bool} to enable/disable Tor
+func (h *TorAdminHandler) UpdateSettings(c *gin.Context) {
+	var req struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{
+				"code":    "INVALID_REQUEST",
+				"message": "Invalid request body",
+			},
+		})
+		return
+	}
+
+	if req.Enabled != nil {
+		if *req.Enabled {
+			h.Enable(c)
+		} else {
+			h.Disable(c)
+		}
+		return
+	}
+
+	c.JSON(http.StatusBadRequest, gin.H{
+		"error": gin.H{
+			"code":    "INVALID_REQUEST",
+			"message": "No settings to update",
+		},
+	})
+}
+
 // Regenerate regenerates the .onion address
 // POST /{api_version}/admin/server/tor/regenerate
 func (h *TorAdminHandler) Regenerate(c *gin.Context) {

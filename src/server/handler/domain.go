@@ -28,7 +28,7 @@ func NewDomainHandlers(serverDB *sql.DB, logger *utils.Logger) *DomainHandlers {
 
 // ListDomains returns all domains (admin) or user's domains
 // GET /{api_version}/admin/domains
-// GET /{api_version}/user/domains
+// GET /{api_version}/users/domains
 func (h *DomainHandlers) ListDomains(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
@@ -93,7 +93,7 @@ func (h *DomainHandlers) GetDomain(c *gin.Context) {
 
 // CreateDomain creates a new custom domain
 // POST /{api_version}/admin/domains
-// POST /{api_version}/user/domains
+// POST /{api_version}/users/domains
 func (h *DomainHandlers) CreateDomain(c *gin.Context) {
 	var req struct {
 		Domain string `json:"domain"`

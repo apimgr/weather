@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
 	"os"
@@ -526,9 +527,12 @@ func LoadConfig() (*AppConfig, error) {
 		return cfg, err
 	}
 
-	// Parse YAML
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return cfg, err
+	// Parse YAML with strict mode per AI.md PART 5
+	// Unknown keys are ERRORS, not silently ignored
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(cfg); err != nil {
+		return cfg, fmt.Errorf("config error: %w (unknown fields are not allowed)", err)
 	}
 
 	return cfg, nil

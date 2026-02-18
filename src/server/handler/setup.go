@@ -22,14 +22,14 @@ type SetupHandler struct {
 
 // ShowWelcome shows the welcome screen (step 1)
 func (h *SetupHandler) ShowWelcome(c *gin.Context) {
-	c.HTML(http.StatusOK, "pages/setup_welcome.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/setup_welcome.tmpl", gin.H{
 		"Title": "Welcome - Weather Setup",
 	})
 }
 
 // ShowUserRegister shows the user registration form (step 2)
 func (h *SetupHandler) ShowUserRegister(c *gin.Context) {
-	c.HTML(http.StatusOK, "pages/setup_user.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/setup_user.tmpl", gin.H{
 		"Title": "Create Your Account - Weather Setup",
 	})
 }
@@ -96,7 +96,7 @@ func (h *SetupHandler) CreateUser(c *gin.Context) {
 
 // ShowAdminSetup shows the admin creation form (step 4)
 func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
-	c.HTML(http.StatusOK, "pages/setup_admin.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/setup_admin.tmpl", gin.H{
 		"Title": "Create Administrator Account - Weather Setup",
 	})
 }
@@ -172,9 +172,9 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		password = input.Password
 	}
 
-	// Check if admin username already exists
+	// Check if admin username already exists in server_admin_credentials
 	var count int
-	err := database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts WHERE username = ?", username).Scan(&count)
+	err := database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials WHERE username = ?", username).Scan(&count)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
@@ -192,10 +192,10 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	// Create administrator account with custom username
-	result, err := database.GetUsersDB().Exec(`
-		INSERT INTO user_accounts (username, email, password_hash, role, created_at, updated_at)
-		VALUES (?, ?, ?, 'admin', datetime('now'), datetime('now'))
+	// Create administrator account in server_admin_credentials (NOT user_accounts)
+	result, err := database.GetServerDB().Exec(`
+		INSERT INTO server_admin_credentials (username, email, password_hash, created_at, updated_at)
+		VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 	`, username, email, hashedPassword)
 
 	if err != nil {
@@ -203,14 +203,14 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	// Get the newly created admin user ID
+	// Get the newly created admin ID
 	adminID, err := result.LastInsertId()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve admin ID"})
 		return
 	}
 
-	// Create session for the admin user (auto-login)
+	// Create admin session (auto-login) in server_admin_sessions
 	sessionID, err := generateSessionID()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate session ID"})
@@ -219,26 +219,26 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	// 7 days
 	expiresAt := time.Now().Add(7 * 24 * time.Hour)
 
-	_, err = database.GetUsersDB().Exec(`
-		INSERT INTO user_sessions (id, user_id, expires_at, created_at)
-		VALUES (?, ?, ?, datetime('now'))
-	`, sessionID, adminID, expiresAt)
+	_, err = database.GetServerDB().Exec(`
+		INSERT INTO server_admin_sessions (id, admin_id, ip_address, user_agent, created_at, expires_at)
+		VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+	`, sessionID, adminID, c.ClientIP(), c.Request.UserAgent(), expiresAt)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
 		return
 	}
 
-	// Set session cookie
+	isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+
+	// Set admin_session cookie (separate from weather_session)
 	c.SetCookie(
-		"weather_session",
+		"admin_session",
 		sessionID,
 		int(7*24*time.Hour.Seconds()),
 		"/",
 		"",
-		// secure (set to true in production with HTTPS)
-		false,
-		// httpOnly
+		isHTTPS,
 		true,
 	)
 
@@ -283,27 +283,29 @@ func generateSessionID() (string, error) {
 
 // CompleteSetup performs the final redirect based on current user context
 func (h *SetupHandler) CompleteSetup(c *gin.Context) {
-	// Check if user is logged in
-	userID, exists := c.Get("user_id")
+	// Check if admin session exists
+	adminSessionID, err := c.Cookie("admin_session")
+	if err == nil && adminSessionID != "" {
+		// Check if admin session is valid
+		var adminID int
+		err := database.GetServerDB().QueryRow(`
+			SELECT admin_id FROM server_admin_sessions
+			WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP
+		`, adminSessionID).Scan(&adminID)
+		if err == nil {
+			c.Redirect(http.StatusFound, "/setup/server/welcome")
+			return
+		}
+	}
+
+	// Not admin - redirect to dashboard or login
+	_, exists := c.Get("user_id")
 	if !exists {
 		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
-	// Get user role
-	var role string
-	err := database.GetUsersDB().QueryRow("SELECT role FROM user_accounts WHERE id = ?", userID).Scan(&role)
-	if err != nil {
-		c.Redirect(http.StatusFound, "/auth/login")
-		return
-	}
-
-	// Redirect based on role - admin goes to server setup, user to dashboard
-	if role == "admin" {
-		c.Redirect(http.StatusFound, "/setup/server/welcome")
-	} else {
-		c.Redirect(http.StatusFound, "/users/dashboard")
-	}
+	c.Redirect(http.StatusFound, "/users/dashboard")
 }
 
 // =============================================================================
@@ -312,14 +314,14 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 
 // ShowServerSetupWelcome shows the server setup welcome page
 func (h *SetupHandler) ShowServerSetupWelcome(c *gin.Context) {
-	c.HTML(http.StatusOK, "pages/server_setup_welcome.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/server_setup_welcome.tmpl", gin.H{
 		"Title": "Server Setup - Weather",
 	})
 }
 
 // ShowServerSetupSettings shows the server settings configuration page
 func (h *SetupHandler) ShowServerSetupSettings(c *gin.Context) {
-	c.HTML(http.StatusOK, "pages/server_setup_settings.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/server_setup_settings.tmpl", gin.H{
 		"Title": "Server Settings - Weather",
 	})
 }
@@ -393,7 +395,7 @@ func (h *SetupHandler) ShowServerSetupComplete(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "pages/server_setup_complete.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/server_setup_complete.tmpl", gin.H{
 		"Title": "Setup Complete - Weather",
 	})
 }
@@ -425,9 +427,9 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 		return
 	}
 
-	// Check if admin exists
+	// Check if admin exists in server_admin_credentials
 	var adminCount int
-	err = database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts WHERE role = 'admin'").Scan(&adminCount)
+	err = database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&adminCount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -452,7 +454,7 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 
 	// Check if setup is completed
 	var setupComplete string
-	err = database.GetUsersDB().QueryRow("SELECT value FROM settings WHERE key = 'setup.completed'").Scan(&setupComplete)
+	err = database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = 'setup.completed'").Scan(&setupComplete)
 
 	// If setup.completed doesn't exist or is not "true", server settings needed
 	if err != nil || setupComplete != "true" {

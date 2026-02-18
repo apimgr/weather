@@ -3,58 +3,53 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use .yaml extension (ALWAYS .yml)
-- ❌ Use strconv.ParseBool() (ALWAYS config.ParseBool())
-- ❌ Put inline comments in YAML (comments ABOVE code only)
-- ❌ Hardcode config values from dev machine
-- ❌ Store passwords in config files (database only)
-- ❌ Store config files in git repo (runtime-generated)
-- ❌ Allow path traversal (../) in config paths
+- ❌ Use strconv.ParseBool() → use config.ParseBool()
+- ❌ Inline YAML comments → comments go ABOVE the setting
+- ❌ Hardcode dev machine values → detect at runtime
+- ❌ Accept path traversal (../) in any path input
+- ❌ Use server.yaml → use server.yml
 
 ## REQUIRED - ALWAYS DO
-- ✅ Config file is ALWAYS `server.yml`
-- ✅ All comments ABOVE the setting, NEVER inline
 - ✅ Use config.ParseBool() for ALL boolean parsing
-- ✅ Detect machine settings at runtime
-- ✅ Normalize and validate all paths
-- ✅ Support both production and development modes
-- ✅ Admin WebUI for ALL settings (no SSH required)
-- ✅ Live reload for config changes (no restart)
+- ✅ Use path.Clean() and validate all paths
+- ✅ Detect hostname/IP/cores/memory at runtime
+- ✅ YAML comments ABOVE settings, never inline
+- ✅ Support MODE env var (production/development)
+- ✅ Auto-migrate server.yaml → server.yml
 
-## BOOLEAN PARSING
-Accept 40+ variations via config.ParseBool():
-- Truthy: yes, true, 1, on, enable, enabled, allow, active, y, t
-- Falsy: no, false, 0, off, disable, disabled, deny, inactive, n, f
+## BOOLEAN HANDLING
+Accept ALL of these (case-insensitive):
+| Truthy | Falsy |
+|--------|-------|
+| 1, yes, true, on, enable, enabled | 0, no, false, off, disable, disabled |
+| yep, yup, yeah, aye, si, oui, da | nope, nah, nay, nein, non, niet |
+| affirmative, accept, allow, grant | negative, reject, block, revoke |
 
 ## APPLICATION MODES
 | Mode | Detection | Behavior |
 |------|-----------|----------|
-| production | Default, or `--mode production` | Strict security, no debug |
-| development | `--mode development` | Verbose logging, debug endpoints |
+| **production** | Default, `MODE=production` | Secure defaults, minimal logging |
+| **development** | `MODE=development` | Debug endpoints, verbose logging |
 
-## PATH NORMALIZATION
+## PATH SECURITY
 ```go
-// ALWAYS normalize and validate paths
+// REQUIRED for ALL path inputs
 safe, err := SafePath(input)
 if err != nil {
-    return err // Reject path traversal
+    return fmt.Errorf("invalid path: %w", err)
 }
 ```
 
-| Input | Result |
-|-------|--------|
-| `/admin/` | `admin` |
-| `//admin//test` | `admin/test` |
-| `/../admin` | REJECTED |
-| `/admin/..` | REJECTED |
+Block: `..`, `%2e`, uppercase letters, special chars
 
-## YAML COMMENT STYLE
-```yaml
-# CORRECT: Comment above
-enabled: true
-
-# WRONG: enabled: true  # inline comment
-```
+## ENV VARIABLES
+| Variable | Description |
+|----------|-------------|
+| MODE | production (default) or development |
+| NO_COLOR | Disable ANSI colors when set |
+| TERM=dumb | Disable ALL ANSI escapes |
+| DOMAIN | FQDN override |
+| DATABASE_URL | Database connection string |
 
 ---
 **Full details: AI.md PART 5, PART 6, PART 12**

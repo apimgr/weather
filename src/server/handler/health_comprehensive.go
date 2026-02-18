@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -181,7 +182,7 @@ func ComprehensiveHealthCheck(db *database.DB, httpPort string, httpsPort int, s
 
 		// TEMPLATE.md: /healthz must return HTML (line 4670)
 		// /api/v1/healthz returns JSON (handled by different handler)
-		c.HTML(httpStatus, "pages/healthz.tmpl", response)
+		c.HTML(httpStatus, "page/healthz.tmpl", response)
 	}
 }
 
@@ -192,7 +193,8 @@ func readVersion() string {
 	if err != nil {
 		return "dev"
 	}
-	return string(data)
+	// Trim whitespace/newline from version string per AI.md PART 13
+	return strings.TrimSpace(string(data))
 }
 
 // Global variables to store directory paths

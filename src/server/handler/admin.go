@@ -725,7 +725,7 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 		HistoryMaxYears:     settingsModel.GetInt("history.max_years", 50),
 	}
 
-	c.HTML(http.StatusOK, "admin/admin-settings.tmpl", gin.H{
+	c.HTML(http.StatusOK, "admin/admin_settings.tmpl", gin.H{
 		"title":    "Server Settings",
 		"user":     user,
 		"settings": settings,

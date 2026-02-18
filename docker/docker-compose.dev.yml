@@ -1,18 +1,29 @@
 # weather - Development compose (DEBUG commented)
 # nginx proxy address - http://172.17.0.1:64580
+# Usage: docker compose -f docker-compose.dev.yml up -d
 
 name: weather-dev
+
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
 
 services:
   weather:
     image: ghcr.io/apimgr/weather:latest
     container_name: weather-dev
-    restart: unless-stopped
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
     environment:
       # Development: relaxed security, verbose logging, no caching
       # Does NOT enable debug endpoints - uncomment DEBUG=true for that
       - MODE=development
-      - TZ=America/New_York
+      - PORT=80
+      - TZ=${TZ:-America/New_York}
       # DEBUG: Uncomment to enable pprof, expvar, detailed request logging
       # - DEBUG=true
     ports:
@@ -23,6 +34,12 @@ services:
       # NEVER run from project directory - always use temp dir workflow
       - ./rootfs/config:/config
       - ./rootfs/data:/data
+    healthcheck:
+      test: /usr/local/bin/weather --status
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     networks:
       - weather-dev
 

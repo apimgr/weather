@@ -157,7 +157,7 @@ continue
 
 // Determine destination path per AI.md PART 25 backup contents
 var destPath string
-if header.Name == "server.yml" || filepath.HasPrefix(header.Name, "templates/") ||
+if header.Name == "server.yml" || filepath.HasPrefix(header.Name, "template/") ||
 filepath.HasPrefix(header.Name, "themes/") || filepath.HasPrefix(header.Name, "ssl/") {
 destPath = filepath.Join(configDir, header.Name)
 } else {

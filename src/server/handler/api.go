@@ -875,7 +875,7 @@ func parseHistoricalDateAPI(dateStr string) (month, day, year int, err error) {
 func (h *APIHandler) GetDocsHTML(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
-	c.HTML(http.StatusOK, "pages/api-docs.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page/api_docs.tmpl", gin.H{
 		"Title":      "API Documentation - Weather",
 		"HostInfo":   hostInfo,
 		"HideFooter": false,

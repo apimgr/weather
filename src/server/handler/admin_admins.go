@@ -318,7 +318,7 @@ func (h *AdminsHandler) ShowAdminsPage(c *gin.Context) {
 	count, _ := h.AdminModel.GetCount()
 	pendingInvites, _ := h.InviteService.GetPendingInvites()
 
-	c.HTML(http.StatusOK, "admin/admin-admins.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "admin/admin_admins.tmpl", utils.TemplateData(c, gin.H{
 		"title":          "Admin Management",
 		"page":           "admins",
 		"admins":         admins,

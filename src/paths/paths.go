@@ -346,12 +346,17 @@ func (p *Paths) Override() {
 }
 
 // initializeSubdirectories sets up additional directory paths
+// AI.md PART 4: SSL and security directories go in ConfigDir (user-editable)
+// Tor, backups, and runtime data go in DataDir (application-managed)
 func (p *Paths) initializeSubdirectories() {
-	p.SSLDir = filepath.Join(p.DataDir, "ssl")
+	// ConfigDir: User-editable configuration and security data
+	p.SSLDir = filepath.Join(p.ConfigDir, "ssl")
+	p.GeoIPDir = filepath.Join(p.ConfigDir, "security", "geoip")
+	p.BlocklistDir = filepath.Join(p.ConfigDir, "security", "blocklists")
+
+	// DataDir: Application-managed runtime data
 	p.TorDir = filepath.Join(p.DataDir, "tor")
-	p.GeoIPDir = filepath.Join(p.DataDir, "geoip")
 	p.BackupDir = filepath.Join(p.DataDir, "backups")
-	p.BlocklistDir = filepath.Join(p.DataDir, "blocklists")
 	p.GOOS = runtime.GOOS
 }
 

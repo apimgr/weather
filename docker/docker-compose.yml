@@ -1,18 +1,30 @@
 # weather - Production compose
 # nginx proxy address - http://172.17.0.1:64580
+# Usage: docker compose -f docker-compose.yml up -d
 
 name: weather
+
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
 
 services:
   weather:
     image: ghcr.io/apimgr/weather:latest
-    container_name: weather
-    restart: unless-stopped
+    container_name: weather-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
     environment:
       # Production: strict security, minimal logging, caching enabled
       # NO debug options - debug must be explicitly set via CLI if needed
       - MODE=production
-      - TZ=America/New_York
+      - PORT=80
+      - DEBUG=false
+      - TZ=${TZ:-America/New_York}
     ports:
       # Production: bound to Docker bridge only (reverse proxy handles external)
       - "172.17.0.1:64580:80"
@@ -21,6 +33,12 @@ services:
       # NEVER run from project directory - always use temp dir workflow
       - ./rootfs/config:/config:z
       - ./rootfs/data:/data:z
+    healthcheck:
+      test: /usr/local/bin/weather --status
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     networks:
       - weather
 

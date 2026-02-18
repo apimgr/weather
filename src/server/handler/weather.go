@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/apimgr/weather/src/server/middleware"
-	"github.com/apimgr/weather/src/renderers"
+	"github.com/apimgr/weather/src/renderer"
 	"github.com/apimgr/weather/src/server/service"
 	"github.com/apimgr/weather/src/utils"
 )
@@ -19,8 +19,8 @@ import (
 type WeatherHandler struct {
 	weatherService   *service.WeatherService
 	locationEnhancer *service.LocationEnhancer
-	asciiRenderer    *renderers.ASCIIRenderer
-	oneLineRenderer  *renderers.OneLineRenderer
+	asciiRenderer    *renderer.ASCIIRenderer
+	oneLineRenderer  *renderer.OneLineRenderer
 }
 
 // NewWeatherHandler creates a new weather handler
@@ -28,8 +28,8 @@ func NewWeatherHandler(ws *service.WeatherService, le *service.LocationEnhancer)
 	return &WeatherHandler{
 		weatherService:   ws,
 		locationEnhancer: le,
-		asciiRenderer:    renderers.NewASCIIRenderer(),
-		oneLineRenderer:  renderers.NewOneLineRenderer(),
+		asciiRenderer:    renderer.NewASCIIRenderer(),
+		oneLineRenderer:  renderer.NewOneLineRenderer(),
 	}
 }
 
@@ -243,7 +243,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *service.Coor
 	// Get current weather and forecast
 	current, err := h.weatherService.GetCurrentWeather(location.Latitude, location.Longitude, units)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "pages/weather.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusInternalServerError, "page/weather.tmpl", utils.TemplateData(c, gin.H{
 			"Error":    err.Error(),
 			"HostInfo": utils.GetHostInfo(c),
 			"page":     "weather",
@@ -332,7 +332,7 @@ func (h *WeatherHandler) serveHTMLWeather(c *gin.Context, location *service.Coor
 	// This shows "Albany, NY" instead of just "Albany"
 	displayLocation := location.ShortName
 
-	c.HTML(http.StatusOK, "pages/weather.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/weather.tmpl", utils.TemplateData(c, gin.H{
 		"Title": location.ShortName + " Weather",
 		"WeatherData": gin.H{
 			"Location": locationData,
@@ -609,7 +609,7 @@ func (h *WeatherHandler) handleMoonRequest(c *gin.Context, locationInput string)
 		moonData := moonService.Calculate(lat, lon, time.Now())
 
 		// Serve moon HTML page
-		c.HTML(http.StatusOK, "pages/moon.tmpl", gin.H{
+		c.HTML(http.StatusOK, "page/moon.tmpl", gin.H{
 			"Title":    "Moon Phase",
 			"Location": location,
 			"Units":    units,
@@ -686,7 +686,7 @@ func (h *WeatherHandler) handleError(c *gin.Context, err error, location string,
 	errMsg := err.Error()
 
 	if isBrowser {
-		c.HTML(http.StatusInternalServerError, "pages/weather.tmpl", utils.TemplateData(c, gin.H{
+		c.HTML(http.StatusInternalServerError, "page/weather.tmpl", utils.TemplateData(c, gin.H{
 			"error":    errMsg,
 			"hostInfo": hostInfo,
 			"page":     "weather",

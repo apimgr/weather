@@ -8,11 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// APIResponse represents a standardized API response per AI.md PART 20
-// Action responses use "success" field
+// APIResponse represents a standardized API response per AI.md PART 14
+// Action responses use "ok" field per specification
 type APIResponse struct {
 	// Present on success actions - always true for successful actions
-	Success bool `json:"success,omitempty"`
+	OK bool `json:"ok,omitempty"`
 	// Present on success - human-readable message
 	Message string `json:"message,omitempty"`
 	// Present on success - contains response data
@@ -90,7 +90,7 @@ func RespondError(c *gin.Context, status int, code string, message string, detai
 }
 
 // RespondSuccess sends a standardized action success response per AI.md PART 20 line 17605
-// Format: {"success": true, "message": "Item created successfully", "id": "item_123"}
+// Format: {"ok": true, "message": "Item created successfully", "id": "item_123"}
 func RespondSuccess(c *gin.Context, message string, data ...map[string]interface{}) {
 	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
@@ -99,7 +99,7 @@ func RespondSuccess(c *gin.Context, message string, data ...map[string]interface
 	}
 
 	response := APIResponse{
-		Success: true,
+		OK:      true,
 		Message: message,
 	}
 
@@ -112,7 +112,7 @@ func RespondSuccess(c *gin.Context, message string, data ...map[string]interface
 }
 
 // RespondCreated sends a standardized response for resource creation per AI.md PART 20 line 17605
-// Format: {"success": true, "message": "Item created successfully", "id": "item_123"}
+// Format: {"ok": true, "message": "Item created successfully", "id": "item_123"}
 func RespondCreated(c *gin.Context, message string, id string, data ...map[string]interface{}) {
 	// AI.md PART 20: Support .txt extension for text responses
 	if shouldRespondText(c) {
@@ -121,7 +121,7 @@ func RespondCreated(c *gin.Context, message string, id string, data ...map[strin
 	}
 
 	response := APIResponse{
-		Success: true,
+		OK:      true,
 		Message: message,
 		ID:      id,
 	}

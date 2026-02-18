@@ -74,7 +74,7 @@ func TestCompleteSetupFlow(t *testing.T) {
 	setupHandler := &handler.SetupHandler{DB: dualDB.Users}
 
 	// Setup routes (only POST routes for JSON API testing)
-	setupRoutes := r.Group("/user/setup")
+	setupRoutes := r.Group("/users/setup")
 	{
 		setupRoutes.POST("/register", setupHandler.CreateUser)
 		setupRoutes.POST("/admin", setupHandler.CreateAdmin)
@@ -90,7 +90,7 @@ func TestCompleteSetupFlow(t *testing.T) {
 		}
 		jsonData, _ := json.Marshal(payload)
 
-		req := httptest.NewRequest("POST", "/user/setup/register", bytes.NewBuffer(jsonData))
+		req := httptest.NewRequest("POST", "/users/setup/register", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
@@ -127,7 +127,7 @@ func TestCompleteSetupFlow(t *testing.T) {
 		}
 		jsonData, _ := json.Marshal(payload)
 
-		req := httptest.NewRequest("POST", "/user/setup/admin", bytes.NewBuffer(jsonData))
+		req := httptest.NewRequest("POST", "/users/setup/admin", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Add user cookies from previous step
@@ -181,7 +181,7 @@ func TestAdminSetupValidation(t *testing.T) {
 
 	r := gin.New()
 	setupHandler := &handler.SetupHandler{DB: dualDB.Users}
-	r.POST("/user/setup/admin", setupHandler.CreateAdmin)
+	r.POST("/users/setup/admin", setupHandler.CreateAdmin)
 
 	tests := []struct {
 		name       string
@@ -242,7 +242,7 @@ func TestAdminSetupValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonData, _ := json.Marshal(tt.payload)
-			req := httptest.NewRequest("POST", "/user/setup/admin", bytes.NewBuffer(jsonData))
+			req := httptest.NewRequest("POST", "/users/setup/admin", bytes.NewBuffer(jsonData))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 

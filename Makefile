@@ -42,7 +42,7 @@ GO_DOCKER := docker run --rm \
 	-e CGO_ENABLED=0 \
 	golang:alpine
 
-.PHONY: build local host release docker test dev clean
+.PHONY: build local release docker test dev clean
 
 # =============================================================================
 # BUILD - Build all platforms + host binary (via Docker with cached modules)
@@ -139,39 +139,6 @@ local: clean
 	@echo "Local build complete: $(BINDIR)/"
 
 # =============================================================================
-# HOST - Build host binaries only (fast development builds)
-# =============================================================================
-host: clean
-	@mkdir -p $(BINDIR)
-	@echo "Building host binaries version $(VERSION)..."
-	@mkdir -p $(GOCACHE) $(GODIR)
-
-	# Download modules first (cached)
-	@echo "Downloading Go modules..."
-	@$(GO_DOCKER) go mod download
-
-	# Build server binary
-	@echo "Building $(PROJECTNAME)..."
-	@$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
-		go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME) ./src"
-
-	# Build CLI binary (if exists)
-	@if [ -d "src/client" ]; then \
-		echo "Building $(PROJECTNAME)-cli..."; \
-		$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
-			go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME)-cli ./src/client"; \
-	fi
-
-	# Build agent binary (if exists)
-	@if [ -d "src/agent" ]; then \
-		echo "Building $(PROJECTNAME)-agent..."; \
-		$(GO_DOCKER) sh -c "GOOS=$$(go env GOOS) GOARCH=$$(go env GOARCH) \
-			go build -ldflags \"$(LDFLAGS)\" -o $(BINDIR)/$(PROJECTNAME)-agent ./src/agent"; \
-	fi
-
-	@echo "Host build complete: $(BINDIR)/"
-
-# =============================================================================
 # RELEASE - Manual local release (stable only)
 # =============================================================================
 release: build
@@ -228,6 +195,7 @@ docker:
 		--build-arg VERSION="$(VERSION)" \
 		--build-arg BUILD_DATE="$(BUILD_DATE)" \
 		--build-arg COMMIT_ID="$(COMMIT_ID)" \
+		--build-arg OFFICIALSITE="$(OFFICIALSITE)" \
 		-t $(REGISTRY):$(VERSION) \
 		-t $(REGISTRY):latest \
 		--push \

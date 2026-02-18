@@ -38,7 +38,7 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 		unreadCount = 0
 	}
 
-	c.HTML(http.StatusOK, "pages/dashboard.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/dashboard.tmpl", utils.TemplateData(c, gin.H{
 		"title":         "Dashboard - Weather Service",
 		"user":          user,
 		"locations":     locations,

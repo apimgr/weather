@@ -3,71 +3,51 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Put Dockerfile in project root (ALWAYS docker/)
-- ❌ Use .env files
+- ❌ Put Dockerfile in project root → `docker/Dockerfile`
+- ❌ Use .env files → hardcode defaults in compose
 - ❌ Run docker-compose in project directory
-- ❌ Modify ENTRYPOINT/CMD directly
-- ❌ Include rootfs/ in Docker image
+- ❌ Copy/symlink binaries in container
+- ❌ Add USER directive → binary handles privilege drop
 
 ## REQUIRED - ALWAYS DO
-- ✅ Dockerfile in docker/Dockerfile
-- ✅ Multi-stage build (golang:alpine → alpine:latest)
-- ✅ STOPSIGNAL SIGRTMIN+3
-- ✅ ENTRYPOINT with tini
-- ✅ Required packages: git, curl, bash, tini, tor
-- ✅ Customization via entrypoint.sh only
-- ✅ docker-compose.yml for each environment
+- ✅ Multi-stage Dockerfile (builder + runtime)
+- ✅ `docker/Dockerfile` location
+- ✅ Use temp directory for compose
+- ✅ `tini` as init process
+- ✅ Include `tor` package (binary controls startup)
 
-## DOCKERFILE LOCATION
+## DOCKERFILE STRUCTURE
+```dockerfile
+# Stage 1: Build
+FROM golang:alpine AS builder
+# Build binary...
+
+# Stage 2: Runtime
+FROM alpine:latest
+RUN apk add --no-cache git curl bash tini tor
+COPY --from=builder /app/weather /usr/local/bin/weather
+STOPSIGNAL SIGRTMIN+3
+ENTRYPOINT ["tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh"]
 ```
-docker/
-├── Dockerfile
-├── docker-compose.yml       # Production (NO debug)
-├── docker-compose.dev.yml   # Development
-├── docker-compose.test.yml  # Testing (DEBUG=true)
-└── file_system/             # Build-time overlay
-    └── usr/local/bin/entrypoint.sh
-```
 
-## CONTAINER PORTS
-| Context | Internal | External |
-|---------|----------|----------|
-| Default | 80 | 64xxx (random) |
-| Override | PORT env | -p mapping |
+## PORTS
+| Type | Port |
+|------|------|
+| Internal default | 80 |
+| External mapping | Random 64xxx → 80 |
 
-## VOLUME MOUNTS
+## VOLUMES
 ```yaml
 volumes:
   - './rootfs/config:/config:z'
   - './rootfs/data:/data:z'
 ```
 
-## DOCKER LABELS (REQUIRED)
-```dockerfile
-LABEL org.opencontainers.image.source="https://github.com/apimgr/weather"
-LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.title="weather"
-LABEL org.opencontainers.image.description="Weather API service"
-```
-
 ## TEMP DIRECTORY WORKFLOW
-```bash
-# Create temp dir for testing
-TMPDIR=$(mktemp -d)
-cp docker/docker-compose.yml "$TMPDIR/"
-cd "$TMPDIR"
-docker compose up -d
-# Test...
-docker compose down
-rm -rf "$TMPDIR"
-```
-
-## DOCKER TAGS (CI/CD)
-| Event | Tags |
-|-------|------|
-| Any push | devel, {commit} |
-| Beta tag | beta, {commit} |
-| Release tag | {version}, latest, YYMM, {commit} |
+1. Create temp dir: `/tmp/apimgr/weather-XXXXXX/`
+2. Copy docker-compose.yml to temp
+3. Run docker-compose from temp
+4. Volumes created in temp (not project dir)
 
 ---
 **Full details: AI.md PART 27**

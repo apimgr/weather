@@ -3,7 +3,7 @@
 {{template "navbar" .}}
 
 <div class="admin-container">
-        <div class="admin-header">
+        <div class="admin_header">
             <h1>Admin Panel</h1>
             <p class="text-comment">Manage users, settings, and system configuration</p>
         </div>
@@ -534,7 +534,7 @@
             if (!confirmed) return;
 
             try {
-                await fetch(`/api/v1/admin/users/${id}`, { method: 'DELETE' });
+                await fetch(`${ADMIN_API_PATH}/server/users/${id}`, { method: 'DELETE' });
                 Toast.success('User deleted successfully');
                 loadUsers();
             } catch (error) {
@@ -606,7 +606,7 @@
             try {
                 // Update email if changed
                 const updateData = { email: email };
-                const response = await fetch(`/api/v1/admin/users/${userId}`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/users/${userId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updateData)
@@ -618,7 +618,7 @@
 
                 // Update password if provided
                 if (password) {
-                    const pwResponse = await fetch(`/api/v1/admin/users/${userId}/password`, {
+                    const pwResponse = await fetch(`${ADMIN_API_PATH}/server/users/${userId}/password`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ password: password })
@@ -993,7 +993,7 @@
             if (!confirmed) return;
 
             try {
-                await fetch(`/api/v1/admin/tokens/${id}`, { method: 'DELETE' });
+                await fetch(`${ADMIN_API_PATH}/server/security/tokens/${id}`, { method: 'DELETE' });
                 Toast.success('Token revoked successfully');
                 loadTokens();
             } catch (error) {
@@ -1194,7 +1194,7 @@
             }
 
             try {
-                const response = await fetch(`/api/v1/admin/logs?days=${days}`, { method: 'DELETE' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/logs?days=${days}`, { method: 'DELETE' });
 
                 if (!response.ok) {
                     throw new Error('Failed to clear logs');
@@ -1333,7 +1333,7 @@
         // Enable a task
         async function enableTask(taskName) {
             try {
-                const response = await fetch(`/api/v1/admin/tasks/${taskName}/enable`, { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/scheduler/${taskName}/enable`, { method: 'POST' });
                 if (!response.ok) throw new Error(await response.text());
                 await loadScheduledTasks();
                 Toast.success(`Task "${taskName}" enabled successfully`);
@@ -1345,7 +1345,7 @@
         // Disable a task
         async function disableTask(taskName) {
             try {
-                const response = await fetch(`/api/v1/admin/tasks/${taskName}/disable`, { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/scheduler/${taskName}/disable`, { method: 'POST' });
                 if (!response.ok) throw new Error(await response.text());
                 await loadScheduledTasks();
                 Toast.success(`Task "${taskName}" disabled successfully`);
@@ -1357,7 +1357,7 @@
         // Trigger a task manually
         async function triggerTask(taskName) {
             try {
-                const response = await fetch(`/api/v1/admin/tasks/${taskName}/trigger`, { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/scheduler/${taskName}/run`, { method: 'POST' });
                 if (!response.ok) throw new Error(await response.text());
                 Toast.success(`Task "${taskName}" triggered successfully`);
                 setTimeout(() => loadScheduledTasks(), 2000); // Reload after 2s
@@ -1369,7 +1369,7 @@
         // View task history
         async function viewTaskHistory(taskName) {
             try {
-                const response = await fetch(`/api/v1/admin/tasks/${taskName}/history?limit=20`);
+                const response = await fetch(`${ADMIN_API_PATH}/server/scheduler/${taskName}?limit=20`);
                 if (!response.ok) throw new Error(await response.text());
                 const data = await response.json();
                 const history = data.history || [];
@@ -1609,7 +1609,7 @@
             if (!await showConfirm('Create backup now? This may take a few moments.')) return;
 
             try {
-                const response = await fetch(`${ADMIN_API_PATH}/backup/create', { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/backup`, { method: 'POST' });
                 const result = await response.json();
 
                 if (result.success) {
@@ -1657,7 +1657,7 @@
 
         async function loadBackupList() {
             try {
-                const response = await fetch(`${ADMIN_API_PATH}/backup/list');
+                const response = await fetch(`${ADMIN_API_PATH}/server/backup`);
                 const backups = await response.json();
 
                 const html = backups.length ? `
@@ -1677,7 +1677,7 @@
                                     <td class="admin-table-body-cell">${formatBytes(backup.size)}</td>
                                     <td class="admin-table-body-cell">${new Date(backup.created).toLocaleString()}</td>
                                     <td class="admin-table-body-cell-right">
-                                        <a href="${ADMIN_API_PATH}/backup/download/${backup.filename}" class="btn btn-sm btn-primary">Download</a>
+                                        <a href="${ADMIN_API_PATH}/server/backup/${backup.filename}/download" class="btn btn-sm btn-primary">Download</a>
                                         <button onclick="deleteBackup('${backup.filename}')" class="btn btn-sm btn-danger">Delete</button>
                                     </td>
                                 </tr>
@@ -1697,7 +1697,7 @@
             if (!await showConfirm(`Delete backup ${filename}?`, 'Delete Backup')) return;
 
             try {
-                const response = await fetch(`/api/v1/admin/backup/delete/${filename}`, { method: 'DELETE' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/backup/${filename}`, { method: 'DELETE' });
                 const result = await response.json();
 
                 if (result.success) {

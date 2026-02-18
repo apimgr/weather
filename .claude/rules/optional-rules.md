@@ -1,67 +1,63 @@
 # Optional Rules (PART 34, 35, 36)
 
-⚠️ **OPTIONAL sections become NON-NEGOTIABLE when implemented.** ⚠️
+⚠️ **OPTIONAL until implemented. Once implemented, NON-NEGOTIABLE.** ⚠️
 
-## PART 34: MULTI-USER (Implemented for Weather)
+## CRITICAL - NEVER DO (if not using)
+- ❌ Include user registration code if not using PART 34
+- ❌ Include org code if not using PART 35
+- ❌ Include custom domain code if not using PART 36
+- ❌ Add disabled feature toggles (users.enabled: false)
 
-### When to Include
-- Apps with Regular User accounts
-- Multi-tenant platforms
-- User-specific data storage
-- Social features, profiles
+## WHEN TO INCLUDE
 
-### If NOT Using Multi-User
-These must NOT appear in code:
-- users table
-- User registration
-- User preferences table
-- User API tokens
-- /auth/register routes
-- User profiles
+### PART 34: Multi-User
+| Include If | Skip If |
+|------------|---------|
+| Regular user accounts needed | Admin-only APIs |
+| User registration required | Simple data APIs |
+| User profiles needed | Read-only services |
 
-### If Using Multi-User (Weather uses this)
-- Separate from Server Admin (different DB tables)
-- Registration modes: public, private, disabled
-- Profile fields: username, avatar, bio, website
-- 2FA support: TOTP, Passkeys
-- API tokens per user
-- Privacy settings (profile visibility)
+### PART 35: Organizations (requires PART 34)
+| Include If | Skip If |
+|------------|---------|
+| Team collaboration | Single-user apps |
+| B2B features | Consumer apps |
+| Shared workspaces | Personal tools |
 
-## PART 35: ORGANIZATIONS (Not Used)
+### PART 36: Custom Domains
+| Include If | Skip If |
+|------------|---------|
+| Users want branded URLs | Simple APIs |
+| Content under user domains | Internal tools |
 
-### When to Include
-- Team collaboration features
-- B2B platforms
-- Workspace-based apps
-- Requires PART 34 (Multi-User)
+## IF IMPLEMENTING PART 34
+- ✅ Separate users table (not admins)
+- ✅ Registration modes: public, private, disabled
+- ✅ Username blocklist validation
+- ✅ Profile fields: visibility, avatar, bio, website
+- ✅ 2FA support: TOTP, Passkeys
+- ✅ User preferences table
+- ✅ User API tokens (usr_ prefix)
 
-### If NOT Using Organizations
-These must NOT appear:
-- organizations table
-- Org membership
-- Org ownership
-- Org API tokens
-- /orgs/* routes
+## IF IMPLEMENTING PART 35
+- ✅ Organizations table
+- ✅ Organization membership
+- ✅ Org API tokens (org_ prefix)
+- ✅ Org-level settings
 
-## PART 36: CUSTOM DOMAINS (Not Used)
+## IF IMPLEMENTING PART 36
+- ✅ Custom domains table
+- ✅ Domain verification (DNS TXT)
+- ✅ SSL cert provisioning
+- ✅ Domain routing
 
-### When to Include
-- Linktree-style apps
-- Blog platforms
-- White-label services
-- Users want branded URLs
-
-### If NOT Using Custom Domains
-These must NOT appear:
-- custom_domains table
-- Domain verification
-- User/org domain settings
-- SSL for custom domains
-
-## CLIENT-SIDE PREFERENCES (No PART 34 Required)
-These work without user accounts:
-- localStorage: Theme, language, UI prefs
-- Cookies: Session prefs, consent flags
+## CLEAN CODEBASE RULE
+If NOT using an optional PART:
+- Zero code references
+- No conditionals checking for feature
+- No config toggles
+- No database tables
+- Code written as if feature never existed
 
 ---
 **Full details: AI.md PART 34, PART 35, PART 36**

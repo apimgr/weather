@@ -52,7 +52,7 @@ func (h *TwoFactorHandler) ShowSecurityPage(c *gin.Context) {
 		recoveryKeysCount, _ = recoveryKeyModel.GetUnusedKeysCount(int(user.ID))
 	}
 
-	c.HTML(http.StatusOK, "pages/user/security.tmpl", utils.TemplateData(c, gin.H{
+	c.HTML(http.StatusOK, "page/user/security.tmpl", utils.TemplateData(c, gin.H{
 		"title":             "Security Settings",
 		"user":              user,
 		"recoveryKeysCount": recoveryKeysCount,
@@ -277,7 +277,7 @@ func respondWith2FAError(c *gin.Context, statusCode int, message string) {
 	if strings.Contains(contentType, "application/json") || strings.Contains(acceptHeader, "application/json") {
 		c.JSON(statusCode, gin.H{"error": message})
 	} else {
-		c.HTML(statusCode, "pages/error.tmpl", gin.H{
+		c.HTML(statusCode, "page/error.tmpl", gin.H{
 			"error": message,
 		})
 	}

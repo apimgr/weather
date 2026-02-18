@@ -76,6 +76,7 @@ func (c *CLI) Parse(args []string) error {
 		pidFile        = c.flags.String("pid", "", "PID file path")
 		address        = c.flags.String("address", "", "Listen address")
 		port           = c.flags.String("port", "", "Server port (deprecated, use --address)")
+		baseURL        = c.flags.String("baseurl", "", "URL path prefix (default: /)")
 		daemon         = c.flags.Bool("daemon", false, "Daemonize (detach from terminal, Unix only)")
 		serviceCmd     = c.flags.String("service", "", "Service management: start, stop, restart, reload, --install, --uninstall")
 		maintenanceCmd = c.flags.String("maintenance", "", "Maintenance: backup, restore, update, mode, setup")
@@ -168,6 +169,9 @@ func (c *CLI) Parse(args []string) error {
 	if *daemon {
 		os.Setenv("DAEMON", "true")
 	}
+	if *baseURL != "" {
+		os.Setenv("BASE_URL", *baseURL)
+	}
 	// Handle --color flag (AI.md PART 8: NO_COLOR support)
 	if *colorMode != "" {
 		os.Setenv("CLI_COLOR_MODE", *colorMode)
@@ -215,6 +219,7 @@ func (c *CLI) ShowHelp() {
 	fmt.Println("      --pid FILE                    PID file path")
 	fmt.Println("      --address ADDR                Listen address (default: 0.0.0.0)")
 	fmt.Println("      --port PORT                   Listen port (default: random 64xxx, 80 in container)")
+	fmt.Println("      --baseurl PATH                URL path prefix (default: /)")
 	fmt.Println("      --daemon                      Run as daemon (detach from terminal)")
 	fmt.Println("      --debug                       Enable debug mode")
 	fmt.Println("      --color {always|never|auto}   Color output (default: auto)")

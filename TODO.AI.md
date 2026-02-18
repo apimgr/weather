@@ -3,10 +3,10 @@
 ## Project Info
 - **Project Name**: weather
 - **Organization**: apimgr
-- **Template Version**: Fresh copy from TEMPLATE.md 2026-02-03 (REFRESHED)
+- **Template Version**: Fresh copy from TEMPLATE.md 2026-02-06 (REFRESHED)
 - **AI.md Location**: /root/Projects/github/apimgr/weather/AI.md
 - **Official Site**: https://wthr.top
-- **AI.md Refresh**: 2026-02-03 - Placeholders replaced (weather/apimgr), rules verified
+- **AI.md Refresh**: 2026-02-06 - Placeholders replaced (weather/apimgr), .claude/rules/ regenerated (14 files)
 
 ---
 
@@ -286,8 +286,9 @@ Previously created:
 - Test binaries in Docker/Incus, never on host
 - AI.md is SOURCE OF TRUTH - always re-read relevant PART before implementing
 - Build: PASSING | Tests: ALL PASSING
-- Last verification: 2026-02-03
-  - All 14 .claude/rules/*.md files present
+- Last verification: 2026-02-06
+  - AI.md refreshed from TEMPLATE.md (2026-02-06), all placeholders replaced
+  - All 14 .claude/rules/*.md files regenerated
   - No TODO/FIXME/XXX comments in src/
   - No bcrypt usage (Argon2id correctly used)
   - No strconv.ParseBool (config.ParseBool used)

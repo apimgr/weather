@@ -173,9 +173,9 @@ func (s *BackupService) collectFiles(opts BackupOptions) ([]string, error) {
 	}
 
 	// Custom templates - If exists per AI.md PART 25 line 22364
-	templatesDir := filepath.Join(opts.ConfigDir, "templates")
+	templatesDir := filepath.Join(opts.ConfigDir, "template")
 	if _, err := os.Stat(templatesDir); err == nil {
-		files = append(files, "templates/")
+		files = append(files, "template/")
 	}
 
 	// Custom themes - If exists per AI.md PART 25 line 22365
@@ -236,7 +236,7 @@ func (s *BackupService) createArchive(configDir, dataDir string, files []string,
 	// Add each file/directory
 	for _, file := range files {
 		var sourcePath string
-		if file == "server.yml" || filepath.HasPrefix(file, "templates/") ||
+		if file == "server.yml" || filepath.HasPrefix(file, "template/") ||
 			filepath.HasPrefix(file, "themes/") || filepath.HasPrefix(file, "ssl/") {
 			sourcePath = filepath.Join(configDir, file)
 		} else {

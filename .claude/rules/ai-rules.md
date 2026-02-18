@@ -9,12 +9,13 @@
 - ❌ Skip reading PART 0 and 1 at conversation start
 - ❌ Add features not in spec without asking
 - ❌ Use "I think" or "probably" - KNOW from spec or ASK
-- ❌ Ask multiple plain-text questions in separate messages - use AskUserQuestion wizard
+- ❌ Ask multiple plain-text questions in separate messages - use AskUserQuestion wizard instead
 - ❌ Use generic placeholder content ("Your app name", "Feature 1")
 - ❌ Create /server/about or /server/help with placeholder text
 - ❌ Leave TODO comments in code - implement fully or don't implement
 - ❌ Create stub functions or "future" placeholders
 - ❌ Partial implementations - every feature must be 100% complete
+- ❌ "I'll come back to this later" - there is no later, do it NOW
 
 ## REQUIRED - ALWAYS DO
 - ✅ Read AI.md PART 0, 1 at start of EVERY conversation
@@ -27,6 +28,7 @@
 - ✅ Use AskUserQuestion wizard - one question at a time, options + custom input
 - ✅ Source /server/about and /server/help content from IDEA.md
 - ✅ Implement features 100% complete - no stubs, no TODOs, no "future"
+- ✅ ONE thing at a time - finish current task completely before starting another
 
 ## KEY DECISIONS (pre-answered)
 | Question | Answer | Reference |
@@ -37,7 +39,6 @@
 | Premium features? | NEVER (all features free) | PART 1 |
 | External cron? | NEVER (built-in scheduler) | PART 19 |
 | Client-side rendering? | NEVER (server-side Go templates) | PART 16 |
-| Boolean parsing? | config.ParseBool() (NEVER strconv) | PART 5 |
 
 ## TERMINOLOGY
 | Term | Meaning |

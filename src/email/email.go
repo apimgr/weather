@@ -15,7 +15,7 @@ import (
 )
 
 // Embedded templates per AI.md line 22772
-//go:embed templates/*.txt
+//go:embed template/*.txt
 var embeddedTemplates embed.FS
 
 // Service handles email sending
@@ -169,13 +169,13 @@ func LoadTemplate(name string) (*Template, error) {
 	if configDir == "" {
 		configDir = "/etc/weather"
 	}
-	customPath := filepath.Join(configDir, "templates", "email", name+".txt")
+	customPath := filepath.Join(configDir, "template", "email", name+".txt")
 	if content, err := os.ReadFile(customPath); err == nil {
 		return parseTemplate(name, string(content))
 	}
 
 	// Fall back to embedded template per AI.md line 22772
-	embeddedPath := "templates/" + name + ".txt"
+	embeddedPath := "template/" + name + ".txt"
 	content, err := embeddedTemplates.ReadFile(embeddedPath)
 	if err != nil {
 		return nil, fmt.Errorf("template not found: %s", name)
