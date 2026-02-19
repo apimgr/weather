@@ -13,7 +13,7 @@
             <div class="setup-header">
                 <div class="setup-icon">🔐</div>
                 <h1 class="setup-title">Create Administrator Account</h1>
-                <p class="setup-subtitle">Step 2 of 2: System Administrator</p>
+                <p class="setup-subtitle">Create Primary Administrator</p>
             </div>
 
             <div class="info-box">
@@ -122,7 +122,8 @@
             };
 
             try {
-                const response = await fetch('/users/setup/admin', {
+                // POST to current URL (/{admin_path}/server/setup/admin)
+                const response = await fetch(window.location.pathname, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -131,8 +132,8 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Use the redirect URL from server response, fallback to /users/setup/complete
-                    window.location.href = result.redirect || '/users/setup/complete';
+                    // Use the redirect URL from server response
+                    window.location.href = result.redirect;
                 } else {
                     errorMsg.textContent = result.error || 'Failed to create administrator';
                     errorMsg.classList.add('edit-error-message');

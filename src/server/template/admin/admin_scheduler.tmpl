@@ -11,7 +11,7 @@
     <div class="admin-page-header">
         <h1>Scheduler Configuration</h1>
         <div class="admin-page-breadcrumb">
-            <a href="/admin">Admin</a> /
+            <a href="{{.admin_path}}">Admin</a> /
             <a href="{{.admin_path}}/tasks">Tasks</a> /
             <span>Configuration</span>
         </div>
@@ -19,7 +19,7 @@
 
     <div class="admin-page-container">
         <div class="admin-nav-links">
-            <a href="/admin" class="admin-nav-link">Dashboard</a>
+            <a href="{{.admin_path}}" class="admin-nav-link">Dashboard</a>
             <a href="{{.admin_path}}/tasks" class="admin-nav-link">Task Monitor</a>
         </div>
 
@@ -489,6 +489,9 @@
     </div>
 
     <script>
+        // Get admin path from template (AI.md: use configurable admin_path)
+        const adminPath = '{{.admin_path}}';
+
         // Form submission
         document.getElementById('schedulerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -517,7 +520,7 @@
             });
 
             try {
-                const response = await fetch('/admin/scheduler/config', {
+                const response = await fetch(adminPath + '/scheduler/config', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -532,7 +535,7 @@
 
                 showSuccess('Scheduler configuration saved successfully!');
                 setTimeout(() => {
-                    window.location.href = '/admin/tasks';
+                    window.location.href = adminPath + '/tasks';
                 }, 1500);
             } catch (error) {
                 showError('Failed to save configuration: ' + error.message);

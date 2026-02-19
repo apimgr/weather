@@ -2,11 +2,13 @@ package utils
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -33,13 +35,81 @@ func DetectFirstRun(dataDir string) bool {
 }
 
 // GenerateSetupToken generates a cryptographically secure one-time setup token
+// AI.md: 32 hex characters (128 bits)
 func GenerateSetupToken() (string, error) {
-	// 128 bits
+	// 128 bits = 16 bytes = 32 hex chars
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+// HashSetupToken returns SHA-256 hash of the setup token
+// AI.md: Setup token stored as SHA-256 hash in {config_dir}/setup_token.txt
+func HashSetupToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+// SaveSetupToken saves the setup token hash to {config_dir}/setup_token.txt
+// AI.md: File contains SHA-256 hash of token, not plaintext
+func SaveSetupToken(configDir, token string) error {
+	// Ensure config directory exists
+	dirPerm := os.FileMode(0700)
+	if os.Geteuid() == 0 {
+		dirPerm = 0755
+	}
+	if err := os.MkdirAll(configDir, dirPerm); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Hash the token
+	hashedToken := HashSetupToken(token)
+
+	// Write hash to file
+	tokenPath := filepath.Join(configDir, "setup_token.txt")
+	if err := os.WriteFile(tokenPath, []byte(hashedToken), 0600); err != nil {
+		return fmt.Errorf("failed to write setup token file: %w", err)
+	}
+
+	return nil
+}
+
+// ValidateSetupToken validates a setup token against the stored hash
+// AI.md: Compare SHA-256 hash of provided token with stored hash
+func ValidateSetupToken(configDir, token string) (bool, error) {
+	tokenPath := filepath.Join(configDir, "setup_token.txt")
+
+	// Read stored hash
+	storedHash, err := os.ReadFile(tokenPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, fmt.Errorf("setup token file not found")
+		}
+		return false, fmt.Errorf("failed to read setup token file: %w", err)
+	}
+
+	// Hash the provided token and compare
+	providedHash := HashSetupToken(strings.TrimSpace(token))
+	return providedHash == strings.TrimSpace(string(storedHash)), nil
+}
+
+// DeleteSetupToken removes the setup token file after successful setup
+// AI.md: File deleted after successful setup completion
+func DeleteSetupToken(configDir string) error {
+	tokenPath := filepath.Join(configDir, "setup_token.txt")
+	if err := os.Remove(tokenPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete setup token file: %w", err)
+	}
+	return nil
+}
+
+// SetupTokenExists checks if a setup token file exists
+func SetupTokenExists(configDir string) bool {
+	tokenPath := filepath.Join(configDir, "setup_token.txt")
+	_, err := os.Stat(tokenPath)
+	return err == nil
 }
 
 // AutoDetectSMTP attempts to auto-detect available SMTP servers

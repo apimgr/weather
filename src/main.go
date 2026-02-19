@@ -291,16 +291,13 @@ func main() {
 	err = dualDB.QueryRowServer("SELECT value FROM server_config WHERE key = 'setup.completed'").Scan(&setupValue)
 	setupComplete = (err == nil && setupValue == "true")
 
-	// If first run, store setup token in database
+	// If first run, store setup token hash in file
+	// AI.md: Setup token stored as SHA-256 hash in {config_dir}/setup_token.txt
 	if isFirstRun && setupToken != "" {
-		_, err = database.GetServerDB().Exec(`
-			INSERT INTO server_config (key, value, type, description, updated_at)
-			VALUES ('setup.token', ?, 'string', 'One-time setup token (first run)', datetime('now'))
-		`, setupToken)
-		if err != nil {
+		if err := utils.SaveSetupToken(dirPaths.Config, setupToken); err != nil {
 			appLogger.Error("Failed to store setup token: %v", err)
 		} else {
-			appLogger.Printf("Setup token stored in database")
+			appLogger.Printf("Setup token hash saved to %s/setup_token.txt", dirPaths.Config)
 		}
 	}
 
@@ -469,8 +466,8 @@ func main() {
 	// Server context middleware - injects server title/tagline/description
 	r.Use(middleware.InjectServerContext(db.DB, Version))
 
-	// Check for first user setup - redirects to /users/setup if no users exist
-	r.Use(middleware.CheckFirstUserSetup(db.DB))
+	// AI.md: Server is FULLY FUNCTIONAL without setup - only admin panel requires setup
+	// AdminSetupRequired middleware applied to admin routes only (see admin route group below)
 
 	// Restrict admin users to only access /admin routes - all other routes treat them as anonymous
 	r.Use(middleware.RestrictAdminToAdminRoutes())
@@ -1143,46 +1140,17 @@ func main() {
 		})
 	})
 
-	// First-run setup routes (public)
-	// First user setup routes (blocked after setup complete)
-	// AI.md PART 14: Use plural nouns for all routes
-	setupRoutes := r.Group("/users/setup")
-	setupRoutes.Use(middleware.BlockSetupAfterComplete(db.DB))
+	// Server setup routes at /{admin_path}/server/setup (public - requires setup token)
+	// AI.md: Setup flow is at /{admin_path}/server/setup, creates Primary Admin
+	// AI.md: Server is FULLY FUNCTIONAL without setup - only admin panel requires setup
+	adminSetupRoutes := r.Group("/" + cfg.GetAdminPath() + "/server/setup")
+	adminSetupRoutes.Use(middleware.BlockSetupAfterComplete(db.DB, cfg))
 	{
-		setupRoutes.GET("", setupHandler.ShowWelcome)
-		setupRoutes.GET("/register", setupHandler.ShowUserRegister)
-		setupRoutes.POST("/register", setupHandler.CreateUser)
-		// AI.md: Setup routes use /{admin_path}
-		setupRoutes.GET("/"+cfg.GetAdminPath(), setupHandler.ShowAdminSetup)
-		setupRoutes.POST("/"+cfg.GetAdminPath(), setupHandler.CreateAdmin)
-		setupRoutes.GET("/complete", setupHandler.CompleteSetup)
-	}
-
-	// Setup wizard routes
-	setupWizard := r.Group("/setup")
-	setupWizard.Use(middleware.RequireAuth(db.DB))
-	{
-		// Admin account creation (step 1 - accessible only when no admin exists)
-		// AI.md: Setup wizard uses /{admin_path}
-		adminSetup := setupWizard.Group("/" + cfg.GetAdminPath())
-		adminSetup.Use(middleware.BlockSetupAfterAdminExists(db.DB))
-		{
-			adminSetup.GET("/welcome", setupHandler.ShowAdminSetup)
-			adminSetup.POST("/create", setupHandler.CreateAdmin)
-		}
-
-		// Server configuration wizard (step 2 - admin only, after admin account created)
-		serverSetup := setupWizard.Group("/server")
-		serverSetup.Use(middleware.RequireAdmin())
-		serverSetup.Use(middleware.BlockSetupAfterComplete(db.DB))
-		{
-			serverSetup.GET("/welcome", setupHandler.ShowServerSetupWelcome)
-			serverSetup.GET("/settings", setupHandler.ShowServerSetupSettings)
-			serverSetup.POST("/settings", setupHandler.SaveServerSettings)
-		}
-
-		// Setup completion page (admin only)
-		setupWizard.GET("/complete", middleware.RequireAdmin(), setupHandler.ShowServerSetupComplete)
+		adminSetupRoutes.GET("", setupHandler.ShowSetupTokenEntry)
+		adminSetupRoutes.POST("/verify", setupHandler.VerifySetupToken)
+		adminSetupRoutes.GET("/admin", setupHandler.ShowAdminSetup)
+		adminSetupRoutes.POST("/admin", setupHandler.CreateAdmin)
+		adminSetupRoutes.GET("/complete", setupHandler.CompleteSetup)
 	}
 
 	// Authentication routes (public) - TEMPLATE.md lines 4441-4534
@@ -1311,6 +1279,8 @@ func main() {
 	// Admin routes (require admin role + stricter rate limiting)
 	// AI.md: Admin panel at /{admin_path} (configurable, default: "admin")
 	adminRoutes := r.Group("/" + cfg.GetAdminPath())
+	// AI.md: Redirect to setup if no admin exists
+	adminRoutes.Use(middleware.AdminSetupRequired(db.DB, cfg))
 	adminRoutes.Use(middleware.RequireAuth(db.DB))
 	adminRoutes.Use(middleware.RequireAdmin())
 	adminRoutes.Use(middleware.AdminRateLimitMiddleware())

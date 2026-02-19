@@ -159,13 +159,18 @@ func IsAdmin(c *gin.Context) bool {
 // RestrictAdminToAdminRoutes middleware that forces admins to only access /admin routes
 // Admins are treated as guest/anonymous on all non-admin routes
 func RestrictAdminToAdminRoutes() gin.HandlerFunc {
+	// Get admin path from config (AI.md: use configurable admin_path)
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
+	}
+
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
-		// Skip this middleware for /admin routes, setup routes, API routes, static files, and auth routes
-		if strings.HasPrefix(path, "/admin") ||
-			strings.HasPrefix(path, "/setup") ||
-			strings.HasPrefix(path, "/users/setup") ||
+		// Skip this middleware for admin routes, setup routes, API routes, static files, and auth routes
+		if strings.HasPrefix(path, adminPath) ||
 			strings.HasPrefix(path, "/api") ||
 			strings.HasPrefix(path, "/static") ||
 			strings.HasPrefix(path, "/auth/login") ||
@@ -192,13 +197,20 @@ func RestrictAdminToAdminRoutes() gin.HandlerFunc {
 }
 
 // BlockAdminFromUserRoutes blocks admin users from accessing /users routes
-// Admins should only access /admin routes
+// Admins should only access admin routes
 func BlockAdminFromUserRoutes() gin.HandlerFunc {
+	// Get admin path from config (AI.md: use configurable admin_path)
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
+	}
+
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
-		// Only apply to /users routes (but not /users/setup which is for initial setup)
-		if !strings.HasPrefix(path, "/users") || strings.HasPrefix(path, "/users/setup") {
+		// Only apply to /users routes
+		if !strings.HasPrefix(path, "/users") {
 			c.Next()
 			return
 		}
@@ -210,7 +222,7 @@ func BlockAdminFromUserRoutes() gin.HandlerFunc {
 			acceptHeader := c.GetHeader("Accept")
 			if strings.Contains(acceptHeader, "text/html") {
 				// Redirect to admin dashboard for HTML requests
-				c.Redirect(http.StatusFound, "/admin")
+				c.Redirect(http.StatusFound, adminPath)
 				c.Abort()
 				return
 			}

@@ -5,34 +5,36 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/paths"
+	"github.com/apimgr/weather/src/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CheckFirstUserSetup checks if any users exist and redirects to setup if needed
-// Only applies to web/HTML requests, not API requests
-func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
+// AdminSetupRequired checks if admin setup is complete when accessing admin routes
+// AI.md: Server is FULLY FUNCTIONAL without setup - only admin panel requires setup
+// AI.md: Setup flow is at /{admin_path}/server/setup, requires setup token
+func AdminSetupRequired(db *sql.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
+		adminPath := "/" + cfg.GetAdminPath()
 
-		// Skip check for setup routes, static files, and API
-		if strings.HasPrefix(path, "/users/setup") ||
-			strings.HasPrefix(path, "/static/") ||
-			strings.HasPrefix(path, "/api/") ||
-			strings.HasPrefix(path, "/healthz") {
+		// Only apply to admin routes
+		if !strings.HasPrefix(path, adminPath) {
 			c.Next()
 			return
 		}
 
-		// Only apply to HTML requests (check Accept header)
-		accept := c.GetHeader("Accept")
-		if !strings.Contains(accept, "text/html") && accept != "" {
+		// Skip check for setup routes within admin
+		setupPath := adminPath + "/server/setup"
+		if strings.HasPrefix(path, setupPath) {
 			c.Next()
 			return
 		}
 
-		// Check if admin exists in server_admin_credentials (setup is complete when any admin exists)
+		// Check if any admin exists (setup is complete when admin exists)
 		var count int
 		err := database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&count)
 		if err != nil {
@@ -40,9 +42,9 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// If no admin exists, redirect to setup
+		// If no admin exists, redirect to setup wizard
 		if count == 0 {
-			c.Redirect(http.StatusFound, "/users/setup")
+			c.Redirect(http.StatusFound, setupPath)
 			c.Abort()
 			return
 		}
@@ -52,15 +54,15 @@ func CheckFirstUserSetup(db *sql.DB) gin.HandlerFunc {
 }
 
 // BlockSetupAfterComplete blocks access to setup routes after server setup is complete
-func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
+// AI.md: Setup token file deleted after successful setup completion
+func BlockSetupAfterComplete(db *sql.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Check if server setup is marked as complete
-		var setupComplete string
-		err := database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = 'setup.completed'").Scan(&setupComplete)
-
-		// If setting exists and is true, setup is complete
-		if err == nil && setupComplete == "true" {
-			c.Redirect(http.StatusFound, "/admin")
+		// Check if setup token file still exists
+		configDir := paths.GetConfigDir()
+		if !utils.SetupTokenExists(configDir) {
+			// Setup complete (token file deleted), redirect to admin dashboard
+			adminPath := "/" + cfg.GetAdminPath()
+			c.Redirect(http.StatusFound, adminPath+"/dashboard")
 			c.Abort()
 			return
 		}
@@ -70,7 +72,7 @@ func BlockSetupAfterComplete(db *sql.DB) gin.HandlerFunc {
 }
 
 // BlockSetupAfterAdminExists blocks access to admin setup if admin account already exists
-func BlockSetupAfterAdminExists(db *sql.DB) gin.HandlerFunc {
+func BlockSetupAfterAdminExists(db *sql.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check if admin exists in server_admin_credentials
 		var count int
@@ -81,9 +83,10 @@ func BlockSetupAfterAdminExists(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// If admin exists, redirect to appropriate page
+		// If admin exists, redirect to admin dashboard
 		if count > 0 {
-			c.Redirect(http.StatusFound, "/users/dashboard")
+			adminPath := "/" + cfg.GetAdminPath()
+			c.Redirect(http.StatusFound, adminPath+"/dashboard")
 			c.Abort()
 			return
 		}

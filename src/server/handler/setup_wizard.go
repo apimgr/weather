@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/paths"
 	"github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/utils"
 )
 
 // SetupWizardRequest represents the initial setup request
@@ -226,8 +228,8 @@ func validateSetupRequest(req *SetupWizardRequest) error {
 	return nil
 }
 
-// validateSetupToken validates the setup token against the database
-// AI.md PART 17: Setup token required for first admin creation
+// validateSetupToken validates the setup token against the stored hash file
+// AI.md: Setup token stored as SHA-256 hash in {config_dir}/setup_token.txt
 func validateSetupToken(token string) error {
 	if token == "" {
 		return fmt.Errorf("setup token is required")
@@ -236,32 +238,27 @@ func validateSetupToken(token string) error {
 	// Trim whitespace from token
 	token = strings.TrimSpace(token)
 
-	// Get stored setup token from database
-	// AI.md: Setup token stored in server_config table
-	var storedToken string
-	err := database.GetServerDB().QueryRow(`
-		SELECT value FROM server_config WHERE key = 'setup.token'
-	`).Scan(&storedToken)
+	// Get config directory
+	configDir := paths.GetConfigDir()
 
+	// Validate against stored hash in file
+	valid, err := utils.ValidateSetupToken(configDir, token)
 	if err != nil {
 		return fmt.Errorf("setup token not found or already used")
 	}
 
-	// Compare tokens (constant-time comparison for security)
-	if token != storedToken {
+	if !valid {
 		return fmt.Errorf("invalid setup token")
 	}
 
 	return nil
 }
 
-// deleteSetupToken removes the setup token after successful admin creation
-// AI.md PART 17: Token is one-time use only
+// deleteSetupToken removes the setup token file after successful admin creation
+// AI.md: File deleted after successful setup completion
 func deleteSetupToken() error {
-	_, err := database.GetServerDB().Exec(`
-		DELETE FROM server_config WHERE key = 'setup.token'
-	`)
-	return err
+	configDir := paths.GetConfigDir()
+	return utils.DeleteSetupToken(configDir)
 }
 
 // markSetupComplete updates the server_setup_state table

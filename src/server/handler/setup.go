@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
+	"github.com/apimgr/weather/src/paths"
 	"github.com/apimgr/weather/src/utils"
 
 	"github.com/gin-gonic/gin"
@@ -20,78 +22,47 @@ type SetupHandler struct {
 	DB *sql.DB
 }
 
-// ShowWelcome shows the welcome screen (step 1)
-func (h *SetupHandler) ShowWelcome(c *gin.Context) {
-	c.HTML(http.StatusOK, "page/setup_welcome.tmpl", gin.H{
-		"Title": "Welcome - Weather Setup",
+// ShowSetupTokenEntry shows the setup token entry form
+// AI.md: First step of setup - user must enter setup token displayed in console
+func (h *SetupHandler) ShowSetupTokenEntry(c *gin.Context) {
+	c.HTML(http.StatusOK, "page/setup_token.tmpl", gin.H{
+		"Title": "Server Setup - Enter Setup Token",
 	})
 }
 
-// ShowUserRegister shows the user registration form (step 2)
-func (h *SetupHandler) ShowUserRegister(c *gin.Context) {
-	c.HTML(http.StatusOK, "page/setup_user.tmpl", gin.H{
-		"Title": "Create Your Account - Weather Setup",
-	})
-}
-
-// CreateUser creates the first user account (step 3)
-func (h *SetupHandler) CreateUser(c *gin.Context) {
+// VerifySetupToken validates the setup token and allows access to admin creation
+// AI.md: Setup token stored as SHA-256 hash in {config_dir}/setup_token.txt
+func (h *SetupHandler) VerifySetupToken(c *gin.Context) {
 	var input struct {
-		Username string `json:"username" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=8"`
+		SetupToken string `json:"setup_token" form:"setup_token" binding:"required"`
 	}
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBind(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Setup token is required"})
 		return
 	}
 
-	// Trim whitespace from non-password fields
-	input.Username = strings.TrimSpace(input.Username)
-	input.Email = strings.TrimSpace(input.Email)
-
-	// Passwords cannot start or end with whitespace
-	if input.Password != strings.TrimSpace(input.Password) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Password cannot start or end with whitespace"})
-		return
-	}
-
-	// Normalize username
-	username := strings.ToLower(input.Username)
-
-	// Check if user already exists
-	var count int
-	err := database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts WHERE email = ? OR username = ?", input.Email, username).Scan(&count)
+	// Validate setup token against stored hash
+	configDir := paths.GetConfigDir()
+	valid, err := utils.ValidateSetupToken(configDir, input.SetupToken)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Setup token not found or already used"})
 		return
 	}
 
-	if count > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email or username already exists"})
+	if !valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid setup token"})
 		return
 	}
 
-	// Hash password using Argon2id (TEMPLATE.md Part 0 requirement)
-	hashedPassword, err := utils.HashPassword(input.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
+	// Store validated token in session for the admin creation step
+	// Use a secure session cookie to track that token was validated
+	c.SetCookie("setup_token_verified", "true", 3600, "/", "", false, true)
 
-	// Create first user with 'user' role (NOT admin)
-	_, err = database.GetUsersDB().Exec(`
-		INSERT INTO user_accounts (username, email, password_hash, role, created_at, updated_at)
-		VALUES (?, ?, ?, 'user', datetime('now'), datetime('now'))
-	`, username, input.Email, hashedPassword)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"ok": true})
+	c.JSON(http.StatusOK, gin.H{
+		"ok":       true,
+		"redirect": c.Request.URL.Path[:strings.LastIndex(c.Request.URL.Path, "/")] + "/admin",
+	})
 }
 
 // ShowAdminSetup shows the admin creation form (step 4)
@@ -101,8 +72,16 @@ func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
 	})
 }
 
-// CreateAdmin creates the administrator account (step 5)
+// CreateAdmin creates the Primary Admin account
+// AI.md: Setup creates Primary Admin, requires setup token verification
 func (h *SetupHandler) CreateAdmin(c *gin.Context) {
+	// Verify setup token was validated
+	verified, err := c.Cookie("setup_token_verified")
+	if err != nil || verified != "true" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Setup token not verified"})
+		return
+	}
+
 	var input struct {
 		Username        string `json:"username" form:"username"`
 		Email           string `json:"email" form:"email"`
@@ -242,6 +221,17 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		true,
 	)
 
+	// Delete setup token file after successful admin creation
+	// AI.md: File deleted after successful setup completion
+	configDir := paths.GetConfigDir()
+	if err := utils.DeleteSetupToken(configDir); err != nil {
+		// Log but don't fail - admin was created successfully
+		fmt.Printf("Warning: failed to delete setup token file: %v\n", err)
+	}
+
+	// Clear the setup_token_verified cookie
+	c.SetCookie("setup_token_verified", "", -1, "/", "", false, true)
+
 	response := gin.H{"ok": true}
 	if generatedPassword != "" {
 		// Include generated password in response (shown only once)
@@ -249,8 +239,9 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		response["username"] = username
 	}
 
-	// Add redirect to server setup
-	response["redirect"] = "/setup/server/welcome"
+	// Redirect to setup complete page (same path prefix as current request)
+	basePath := c.Request.URL.Path[:strings.LastIndex(c.Request.URL.Path, "/")]
+	response["redirect"] = basePath + "/complete"
 
 	c.JSON(http.StatusOK, response)
 }
@@ -281,31 +272,32 @@ func generateSessionID() (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-// CompleteSetup performs the final redirect based on current user context
+// CompleteSetup shows the setup completion page
+// AI.md: Setup is complete when Primary Admin is created
 func (h *SetupHandler) CompleteSetup(c *gin.Context) {
-	// Check if admin session exists
-	adminSessionID, err := c.Cookie("admin_session")
-	if err == nil && adminSessionID != "" {
-		// Check if admin session is valid
-		var adminID int
-		err := database.GetServerDB().QueryRow(`
-			SELECT admin_id FROM server_admin_sessions
-			WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP
-		`, adminSessionID).Scan(&adminID)
-		if err == nil {
-			c.Redirect(http.StatusFound, "/setup/server/welcome")
-			return
-		}
+	// Mark setup as complete in database
+	_, err := database.GetServerDB().Exec(`
+		INSERT INTO server_config (key, value, type, description, updated_at)
+		VALUES ('setup.completed', 'true', 'bool', 'Server setup completed', datetime('now'))
+		ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')
+	`)
+	if err != nil {
+		fmt.Printf("Warning: failed to mark setup complete: %v\n", err)
 	}
 
-	// Not admin - redirect to dashboard or login
-	_, exists := c.Get("user_id")
-	if !exists {
-		c.Redirect(http.StatusFound, "/auth/login")
-		return
+	// Get the admin path from config (derive from current URL)
+	// Current URL is /{admin_path}/server/setup/complete
+	path := c.Request.URL.Path
+	parts := strings.Split(path, "/")
+	adminPath := "/admin" // default
+	if len(parts) > 1 && parts[1] != "" {
+		adminPath = "/" + parts[1]
 	}
 
-	c.Redirect(http.StatusFound, "/users/dashboard")
+	c.HTML(http.StatusOK, "page/setup_complete.tmpl", gin.H{
+		"Title":     "Setup Complete - Weather",
+		"AdminPath": adminPath,
+	})
 }
 
 // =============================================================================
@@ -471,13 +463,20 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 	}
 
 	// Setup is complete
+	// Get admin path from config (AI.md: use configurable admin_path)
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":      "completed",
 		"step":        3,
 		"total_steps": 3,
 		"message":     "Setup completed successfully",
 		"next_action": "Access admin dashboard",
-		"next_route":  "/admin",
+		"next_route":  adminPath,
 		"is_complete": true,
 	})
 }

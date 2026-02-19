@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <div class="setup-header">
+                <div class="setup-icon">🔐</div>
+                <h1 class="setup-title">Server Setup</h1>
+                <p class="setup-subtitle">Enter the setup token from the server console</p>
+            </div>
+
+            <div class="info-box">
+                <p>The setup token was displayed in the server console when it first started. Enter it below to create the Primary Administrator account.</p>
+            </div>
+
+            <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
+
+            <form id="token-form" role="form" aria-label="Setup token verification form">
+                <div class="form-group">
+                    <label class="form-label" for="setup_token">Setup Token</label>
+                    <input type="text"
+                           id="setup_token"
+                           name="setup_token"
+                           class="form-input"
+                           required
+                           minlength="32"
+                           maxlength="32"
+                           pattern="[a-fA-F0-9]{32}"
+                           placeholder="32-character hex token"
+                           autocomplete="off"
+                           spellcheck="false"
+                           aria-label="Setup token"
+                           aria-required="true"
+                           aria-describedby="token-hint"
+                           title="Enter the 32-character setup token from the server console">
+                    <small class="setup-admin-form-hint" id="token-hint">32 hexadecimal characters (a-f, 0-9)</small>
+                </div>
+
+                <button type="submit"
+                        id="submit-btn"
+                        class="submit-button"
+                        aria-label="Verify setup token"
+                        title="Verify setup token and continue to admin creation">Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('token-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn');
+            const errorMsg = document.getElementById('error-message');
+            const token = document.getElementById('setup_token').value.trim().toLowerCase();
+
+            errorMsg.classList.remove('edit-error-message');
+
+            // Validate token format
+            if (!/^[a-f0-9]{32}$/.test(token)) {
+                errorMsg.textContent = 'Invalid token format. Must be 32 hexadecimal characters.';
+                errorMsg.classList.add('edit-error-message');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verifying...';
+
+            try {
+                const response = await fetch(window.location.pathname.replace(/\/$/, '') + '/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ setup_token: token })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = result.redirect;
+                } else {
+                    errorMsg.textContent = result.error || 'Invalid setup token';
+                    errorMsg.classList.add('edit-error-message');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Continue';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Network error. Please try again.';
+                errorMsg.classList.add('edit-error-message');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Continue';
+            }
+        });
+    </script>
+</body>
+</html>

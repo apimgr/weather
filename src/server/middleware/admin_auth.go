@@ -229,12 +229,18 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 		// Detect if HTTPS is being used
 		isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
 
+		// Get admin path from config (AI.md: use configurable admin_path)
+		adminPath := "/admin"
+		if cfg != nil {
+			adminPath = "/" + cfg.GetAdminPath()
+		}
+
 		// Set admin_session cookie with proper security (AI.md PART 18)
 		c.SetCookie(
 			"admin_session",
 			sessionToken,
 			maxAge,
-			"/admin",
+			adminPath,
 			"",
 			// Secure flag - true if HTTPS
 			isHTTPS,
@@ -246,26 +252,33 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 		db.Exec("UPDATE server_admin_credentials SET last_login = strftime('%s', 'now') WHERE id = ?", adminID)
 
 		// Redirect to admin dashboard
-		c.Redirect(http.StatusFound, "/admin/dashboard")
+		c.Redirect(http.StatusFound, adminPath+"/dashboard")
 	}
 }
 
 // AdminLogoutHandler handles admin logout per AI.md PART 18
 func AdminLogoutHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Get admin path from config (AI.md: use configurable admin_path)
+		cfg, _ := config.LoadConfig()
+		adminPath := "/admin"
+		if cfg != nil {
+			adminPath = "/" + cfg.GetAdminPath()
+		}
+
 		// Clear admin session cookie
 		c.SetCookie(
 			"admin_session",
 			"",
 			-1,
-			"/admin",
+			adminPath,
 			"",
 			false,
 			true,
 		)
 
 		// Redirect to admin login
-		c.Redirect(http.StatusFound, "/admin")
+		c.Redirect(http.StatusFound, adminPath)
 	}
 }
 

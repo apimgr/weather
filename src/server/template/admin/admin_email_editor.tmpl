@@ -11,7 +11,7 @@
     <div class="admin-page-header">
         <h1>Email Template Editor</h1>
         <div class="admin-page-breadcrumb">
-            <a href="/admin">Admin</a> /
+            <a href="{{.admin_path}}">Admin</a> /
             <a href="{{.admin_path}}/email">Email</a> /
             <span>Template Editor</span>
         </div>
@@ -20,7 +20,7 @@
     <div class="admin-page-container wide">
         <div class="admin-nav-links">
             <a href="{{.admin_path}}/email" class="admin-nav-link">← Back to Email Settings</a>
-            <a href="/admin" class="admin-nav-link">Dashboard</a>
+            <a href="{{.admin_path}}" class="admin-nav-link">Dashboard</a>
         </div>
 
         <div class="admin-alert admin-alert-success" id="successAlert" role="alert"></div>
