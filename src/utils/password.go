@@ -2,8 +2,10 @@ package utils
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -85,4 +87,24 @@ func IsBcryptHash(hash string) bool {
 // IsArgon2idHash checks if a hash is argon2id format
 func IsArgon2idHash(hash string) bool {
 	return strings.HasPrefix(hash, "$argon2id$")
+}
+
+// HashAPIToken hashes an API token using SHA-256
+// AI.md: SHA-256 for API token hashing (fast lookup needed)
+func HashAPIToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+// GenerateAPIToken generates a cryptographically secure API token
+// AI.md: API tokens use prefix format: adm_ for admin, usr_ for user
+func GenerateAPIToken(prefix string) (string, error) {
+	// Generate 32 random bytes (256 bits)
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate API token: %w", err)
+	}
+	// Encode as base64url without padding
+	token := base64.RawURLEncoding.EncodeToString(bytes)
+	return prefix + token, nil
 }

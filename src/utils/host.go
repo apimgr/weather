@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -323,4 +324,17 @@ func GetDockerBridgeIPs() []string {
 	}
 
 	return ips
+}
+
+// IsTorAvailable checks if Tor binary is available on the system
+// AI.md PART 32: Tor hidden service auto-enabled when Tor binary found
+func IsTorAvailable() bool {
+	// Check common Tor binary locations
+	torPaths := []string{"tor", "/usr/bin/tor", "/usr/local/bin/tor"}
+	for _, path := range torPaths {
+		if _, err := exec.LookPath(path); err == nil {
+			return true
+		}
+	}
+	return false
 }

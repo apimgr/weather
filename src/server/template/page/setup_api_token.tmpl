@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card setup-card">
+            <div class="login-header">
+                <h1 class="login-title">API Token</h1>
+                <p class="login-subtitle">Server Setup - Step 2 of 6</p>
+            </div>
+
+            <div class="setup-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 33.33%"></div>
+                </div>
+                <div class="progress-steps">
+                    <span class="step completed">Admin</span>
+                    <span class="step active">API Token</span>
+                    <span class="step">Server</span>
+                    <span class="step">Security</span>
+                    <span class="step">Services</span>
+                    <span class="step">Complete</span>
+                </div>
+            </div>
+
+            <div class="login-info">
+                <p>An API token has been generated for programmatic access.</p>
+                <p class="text-orange"><strong>Copy this token now - it will only be shown once!</strong></p>
+            </div>
+
+            {{ if .error }}
+            <div class="error-message" role="alert">{{ .error }}</div>
+            {{ end }}
+
+            <div class="token-display">
+                <label class="form-label">Your API Token</label>
+                <div class="token-box">
+                    <code id="api-token" class="token-value long-string">{{ .APIToken }}</code>
+                    <button type="button" class="btn-copy" onclick="copyToken()">Copy</button>
+                </div>
+                <small class="form-hint">Use this token in the Authorization header: <code>Bearer {token}</code></small>
+            </div>
+
+            <div class="form-group checkbox-confirm">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="token-copied" required>
+                    <span>I have copied and saved my API token</span>
+                </label>
+            </div>
+
+            <form method="POST" action="" id="token-form">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+                <input type="hidden" name="token_acknowledged" value="true">
+                <button type="submit" id="submit-btn" class="btn-login" disabled>Continue to Server Configuration</button>
+            </form>
+        </div>
+
+        {{ if .version }}
+        <div class="login-footer">
+            v{{ .version }}
+        </div>
+        {{ end }}
+    </div>
+
+    <script>
+        function copyToken() {
+            var token = document.getElementById('api-token').textContent;
+            navigator.clipboard.writeText(token).then(function() {
+                var btn = document.querySelector('.btn-copy');
+                btn.textContent = 'Copied!';
+                setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+            });
+        }
+
+        document.getElementById('token-copied').addEventListener('change', function() {
+            document.getElementById('submit-btn').disabled = !this.checked;
+        });
+    </script>
+</body>
+</html>

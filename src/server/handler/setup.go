@@ -30,7 +30,71 @@ func (h *SetupHandler) ShowSetupTokenEntry(c *gin.Context) {
 	})
 }
 
-// VerifySetupToken validates the setup token and allows access to admin creation
+// VerifySetupTokenAtAdmin handles setup token verification at /admin/verify-token
+// AI.md: Step 2: User navigates to /admin → Step 3: User enters setup token → Step 4: Redirect to setup wizard
+func (h *SetupHandler) VerifySetupTokenAtAdmin(c *gin.Context) {
+	// Get admin path from config
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
+	}
+
+	title := "Weather Service"
+	if cfg != nil && cfg.Server.Branding.Title != "" {
+		title = cfg.Server.Branding.Title
+	}
+
+	setupToken := c.PostForm("setup_token")
+	if setupToken == "" {
+		c.HTML(http.StatusBadRequest, "admin/setup_token.tmpl", gin.H{
+			"title":      title + " - Setup",
+			"admin_path": adminPath,
+			"branding": gin.H{
+				"Title": title,
+			},
+			"error": "Setup token is required",
+		})
+		return
+	}
+
+	// Validate setup token against stored hash
+	configDir := paths.GetConfigDir()
+	valid, err := utils.ValidateSetupToken(configDir, setupToken)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "admin/setup_token.tmpl", gin.H{
+			"title":      title + " - Setup",
+			"admin_path": adminPath,
+			"branding": gin.H{
+				"Title": title,
+			},
+			"error": "Setup token not found or already used",
+		})
+		return
+	}
+
+	if !valid {
+		c.HTML(http.StatusUnauthorized, "admin/setup_token.tmpl", gin.H{
+			"title":      title + " - Setup",
+			"admin_path": adminPath,
+			"branding": gin.H{
+				"Title": title,
+			},
+			"error": "Invalid setup token",
+		})
+		return
+	}
+
+	// Store validated token in session for the admin creation step
+	isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+	c.SetCookie("setup_token_verified", "true", 3600, "/", "", isHTTPS, true)
+
+	// Redirect to setup wizard at /{admin_path}/server/setup
+	// AI.md: Step 4: Redirect to /{admin_path}/server/setup (setup wizard)
+	c.Redirect(http.StatusFound, adminPath+"/server/setup")
+}
+
+// VerifySetupToken validates the setup token (API endpoint)
 // AI.md: Setup token stored as SHA-256 hash in {config_dir}/setup_token.txt
 func (h *SetupHandler) VerifySetupToken(c *gin.Context) {
 	var input struct {
@@ -57,28 +121,66 @@ func (h *SetupHandler) VerifySetupToken(c *gin.Context) {
 
 	// Store validated token in session for the admin creation step
 	// Use a secure session cookie to track that token was validated
-	c.SetCookie("setup_token_verified", "true", 3600, "/", "", false, true)
+	isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+	c.SetCookie("setup_token_verified", "true", 3600, "/", "", isHTTPS, true)
+
+	// Get admin path for redirect
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"ok":       true,
-		"redirect": c.Request.URL.Path[:strings.LastIndex(c.Request.URL.Path, "/")] + "/admin",
+		"redirect": adminPath + "/server/setup",
 	})
 }
 
-// ShowAdminSetup shows the admin creation form (step 4)
+// ShowAdminSetup shows the admin creation form
+// AI.md: Setup wizard step - create Primary Admin
 func (h *SetupHandler) ShowAdminSetup(c *gin.Context) {
+	cfg, _ := config.LoadConfig()
+	title := "Weather Service"
+	if cfg != nil && cfg.Server.Branding.Title != "" {
+		title = cfg.Server.Branding.Title
+	}
+
 	c.HTML(http.StatusOK, "page/setup_admin.tmpl", gin.H{
-		"Title": "Create Administrator Account - Weather Setup",
+		"Title": "Create Administrator - " + title,
+	})
+}
+
+// setupError renders error for form submissions or returns JSON for API
+func (h *SetupHandler) setupError(c *gin.Context, status int, errorMsg string) {
+	// Check Accept header to determine response type
+	accept := c.GetHeader("Accept")
+	if strings.Contains(accept, "application/json") {
+		c.JSON(status, gin.H{"error": errorMsg})
+		return
+	}
+
+	// HTML form submission - re-render form with error
+	cfg, _ := config.LoadConfig()
+	title := "Weather Service"
+	if cfg != nil && cfg.Server.Branding.Title != "" {
+		title = cfg.Server.Branding.Title
+	}
+
+	c.HTML(status, "page/setup_admin.tmpl", gin.H{
+		"Title": "Create Administrator - " + title,
+		"error": errorMsg,
 	})
 }
 
 // CreateAdmin creates the Primary Admin account
 // AI.md: Setup creates Primary Admin, requires setup token verification
+// AI.md PART 16: Works without JavaScript - form POST returns redirect
 func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	// Verify setup token was validated
 	verified, err := c.Cookie("setup_token_verified")
 	if err != nil || verified != "true" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Setup token not verified"})
+		h.setupError(c, http.StatusUnauthorized, "Setup token not verified")
 		return
 	}
 
@@ -92,19 +194,19 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	// Accept both JSON and form data
 	if err := c.ShouldBind(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		h.setupError(c, http.StatusBadRequest, "Invalid form data")
 		return
 	}
 
 	// Validate email
 	email := strings.TrimSpace(input.Email)
 	if email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
+		h.setupError(c, http.StatusBadRequest, "Email is required")
 		return
 	}
 	// Basic email validation
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		h.setupError(c, http.StatusBadRequest, "Invalid email format")
 		return
 	}
 
@@ -125,27 +227,27 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 		var err error
 		generatedPassword, err = generateRandomPassword(32)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure password"})
+			h.setupError(c, http.StatusInternalServerError, "Failed to generate secure password")
 			return
 		}
 		password = generatedPassword
 	} else {
 		// Use custom password - must be confirmed
 		if input.Password == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Password is required"})
+			h.setupError(c, http.StatusBadRequest, "Password is required")
 			return
 		}
 		// Passwords cannot start or end with whitespace
 		if input.Password != strings.TrimSpace(input.Password) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Password cannot start or end with whitespace"})
+			h.setupError(c, http.StatusBadRequest, "Password cannot start or end with whitespace")
 			return
 		}
 		if len(input.Password) < 12 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 12 characters"})
+			h.setupError(c, http.StatusBadRequest, "Password must be at least 12 characters")
 			return
 		}
 		if input.Password != input.ConfirmPassword {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Passwords do not match"})
+			h.setupError(c, http.StatusBadRequest, "Passwords do not match")
 			return
 		}
 		password = input.Password
@@ -153,21 +255,21 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	// Check if admin username already exists in server_admin_credentials
 	var count int
-	err := database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials WHERE username = ?", username).Scan(&count)
+	err = database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials WHERE username = ?", username).Scan(&count)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		h.setupError(c, http.StatusInternalServerError, "Database error")
 		return
 	}
 
 	if count > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
+		h.setupError(c, http.StatusConflict, "Username already exists")
 		return
 	}
 
-	// Hash password using Argon2id (TEMPLATE.md Part 0 requirement)
+	// Hash password using Argon2id (AI.md PART 3 requirement)
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		h.setupError(c, http.StatusInternalServerError, "Failed to hash password")
 		return
 	}
 
@@ -178,21 +280,21 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	`, username, email, hashedPassword)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create administrator"})
+		h.setupError(c, http.StatusInternalServerError, "Failed to create administrator")
 		return
 	}
 
 	// Get the newly created admin ID
 	adminID, err := result.LastInsertId()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve admin ID"})
+		h.setupError(c, http.StatusInternalServerError, "Failed to retrieve admin ID")
 		return
 	}
 
 	// Create admin session (auto-login) in server_admin_sessions
 	sessionID, err := generateSessionID()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate session ID"})
+		h.setupError(c, http.StatusInternalServerError, "Failed to generate session ID")
 		return
 	}
 	// 7 days
@@ -204,7 +306,7 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	`, sessionID, adminID, c.ClientIP(), c.Request.UserAgent(), expiresAt)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
+		h.setupError(c, http.StatusInternalServerError, "Failed to create session")
 		return
 	}
 
@@ -232,18 +334,52 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	// Clear the setup_token_verified cookie
 	c.SetCookie("setup_token_verified", "", -1, "/", "", false, true)
 
-	response := gin.H{"ok": true}
-	if generatedPassword != "" {
-		// Include generated password in response (shown only once)
-		response["generated_password"] = generatedPassword
-		response["username"] = username
+	// Generate API token for the new admin
+	// AI.md: Step 2 - API Token auto-generated
+	apiToken, err := generateAPIToken()
+	if err != nil {
+		h.setupError(c, http.StatusInternalServerError, "Failed to generate API token")
+		return
 	}
 
-	// Redirect to setup complete page (same path prefix as current request)
-	basePath := c.Request.URL.Path[:strings.LastIndex(c.Request.URL.Path, "/")]
-	response["redirect"] = basePath + "/complete"
+	// Hash and store the API token
+	tokenHash := utils.HashAPIToken(apiToken)
+	_, err = database.GetServerDB().Exec(`
+		INSERT INTO server_admin_tokens (admin_id, token_hash, name, created_at, expires_at)
+		VALUES (?, ?, 'Setup Token', CURRENT_TIMESTAMP, datetime('now', '+1 year'))
+	`, adminID, tokenHash)
+	if err != nil {
+		// Log but don't fail - admin was created successfully
+		fmt.Printf("Warning: failed to store admin API token: %v\n", err)
+	}
 
-	c.JSON(http.StatusOK, response)
+	// Store the generated password and token in session for display on next step
+	// These are shown once and must be copied by user
+	if generatedPassword != "" {
+		c.SetCookie("setup_generated_password", generatedPassword, 3600, "/", "", isHTTPS, true)
+	}
+	c.SetCookie("setup_api_token", apiToken, 3600, "/", "", isHTTPS, true)
+	c.SetCookie("setup_username", username, 3600, "/", "", isHTTPS, true)
+
+	// Redirect to API token step (Step 2)
+	// AI.md: Setup wizard Step 2 - API Token
+	redirectURL := c.Request.URL.Path + "/api-token"
+
+	// Check Accept header to determine response type
+	accept := c.GetHeader("Accept")
+	if strings.Contains(accept, "application/json") {
+		response := gin.H{"ok": true, "redirect": redirectURL}
+		if generatedPassword != "" {
+			response["generated_password"] = generatedPassword
+			response["username"] = username
+		}
+		response["api_token"] = apiToken
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	// Form submission - redirect (works without JavaScript)
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 // generateRandomPassword generates a cryptographically secure random password
@@ -262,6 +398,18 @@ func generateRandomPassword(length int) (string, error) {
 	return string(password), nil
 }
 
+// generateAPIToken generates a cryptographically secure API token with admin prefix
+// AI.md: API tokens use prefix: adm_ for admin
+func generateAPIToken() (string, error) {
+	// Generate 32 random bytes (256 bits)
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate API token: %w", err)
+	}
+	// Encode as base64url without padding, prefix with adm_
+	return "adm_" + base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
 // generateSessionID generates a cryptographically secure random session ID
 func generateSessionID() (string, error) {
 	// Generate 48 random bytes and encode as base64 (results in 64 chars)
@@ -270,6 +418,275 @@ func generateSessionID() (string, error) {
 		return "", fmt.Errorf("failed to generate secure session ID: %w", err)
 	}
 	return base64.URLEncoding.EncodeToString(bytes), nil
+}
+
+// ShowAPIToken shows the API token page (Step 2)
+// AI.md: Setup wizard Step 2 - API Token auto-generated, user MUST copy
+func (h *SetupHandler) ShowAPIToken(c *gin.Context) {
+	cfg, _ := config.LoadConfig()
+	title := "Weather Service"
+	if cfg != nil && cfg.Server.Branding.Title != "" {
+		title = cfg.Server.Branding.Title
+	}
+
+	// Get tokens from cookies (set during admin creation)
+	apiToken, _ := c.Cookie("setup_api_token")
+	generatedPassword, _ := c.Cookie("setup_generated_password")
+	username, _ := c.Cookie("setup_username")
+
+	c.HTML(http.StatusOK, "page/setup_api_token.tmpl", gin.H{
+		"Title":             "API Token - " + title,
+		"APIToken":          apiToken,
+		"GeneratedPassword": generatedPassword,
+		"Username":          username,
+	})
+}
+
+// ProcessAPIToken handles acknowledgment of API token (Step 2 → Step 3)
+func (h *SetupHandler) ProcessAPIToken(c *gin.Context) {
+	// Clear the sensitive cookies
+	isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+	c.SetCookie("setup_api_token", "", -1, "/", "", isHTTPS, true)
+	c.SetCookie("setup_generated_password", "", -1, "/", "", isHTTPS, true)
+
+	// Redirect to server configuration (Step 3)
+	basePath := strings.TrimSuffix(c.Request.URL.Path, "/api-token")
+	c.Redirect(http.StatusFound, basePath+"/config")
+}
+
+// ShowServerConfig shows the server configuration page (Step 3)
+// AI.md: Setup wizard Step 3 - Server Configuration
+func (h *SetupHandler) ShowServerConfig(c *gin.Context) {
+	cfg, _ := config.LoadConfig()
+	title := "Weather Service"
+	defaultDomain := ""
+	defaultMode := "production"
+	defaultTimezone := "UTC"
+
+	if cfg != nil {
+		if cfg.Server.Branding.Title != "" {
+			title = cfg.Server.Branding.Title
+		}
+		defaultMode = cfg.Server.Mode
+	}
+
+	// Check for skip parameter
+	if c.Query("skip") == "true" {
+		basePath := strings.TrimSuffix(c.Request.URL.Path, "/config")
+		c.Redirect(http.StatusFound, basePath+"/security")
+		return
+	}
+
+	c.HTML(http.StatusOK, "page/setup_server_config.tmpl", gin.H{
+		"Title":           "Server Configuration - " + title,
+		"DefaultAppName":  title,
+		"DefaultDomain":   defaultDomain,
+		"DefaultMode":     defaultMode,
+		"DefaultTimezone": defaultTimezone,
+	})
+}
+
+// ProcessServerConfig handles server configuration submission (Step 3 → Step 4)
+func (h *SetupHandler) ProcessServerConfig(c *gin.Context) {
+	var input struct {
+		AppName  string `form:"app_name"`
+		Domain   string `form:"domain"`
+		Mode     string `form:"mode"`
+		Timezone string `form:"timezone"`
+	}
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.HTML(http.StatusBadRequest, "page/setup_server_config.tmpl", gin.H{
+			"Title": "Server Configuration",
+			"error": "Invalid form data",
+		})
+		return
+	}
+
+	// Save settings to database
+	settings := map[string]string{
+		"server.branding.title": input.AppName,
+		"server.domain":         input.Domain,
+		"mode":                  input.Mode,
+		"server.timezone":       input.Timezone,
+	}
+
+	for key, value := range settings {
+		if value != "" {
+			_, err := database.GetServerDB().Exec(`
+				INSERT INTO server_config (key, value, updated_at)
+				VALUES (?, ?, datetime('now'))
+				ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+			`, key, value, value)
+			if err != nil {
+				fmt.Printf("Warning: failed to save setting %s: %v\n", key, err)
+			}
+		}
+	}
+
+	// Redirect to security settings (Step 4)
+	basePath := strings.TrimSuffix(c.Request.URL.Path, "/config")
+	c.Redirect(http.StatusFound, basePath+"/security")
+}
+
+// ShowSecurity shows the security settings page (Step 4)
+// AI.md: Setup wizard Step 4 - Security Settings
+func (h *SetupHandler) ShowSecurity(c *gin.Context) {
+	cfg, _ := config.LoadConfig()
+	title := "Weather Service"
+	if cfg != nil && cfg.Server.Branding.Title != "" {
+		title = cfg.Server.Branding.Title
+	}
+
+	// Check for skip parameter
+	if c.Query("skip") == "true" {
+		basePath := strings.TrimSuffix(c.Request.URL.Path, "/security")
+		c.Redirect(http.StatusFound, basePath+"/services")
+		return
+	}
+
+	c.HTML(http.StatusOK, "page/setup_security.tmpl", gin.H{
+		"Title": "Security Settings - " + title,
+	})
+}
+
+// ProcessSecurity handles security settings submission (Step 4 → Step 5)
+func (h *SetupHandler) ProcessSecurity(c *gin.Context) {
+	var input struct {
+		BackupPassword        string `form:"backup_password"`
+		BackupPasswordConfirm string `form:"backup_password_confirm"`
+		Enable2FA             bool   `form:"enable_2fa"`
+		TOTPCode              string `form:"totp_code"`
+	}
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.HTML(http.StatusBadRequest, "page/setup_security.tmpl", gin.H{
+			"Title": "Security Settings",
+			"error": "Invalid form data",
+		})
+		return
+	}
+
+	// Validate backup password match
+	if input.BackupPassword != "" && input.BackupPassword != input.BackupPasswordConfirm {
+		c.HTML(http.StatusBadRequest, "page/setup_security.tmpl", gin.H{
+			"Title": "Security Settings",
+			"error": "Backup passwords do not match",
+		})
+		return
+	}
+
+	// Save backup encryption password if provided
+	if input.BackupPassword != "" {
+		// Hash the backup password
+		hashedPassword, err := utils.HashPassword(input.BackupPassword)
+		if err == nil {
+			database.GetServerDB().Exec(`
+				INSERT INTO server_config (key, value, updated_at)
+				VALUES ('backup.encryption_hash', ?, datetime('now'))
+				ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+			`, hashedPassword, hashedPassword)
+		}
+	}
+
+	// Handle 2FA setup (if enabled, this would involve TOTP verification)
+	// For now, we skip this as it requires more complex flow
+
+	// Redirect to optional services (Step 5)
+	basePath := strings.TrimSuffix(c.Request.URL.Path, "/security")
+	c.Redirect(http.StatusFound, basePath+"/services")
+}
+
+// ShowServices shows the optional services page (Step 5)
+// AI.md: Setup wizard Step 5 - Optional Services
+func (h *SetupHandler) ShowServices(c *gin.Context) {
+	cfg, _ := config.LoadConfig()
+	title := "Weather Service"
+	if cfg != nil && cfg.Server.Branding.Title != "" {
+		title = cfg.Server.Branding.Title
+	}
+
+	// Check for skip parameter
+	if c.Query("skip") == "true" {
+		basePath := strings.TrimSuffix(c.Request.URL.Path, "/services")
+		c.Redirect(http.StatusFound, basePath+"/complete")
+		return
+	}
+
+	// Check if Tor is available
+	torAvailable := utils.IsTorAvailable()
+
+	// Get admin email for SSL contact
+	var adminEmail string
+	database.GetServerDB().QueryRow("SELECT email FROM server_admin_credentials LIMIT 1").Scan(&adminEmail)
+
+	c.HTML(http.StatusOK, "page/setup_services.tmpl", gin.H{
+		"Title":        "Optional Services - " + title,
+		"TorAvailable": torAvailable,
+		"AdminEmail":   adminEmail,
+	})
+}
+
+// ProcessServices handles optional services submission (Step 5 → Step 6)
+func (h *SetupHandler) ProcessServices(c *gin.Context) {
+	var input struct {
+		EnableSSL        bool   `form:"enable_ssl"`
+		SSLDomain        string `form:"ssl_domain"`
+		SSLEmail         string `form:"ssl_email"`
+		EnableMultiUser  bool   `form:"enable_multiuser"`
+		RegistrationMode string `form:"registration_mode"`
+	}
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.HTML(http.StatusBadRequest, "page/setup_services.tmpl", gin.H{
+			"Title": "Optional Services",
+			"error": "Invalid form data",
+		})
+		return
+	}
+
+	// Save SSL settings
+	if input.EnableSSL {
+		database.GetServerDB().Exec(`
+			INSERT INTO server_config (key, value, updated_at)
+			VALUES ('ssl.enabled', 'true', datetime('now'))
+			ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')
+		`)
+		if input.SSLDomain != "" {
+			database.GetServerDB().Exec(`
+				INSERT INTO server_config (key, value, updated_at)
+				VALUES ('ssl.domain', ?, datetime('now'))
+				ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+			`, input.SSLDomain, input.SSLDomain)
+		}
+		if input.SSLEmail != "" {
+			database.GetServerDB().Exec(`
+				INSERT INTO server_config (key, value, updated_at)
+				VALUES ('ssl.email', ?, datetime('now'))
+				ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+			`, input.SSLEmail, input.SSLEmail)
+		}
+	}
+
+	// Save multi-user settings
+	if input.EnableMultiUser {
+		database.GetServerDB().Exec(`
+			INSERT INTO server_config (key, value, updated_at)
+			VALUES ('features.multiuser', 'true', datetime('now'))
+			ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')
+		`)
+		if input.RegistrationMode != "" {
+			database.GetServerDB().Exec(`
+				INSERT INTO server_config (key, value, updated_at)
+				VALUES ('users.registration_mode', ?, datetime('now'))
+				ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
+			`, input.RegistrationMode, input.RegistrationMode)
+		}
+	}
+
+	// Redirect to complete (Step 6)
+	basePath := strings.TrimSuffix(c.Request.URL.Path, "/services")
+	c.Redirect(http.StatusFound, basePath+"/complete")
 }
 
 // CompleteSetup shows the setup completion page

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card setup-card">
+            <div class="login-header">
+                <h1 class="login-title">Server Configuration</h1>
+                <p class="login-subtitle">Server Setup - Step 3 of 6</p>
+            </div>
+
+            <div class="setup-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 50%"></div>
+                </div>
+                <div class="progress-steps">
+                    <span class="step completed">Admin</span>
+                    <span class="step completed">API Token</span>
+                    <span class="step active">Server</span>
+                    <span class="step">Security</span>
+                    <span class="step">Services</span>
+                    <span class="step">Complete</span>
+                </div>
+            </div>
+
+            <div class="login-info">
+                <p>Configure basic server settings. These can be changed later.</p>
+            </div>
+
+            {{ if .error }}
+            <div class="error-message" role="alert">{{ .error }}</div>
+            {{ end }}
+
+            <form method="POST" action="" id="server-form" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+
+                <div class="form-group">
+                    <label class="form-label" for="app_name">Application Name</label>
+                    <input type="text"
+                           id="app_name"
+                           name="app_name"
+                           class="form-input"
+                           value="{{ .DefaultAppName }}"
+                           required
+                           placeholder="Weather Service">
+                    <small class="form-hint">Display name for your server</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="domain">Domain / FQDN</label>
+                    <input type="text"
+                           id="domain"
+                           name="domain"
+                           class="form-input"
+                           value="{{ .DefaultDomain }}"
+                           placeholder="weather.example.com">
+                    <small class="form-hint">Primary domain (leave empty if unknown)</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="mode">Application Mode</label>
+                    <select id="mode" name="mode" class="form-input">
+                        <option value="production" {{ if eq .DefaultMode "production" }}selected{{ end }}>Production</option>
+                        <option value="development" {{ if eq .DefaultMode "development" }}selected{{ end }}>Development</option>
+                    </select>
+                    <small class="form-hint">Production mode disables debug endpoints</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="timezone">Server Timezone</label>
+                    <select id="timezone" name="timezone" class="form-input">
+                        <option value="UTC" {{ if eq .DefaultTimezone "UTC" }}selected{{ end }}>UTC</option>
+                        <option value="America/New_York" {{ if eq .DefaultTimezone "America/New_York" }}selected{{ end }}>America/New_York (Eastern)</option>
+                        <option value="America/Chicago" {{ if eq .DefaultTimezone "America/Chicago" }}selected{{ end }}>America/Chicago (Central)</option>
+                        <option value="America/Denver" {{ if eq .DefaultTimezone "America/Denver" }}selected{{ end }}>America/Denver (Mountain)</option>
+                        <option value="America/Los_Angeles" {{ if eq .DefaultTimezone "America/Los_Angeles" }}selected{{ end }}>America/Los_Angeles (Pacific)</option>
+                        <option value="Europe/London" {{ if eq .DefaultTimezone "Europe/London" }}selected{{ end }}>Europe/London</option>
+                        <option value="Europe/Paris" {{ if eq .DefaultTimezone "Europe/Paris" }}selected{{ end }}>Europe/Paris</option>
+                        <option value="Asia/Tokyo" {{ if eq .DefaultTimezone "Asia/Tokyo" }}selected{{ end }}>Asia/Tokyo</option>
+                        <option value="Australia/Sydney" {{ if eq .DefaultTimezone "Australia/Sydney" }}selected{{ end }}>Australia/Sydney</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="submit-btn" class="btn-login">Continue to Security Settings</button>
+            </form>
+
+            <div class="setup-skip">
+                <a href="?skip=true" class="text-comment">Skip this step (use defaults)</a>
+            </div>
+        </div>
+
+        {{ if .version }}
+        <div class="login-footer">
+            v{{ .version }}
+        </div>
+        {{ end }}
+    </div>
+
+    <script>
+        document.getElementById('server-form').addEventListener('submit', function(e) {
+            var btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+        });
+    </script>
+</body>
+</html>

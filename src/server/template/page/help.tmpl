@@ -6,25 +6,63 @@
     <h1 class="text-purple">Help & Documentation</h1>
 
     <div class="card margin-y-lg">
+        <h2 class="text-cyan">Quick Start - Terminal/API</h2>
+        <p class="text-comment margin-bottom-1">Get weather data directly from your terminal. No API key required!</p>
+        <div class="console-commands">
+            <div class="command-item">
+                <strong class="console-label">Current Weather:</strong>
+                <code class="mobile-code">curl {{.HostInfo.FullHost}}/London</code>
+            </div>
+            <div class="command-item">
+                <strong class="console-label">One-Line Format:</strong>
+                <code class="mobile-code">curl "{{.HostInfo.FullHost}}/Paris?format=3"</code>
+            </div>
+            <div class="command-item">
+                <strong class="console-label">Moon Phase:</strong>
+                <code class="mobile-code">curl {{.HostInfo.FullHost}}/moon</code>
+            </div>
+            <div class="command-item">
+                <strong class="console-label">JSON API:</strong>
+                <code class="mobile-code">curl {{.HostInfo.FullHost}}/api/v1/weather?location=Tokyo</code>
+            </div>
+            <div class="command-item">
+                <strong class="console-label">Earthquakes:</strong>
+                <code class="mobile-code">curl {{.HostInfo.FullHost}}/api/v1/earthquakes?feed=all_day</code>
+            </div>
+            <div class="command-item">
+                <strong class="console-label">Severe Weather:</strong>
+                <code class="mobile-code">curl {{.HostInfo.FullHost}}/api/v1/severe-weather?location=Miami</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="card margin-y-lg">
         <h2 class="text-cyan">Getting Started</h2>
         <details class="help-section">
-            <summary class="help-summary">How do I create an account?</summary>
+            <summary class="help-summary">How do I get weather for my location?</summary>
             <div class="help-content">
-                <p>Click the user icon in the top right corner and select "Register". Fill in your email, username, and password. After registering, you'll be logged in automatically.</p>
+                <p>Simply enter a city name, ZIP code, or coordinates in the search box on the <a href="/" class="text-cyan">homepage</a>. You can also click "My Location" to auto-detect your position using GPS or IP geolocation.</p>
+                <p>Supported location formats:</p>
+                <ul>
+                    <li>City name: <code>London</code>, <code>New York</code></li>
+                    <li>City with state/country: <code>Paris, France</code>, <code>Albany, NY</code></li>
+                    <li>ZIP/Postal code: <code>10001</code>, <code>SW1A 1AA</code></li>
+                    <li>Coordinates: <code>40.7128,-74.0060</code></li>
+                </ul>
             </div>
         </details>
 
         <details class="help-section">
-            <summary class="help-summary">How do I add a location?</summary>
+            <summary class="help-summary">How do I create an account?</summary>
             <div class="help-content">
-                <p>Go to your <a href="/users/dashboard" class="text-cyan">Dashboard</a> and click "Add Location". You can search by city name, ZIP code, or enter exact coordinates. Save your favorite locations for quick access.</p>
+                <p>Click the user icon in the top right corner and select "Register". Fill in your email, username, and password. After registering, you can save up to 10 favorite locations and subscribe to weather alerts.</p>
             </div>
         </details>
 
         <details class="help-section">
             <summary class="help-summary">How do I enable weather alerts?</summary>
             <div class="help-content">
-                <p>From your dashboard, edit a saved location and enable the "Weather Alerts" toggle. You'll receive notifications for severe weather affecting that location.</p>
+                <p>From your <a href="/users/dashboard" class="text-cyan">dashboard</a>, add a location and enable "Weather Alerts". You'll receive notifications for severe weather affecting that location via WebSocket push or email (if configured).</p>
             </div>
         </details>
     </div>
@@ -32,38 +70,69 @@
     <div class="card margin-y-lg">
         <h2 class="text-cyan">Features</h2>
         <details class="help-section">
-            <summary class="help-summary">What weather data is available?</summary>
+            <summary class="help-summary">Weather Forecasts</summary>
             <div class="help-content">
+                <p>Get 16-day forecasts with hourly and daily breakdowns:</p>
                 <ul>
-                    <li>Current weather conditions</li>
-                    <li>Hourly forecasts for the next 24 hours</li>
-                    <li>Daily forecasts up to 16 days ahead</li>
-                    <li>Temperature, humidity, wind speed/direction</li>
-                    <li>Precipitation and cloud cover</li>
-                    <li>Pressure and visibility</li>
-                    <li>UV index and air quality (where available)</li>
+                    <li>Current conditions - temperature, humidity, wind, pressure</li>
+                    <li>48-hour hourly forecast</li>
+                    <li>16-day daily forecast</li>
+                    <li>Precipitation probability and amounts</li>
+                    <li>UV index and feels-like temperature</li>
                 </ul>
+                <p>Data from <a href="https://open-meteo.com" target="_blank" class="text-cyan">Open-Meteo</a>, updated every 15 minutes.</p>
             </div>
         </details>
 
         <details class="help-section">
-            <summary class="help-summary">What is Moon Phase tracking?</summary>
+            <summary class="help-summary">Severe Weather Alerts</summary>
             <div class="help-content">
-                <p>The <a href="/moon" class="text-cyan">Moon page</a> shows current and upcoming moon phases, illumination percentage, moonrise/moonset times, and astronomical events. Useful for photography, stargazing, and astronomical observations.</p>
+                <p>The <a href="/severe-weather" class="text-cyan">Severe Weather page</a> shows real-time alerts from:</p>
+                <ul>
+                    <li>🇺🇸 USA - NOAA Weather API</li>
+                    <li>🇨🇦 Canada - Environment Canada</li>
+                    <li>🇬🇧 UK - Met Office</li>
+                    <li>🇦🇺 Australia - Bureau of Meteorology</li>
+                    <li>🇯🇵 Japan - JMA</li>
+                    <li>🇲🇽 Mexico - CONAGUA</li>
+                </ul>
+                <p>Filter by type (hurricanes, tornadoes, storms, winter, floods) and distance. Alerts updated every 5 minutes.</p>
             </div>
         </details>
 
         <details class="help-section">
-            <summary class="help-summary">How does Severe Weather tracking work?</summary>
+            <summary class="help-summary">Hurricane Tracking</summary>
             <div class="help-content">
-                <p>The <a href="/severe-weather" class="text-cyan">Severe Weather page</a> displays active weather warnings, watches, and alerts from national weather services. Filter by type (hurricanes, tornadoes, floods, etc.) and distance from your locations.</p>
+                <p>Monitor active tropical storms and hurricanes from NOAA National Hurricane Center. Track storm position, wind speed, pressure, movement, and forecast path.</p>
             </div>
         </details>
 
         <details class="help-section">
-            <summary class="help-summary">What earthquake data is provided?</summary>
+            <summary class="help-summary">Earthquake Monitoring</summary>
             <div class="help-content">
-                <p>The <a href="/earthquake" class="text-cyan">Earthquake page</a> shows recent seismic activity from USGS. View by time range, magnitude, location, and check for tsunami warnings. Interactive map shows earthquake locations and intensities.</p>
+                <p>The <a href="/earthquake" class="text-cyan">Earthquake page</a> shows real-time seismic activity from USGS:</p>
+                <ul>
+                    <li>Filter by time range (hour, day, week, month)</li>
+                    <li>Filter by magnitude (all, M4.5+, significant)</li>
+                    <li>View tsunami warnings</li>
+                    <li>Interactive map with earthquake markers</li>
+                    <li>Search by location to find nearby earthquakes</li>
+                </ul>
+                <p>Data updated every minute.</p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">Moon Phase Tracking</summary>
+            <div class="help-content">
+                <p>The <a href="/moon" class="text-cyan">Moon page</a> shows:</p>
+                <ul>
+                    <li>Current phase (new, waxing crescent, first quarter, etc.)</li>
+                    <li>Illumination percentage</li>
+                    <li>Days since new moon</li>
+                    <li>Moonrise and moonset times for your location</li>
+                </ul>
+                <p>Calculated internally - no external API needed.</p>
             </div>
         </details>
     </div>
@@ -71,23 +140,52 @@
     <div class="card margin-y-lg">
         <h2 class="text-cyan">API Access</h2>
         <details class="help-section">
-            <summary class="help-summary">How do I use the API?</summary>
+            <summary class="help-summary">API Endpoints</summary>
             <div class="help-content">
-                <p>Visit the <a href="/docs" class="text-cyan">API Documentation</a> for full details. All API endpoints are available under <code>/api/v1/*</code>. Most endpoints support both JSON and text formats.</p>
+                <p>All endpoints available at <code>/api/v1/</code>:</p>
+                <ul>
+                    <li><code>GET /api/v1/weather?location=CITY</code> - Current weather and forecast</li>
+                    <li><code>GET /api/v1/earthquakes?feed=all_day</code> - Earthquake data</li>
+                    <li><code>GET /api/v1/severe-weather?location=CITY</code> - Severe weather alerts</li>
+                    <li><code>GET /api/v1/hurricanes</code> - Active hurricanes</li>
+                    <li><code>GET /api/v1/moon?location=CITY</code> - Moon phase data</li>
+                    <li><code>GET /api/v1/search?q=QUERY</code> - Location search</li>
+                    <li><code>GET /healthz</code> - Health check</li>
+                </ul>
+                <p>Visit <a href="/docs" class="text-cyan">/docs</a> for full API documentation.</p>
             </div>
         </details>
 
         <details class="help-section">
             <summary class="help-summary">Do I need an API key?</summary>
             <div class="help-content">
-                <p>No API key is required for public endpoints. If you have an account, you can generate API tokens from your <a href="/users/profile" class="text-cyan">profile page</a> for authenticated access.</p>
+                <p><strong>No API key required</strong> for public endpoints. All weather data sources are free/public APIs.</p>
+                <p>If you have an account, you can generate API tokens from your <a href="/users/settings" class="text-cyan">settings page</a> for authenticated access with higher rate limits.</p>
             </div>
         </details>
 
         <details class="help-section">
-            <summary class="help-summary">What are the rate limits?</summary>
+            <summary class="help-summary">Rate Limits</summary>
             <div class="help-content">
-                <p>Default rate limit is 120 requests per minute. Authenticated users may have higher limits. Check the response headers for <code>X-RateLimit-Limit</code> and <code>X-RateLimit-Remaining</code>.</p>
+                <ul>
+                    <li><strong>Anonymous:</strong> 20 requests per minute</li>
+                    <li><strong>Authenticated:</strong> 100 requests per minute</li>
+                    <li><strong>Admin:</strong> Unlimited</li>
+                </ul>
+                <p>Check response headers: <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code></p>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary class="help-summary">Response Formats</summary>
+            <div class="help-content">
+                <p>Set the <code>Accept</code> header to control response format:</p>
+                <ul>
+                    <li><code>Accept: application/json</code> - JSON response</li>
+                    <li><code>Accept: text/plain</code> - Plain text (for terminal)</li>
+                    <li><code>Accept: text/html</code> - HTML page (default for browsers)</li>
+                </ul>
+                <p>GraphQL endpoint available at <code>/api/v1/graphql</code>.</p>
             </div>
         </details>
     </div>
@@ -97,26 +195,22 @@
         <details class="help-section">
             <summary class="help-summary">Weather data isn't loading</summary>
             <div class="help-content">
-                <p>Try the following:</p>
                 <ul>
-                    <li>Refresh the page (F5)</li>
-                    <li>Clear your browser cache</li>
-                    <li>Check your internet connection</li>
-                    <li>Verify the location is valid</li>
+                    <li>Refresh the page (F5 or Ctrl+R)</li>
+                    <li>Verify the location name is correct</li>
+                    <li>Try coordinates instead of city name</li>
+                    <li>Check <a href="/healthz" class="text-cyan">/healthz</a> for server status</li>
                 </ul>
-                <p>If the problem persists, <a href="/server/contact" class="text-cyan">contact support</a>.</p>
             </div>
         </details>
 
         <details class="help-section">
-            <summary class="help-summary">Notifications aren't working</summary>
+            <summary class="help-summary">Location detection not working</summary>
             <div class="help-content">
-                <p>Make sure:</p>
                 <ul>
-                    <li>Alerts are enabled for your location</li>
-                    <li>Your browser allows notifications</li>
-                    <li>You're logged in to receive notifications</li>
-                    <li>Check your notification preferences in your profile</li>
+                    <li>Allow location access in your browser when prompted</li>
+                    <li>If GPS fails, the system will fall back to IP-based detection</li>
+                    <li>You can always enter your location manually</li>
                 </ul>
             </div>
         </details>
@@ -134,14 +228,14 @@
         <details class="help-section">
             <summary class="help-summary">What data do you collect?</summary>
             <div class="help-content">
-                <p>See our complete <a href="/server/privacy" class="text-cyan">Privacy Policy</a> for details. We collect minimal data: account information, saved locations, and usage logs for security.</p>
+                <p>See our <a href="/server/privacy" class="text-cyan">Privacy Policy</a>. We collect minimal data: account information (if registered), saved locations, and usage logs for security.</p>
             </div>
         </details>
 
         <details class="help-section">
             <summary class="help-summary">How do I delete my account?</summary>
             <div class="help-content">
-                <p>Go to your <a href="/users/profile" class="text-cyan">profile page</a> and scroll to the bottom. Click "Delete Account" and confirm. This action is permanent and cannot be undone.</p>
+                <p>Go to your <a href="/users/settings" class="text-cyan">settings page</a> and click "Delete Account". This action is permanent.</p>
             </div>
         </details>
     </div>

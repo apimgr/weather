@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/server/model"
 
 	"github.com/gin-gonic/gin"

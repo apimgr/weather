@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="/static/css/dracula.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="login-title">{{ .branding.Title }}</h1>
+                <p class="login-subtitle">Server Setup</p>
+            </div>
+
+            <div class="login-info">
+                <p>Welcome! This server requires initial setup.</p>
+                <p>Enter the setup token displayed in the server console.</p>
+            </div>
+
+            {{ if .error }}
+            <div class="error-message" role="alert">{{ .error }}</div>
+            {{ end }}
+
+            <form method="POST" action="{{.admin_path}}/verify-token" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
+                <div class="form-group">
+                    <label for="setup_token" class="form-label">Setup Token</label>
+                    <input type="text"
+                           id="setup_token"
+                           name="setup_token"
+                           class="form-input long-string"
+                           required
+                           autofocus
+                           autocomplete="off"
+                           placeholder="Enter 32-character setup token"
+                           aria-label="Setup token"
+                           aria-required="true"
+                           pattern="[a-fA-F0-9]{32}"
+                           title="32-character hexadecimal token">
+                </div>
+
+                <button type="submit" class="btn-login">Verify Token</button>
+            </form>
+
+            <div class="login-help">
+                <p>The setup token was shown once when the server first started.</p>
+                <p>If you don't have the token, check the server console output.</p>
+            </div>
+        </div>
+
+        {{ if .version }}
+        <div class="login-footer">
+            v{{ .version }}
+        </div>
+        {{ end }}
+    </div>
+</body>
+</html>

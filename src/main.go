@@ -1140,16 +1140,26 @@ func main() {
 		})
 	})
 
-	// Server setup routes at /{admin_path}/server/setup (public - requires setup token)
+	// Server setup routes at /{admin_path}/server/setup (requires verified setup token)
 	// AI.md: Setup flow is at /{admin_path}/server/setup, creates Primary Admin
 	// AI.md: Server is FULLY FUNCTIONAL without setup - only admin panel requires setup
+	// AI.md: Step 4: Redirect to /{admin_path}/server/setup (setup wizard) after token verified
 	adminSetupRoutes := r.Group("/" + cfg.GetAdminPath() + "/server/setup")
 	adminSetupRoutes.Use(middleware.BlockSetupAfterComplete(db.DB, cfg))
+	adminSetupRoutes.Use(middleware.RequireSetupTokenVerified(cfg))
 	{
-		adminSetupRoutes.GET("", setupHandler.ShowSetupTokenEntry)
-		adminSetupRoutes.POST("/verify", setupHandler.VerifySetupToken)
-		adminSetupRoutes.GET("/admin", setupHandler.ShowAdminSetup)
-		adminSetupRoutes.POST("/admin", setupHandler.CreateAdmin)
+		// Setup wizard pages - user has already verified token at /admin
+		// AI.md: 6 steps: Admin Account → API Token → Server Config → Security → Services → Complete
+		adminSetupRoutes.GET("", setupHandler.ShowAdminSetup)
+		adminSetupRoutes.POST("", setupHandler.CreateAdmin)
+		adminSetupRoutes.GET("/api-token", setupHandler.ShowAPIToken)
+		adminSetupRoutes.POST("/api-token", setupHandler.ProcessAPIToken)
+		adminSetupRoutes.GET("/config", setupHandler.ShowServerConfig)
+		adminSetupRoutes.POST("/config", setupHandler.ProcessServerConfig)
+		adminSetupRoutes.GET("/security", setupHandler.ShowSecurity)
+		adminSetupRoutes.POST("/security", setupHandler.ProcessSecurity)
+		adminSetupRoutes.GET("/services", setupHandler.ShowServices)
+		adminSetupRoutes.POST("/services", setupHandler.ProcessServices)
 		adminSetupRoutes.GET("/complete", setupHandler.CompleteSetup)
 	}
 
@@ -1276,13 +1286,16 @@ func main() {
 		usersRoutes.GET("/tokens", userSettingsHandler.ShowTokensSettings)
 	}
 
+	// Admin setup token verification route (public - before auth check)
+	// AI.md: Step 2: User navigates to /admin → Step 3: User enters setup token
+	r.POST("/"+cfg.GetAdminPath()+"/verify-token", setupHandler.VerifySetupTokenAtAdmin)
+
 	// Admin routes (require admin role + stricter rate limiting)
 	// AI.md: Admin panel at /{admin_path} (configurable, default: "admin")
 	adminRoutes := r.Group("/" + cfg.GetAdminPath())
-	// AI.md: Redirect to setup if no admin exists
-	adminRoutes.Use(middleware.AdminSetupRequired(db.DB, cfg))
-	adminRoutes.Use(middleware.RequireAuth(db.DB))
-	adminRoutes.Use(middleware.RequireAdmin())
+	// AI.md: Show setup token entry at /admin when no admin exists
+	adminRoutes.Use(middleware.SetupTokenRequired(db.DB, cfg))
+	adminRoutes.Use(middleware.RequireAdminAuth())
 	adminRoutes.Use(middleware.AdminRateLimitMiddleware())
 	// Log all admin actions
 	adminRoutes.Use(middleware.AuditLogger(db.DB))
