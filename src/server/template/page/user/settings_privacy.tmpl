@@ -204,6 +204,9 @@
 </style>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+
 // Update visibility option styling
 document.querySelectorAll('input[name="visibility"]').forEach(radio => {
     radio.addEventListener('change', function() {
@@ -228,7 +231,7 @@ document.getElementById('privacySettingsForm').addEventListener('submit', async 
     };
 
     try {
-        const response = await fetch('/api/v1/users/settings', {
+        const response = await fetch(API_PATH + '/users/settings', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)

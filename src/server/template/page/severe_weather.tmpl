@@ -469,6 +469,9 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+
         // Form handling for severe weather page
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('severe-weather-form');
@@ -589,7 +592,7 @@
         }
 
         function searchLocations(query) {
-            fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+            fetch(`${API_PATH}/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.results && data.results.length > 0) {

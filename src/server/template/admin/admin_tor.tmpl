@@ -257,10 +257,14 @@ cd mkp224o && ./autogen.sh && ./configure && make
 </div>
 
 <script>
+    // Path variables - SPEC compliant (AI.md PART 13)
+    const API_PATH = '{{.api_path}}';
+    const ADMIN_API_PATH = '{{.admin_api_path}}';
+
     // API calls
     async function enableTor() {
         try {
-            const response = await fetch('/api/v1/admin/server/tor/enable', {
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/enable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -280,7 +284,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
         if (!await showConfirm('Are you sure you want to disable Tor?', 'Disable Tor')) return;
 
         try {
-            const response = await fetch('/api/v1/admin/server/tor/disable', {
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/disable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -308,7 +312,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
         closeRegenerateModal();
 
         try {
-            const response = await fetch('/api/v1/admin/server/tor/regenerate', {
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/regenerate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -337,7 +341,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
         }
 
         try {
-            const response = await fetch('/api/v1/admin/server/tor/vanity/generate', {
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/vanity/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prefix })
@@ -364,7 +368,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
 
     async function updateVanityStatus() {
         try {
-            const response = await fetch('/api/v1/admin/server/tor/vanity/status');
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/vanity/status');
             const data = await response.json();
 
             if (data.running) {
@@ -392,7 +396,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
 
     async function cancelVanity() {
         try {
-            await fetch('/api/v1/admin/server/tor/vanity/cancel', { method: 'POST' });
+            await fetch(ADMIN_API_PATH + '/server/tor/vanity/cancel', { method: 'POST' });
             clearInterval(vanityPolling);
             document.getElementById('vanity-progress').classList.add('d-none');
             document.getElementById('generate-vanity-btn').disabled = false;
@@ -405,7 +409,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
         if (!await showConfirm('Apply this vanity address? Your current address will be replaced.', 'Apply Vanity Address')) return;
 
         try {
-            const response = await fetch('/api/v1/admin/server/tor/vanity/apply', { method: 'POST' });
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/vanity/apply', { method: 'POST' });
             const data = await response.json();
             if (response.ok) {
                 Toast.show('Vanity address applied successfully!', 'success');
@@ -424,7 +428,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
         const formData = new FormData(event.target);
 
         try {
-            const response = await fetch('/api/v1/admin/server/tor/keys/import', {
+            const response = await fetch(ADMIN_API_PATH + '/server/tor/keys/import', {
                 method: 'POST',
                 body: formData
             });
@@ -442,7 +446,7 @@ cd mkp224o && ./autogen.sh && ./configure && make
     }
 
     function exportKeys() {
-        window.location.href = '/api/v1/admin/server/tor/keys/export';
+        window.location.href = ADMIN_API_PATH + '/server/tor/keys/export';
     }
 
     function copyAddress() {

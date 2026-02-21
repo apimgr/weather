@@ -210,7 +210,22 @@ func IsLocalhost(ip string) bool {
 }
 
 // IsBrowser detects if the request is from a web browser
+// AI.md PART 13: Content negotiation based on Accept header first, then User-Agent
 func IsBrowser(c *gin.Context) bool {
+	// Priority 1: Check Accept header (SPEC requirement)
+	accept := c.GetHeader("Accept")
+	if accept != "" {
+		// Explicit text/html request = browser behavior
+		if contains(accept, "text/html") {
+			return true
+		}
+		// Explicit text/plain or application/json = non-browser
+		if contains(accept, "text/plain") || contains(accept, "application/json") {
+			return false
+		}
+	}
+
+	// Priority 2: Check User-Agent for browser detection
 	userAgent := c.GetHeader("User-Agent")
 	if userAgent == "" {
 		return false

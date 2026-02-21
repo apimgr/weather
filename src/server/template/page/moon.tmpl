@@ -178,6 +178,9 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+
         // Form handling for moon page
         document.addEventListener('DOMContentLoaded', function() {
             const moonForm = document.getElementById('moon-form');
@@ -278,7 +281,7 @@
         });
 
         function searchMoonLocations(query) {
-            fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+            fetch(`${API_PATH}/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.results && data.results.length > 0) {

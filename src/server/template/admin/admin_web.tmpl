@@ -315,6 +315,10 @@ Sitemap: {app_url}/sitemap.xml</textarea>
     </div>
 
     <script>
+    // Path variables - SPEC compliant (AI.md PART 13)
+    const API_PATH = '{{.api_path}}';
+    const ADMIN_API_PATH = '{{.admin_api_path}}';
+
     // Load current settings on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadSettings();
@@ -322,7 +326,7 @@ Sitemap: {app_url}/sitemap.xml</textarea>
 
     async function loadSettings() {
         try {
-            const response = await fetch('/api/v1/admin/settings/all');
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/all');
             const data = await response.json();
 
             if (data.settings) {
@@ -373,7 +377,7 @@ Sitemap: {app_url}/sitemap.xml</textarea>
         }
 
         try {
-            const response = await fetch('/api/v1/admin/settings/bulk', {
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/bulk', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

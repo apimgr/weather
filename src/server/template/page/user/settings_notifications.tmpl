@@ -181,6 +181,9 @@
 </style>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+
 // Toggle push mentions based on push enabled
 document.getElementById('pushEnabled').addEventListener('change', function() {
     const pushMentions = document.getElementById('pushMentions');
@@ -222,7 +225,7 @@ document.getElementById('notificationSettingsForm').addEventListener('submit', a
     };
 
     try {
-        const response = await fetch('/api/v1/users/settings', {
+        const response = await fetch(API_PATH + '/users/settings', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)

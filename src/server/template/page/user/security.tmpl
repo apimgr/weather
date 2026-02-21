@@ -204,13 +204,16 @@
 </style>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+
 let setup2FASecret = '';
 let recoveryKeysList = [];
 
 // Enable 2FA Flow
 async function enable2FA() {
     try {
-        const response = await fetch('/api/v1/users/security/2fa/setup', {
+        const response = await fetch(API_PATH + '/users/security/2fa/setup', {
             method: 'GET'
         });
 
@@ -254,7 +257,7 @@ document.getElementById('verify2FAForm').addEventListener('submit', async functi
     const code = document.getElementById('verificationCode').value;
 
     try {
-        const response = await fetch('/api/v1/users/security/2fa/enable', {
+        const response = await fetch(API_PATH + '/users/security/2fa/enable', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -326,7 +329,7 @@ document.getElementById('disable2FAForm').addEventListener('submit', async funct
     const password = document.getElementById('disablePassword').value;
 
     try {
-        const response = await fetch('/api/v1/users/security/2fa/disable', {
+        const response = await fetch(API_PATH + '/users/security/2fa/disable', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: password })
@@ -355,7 +358,7 @@ async function regenerateRecoveryKeys() {
     if (!code) return;
 
     try {
-        const response = await fetch('/api/v1/users/security/2fa/recovery/regenerate', {
+        const response = await fetch(API_PATH + '/users/security/2fa/recovery/regenerate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: code })

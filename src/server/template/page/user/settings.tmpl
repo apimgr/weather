@@ -173,6 +173,9 @@
 </style>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+
 // Bio character counter
 document.getElementById('bio').addEventListener('input', function() {
     document.getElementById('bioCount').textContent = this.value.length;
@@ -196,7 +199,7 @@ document.getElementById('accountSettingsForm').addEventListener('submit', async 
     };
 
     try {
-        const response = await fetch('/api/v1/users/settings', {
+        const response = await fetch(API_PATH + '/users/settings', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)

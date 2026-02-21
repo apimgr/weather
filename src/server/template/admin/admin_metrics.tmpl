@@ -319,6 +319,10 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+        const ADMIN_API_PATH = '{{.admin_api_path}}';
+
         // Tab switching
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -333,7 +337,7 @@
         // Load metrics stats
         async function loadStats() {
             try {
-                const response = await fetch('/api/v1/admin/metrics/stats');
+                const response = await fetch(ADMIN_API_PATH + '/server/metrics/stats');
                 const data = await response.json();
 
                 document.getElementById('totalMetrics').textContent = data.total || 0;
@@ -358,7 +362,7 @@
             };
 
             try {
-                const response = await fetch('/api/v1/admin/metrics/config', {
+                const response = await fetch(ADMIN_API_PATH + '/server/metrics/config', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
@@ -397,7 +401,7 @@
         });
 
         document.getElementById('exportJsonBtn').addEventListener('click', async () => {
-            const response = await fetch('/api/v1/admin/metrics/export?format=json');
+            const response = await fetch(ADMIN_API_PATH + '/server/metrics/export?format=json');
             const data = await response.json();
             document.getElementById('exportPreview').textContent = JSON.stringify(data, null, 2);
         });

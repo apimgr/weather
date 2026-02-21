@@ -176,10 +176,14 @@
 </main>
 
 <script>
+    // Path variables - SPEC compliant (AI.md PART 13)
+    const API_PATH = '{{.api_path}}';
+    const ADMIN_API_PATH = '{{.admin_api_path}}';
+
     // Load certificate status
     async function loadCertStatus() {
         try {
-            const response = await fetch('/api/v1/admin/ssl/status');
+            const response = await fetch(ADMIN_API_PATH + '/server/ssl/status');
             const data = await response.json();
 
             renderCertStatus(data);
@@ -271,7 +275,7 @@
 
             updateProgress(10, 'Validating domain...');
 
-            const response = await fetch('/api/v1/admin/ssl/obtain', {
+            const response = await fetch(ADMIN_API_PATH + '/server/ssl/obtain', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ domain, email, altNames })
@@ -303,7 +307,7 @@
         renewBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/v1/admin/ssl/renew', { method: 'POST' });
+            const response = await fetch(ADMIN_API_PATH + '/server/ssl/renew', { method: 'POST' });
             if (!response.ok) throw new Error('Failed to renew certificate');
 
             Toast.show('Certificate renewed successfully!', 'success');
@@ -327,7 +331,7 @@
     // Verify button
     document.getElementById('verifyBtn').addEventListener('click', async () => {
         try {
-            const response = await fetch('/api/v1/admin/ssl/verify', { method: 'POST' });
+            const response = await fetch(ADMIN_API_PATH + '/server/ssl/verify', { method: 'POST' });
             const data = await response.json();
 
             if (data.valid) {
@@ -349,7 +353,7 @@
                 emailNotifications: document.getElementById('emailNotifications').checked
             };
 
-            const response = await fetch('/api/v1/admin/ssl/settings', {
+            const response = await fetch(ADMIN_API_PATH + '/server/ssl/settings', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings)

@@ -16,11 +16,14 @@
 </div>
 
 <script>
+    // Path variables - SPEC compliant (AI.md PART 13)
+    const API_PATH = '{{.api_path}}';
+
     let currentFilter = 'all';
 
     async function loadNotifications() {
         const unreadParam = currentFilter === 'unread' ? '?unread=true' : '';
-        const response = await fetch(`/api/v1/notifications${unreadParam}`);
+        const response = await fetch(`${API_PATH}/notifications${unreadParam}`);
         const data = await response.json();
 
         const container = document.getElementById('notifications-list');
@@ -62,18 +65,18 @@
     }
 
     async function markAsRead(id) {
-        await fetch(`/api/v1/notifications/${id}/read`, { method: 'PUT' });
+        await fetch(`${API_PATH}/notifications/${id}/read`, { method: 'PUT' });
         loadNotifications();
     }
 
     async function deleteNotification(id) {
         if (!showConfirm('Delete this notification?')) return;
-        await fetch(`/api/v1/notifications/${id}`, { method: 'DELETE' });
+        await fetch(`${API_PATH}/notifications/${id}`, { method: 'DELETE' });
         loadNotifications();
     }
 
     document.getElementById('mark-all-read').addEventListener('click', async () => {
-        await fetch('/api/v1/notifications/read-all', { method: 'PUT' });
+        await fetch(API_PATH + '/notifications/read-all', { method: 'PUT' });
         loadNotifications();
     });
 

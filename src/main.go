@@ -543,8 +543,23 @@ func main() {
 		},
 	}
 
-	// Parse all templates
-	tmpl := template.Must(template.New("").Funcs(templateFuncs).ParseFS(templatesSubFS, templatePaths...))
+	// Parse all templates - wrap those without {{define}} in a define block to preserve full path names
+	tmpl := template.New("").Funcs(templateFuncs)
+	for _, path := range templatePaths {
+		content, err := fs.ReadFile(templatesSubFS, path)
+		if err != nil {
+			log.Fatalf("Failed to read template %s: %v", path, err)
+		}
+		contentStr := string(content)
+		// If template doesn't have {{define}}, wrap it to give it a name matching the path
+		if !strings.Contains(contentStr, "{{define ") {
+			contentStr = fmt.Sprintf("{{define %q}}%s{{end}}", path, contentStr)
+		}
+		_, err = tmpl.Parse(contentStr)
+		if err != nil {
+			log.Fatalf("Failed to parse template %s: %v", path, err)
+		}
+	}
 
 	// Debug: Print registered template names
 	if gin.Mode() == gin.DebugMode {

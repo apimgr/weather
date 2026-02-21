@@ -106,6 +106,9 @@
 </div>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+
 async function submitContactForm(event) {
     event.preventDefault();
 
@@ -125,7 +128,7 @@ async function submitContactForm(event) {
     };
 
     try {
-        const response = await fetch('/api/v1/server/contact', {
+        const response = await fetch(API_PATH + '/server/contact', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

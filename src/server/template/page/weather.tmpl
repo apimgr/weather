@@ -249,6 +249,9 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+
         async function getLocation() {
             const button = document.getElementById('location-btn');
             if (!button) {
@@ -558,7 +561,7 @@
 
         function searchLocations(query) {
             // Use our search API endpoint
-            fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+            fetch(`${API_PATH}/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.results && data.results.length > 0) {

@@ -1205,6 +1205,10 @@
     <!-- Scripts -->
     <script src="/static/js/app.js"></script>
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+        const ADMIN_API_PATH = '{{.admin_api_path}}';
+
         // Tab switching
         function switchSettingsTab(tabName) {
             // Hide all tabs
@@ -1239,7 +1243,7 @@
             try {
                 // Send multiple settings updates
                 for (let [key, value] of Object.entries(settings)) {
-                    const response = await fetch(`/api/v1/admin/settings/${key}`, {
+                    const response = await fetch(`${ADMIN_API_PATH}/server/settings/${key}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'

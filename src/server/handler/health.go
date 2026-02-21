@@ -229,7 +229,7 @@ Tip: Check status with:
 	// Browser gets HTML loading page
 	hostInfo := utils.GetHostInfo(c)
 
-	c.HTML(http.StatusServiceUnavailable, "components/loading.tmpl", gin.H{
+	c.HTML(http.StatusServiceUnavailable, "component/loading.tmpl", gin.H{
 		"Title":    "Starting Up - Weather",
 		"Status":   status,
 		"Uptime":   uptime.String(),

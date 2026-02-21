@@ -171,6 +171,10 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+        const ADMIN_API_PATH = '{{.admin_api_path}}';
+
         // Add domain form submission
         document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -180,7 +184,7 @@
             const userID = userIDSelect ? (userIDSelect.value || null) : null;
 
             try {
-                const response = await fetch('/api/v1/admin/domains', {
+                const response = await fetch(ADMIN_API_PATH + '/server/domains', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -206,7 +210,7 @@
         // Verify domain
         async function verifyDomain(id) {
             try {
-                const response = await fetch(`/api/v1/admin/domains/${id}/verify`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/domains/${id}/verify`, {
                     method: 'PUT'
                 });
 
@@ -225,7 +229,7 @@
         // Activate domain
         async function activateDomain(id) {
             try {
-                const response = await fetch(`/api/v1/admin/domains/${id}/activate`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/domains/${id}/activate`, {
                     method: 'PUT'
                 });
 
@@ -244,7 +248,7 @@
         // Deactivate domain
         async function deactivateDomain(id) {
             try {
-                const response = await fetch(`/api/v1/admin/domains/${id}/deactivate`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/domains/${id}/deactivate`, {
                     method: 'PUT'
                 });
 
@@ -267,7 +271,7 @@
             }
 
             try {
-                const response = await fetch(`/api/v1/admin/domains/${id}`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/domains/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -297,7 +301,7 @@
         // Update SSL
         async function updateSSL(id, certPath, keyPath) {
             try {
-                const response = await fetch(`/api/v1/admin/domains/${id}/ssl`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/domains/${id}/ssl`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

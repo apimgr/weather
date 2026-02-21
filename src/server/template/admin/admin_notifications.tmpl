@@ -126,6 +126,10 @@
 </main>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+const ADMIN_API_PATH = '{{.admin_api_path}}';
+
 // Update admin duration label as slider moves
 function updateAdminDurationLabel(type, value) {
     document.getElementById(`adminDurationLabel${type.charAt(0).toUpperCase() + type.slice(1)}`).textContent = value + 's';
@@ -134,7 +138,7 @@ function updateAdminDurationLabel(type, value) {
 // Load admin notification preferences on page load
 async function loadAdminNotificationPreferences() {
     try {
-        const response = await fetch('/api/v1/admin/notifications/preferences');
+        const response = await fetch(ADMIN_API_PATH + '/notifications/preferences');
 
         if (!response.ok) {
             throw new Error('Failed to load preferences');
@@ -181,7 +185,7 @@ document.getElementById('adminNotificationPreferencesForm').addEventListener('su
     };
 
     try {
-        const response = await fetch('/api/v1/admin/notifications/preferences', {
+        const response = await fetch(ADMIN_API_PATH + '/notifications/preferences', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'

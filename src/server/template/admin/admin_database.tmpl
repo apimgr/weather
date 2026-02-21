@@ -392,6 +392,10 @@
     </div>
 
     <script>
+    // Path variables - SPEC compliant (AI.md PART 13)
+    const API_PATH = '{{.api_path}}';
+    const ADMIN_API_PATH = '{{.admin_api_path}}';
+
     // Load stats and settings on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadDatabaseStats();
@@ -403,7 +407,7 @@
 
     async function loadDatabaseStats() {
         try {
-            const response = await fetch('/api/v1/admin/stats');
+            const response = await fetch(ADMIN_API_PATH + '/server/stats');
             const data = await response.json();
 
             if (data.database) {
@@ -422,7 +426,7 @@
 
     async function loadCacheStats() {
         try {
-            const response = await fetch('/api/v1/admin/stats');
+            const response = await fetch(ADMIN_API_PATH + '/server/stats');
             const data = await response.json();
 
             if (data.cache && data.cache.enabled) {
@@ -441,7 +445,7 @@
 
     async function loadSettings() {
         try {
-            const response = await fetch('/api/v1/admin/settings/all');
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/all');
             const data = await response.json();
 
             if (data.settings) {
@@ -467,7 +471,7 @@
         btn.textContent = '⏳ Optimizing...';
 
         try {
-            const response = await fetch('/api/v1/admin/database/optimize', {
+            const response = await fetch(ADMIN_API_PATH + '/server/database/optimize', {
                 method: 'POST'
             });
 
@@ -493,7 +497,7 @@
         btn.textContent = '⏳ Vacuuming...';
 
         try {
-            const response = await fetch('/api/v1/admin/database/vacuum', {
+            const response = await fetch(ADMIN_API_PATH + '/server/database/vacuum', {
                 method: 'POST'
             });
 
@@ -519,7 +523,7 @@
         btn.textContent = '⏳ Testing...';
 
         try {
-            const response = await fetch('/api/v1/admin/database/test', {
+            const response = await fetch(ADMIN_API_PATH + '/server/database/test', {
                 method: 'POST'
             });
 
@@ -548,7 +552,7 @@
         btn.textContent = '⏳ Clearing...';
 
         try {
-            const response = await fetch('/api/v1/admin/cache/clear', {
+            const response = await fetch(ADMIN_API_PATH + '/server/cache/clear', {
                 method: 'POST'
             });
 
@@ -590,7 +594,7 @@
         settings['database.auto_optimize'] = document.getElementById('db_auto_optimize').checked ? 'true' : 'false';
 
         try {
-            const response = await fetch('/api/v1/admin/settings/bulk', {
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/bulk', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -656,7 +660,7 @@
     // Database Configuration Functions
     async function loadDatabaseConfig() {
         try {
-            const response = await fetch('/api/v1/admin/settings/all');
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/all');
             const data = await response.json();
 
             if (data.settings) {
@@ -744,7 +748,7 @@
                 }
             }
 
-            const response = await fetch('/api/v1/admin/database/test-config', {
+            const response = await fetch(ADMIN_API_PATH + '/server/database/test-config', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -810,7 +814,7 @@
         }
 
         try {
-            const response = await fetch('/api/v1/admin/settings/database', {
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/database', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

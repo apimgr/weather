@@ -106,6 +106,9 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+
         const form = document.getElementById('locationForm');
         const messageDiv = document.getElementById('message');
         const locationId = {{ .location.ID }};
@@ -122,7 +125,7 @@
             };
 
             try {
-                const response = await fetch(`/api/v1/locations/${locationId}`, {
+                const response = await fetch(`${API_PATH}/locations/${locationId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -148,7 +151,7 @@
             }
 
             try {
-                const response = await fetch(`/api/v1/locations/${locationId}`, {
+                const response = await fetch(`${API_PATH}/locations/${locationId}`, {
                     method: 'DELETE'
                 });
 

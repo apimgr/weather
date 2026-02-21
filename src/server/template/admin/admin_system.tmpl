@@ -236,6 +236,10 @@
     </div>
 
     <script>
+    // Path variables - SPEC compliant (AI.md PART 13)
+    const API_PATH = '{{.api_path}}';
+    const ADMIN_API_PATH = '{{.admin_api_path}}';
+
     // Load system info on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadSystemInfo();
@@ -249,7 +253,7 @@
 
     async function loadSystemInfo() {
         try {
-            const response = await fetch('/api/v1/admin/stats');
+            const response = await fetch(ADMIN_API_PATH + '/server/stats');
             const data = await response.json();
 
             if (data) {
@@ -276,7 +280,7 @@
 
     async function loadResourceUsage() {
         try {
-            const response = await fetch('/api/v1/admin/stats');
+            const response = await fetch(ADMIN_API_PATH + '/server/stats');
             const data = await response.json();
 
             if (data.memory) {
@@ -292,7 +296,7 @@
 
     async function loadNetworkInfo() {
         try {
-            const response = await fetch('/api/v1/admin/stats');
+            const response = await fetch(ADMIN_API_PATH + '/server/stats');
             const data = await response.json();
 
             document.getElementById('http-port').textContent = data.http_port || '-';
@@ -314,7 +318,7 @@
 
     async function loadSettings() {
         try {
-            const response = await fetch('/api/v1/admin/settings/all');
+            const response = await fetch(ADMIN_API_PATH + '/server/settings/all');
             const data = await response.json();
 
             if (data.settings) {
@@ -344,7 +348,7 @@
 
     async function reloadConfig() {
         try {
-            const response = await fetch('/api/v1/admin/reload', { method: 'POST' });
+            const response = await fetch(ADMIN_API_PATH + '/server/reload', { method: 'POST' });
             const data = await response.json();
 
             if (response.ok) {
@@ -362,7 +366,7 @@
     }
 
     function exportSystemInfo() {
-        fetch('/api/v1/admin/stats')
+        fetch(ADMIN_API_PATH + '/server/stats')
             .then(response => response.json())
             .then(data => {
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

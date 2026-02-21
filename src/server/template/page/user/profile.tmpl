@@ -243,6 +243,9 @@
 </div>
 
 <script>
+// Path variables - SPEC compliant (AI.md PART 13)
+const API_PATH = '{{.api_path}}';
+
 // Save profile changes
 document.getElementById('profileForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -254,7 +257,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
     };
 
     try {
-        const response = await fetch('/api/v1/users/profile', {
+        const response = await fetch(API_PATH + '/users/profile', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -295,7 +298,7 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
     }
 
     try {
-        const response = await fetch('/api/v1/users/password', {
+        const response = await fetch(API_PATH + '/users/password', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -335,7 +338,7 @@ function updateDurationLabel(type, value) {
 // Load notification preferences on page load
 async function loadNotificationPreferences() {
     try {
-        const response = await fetch('/api/v1/users/notifications/preferences');
+        const response = await fetch(API_PATH + '/users/notifications/preferences');
 
         if (!response.ok) {
             throw new Error('Failed to load preferences');
@@ -382,7 +385,7 @@ document.getElementById('notificationPreferencesForm').addEventListener('submit'
     };
 
     try {
-        const response = await fetch('/api/v1/users/notifications/preferences', {
+        const response = await fetch(API_PATH + '/users/notifications/preferences', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'

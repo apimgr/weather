@@ -125,6 +125,10 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+        const ADMIN_API_PATH = '{{.admin_api_path}}';
+
         let tasks = [];
         let currentTab = 'timeline';
 
@@ -146,7 +150,7 @@
         // Load tasks
         async function loadTasks() {
             try {
-                const response = await fetch('/api/v1/admin/tasks');
+                const response = await fetch(ADMIN_API_PATH + '/server/tasks');
                 const data = await response.json();
                 tasks = data.tasks || [];
 
@@ -252,7 +256,7 @@
         // Load execution history
         async function loadHistory() {
             try {
-                const response = await fetch('/api/v1/admin/tasks/history');
+                const response = await fetch(ADMIN_API_PATH + '/server/tasks/history');
                 const data = await response.json();
 
                 const tbody = document.getElementById('historyTable').querySelector('tbody');
@@ -289,7 +293,7 @@
             if (!await showConfirm(`Manually trigger task: ${name}?`, 'Trigger Task')) return;
 
             try {
-                const response = await fetch(`/api/v1/admin/tasks/${name}/trigger`, { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/tasks/${name}/trigger`, { method: 'POST' });
                 if (!response.ok) throw new Error('Failed to trigger task');
 
                 showSuccess(`Task "${name}" triggered successfully!`);
@@ -304,7 +308,7 @@
             const action = currentlyEnabled ? 'disable' : 'enable';
 
             try {
-                const response = await fetch(`/api/v1/admin/tasks/${name}/${action}`, { method: 'POST' });
+                const response = await fetch(`${ADMIN_API_PATH}/server/tasks/${name}/${action}`, { method: 'POST' });
                 if (!response.ok) throw new Error(`Failed to ${action} task`);
 
                 showSuccess(`Task "${name}" ${action}d successfully!`);

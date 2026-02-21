@@ -125,10 +125,14 @@
     </div>
 
     <script>
+        // Path variables - SPEC compliant (AI.md PART 13)
+        const API_PATH = '{{.api_path}}';
+        const ADMIN_API_PATH = '{{.admin_api_path}}';
+
         // Load backup stats
         async function loadStats() {
             try {
-                const response = await fetch('/api/v1/admin/backup/stats');
+                const response = await fetch(ADMIN_API_PATH + '/server/backup/stats');
                 const data = await response.json();
 
                 document.getElementById('totalBackups').textContent = data.total || 0;
@@ -143,7 +147,7 @@
         // Load backup list
         async function loadBackups() {
             try {
-                const response = await fetch('/api/v1/admin/backup/list');
+                const response = await fetch(ADMIN_API_PATH + '/server/backup/list');
                 const data = await response.json();
 
                 const container = document.getElementById('backupList');
@@ -193,7 +197,7 @@
             updateProgress(0, 'Starting backup...');
 
             try {
-                const response = await fetch('/api/v1/admin/backup/create', {
+                const response = await fetch(ADMIN_API_PATH + '/server/backup/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type })
@@ -227,7 +231,7 @@
 
         // Download backup
         async function downloadBackup(filename) {
-            window.location.href = `/api/v1/admin/backup/download/${filename}`;
+            window.location.href = `${ADMIN_API_PATH}/server/backup/download/${filename}`;
         }
 
         // Restore backup
@@ -237,7 +241,7 @@
             }
 
             try {
-                const response = await fetch('/api/v1/admin/backup/restore', {
+                const response = await fetch(ADMIN_API_PATH + '/server/backup/restore', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ filename })
@@ -256,7 +260,7 @@
             if (!await showConfirm(`Delete backup: ${filename}?`, 'Delete Backup')) return;
 
             try {
-                const response = await fetch(`/api/v1/admin/backup/delete/${filename}`, {
+                const response = await fetch(`${ADMIN_API_PATH}/server/backup/delete/${filename}`, {
                     method: 'DELETE'
                 });
 
@@ -283,7 +287,7 @@
             };
 
             try {
-                const response = await fetch('/api/v1/admin/backup/schedule', {
+                const response = await fetch(ADMIN_API_PATH + '/server/backup/schedule', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(schedule)
