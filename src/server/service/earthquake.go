@@ -36,6 +36,10 @@ type Earthquake struct {
 	MagnitudeType string    `json:"magnitudeType"`
 	Network       string    `json:"network"`
 	UpdatedTime   time.Time `json:"updated"`
+	// Distance from user location in km (calculated at request time)
+	Distance      float64   `json:"distance,omitempty"`
+	// Formatted distance string for display
+	DistanceFmt   string    `json:"distanceFmt,omitempty"`
 }
 
 // EarthquakeCollection represents a collection of earthquakes
@@ -202,17 +206,21 @@ func (es *EarthquakeService) GetEarthquakes(feedType string) (*EarthquakeCollect
 }
 
 // GetEarthquakesByLocation filters earthquakes within radius of location
+// and calculates distance from user location for each earthquake
 func (es *EarthquakeService) GetEarthquakesByLocation(latitude, longitude, radiusKm float64, feedType string) (*EarthquakeCollection, error) {
 	allEarthquakes, err := es.GetEarthquakes(feedType)
 	if err != nil {
 		return nil, err
 	}
 
-	// Filter earthquakes within radius
+	// Filter earthquakes within radius and calculate distance
 	filtered := make([]Earthquake, 0)
 	for _, eq := range allEarthquakes.Earthquakes {
 		distance := haversineDistance(latitude, longitude, eq.Latitude, eq.Longitude)
 		if distance <= radiusKm {
+			// Store distance for sorting and display
+			eq.Distance = distance
+			eq.DistanceFmt = formatDistanceKm(distance)
 			filtered = append(filtered, eq)
 		}
 	}
@@ -221,6 +229,16 @@ func (es *EarthquakeService) GetEarthquakesByLocation(latitude, longitude, radiu
 		Earthquakes: filtered,
 		Metadata:    allEarthquakes.Metadata,
 	}, nil
+}
+
+// formatDistanceKm formats distance in a human-readable way
+func formatDistanceKm(km float64) string {
+	if km < 1 {
+		return fmt.Sprintf("%.0f m", km*1000)
+	} else if km < 10 {
+		return fmt.Sprintf("%.1f km", km)
+	}
+	return fmt.Sprintf("%.0f km", km)
 }
 
 // SortAndLimit sorts and limits earthquake collection
@@ -250,6 +268,15 @@ func (ec *EarthquakeCollection) SortAndLimit(sortBy string, limit int) {
 		for i := 0; i < len(ec.Earthquakes)-1; i++ {
 			for j := i + 1; j < len(ec.Earthquakes); j++ {
 				if ec.Earthquakes[i].Depth < ec.Earthquakes[j].Depth {
+					ec.Earthquakes[i], ec.Earthquakes[j] = ec.Earthquakes[j], ec.Earthquakes[i]
+				}
+			}
+		}
+	case "closest":
+		// Sort by distance ascending (closest first) - requires Distance field to be set
+		for i := 0; i < len(ec.Earthquakes)-1; i++ {
+			for j := i + 1; j < len(ec.Earthquakes); j++ {
+				if ec.Earthquakes[i].Distance > ec.Earthquakes[j].Distance {
 					ec.Earthquakes[i], ec.Earthquakes[j] = ec.Earthquakes[j], ec.Earthquakes[i]
 				}
 			}

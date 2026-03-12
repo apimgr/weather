@@ -48,10 +48,13 @@
                         class="select-input flex-1"
                         aria-label="Sort earthquakes by"
                         title="Choose how to sort the earthquake results">
-                    <option value="newest" {{if or (eq .Sort "newest") (not .Sort)}}selected{{end}}>Newest First</option>
-                    <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>Oldest First</option>
-                    <option value="magnitude" {{if eq .Sort "magnitude"}}selected{{end}}>By Magnitude</option>
-                    <option value="depth" {{if eq .Sort "depth"}}selected{{end}}>By Depth</option>
+                    <option value="newest" {{if or (eq .SortBy "newest") (not .SortBy)}}selected{{end}}>Newest First</option>
+                    <option value="oldest" {{if eq .SortBy "oldest"}}selected{{end}}>Oldest First</option>
+                    <option value="magnitude" {{if eq .SortBy "magnitude"}}selected{{end}}>By Magnitude</option>
+                    <option value="depth" {{if eq .SortBy "depth"}}selected{{end}}>By Depth</option>
+                    {{if .HasUserLocation}}
+                    <option value="closest" {{if eq .SortBy "closest"}}selected{{end}}>Closest First</option>
+                    {{end}}
                 </select>
                 <input
                     type="number"
@@ -172,6 +175,7 @@
                             {{if eq .Tsunami 1}}<span class="text-cyan font-semibold">🌊 TSUNAMI</span>{{end}}
                             <div class="eq-info">
                                 {{.Time.Format "2006-01-02 15:04:05"}} • Depth: {{printf "%.1f" .Depth}}km
+                                {{if .DistanceFmt}} • <span class="text-cyan">📍 {{.DistanceFmt}} away</span>{{end}}
                                 {{if .Felt}} • Felt by {{.Felt}} people{{end}}
                             </div>
                             <div class="eq-details">

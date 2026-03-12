@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,6 +58,35 @@ func (h *EarthquakeHandler) HandleEarthquakes(c *gin.Context) {
 		feedType = "all_day"
 	}
 
+	// Get client location for map centering and distance calculation
+	// Priority: 1. Saved cookies, 2. IP geolocation
+	clientIP := utils.GetClientIP(c)
+	var centerLat, centerLon float64 = 0.0, 0.0
+	hasUserLocation := false
+
+	// Check cookies first
+	if latStr, err := c.Cookie("user_lat"); err == nil {
+		if lonStr, err := c.Cookie("user_lon"); err == nil {
+			if lat, err1 := strconv.ParseFloat(latStr, 64); err1 == nil {
+				if lon, err2 := strconv.ParseFloat(lonStr, 64); err2 == nil {
+					centerLat = lat
+					centerLon = lon
+					hasUserLocation = true
+				}
+			}
+		}
+	}
+
+	// If no cookies, use IP geolocation as fallback
+	if !hasUserLocation {
+		coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
+		if err == nil {
+			centerLat = coords.Latitude
+			centerLon = coords.Longitude
+			hasUserLocation = true
+		}
+	}
+
 	// Fetch earthquake data
 	earthquakes, err := h.earthquakeService.GetEarthquakes(feedType)
 	if err != nil {
@@ -66,48 +96,31 @@ func (h *EarthquakeHandler) HandleEarthquakes(c *gin.Context) {
 		return
 	}
 
+	// Calculate distance from user for each earthquake
+	if hasUserLocation {
+		for i := range earthquakes.Earthquakes {
+			eq := &earthquakes.Earthquakes[i]
+			eq.Distance = haversineDistanceCalc(centerLat, centerLon, eq.Latitude, eq.Longitude)
+			eq.DistanceFmt = formatEarthquakeDistance(eq.Distance)
+		}
+	}
+
 	// Sort and limit results
 	earthquakes.SortAndLimit(sortBy, number)
-
-	// Get client location for map centering using priority order:
-	// 1. Saved cookies
-	// 2. IP geolocation (fallback)
-	clientIP := utils.GetClientIP(c)
-	// Default to world view
-	var centerLat, centerLon float64 = 0.0, 0.0
-
-	// Check cookies first
-	if latStr, err := c.Cookie("user_lat"); err == nil {
-		if lonStr, err := c.Cookie("user_lon"); err == nil {
-			if lat, err1 := strconv.ParseFloat(latStr, 64); err1 == nil {
-				if lon, err2 := strconv.ParseFloat(lonStr, 64); err2 == nil {
-					centerLat = lat
-					centerLon = lon
-				}
-			}
-		}
-	}
-
-	// If no cookies, use IP geolocation as fallback
-	if centerLat == 0.0 && centerLon == 0.0 {
-		coords, err := h.weatherService.GetCoordinatesFromIP(clientIP)
-		if err == nil {
-			centerLat = coords.Latitude
-			centerLon = coords.Longitude
-		}
-	}
 
 	// Get host info for console commands
 	hostInfo := utils.GetHostInfo(c)
 
 	// Render earthquake page
 	c.HTML(http.StatusOK, "page/earthquake.tmpl", gin.H{
-		"Earthquakes": earthquakes.Earthquakes,
-		"Metadata":    earthquakes.Metadata,
-		"FeedType":    feedType,
-		"CenterLat":   centerLat,
-		"CenterLon":   centerLon,
-		"HostInfo":    hostInfo,
+		"Earthquakes":     earthquakes.Earthquakes,
+		"Metadata":        earthquakes.Metadata,
+		"FeedType":        feedType,
+		"SortBy":          sortBy,
+		"CenterLat":       centerLat,
+		"CenterLon":       centerLon,
+		"HasUserLocation": hasUserLocation,
+		"HostInfo":        hostInfo,
 	})
 }
 
@@ -196,15 +209,17 @@ func (h *EarthquakeHandler) HandleEarthquakesByLocation(c *gin.Context) {
 
 	// Render earthquake page
 	c.HTML(http.StatusOK, "page/earthquake.tmpl", gin.H{
-		"Earthquakes":  earthquakes.Earthquakes,
-		"Metadata":     earthquakes.Metadata,
-		"FeedType":     feedType,
-		"Location":     enhanced.ShortName,
-		"LocationData": locationData,
-		"Radius":       radius,
-		"CenterLat":    enhanced.Latitude,
-		"CenterLon":    enhanced.Longitude,
-		"HostInfo":     hostInfo,
+		"Earthquakes":     earthquakes.Earthquakes,
+		"Metadata":        earthquakes.Metadata,
+		"FeedType":        feedType,
+		"SortBy":          sortBy,
+		"Location":        enhanced.ShortName,
+		"LocationData":    locationData,
+		"Radius":          radius,
+		"CenterLat":       enhanced.Latitude,
+		"CenterLon":       enhanced.Longitude,
+		"HasUserLocation": true,
+		"HostInfo":        hostInfo,
 	})
 }
 
@@ -665,4 +680,35 @@ func (h *EarthquakeHandler) renderASCIIEarthquakeDetail(eq *service.Earthquake) 
 	sb.WriteString(fmt.Sprintf("\n%sUSGS Details: %s%s%s\n", comment, cyan, eq.URL, reset))
 
 	return sb.String()
+}
+
+// haversineDistanceCalc calculates distance between two points in km
+func haversineDistanceCalc(lat1, lon1, lat2, lon2 float64) float64 {
+	const earthRadiusKm = 6371.0
+
+	// Convert to radians
+	lat1Rad := lat1 * math.Pi / 180.0
+	lat2Rad := lat2 * math.Pi / 180.0
+	deltaLat := (lat2 - lat1) * math.Pi / 180.0
+	deltaLon := (lon2 - lon1) * math.Pi / 180.0
+
+	// Haversine formula
+	sinDeltaLat := math.Sin(deltaLat / 2)
+	sinDeltaLon := math.Sin(deltaLon / 2)
+	a := sinDeltaLat*sinDeltaLat + math.Cos(lat1Rad)*math.Cos(lat2Rad)*sinDeltaLon*sinDeltaLon
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return earthRadiusKm * c
+}
+
+// formatEarthquakeDistance formats distance in a human-readable way
+func formatEarthquakeDistance(km float64) string {
+	if km < 1 {
+		return fmt.Sprintf("%.0f m", km*1000)
+	} else if km < 10 {
+		return fmt.Sprintf("%.1f km", km)
+	} else if km < 100 {
+		return fmt.Sprintf("%.0f km", km)
+	}
+	return fmt.Sprintf("%.0f km", km)
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -234,6 +235,13 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	moonService := service.NewMoonService()
 	moonDataCalc := moonService.Calculate(enhanced.Latitude, enhanced.Longitude, time.Now())
 
+	// Calculate sun times
+	sunTimes := calculateSunTimesForWeb(enhanced.Latitude, enhanced.Longitude, time.Now())
+
+	// Parse next new moon and full moon dates for formatted display
+	nextNewMoon, _ := time.Parse(time.RFC3339, moonDataCalc.NextNewMoon)
+	nextFullMoon, _ := time.Parse(time.RFC3339, moonDataCalc.NextFullMoon)
+
 	moonData := gin.H{
 		"Location": gin.H{
 			"Name":                enhanced.Name,
@@ -249,21 +257,24 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 			"PopulationFormatted": fmt.Sprintf("%d", enhanced.Population),
 		},
 		"Moon": gin.H{
-			"Phase":         moonDataCalc.Phase,
-			"Illumination":  moonDataCalc.Illumination,
-			"Icon":          moonDataCalc.Icon,
-			"Age":           moonDataCalc.Age,
-			"Rise":          "12:00",
-			"Set":           "00:00",
-			"RiseFormatted": "12:00 PM",
-			"SetFormatted":  "12:00 AM",
+			"Phase":             moonDataCalc.Phase,
+			"Illumination":      fmt.Sprintf("%.1f", moonDataCalc.Illumination),
+			"Icon":              moonDataCalc.Icon,
+			"Age":               fmt.Sprintf("%.1f", moonDataCalc.Age),
+			"Rise":              moonDataCalc.Rise,
+			"Set":               moonDataCalc.Set,
+			"RiseFormatted":     formatTimeToAMPM(moonDataCalc.Rise),
+			"SetFormatted":      formatTimeToAMPM(moonDataCalc.Set),
+			"NextNewMoon":       moonDataCalc.NextNewMoon,
+			"NextNewMoonFmt":    nextNewMoon.Format("Jan 2, 2006"),
+			"NextFullMoon":      moonDataCalc.NextFullMoon,
+			"NextFullMoonFmt":   nextFullMoon.Format("Jan 2, 2006"),
+			"Distance":          moonDataCalc.Distance,
+			"DistanceFormatted": formatDistance(moonDataCalc.Distance),
+			"AngularSize":       moonDataCalc.AngularSize,
+			"AngularSizeFmt":    fmt.Sprintf("%.4f°", moonDataCalc.AngularSize),
 		},
-		"Sun": gin.H{
-			"SunriseFormatted":   "6:30 AM",
-			"SunsetFormatted":    "6:30 PM",
-			"SolarNoonFormatted": "12:30 PM",
-			"DayLengthFormatted": "12h 0m",
-		},
+		"Sun": sunTimes,
 	}
 
 	// Always use full location (ShortName) for clarity
@@ -289,4 +300,136 @@ func (h *WebHandler) ServeExamplesPage(c *gin.Context) {
 		"title":    "Examples - Weather",
 		"hostInfo": hostInfo,
 	})
+}
+
+// calculateSunTimesForWeb calculates sun times for the web template
+func calculateSunTimesForWeb(lat, lon float64, date time.Time) gin.H {
+	// Calculate day of year
+	dayOfYear := date.YearDay()
+
+	// Calculate fractional year
+	year := float64(date.Year())
+	daysInYear := 365.0
+	if year == float64(int(year/4)*4) { // Leap year check
+		daysInYear = 366.0
+	}
+	gamma := 2 * 3.14159265359 / daysInYear * (float64(dayOfYear) - 1 + (12-12)/24)
+
+	// Equation of time (minutes)
+	eqtime := 229.18 * (0.000075 + 0.001868*cosVal(gamma) - 0.032077*sinVal(gamma) -
+		0.014615*cosVal(2*gamma) - 0.040849*sinVal(2*gamma))
+
+	// Solar declination (radians)
+	decl := 0.006918 - 0.399912*cosVal(gamma) + 0.070257*sinVal(gamma) -
+		0.006758*cosVal(2*gamma) + 0.000907*sinVal(2*gamma) -
+		0.002697*cosVal(3*gamma) + 0.00148*sinVal(3*gamma)
+
+	// Convert latitude to radians
+	latRad := lat * 3.14159265359 / 180.0
+
+	// Hour angle at sunrise/sunset (cos)
+	cosHa := (cosVal(90.833*3.14159265359/180.0) / (cosVal(latRad) * cosVal(decl))) - tanVal(latRad)*tanVal(decl)
+
+	// Clamp for polar regions
+	if cosHa > 1 {
+		return gin.H{
+			"SunriseFormatted":   "No sunrise",
+			"SunsetFormatted":    "No sunset",
+			"SolarNoonFormatted": "12:00 PM",
+			"DayLengthFormatted": "0h 0m",
+		}
+	} else if cosHa < -1 {
+		return gin.H{
+			"SunriseFormatted":   "Midnight sun",
+			"SunsetFormatted":    "Midnight sun",
+			"SolarNoonFormatted": "12:00 PM",
+			"DayLengthFormatted": "24h 0m",
+		}
+	}
+
+	// Hour angle in degrees
+	ha := acosVal(cosHa) * 180 / 3.14159265359
+
+	// Calculate sunrise and sunset in minutes from midnight UTC
+	sunrise := 720 - 4*(lon+ha) - eqtime
+	sunset := 720 - 4*(lon-ha) - eqtime
+	solarNoon := 720 - 4*lon - eqtime
+
+	// Day length in minutes
+	dayLength := sunset - sunrise
+
+	// Format times
+	sunriseHour := int(sunrise / 60)
+	sunriseMin := int(sunrise) % 60
+	sunsetHour := int(sunset / 60)
+	sunsetMin := int(sunset) % 60
+	noonHour := int(solarNoon / 60)
+	noonMin := int(solarNoon) % 60
+
+	// Adjust for timezone (approximate based on longitude)
+	tzOffset := int(lon / 15)
+	sunriseHour = (sunriseHour + tzOffset + 24) % 24
+	sunsetHour = (sunsetHour + tzOffset + 24) % 24
+	noonHour = (noonHour + tzOffset + 24) % 24
+
+	dayLengthHours := int(dayLength / 60)
+	dayLengthMins := int(dayLength) % 60
+	if dayLengthMins < 0 {
+		dayLengthMins = 0
+	}
+
+	return gin.H{
+		"SunriseFormatted":   formatHourMinToAMPM(sunriseHour, sunriseMin),
+		"SunsetFormatted":    formatHourMinToAMPM(sunsetHour, sunsetMin),
+		"SolarNoonFormatted": formatHourMinToAMPM(noonHour, noonMin),
+		"DayLengthFormatted": fmt.Sprintf("%dh %dm", dayLengthHours, dayLengthMins),
+	}
+}
+
+// formatTimeToAMPM converts 24h "HH:MM" to 12h "H:MM AM/PM"
+func formatTimeToAMPM(timeStr string) string {
+	var hour, min int
+	fmt.Sscanf(timeStr, "%d:%d", &hour, &min)
+	return formatHourMinToAMPM(hour, min)
+}
+
+// formatHourMinToAMPM formats hour and minute to 12h "H:MM AM/PM"
+func formatHourMinToAMPM(hour, min int) string {
+	if min < 0 {
+		min = 0
+	}
+	if min > 59 {
+		min = 59
+	}
+	ampm := "AM"
+	if hour >= 12 {
+		ampm = "PM"
+	}
+	h := hour % 12
+	if h == 0 {
+		h = 12
+	}
+	return fmt.Sprintf("%d:%02d %s", h, min, ampm)
+}
+
+// formatDistance formats distance in km with thousands separator
+func formatDistance(km float64) string {
+	return fmt.Sprintf("%.0f km", km)
+}
+
+// Math helper functions for sun calculations (wrappers around math package)
+func sinVal(x float64) float64 {
+	return math.Sin(x)
+}
+
+func cosVal(x float64) float64 {
+	return math.Cos(x)
+}
+
+func tanVal(x float64) float64 {
+	return math.Tan(x)
+}
+
+func acosVal(x float64) float64 {
+	return math.Acos(x)
 }

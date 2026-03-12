@@ -2606,6 +2606,18 @@ a:hover {
   color: var(--dracula-red);
 }
 
+.info-box__value--cyan {
+  color: var(--dracula-cyan);
+}
+
+.info-box__value--purple {
+  color: var(--dracula-purple);
+}
+
+.info-box__value--yellow {
+  color: var(--dracula-yellow);
+}
+
 /* Grid layouts */
 .grid-auto-fit-300 {
   display: grid;

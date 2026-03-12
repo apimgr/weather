@@ -101,6 +101,29 @@
                             <span class="info-box__value--orange">{{.MoonData.Moon.SetFormatted}}</span>
                         </div>
                         {{end}}
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Distance:</strong>
+                            <span class="info-box__value--cyan">{{.MoonData.Moon.DistanceFormatted}}</span>
+                        </div>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">Angular Size:</strong>
+                            <span class="info-box__value--purple">{{.MoonData.Moon.AngularSizeFmt}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Phases -->
+                <div class="info-box">
+                    <h3 class="info-box__title info-box__title--upcoming">📅 Upcoming Phases</h3>
+                    <div class="info-box__content">
+                        <div class="info-box__item">
+                            <strong class="info-box__label">🌑 Next New Moon:</strong>
+                            <span class="info-box__value--primary">{{.MoonData.Moon.NextNewMoonFmt}}</span>
+                        </div>
+                        <div class="info-box__item">
+                            <strong class="info-box__label">🌕 Next Full Moon:</strong>
+                            <span class="info-box__value--yellow">{{.MoonData.Moon.NextFullMoonFmt}}</span>
+                        </div>
                     </div>
                 </div>
 
