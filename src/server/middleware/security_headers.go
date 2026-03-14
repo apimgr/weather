@@ -25,14 +25,14 @@ func SecurityHeaders() gin.HandlerFunc {
 		c.Header("X-XSS-Protection", "1; mode=block")
 
 		// Content Security Policy
-		// Restrictive policy that only allows resources from same origin
-		// Allows inline styles for Dracula theme and inline scripts for admin panels
+		// Allows resources needed for maps (Leaflet from unpkg.com, tiles from OpenStreetMap)
+		// Allows inline styles for Dracula theme and inline scripts for functionality
 		csp := "default-src 'self'; " +
-			"script-src 'self' 'unsafe-inline'; " +
-			"style-src 'self' 'unsafe-inline'; " +
-			"img-src 'self' data: https:; " +
-			"font-src 'self'; " +
-			"connect-src 'self'; " +
+			"script-src 'self' 'unsafe-inline' https://unpkg.com; " +
+			"style-src 'self' 'unsafe-inline' https://unpkg.com; " +
+			"img-src 'self' data: https: blob:; " +
+			"font-src 'self' https://unpkg.com; " +
+			"connect-src 'self' https://*.tile.openstreetmap.org wss: ws:; " +
 			"frame-ancestors 'self'; " +
 			"base-uri 'self'; " +
 			"form-action 'self'"
@@ -58,10 +58,11 @@ func SecurityHeaders() gin.HandlerFunc {
 		c.Header("Server", "")
 
 		// Cross-Origin policies
-		// Prevent other sites from embedding resources
-		c.Header("Cross-Origin-Embedder-Policy", "require-corp")
+		// Use credentialless instead of require-corp to allow loading external resources
+		// (maps, CDN scripts) while still providing isolation benefits
+		c.Header("Cross-Origin-Embedder-Policy", "credentialless")
 		c.Header("Cross-Origin-Opener-Policy", "same-origin")
-		c.Header("Cross-Origin-Resource-Policy", "same-origin")
+		c.Header("Cross-Origin-Resource-Policy", "cross-origin")
 
 		// Continue processing request
 		c.Next()
