@@ -455,7 +455,12 @@
      */
     fetch: async function() {
       try {
-        const response = await fetch('/api/v1/notifications/unread', {
+        // Use global API_PATHS if available, fallback to default
+        const basePath = (window.API_PATHS && window.API_PATHS.notifications)
+          ? window.API_PATHS.notifications
+          : '/api/v1/users/notifications';
+
+        const response = await fetch(basePath + '/unread', {
           credentials: 'same-origin'
         });
 
@@ -941,6 +946,31 @@
       if (metaThemeColor) {
         metaThemeColor.setAttribute('content', themeColor);
       }
+      // Update theme toggle icon
+      this.updateIcon(theme);
+    },
+
+    /**
+     * Update theme toggle icon based on current theme
+     */
+    updateIcon: function(theme) {
+      var icon = document.querySelector('.theme-icon');
+      if (icon) {
+        switch(theme) {
+          case 'dark':
+            icon.textContent = '🌙';
+            icon.title = 'Dark theme (click to switch to Light)';
+            break;
+          case 'light':
+            icon.textContent = '☀️';
+            icon.title = 'Light theme (click to switch to Auto)';
+            break;
+          case 'auto':
+            icon.textContent = '🔄';
+            icon.title = 'Auto theme (click to switch to Dark)';
+            break;
+        }
+      }
     },
 
     /**
@@ -968,8 +998,10 @@
      * Initialize theme system
      */
     init: function() {
-      // Apply saved theme
-      this.apply(this.get());
+      // Apply saved theme and update icon
+      var currentTheme = this.get();
+      this.apply(currentTheme);
+      this.updateIcon(currentTheme);
 
       // Listen for system preference changes when using auto theme
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {

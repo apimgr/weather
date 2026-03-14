@@ -389,12 +389,13 @@ a:hover {
   position: absolute;
   top: calc(100% + var(--space-sm));
   right: 0;
-  background: var(--dracula-current-line);
-  border: 1px solid var(--dracula-purple);
+  background: var(--dracula-bg);
+  border: 1px solid var(--dracula-selection);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  min-width: 220px;
   z-index: var(--z-dropdown);
+  overflow: hidden;
 }
 
 .profile-dropdown.active {
@@ -402,8 +403,15 @@ a:hover {
 }
 
 .profile-dropdown-header {
-  padding: var(--space-md);
-  border-bottom: 1px solid var(--dracula-bg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--dracula-current-line);
+  border-bottom: 1px solid var(--dracula-selection);
+}
+
+.profile-dropdown-header > div:first-child {
+  font-weight: 600;
+  color: var(--dracula-foreground);
+  font-size: 0.95rem;
 }
 
 .profile-dropdown-email {
@@ -412,36 +420,49 @@ a:hover {
 }
 
 .profile-dropdown-role {
-  font-size: 0.75rem;
-  color: var(--dracula-cyan);
-  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--dracula-comment);
+  font-weight: 500;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
 }
 
 .profile-dropdown-menu {
   list-style: none;
+  padding: var(--space-xs) 0;
 }
 
 .profile-dropdown-item {
-  display: block;
-  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
   color: var(--dracula-foreground);
-  transition: all 0.2s ease;
-  border-bottom: 1px solid var(--dracula-bg);
+  transition: all 0.15s ease;
+  font-size: 0.9rem;
 }
 
 .profile-dropdown-item:hover {
-  background: var(--dracula-purple);
-  color: var(--dracula-bg);
+  background: var(--dracula-selection);
+  color: var(--dracula-cyan);
 }
 
 .profile-dropdown-item:focus-visible {
-  outline: 3px solid var(--dracula-cyan);
+  outline: 2px solid var(--dracula-cyan);
   outline-offset: -2px;
 }
 
 .profile-dropdown-item:last-child {
-  border-bottom: none;
+  border-top: 1px solid var(--dracula-selection);
+  margin-top: var(--space-xs);
+  padding-top: var(--space-md);
+  color: var(--dracula-red);
+}
+
+.profile-dropdown-item:last-child:hover {
+  background: var(--dracula-red);
+  color: var(--dracula-bg);
 }
 
 /* ============================================

@@ -65,9 +65,9 @@
                         {{.MoonData.Moon.Illumination}}% illuminated
                     </div>
                     <div class="weather-stats">
-                        <div class="stat">Age: <span class="stat-value">{{.MoonData.Moon.Age}} days</span></div>
+                        <div class="stat">Age: <span class="stat-value">{{.MoonData.Moon.AgeFmt}} days</span></div>
                         <div class="stat">Next Phase: <span class="stat-value">
-                            {{if lt .MoonData.Moon.Age 7}}First Quarter{{else if lt .MoonData.Moon.Age 14}}Full Moon{{else if lt .MoonData.Moon.Age 21}}Last Quarter{{else}}New Moon{{end}}
+                            {{if lt .MoonData.Moon.Age 7.0}}First Quarter{{else if lt .MoonData.Moon.Age 14.0}}Full Moon{{else if lt .MoonData.Moon.Age 21.0}}Last Quarter{{else}}New Moon{{end}}
                         </span></div>
                     </div>
                 </div>
@@ -89,7 +89,7 @@
                         </div>
                         <div class="info-box__item">
                             <strong class="info-box__label">Age:</strong>
-                            <span class="info-box__value--pink">{{.MoonData.Moon.Age}} days</span>
+                            <span class="info-box__value--pink">{{.MoonData.Moon.AgeFmt}} days</span>
                         </div>
                         {{if and .MoonData.Moon.Rise .MoonData.Moon.Set}}
                         <div class="info-box__item">

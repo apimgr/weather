@@ -32,8 +32,10 @@
     {{if .server.VerifyFacebook}}<meta property="fb:domain_verification" content="{{.server.VerifyFacebook}}">{{end}}
 
     <!-- AI.md PART 16: Theme initialization - MUST be in head to prevent flash -->
+    <!-- Global API paths for JavaScript (AI.md PART 13) -->
     <script>
     (function() {
+        // Theme initialization
         var theme = localStorage.getItem('theme');
         if (!theme) {
             // Default to dark per AI.md PART 16
@@ -45,6 +47,14 @@
             theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         document.documentElement.setAttribute('data-theme', theme);
+
+        // Global API paths - available to all JavaScript
+        window.API_PATHS = {
+            base: '{{.api_path}}',
+            admin: '{{.admin_api_path}}',
+            notifications: '{{.api_path}}/users/notifications',
+            adminNotifications: '{{.admin_api_path}}/notifications'
+        };
     })();
     </script>
 
