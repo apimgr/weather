@@ -301,45 +301,231 @@ a:hover {
 }
 
 /* ============================================
-   NOTIFICATION BELL
+   THEME TOGGLE (in profile dropdown per AI.md)
+   ============================================ */
+
+.theme-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--dracula-foreground);
+}
+
+.theme-toggle-row span:first-child {
+  margin-right: auto;
+}
+
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--dracula-selection);
+  border-radius: var(--radius-sm);
+  color: var(--dracula-foreground);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+  background: var(--dracula-selection);
+  border-color: var(--dracula-purple);
+}
+
+.theme-btn.active {
+  background: var(--dracula-purple);
+  border-color: var(--dracula-purple);
+  color: var(--dracula-bg);
+}
+
+.theme-sep {
+  color: var(--dracula-comment);
+  font-size: 0.8rem;
+}
+
+/* ============================================
+   NOTIFICATION BELL (per AI.md lines 21581-21650)
    ============================================ */
 
 .notification-bell {
   position: relative;
-  cursor: pointer;
-  padding: var(--space-sm);
-  border-radius: var(--radius-full);
-  transition: all 0.2s ease;
+}
+
+.bell-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   background: transparent;
   border: none;
-  font-size: 1.25rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--dracula-foreground);
+  position: relative;
 }
 
-.notification-bell:hover {
-  background: var(--dracula-bg);
+.bell-button:hover {
+  background: var(--dracula-selection);
 }
 
-.notification-bell:focus-visible {
-  outline: 3px solid var(--dracula-cyan);
+.bell-button:focus-visible {
+  outline: 2px solid var(--dracula-cyan);
   outline-offset: 2px;
 }
 
-.notification-badge {
+.bell-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 4px;
+  right: 4px;
   background: var(--dracula-red);
   color: white;
   border-radius: var(--radius-full);
-  min-width: 18px;
-  height: 18px;
-  font-size: 0.7rem;
+  min-width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
   font-weight: 700;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-xs);
-  box-shadow: var(--shadow-sm);
+  padding: 0 4px;
+}
+
+.badge:not(:empty) {
+  display: flex;
+}
+
+/* Notification Dropdown */
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  background: var(--dracula-bg-dark);
+  border: 1px solid var(--dracula-selection);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.notification-dropdown[hidden] {
+  display: none;
+}
+
+.notification-dropdown .dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--dracula-selection);
+  font-weight: 600;
+}
+
+.notification-dropdown .mark-all-read {
+  background: transparent;
+  border: none;
+  color: var(--dracula-cyan);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.notification-dropdown .mark-all-read:hover {
+  text-decoration: underline;
+}
+
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-empty {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--dracula-comment);
+}
+
+.notification-item {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--dracula-selection);
+  text-decoration: none;
+  color: var(--dracula-foreground);
+  transition: background 0.2s ease;
+}
+
+.notification-item:hover {
+  background: var(--dracula-selection);
+}
+
+.notification-item.unread {
+  background: rgba(139, 233, 253, 0.05);
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--dracula-cyan);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.notification-item:not(.unread) .notification-dot {
+  visibility: hidden;
+}
+
+.notification-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.notification-message {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--dracula-comment);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notification-time {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--dracula-comment);
+  margin-top: 4px;
+}
+
+.notification-dropdown .dropdown-footer {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  text-align: center;
+  color: var(--dracula-cyan);
+  text-decoration: none;
+  border-top: 1px solid var(--dracula-selection);
+}
+
+.notification-dropdown .dropdown-footer:hover {
+  background: var(--dracula-selection);
 }
 
 /* ============================================
@@ -453,14 +639,18 @@ a:hover {
   outline-offset: -2px;
 }
 
-.profile-dropdown-item:last-child {
-  border-top: 1px solid var(--dracula-selection);
-  margin-top: var(--space-xs);
-  padding-top: var(--space-md);
+.dropdown-divider {
+  height: 1px;
+  background: var(--dracula-selection);
+  margin: var(--space-xs) 0;
+}
+
+/* Sign out link (last item) */
+a.profile-dropdown-item[href="/auth/logout"] {
   color: var(--dracula-red);
 }
 
-.profile-dropdown-item:last-child:hover {
+a.profile-dropdown-item[href="/auth/logout"]:hover {
   background: var(--dracula-red);
   color: var(--dracula-bg);
 }

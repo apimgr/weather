@@ -18,20 +18,24 @@
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
-            <!-- Theme Toggle Button per AI.md PART 16 -->
-            <button class="theme-toggle" onclick="Theme.cycle()" title="Toggle theme (Dark/Light/Auto)" aria-label="Toggle theme">
-                <span class="theme-icon" aria-hidden="true">🌙</span>
-            </button>
-
-            <!-- Notification Bell (WebUI Notification System) -->
-            <div class="notification-bell-wrapper">
-                <a href="#" id="notification-bell" class="notification-bell" title="Notifications" aria-label="Notifications" aria-describedby="notification-badge">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <!-- Notification Bell per AI.md lines 21581-21650 -->
+            <div class="notification-bell" aria-label="Notifications">
+                <button class="bell-button" onclick="Dropdown.toggle('notification-dropdown', 'notification-bell')" aria-haspopup="true" aria-expanded="false" title="View notifications">
+                    <svg class="bell-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
                     </svg>
-                    <span id="notification-badge" class="hidden" aria-live="polite" role="status"></span>
-                </a>
-                <!-- Notification center dropdown will be inserted here by notifications.js -->
+                    <span id="notification-badge" class="badge" aria-live="polite" role="status"></span>
+                </button>
+                <div class="notification-dropdown" id="notification-dropdown" role="menu" hidden>
+                    <div class="dropdown-header">
+                        <span>Notifications</span>
+                        <button class="mark-all-read" onclick="Notifications.markAllRead()">Mark all read</button>
+                    </div>
+                    <div class="notification-list" id="notification-list">
+                        <div class="notification-empty">No notifications</div>
+                    </div>
+                    <a href="/users/notifications" class="dropdown-footer">View all</a>
+                </div>
             </div>
 
             <!-- Profile Avatar with Dropdown -->
@@ -72,9 +76,22 @@
                     </div>
                     <nav class="profile-dropdown-menu">
                         <a href="/profile" class="profile-dropdown-item" role="menuitem" title="View and edit your profile settings">👤 Profile</a>
-                        <a href="/notifications" class="profile-dropdown-item" role="menuitem" title="View all notifications and alerts">🔔 Notifications</a>
-                        <a href="/docs" class="profile-dropdown-item" role="menuitem" title="API documentation and developer guides">📚 API Docs</a>
-                        <a href="/auth/logout" class="profile-dropdown-item" role="menuitem" title="Sign out of your account">🚪 Logout</a>
+                        <a href="/users/settings" class="profile-dropdown-item" role="menuitem" title="Account settings">⚙️ Settings</a>
+                        <a href="/users/security" class="profile-dropdown-item" role="menuitem" title="Password, 2FA, sessions">🔒 Security</a>
+                        <a href="/users/tokens" class="profile-dropdown-item" role="menuitem" title="Manage API tokens">🔑 API Tokens</a>
+                        <div class="dropdown-divider" role="separator"></div>
+                        <!-- Theme toggle per AI.md lines 21676-21698 -->
+                        <div class="profile-dropdown-item theme-toggle-row">
+                            <span>Theme:</span>
+                            <button onclick="Theme.set('dark')" class="theme-btn" data-theme="dark" title="Dark theme">Dark</button>
+                            <span class="theme-sep">|</span>
+                            <button onclick="Theme.set('light')" class="theme-btn" data-theme="light" title="Light theme">Light</button>
+                            <span class="theme-sep">|</span>
+                            <button onclick="Theme.set('auto')" class="theme-btn" data-theme="auto" title="Auto theme">Auto</button>
+                        </div>
+                        <div class="dropdown-divider" role="separator"></div>
+                        <a href="/server/help" class="profile-dropdown-item" role="menuitem" title="Help documentation">❓ Help</a>
+                        <a href="/auth/logout" class="profile-dropdown-item" role="menuitem" title="Sign out of your account">🚪 Sign out</a>
                     </nav>
                 </div>
             </div>

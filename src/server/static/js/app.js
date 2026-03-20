@@ -347,14 +347,26 @@
       const dropdown = document.getElementById(dropdownId);
       if (!dropdown) return;
 
-      const isActive = dropdown.classList.contains('active');
+      // Check if using hidden attribute or active class
+      const usesHidden = dropdown.hasAttribute('hidden');
+      const isActive = usesHidden ? !dropdown.hidden : dropdown.classList.contains('active');
 
       // Close any other open dropdowns
       this.closeAll();
 
       if (!isActive) {
-        dropdown.classList.add('active');
+        // Open dropdown
+        if (usesHidden) {
+          dropdown.removeAttribute('hidden');
+        } else {
+          dropdown.classList.add('active');
+        }
         this.activeDropdown = dropdownId;
+
+        // Fetch notifications when notification dropdown opens
+        if (dropdownId === 'notification-dropdown' && typeof Notifications !== 'undefined') {
+          Notifications.fetchList();
+        }
 
         // Position dropdown if trigger is provided
         if (triggerId) {
@@ -376,7 +388,11 @@
     close: function(dropdownId) {
       const dropdown = document.getElementById(dropdownId);
       if (dropdown) {
-        dropdown.classList.remove('active');
+        if (dropdown.hasAttribute('hidden') || dropdown.hidden === false) {
+          dropdown.setAttribute('hidden', '');
+        } else {
+          dropdown.classList.remove('active');
+        }
         if (this.activeDropdown === dropdownId) {
           this.activeDropdown = null;
         }
@@ -388,8 +404,13 @@
      * Close all dropdowns
      */
     closeAll: function() {
+      // Close class-based dropdowns
       document.querySelectorAll('.profile-dropdown.active, .dropdown.active').forEach(dropdown => {
         dropdown.classList.remove('active');
+      });
+      // Close hidden-attribute dropdowns
+      document.querySelectorAll('.notification-dropdown:not([hidden])').forEach(dropdown => {
+        dropdown.setAttribute('hidden', '');
       });
       this.activeDropdown = null;
     }
@@ -430,20 +451,29 @@
 
   const Notifications = {
     unreadCount: 0,
+    notifications: [],
+
+    /**
+     * Get API base path
+     */
+    getBasePath: function() {
+      return (window.API_PATHS && window.API_PATHS.notifications)
+        ? window.API_PATHS.notifications
+        : '/api/v1/users/notifications';
+    },
 
     /**
      * Update notification badge count
      */
     updateBadge: function(count) {
       this.unreadCount = count;
-      const badge = document.querySelector('.notification-badge');
+      const badge = document.getElementById('notification-badge');
 
       if (badge) {
         if (count > 0) {
-          badge.textContent = count > 99 ? '99+' : count;
-          badge.style.display = 'flex';
+          badge.textContent = count > 9 ? '9+' : count;
         } else {
-          badge.style.display = 'none';
+          badge.textContent = '';
         }
       }
 
@@ -455,12 +485,7 @@
      */
     fetch: async function() {
       try {
-        // Use global API_PATHS if available, fallback to default
-        const basePath = (window.API_PATHS && window.API_PATHS.notifications)
-          ? window.API_PATHS.notifications
-          : '/api/v1/users/notifications';
-
-        const response = await fetch(basePath + '/unread', {
+        const response = await fetch(this.getBasePath() + '/unread', {
           credentials: 'same-origin'
         });
 
@@ -476,6 +501,94 @@
         }
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
+      }
+    },
+
+    /**
+     * Fetch notifications list for dropdown
+     */
+    fetchList: async function() {
+      try {
+        const response = await fetch(this.getBasePath() + '?limit=5', {
+          credentials: 'same-origin'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          this.notifications = data.notifications || [];
+          this.renderList();
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications list:', error);
+      }
+    },
+
+    /**
+     * Render notifications in dropdown
+     */
+    renderList: function() {
+      const list = document.getElementById('notification-list');
+      if (!list) return;
+
+      if (this.notifications.length === 0) {
+        list.innerHTML = '<div class="notification-empty">No notifications</div>';
+        return;
+      }
+
+      list.innerHTML = this.notifications.map(function(n) {
+        var icon = n.type === 'error' ? '❌' : n.type === 'warning' ? '⚠️' : n.type === 'success' ? '✅' : 'ℹ️';
+        var unreadClass = n.read ? '' : ' unread';
+        var timeAgo = Notifications.formatTimeAgo(n.created_at);
+
+        return '<a href="' + (n.link || '/users/notifications') + '" class="notification-item' + unreadClass + '" data-id="' + n.id + '">' +
+          '<span class="notification-dot"></span>' +
+          '<span class="notification-icon">' + icon + '</span>' +
+          '<div class="notification-content">' +
+            '<span class="notification-title">' + (n.title || 'Notification') + '</span>' +
+            '<span class="notification-message">' + (n.message || '') + '</span>' +
+            '<span class="notification-time">' + timeAgo + '</span>' +
+          '</div>' +
+        '</a>';
+      }).join('');
+    },
+
+    /**
+     * Format timestamp to relative time
+     */
+    formatTimeAgo: function(timestamp) {
+      if (!timestamp) return '';
+      var date = new Date(timestamp);
+      var now = new Date();
+      var diff = Math.floor((now - date) / 1000);
+
+      if (diff < 60) return 'Just now';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      if (diff < 172800) return 'Yesterday';
+      return Math.floor(diff / 86400) + 'd ago';
+    },
+
+    /**
+     * Mark all notifications as read
+     */
+    markAllRead: async function() {
+      try {
+        const response = await fetch(this.getBasePath() + '/read-all', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          this.updateBadge(0);
+          this.notifications.forEach(function(n) { n.read = true; });
+          this.renderList();
+          Toast.show('All notifications marked as read', 'success');
+        }
+      } catch (error) {
+        console.error('Failed to mark notifications as read:', error);
       }
     },
 
@@ -946,30 +1059,22 @@
       if (metaThemeColor) {
         metaThemeColor.setAttribute('content', themeColor);
       }
-      // Update theme toggle icon
-      this.updateIcon(theme);
+      // Update active button in profile dropdown
+      this.updateActiveButton(theme);
     },
 
     /**
-     * Update theme toggle icon based on current theme
+     * Update active theme button in profile dropdown
      */
-    updateIcon: function(theme) {
-      var icon = document.querySelector('.theme-icon');
-      if (icon) {
-        switch(theme) {
-          case 'dark':
-            icon.textContent = '🌙';
-            icon.title = 'Dark theme (click to switch to Light)';
-            break;
-          case 'light':
-            icon.textContent = '☀️';
-            icon.title = 'Light theme (click to switch to Auto)';
-            break;
-          case 'auto':
-            icon.textContent = '🔄';
-            icon.title = 'Auto theme (click to switch to Dark)';
-            break;
-        }
+    updateActiveButton: function(theme) {
+      // Remove active class from all theme buttons
+      document.querySelectorAll('.theme-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      // Add active class to current theme button
+      var activeBtn = document.querySelector('.theme-btn[data-theme="' + theme + '"]');
+      if (activeBtn) {
+        activeBtn.classList.add('active');
       }
     },
 
@@ -998,29 +1103,15 @@
      * Initialize theme system
      */
     init: function() {
-      // Apply saved theme and update icon
+      // Apply saved theme
       var currentTheme = this.get();
       this.apply(currentTheme);
-      this.updateIcon(currentTheme);
 
       // Listen for system preference changes when using auto theme
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
         if (Theme.get() === 'auto') {
           Theme.apply('auto');
         }
-      });
-
-      // Set up theme toggle buttons
-      document.querySelectorAll('[data-theme-toggle]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          Theme.toggle();
-        });
-      });
-
-      document.querySelectorAll('[data-theme-cycle]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          Theme.cycle();
-        });
       });
     }
   };
