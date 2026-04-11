@@ -368,15 +368,10 @@
           Notifications.fetchList();
         }
 
-        // Position dropdown if trigger is provided
-        if (triggerId) {
-          const trigger = document.getElementById(triggerId);
-          if (trigger) {
-            const rect = trigger.getBoundingClientRect();
-            dropdown.style.top = `${rect.bottom + 8}px`;
-            dropdown.style.right = `${window.innerWidth - rect.right}px`;
-          }
-        }
+        // CSS handles positioning via position:absolute + right:0 on the dropdown.
+        // Do not override with viewport-relative inline styles — the dropdown is
+        // position:absolute inside a position:relative parent, so right:0 already
+        // aligns it correctly. Overriding broke mobile (pushed off-screen left).
 
         Utils.dispatchEvent('dropdown:opened', { dropdownId });
       }

@@ -89,12 +89,13 @@ On EVERY new conversation or after "context compacted" message:
 
 ## Current Project State
 [AI updates this section as work progresses]
-- Last read AI.md: 2026-04-10
-- Current task: Full project read-in (AI.md + all .claude/rules/*.md + source)
+- Last read AI.md: 2026-04-11 (PART 16 for frontend fix)
+- Current task: Fixed mobile user menu dropdown overflowing off left edge
+- Fix: Removed JS inline style override in Dropdown.toggle (viewport-relative coords broke absolute positioning); added max-width CSS clamp to profile-dropdown and notification-dropdown
 - Status: Feature-complete v1.0.0 - all core weather features, PART 34 multi-user, 19 scheduled tasks, 7 locales
 - Official site: https://wthr.top
 - PART 34 (Multi-User): IMPLEMENTED ✅ | PART 35/36: NOT implemented
-- Relevant PARTs: ALL (full read)
+- Relevant PARTs: 16 (Web Frontend)
 
 ---
 **Full specification: AI.md**
