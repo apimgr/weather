@@ -733,7 +733,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
-      if (!e.target.closest('.profile-avatar') && !e.target.closest('.dropdown')) {
+      if (!e.target.closest('.profile-avatar') && !e.target.closest('.notification-bell') && !e.target.closest('.dropdown')) {
         Dropdown.closeAll();
       }
     });
