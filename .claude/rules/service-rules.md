@@ -1,76 +1,66 @@
-# Service Rules (PART 24, 25)
+# Service & Deployment Rules (PART 24, 25)
 
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Require manual service file creation
-- ❌ Assume user has root/admin access
-- ❌ Skip privilege detection before escalation
-- ❌ Run as root after binding privileged ports (Unix)
-- ❌ Prompt for escalation when user cannot escalate
+
+- Never use commonly reserved UIDs/GIDs even if they appear available
+- Never hardcode UIDs/GIDs -- find an unused ID dynamically
+- Never skip service manager support -- all service managers are required
 
 ## CRITICAL - ALWAYS DO
-- ✅ Auto-generate service files on `--service --install`
-- ✅ Detect privilege level (root vs user)
-- ✅ Check if user CAN escalate before prompting
-- ✅ Drop privileges after binding ports <1024 (Unix)
-- ✅ Support both system and user service installations
-- ✅ Support all service managers per platform
 
-## SERVICE MANAGEMENT
-```bash
-weather --service --install    # Install service
-weather --service --uninstall  # Remove service
-weather --service --disable    # Disable autostart
-weather --service start        # Start service
-weather --service stop         # Stop service
-weather --service restart      # Restart service
-weather --service reload       # Reload config
-weather --service status       # Show status (read-only)
-```
+- Support ALL service managers (systemd, OpenRC, SysV, launchd, Windows Services)
+- Use the same UID and GID value for the service user
+- Find an unused UID/GID where both are available AND not reserved by well-known services
+- Support privilege escalation/dropping (start as root if needed for ports, drop after bind)
 
-## PLATFORM SERVICE MANAGERS
-| Platform | System Service | User Service |
-|----------|---------------|--------------|
-| Linux | systemd | systemd --user |
-| macOS | launchd (LaunchDaemons) | launchd (LaunchAgents) |
-| FreeBSD | rc.d | user crontab |
-| Windows | SCM (Services) | Task Scheduler |
+## Service User Rules
 
-## PRIVILEGE ESCALATION FLOW
-```
-User runs: weather --service --install
-    │
-    ├─► Is elevated (root/admin)?
-    │   └─► YES: Install system service
-    │
-    ├─► Can escalate (sudo/UAC)?
-    │   └─► YES: Ask user, re-exec elevated
-    │
-    └─► Cannot escalate?
-        └─► Install user service OR show clear error
-```
+| Rule | Detail |
+|------|--------|
+| UID == GID | MUST be the same value |
+| Unused ID | Find one not reserved by well-known services |
+| Never hardcode | Detect unused ID dynamically during install |
 
-## UNIX PRIVILEGE DROP
-1. Start as root (service manager)
-2. Create `weather` user if needed
-3. Bind privileged ports (80, 443)
-4. **DROP to `weather` user**
-5. Initialize application
-6. Serve requests (as user)
+## Reserved UIDs/GIDs to Avoid
 
-## WINDOWS VIRTUAL SERVICE ACCOUNT
-- Auto-created: `NT SERVICE\weather`
-- No manual user creation needed
-- Minimal privileges by design
-- No privilege dropping (already minimal)
+NEVER use these even if they appear available:
+- Common service accounts (www-data, nobody, daemon, etc.)
+- IDs used by well-known services across distributions
+- Detect dynamically -- do not hardcode any specific ID
 
-## OPERATIONS REQUIRING AUTH
-| Operation | Authorization |
-|-----------|---------------|
-| `--maintenance setup` | First-run OR setup token OR root |
-| `--maintenance restore` | Admin creds OR root OR empty DB |
-| `--maintenance mode` | Admin creds OR root |
+## Service Manager Support (ALL Required)
 
----
-For complete details, see AI.md PART 24, 25
+| Platform | Service Manager |
+|----------|----------------|
+| Linux (systemd) | systemd unit file |
+| Linux (OpenRC) | OpenRC init script |
+| Linux (SysV) | SysV init script |
+| macOS | launchd plist |
+| Windows | Windows Service |
+| FreeBSD | rc.d script |
+
+## Privilege Escalation Logic
+
+Follow PART 5 "Smart Escalation Logic" for complete escalation flow:
+- If binding to privileged port (< 1024): may need to start as root
+- After binding: drop privileges to service user
+- If no privilege needed: never run as root
+
+## Let's Encrypt (REQUIRED)
+
+- ALL projects MUST have built-in Let's Encrypt support
+- Auto-renew certificates
+- Configurable via admin panel
+
+## Tor Hidden Service
+
+- ALWAYS enabled if Tor binary is found
+- No enable/disable toggle
+- Application starts its own dedicated Tor process
+- Tor dirs: {config_dir}/tor/, {data_dir}/tor/, {log_dir}/tor.log
+
+## Reference
+
+For complete details, see AI.md PART 24 (32858-33755), PART 25 (33756-33939)

@@ -3,10 +3,10 @@
 ## Project Info
 - **Project Name**: weather
 - **Organization**: apimgr
-- **Template Version**: Fresh copy from TEMPLATE.md 2026-02-18 (REFRESHED)
+- **Template Version**: Fresh copy from TEMPLATE.md 2026-02-18 (REFRESHED x2)
 - **AI.md Location**: /root/Projects/github/apimgr/weather/AI.md
 - **Official Site**: https://wthr.top
-- **AI.md Refresh**: 2026-02-18 - Placeholders replaced (weather/apimgr), .claude/rules/ regenerated (14 files)
+- **AI.md Refresh**: 2026-02-18 (second refresh) - Placeholders replaced (weather/apimgr), .claude/rules/ regenerated (14 files)
 
 ---
 
@@ -208,15 +208,33 @@
 - [x] **Bash Shell Function** - COMPLETE
   - Shell completions exist (--shell completions [bash|zsh])
   - /:bash.function endpoint implemented in src/server/handler/weather.go:536
-  - Provides wttr() and w() bash functions for terminal weather
+  - Provides wthr() and w() bash functions for terminal weather
+
+- [x] **i18n: `?lang=` query param with cookie persistence** - DONE
+  - `?lang=` sets cookie `lang=` (Max-Age 1yr, HttpOnly, SameSite=Lax)
+  - Fallback chain: `?lang=` → lang cookie → Accept-Language → en
+  - Language selector UI in nav header (native language names)
+  - Full fallback chain in LanguageMiddleware (main.go)
+
+- [x] **i18n: `make i18n-validate` build-time key validation** - DONE
+  - All 7 locale files have exact same 196 keys as en.json
+  - `make i18n-validate` target added; calls scripts/i18n-validate.sh
 
 ---
 
 ## Uncommitted Changes
 
-**Status**: Ready to commit - full AI.md compliance update
+**Status**: Pending - AI.md template re-sync (second refresh)
 
-New files (AI.md compliance):
+Files modified:
+- AI.md - Re-synced from TEMPLATE.md (2026-02-18), placeholders replaced
+- TODO.AI.md - Updated for new PART 31 i18n requirements
+- .claude/rules/*.md (14 files) - Regenerated from updated AI.md
+- CLAUDE.md - Updated "Current Project State" section
+
+Previous uncommitted changes (code fixes):
+- src/server/handler/auth.go - Registration redirect fix (→ /users, not /setup/admin/welcome)
+- src/server/static/js/app.js - Notification bell click-outside fix
 - LICENSE - MIT license file (AI.md required root file)
 - CLAUDE.md - Project memory file (AI.md PART 0 required)
 - .claude/settings.json - Shared team settings (AI.md PART 0)
@@ -286,9 +304,9 @@ Previously created:
 - Test binaries in Docker/Incus, never on host
 - AI.md is SOURCE OF TRUTH - always re-read relevant PART before implementing
 - Build: PASSING | Tests: ALL PASSING
-- Last verification: 2026-02-18
-  - AI.md refreshed from TEMPLATE.md (2026-02-18), all placeholders replaced
-  - All 14 .claude/rules/*.md files regenerated
+- Last verification: 2026-02-18 (second AI.md refresh)
+  - AI.md re-synced from TEMPLATE.md second time (2026-02-18), placeholders replaced
+  - All 14 .claude/rules/*.md files regenerated from updated AI.md
   - No TODO/FIXME/XXX comments in src/
   - No bcrypt usage (Argon2id correctly used)
   - No strconv.ParseBool (config.ParseBool used)

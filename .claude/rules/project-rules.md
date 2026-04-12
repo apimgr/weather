@@ -1,58 +1,105 @@
-# Project Rules (PART 2, 3, 4)
+# Project Structure Rules (PART 2, 3, 4)
 
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Create files not in allowed list (see PART 3)
-- ❌ Create directories not in allowed list
-- ❌ Put Dockerfile in project root (must be `docker/Dockerfile`)
-- ❌ Use `.yaml` extension (always `.yml`)
-- ❌ Create SUMMARY.md, COMPLIANCE.md, NOTES.md, CHANGELOG.md
-- ❌ Create config/, data/, logs/, tmp/ in project root
-- ❌ Use vendor/ directory (use Go modules)
-- ❌ Use GPL/AGPL/LGPL licensed dependencies
-- ❌ Hardcode paths - use OS-specific path detection
+
+- Never use GPL/AGPL/LGPL licensed dependencies
+- Never hardcode `weather` or `apimgr` — always infer from git remote or directory path
+- Never place Dockerfile or docker-compose.yml in project root (use `docker/`)
+- Never commit runtime volume data (config, data, logs)
+- Never assume current directory is project root
+- Never mix config_dir and data_dir purposes
+- Never use `github.com/mattn/go-sqlite3` (CGO — forbidden)
+- Never use `strconv.ParseBool()` — always use `config.ParseBool()`
+- Never store plaintext passwords — always Argon2id
+- Never store passwords in config files (`server.yml`)
+- Never log passwords (even hashed)
 
 ## CRITICAL - ALWAYS DO
-- ✅ All source code in `src/` directory
-- ✅ Dockerfile in `docker/Dockerfile`
-- ✅ Use MIT License with embedded third-party licenses
-- ✅ Support all 4 OSes: Linux, macOS, Windows, FreeBSD
-- ✅ Support both AMD64 and ARM64 architectures
-- ✅ Use latest stable Go version
-- ✅ Use OS-specific paths (see PART 4)
-- ✅ Use `server.yml` for config files
-- ✅ All paths relative to project root
 
-## DIRECTORY STRUCTURE
+- Use MIT License (required for all projects)
+- Include `LICENSE.md` in project root with third-party attributions
+- Include README.md license badge
+- Use `modernc.org/sqlite` (pure Go, CGO_ENABLED=0)
+- Use Argon2id for all password hashing
+- Use SHA-256 for API token hashing
+- Use `config.ParseBool()` for all boolean parsing
+- Build all 8 platforms (linux/darwin/windows/freebsd × amd64/arm64)
+- Set CGO_ENABLED=0 always
+- Use latest stable Go version (never hardcode specific versions)
+
+## Project Identity
+
+| Field | Value |
+|-------|-------|
+| Project name | `weather` |
+| Organization | `apimgr` |
+| Official site | `https://wthr.top` |
+| Admin path | `admin` |
+| API version | `v1` |
+| License | MIT |
+
+## Directory Structure
+
 ```
-./                        # Project root
-├── src/                  # All Go source code
-├── docker/               # Dockerfile, compose files
-├── docs/                 # MkDocs documentation
-├── tests/                # Test scripts
-├── scripts/              # Production scripts
-├── binaries/             # Build output (gitignored)
-├── .claude/rules/        # AI rule files (this directory)
-├── AI.md, IDEA.md        # Specifications
-├── README.md, LICENSE.md # Documentation
-└── Makefile, go.mod      # Build files
+weather/
+├── LICENSE.md          # Required
+├── README.md           # Required
+├── CLAUDE.md           # AI memory
+├── AI.md               # Source of truth
+├── Makefile            # Six core targets only
+├── go.mod / go.sum
+├── tools.go
+├── release.txt         # Stable version (SemVer)
+├── site.txt            # Official site URL
+├── .claude/rules/      # Auto-loaded rule files
+├── src/                # All source code
+├── docker/             # ALL Docker files
+├── scripts/            # run_tests.sh, docker.sh, incus.sh
+├── tests/              # Test scripts
+├── docs/               # ReadTheDocs (MkDocs) ONLY
+└── binaries/           # Built binaries
 ```
 
-## OS PATH PATTERNS
-| OS | Config | Data | Logs |
-|----|--------|------|------|
-| Linux (root) | `/etc/apimgr/weather/` | `/var/lib/apimgr/weather/` | `/var/log/apimgr/weather/` |
-| Linux (user) | `~/.config/apimgr/weather/` | `~/.local/share/apimgr/weather/` | `~/.local/log/apimgr/weather/` |
-| macOS | `/Library/Application Support/apimgr/weather/` | same | `/Library/Logs/apimgr/weather/` |
-| Windows | `%ProgramData%\apimgr\weather\` | same | `%ProgramData%\apimgr\weather\logs\` |
-| Docker | `/config/weather/` | `/data/weather/` | `/data/log/weather/` |
+## Library Rules
 
-## LICENSE REQUIREMENTS
-- MIT License for all projects
-- LICENSE.md required in root
-- All 3rd party licenses embedded in LICENSE.md
-- NEVER use GPL/AGPL/LGPL dependencies
+| Library | CGO | Rule |
+|---------|-----|------|
+| `modernc.org/sqlite` | NO | **ALWAYS USE** |
+| `github.com/mattn/go-sqlite3` | YES | **NEVER USE** |
 
----
-For complete details, see AI.md PART 2, 3, 4
+## Password & Token Security
+
+| Item | Algorithm | Storage |
+|------|-----------|---------|
+| Passwords | Argon2id | Database only |
+| API tokens | SHA-256 | Database only |
+| Config file | — | NEVER store passwords here |
+
+## Platforms (All 8 Required)
+
+| OS | Architectures |
+|----|--------------|
+| Linux | amd64, arm64 |
+| macOS (Darwin) | amd64, arm64 |
+| Windows | amd64, arm64 |
+| FreeBSD | amd64, arm64 |
+
+## File Path Rules
+
+- ALL paths are relative to project root
+- NEVER assume current directory is project root
+- Commands must `cd` to project root OR use absolute paths
+
+## Required Scripts
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `run_tests.sh` | `scripts/` | Auto-detect and run tests |
+| `docker.sh` | `scripts/` | Beta testing with Docker |
+| `incus.sh` | `scripts/` | Beta testing with Incus |
+
+## Reference
+
+For complete details, see AI.md PART 2 (lines 4974-5307), PART 3 (5308-6268), PART 4 (6269-6462)

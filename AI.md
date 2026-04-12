@@ -1096,7 +1096,7 @@ On EVERY new conversation or after "context compacted" message:
 ## Key Placeholders
 - `weather` = [actual project name]
 - `apimgr` = [organization name]
-- `{admin_path}` = [admin URL path, default: admin]
+- `admin` = [admin URL path, default: admin]
 
 ## Account Types (CRITICAL)
 - **Server Admin** = manages the app (NOT a privileged OS user)
@@ -1570,13 +1570,13 @@ Instructions for how this agent should behave...
 |-------------|-------------|---------|
 | `weather` | Project name (lowercase, no spaces/hyphens) | `jokes`, `echoip`, `pastebin` |
 | `apimgr` | Organization/owner name (lowercase) | `sneak`, `acme`, `mycompany` |
-| `{projectversion}` | Current version (semver format) | `1.0.0`, `2.3.1` |
+| `1.0.0` | Current version (semver format) | `1.0.0`, `2.3.1` |
 | `WEATHER` | Uppercase project name (for constants, env vars) | `JOKES`, `ECHOIP` |
-| `{officialsite}` | Official project website | `https://jokes.example.com` |
+| `https://wthr.top` | Official project website | `https://jokes.example.com` |
 | `{fqdn}` | Fully qualified domain name | `api.example.com` |
 | `{baseurl}` | URL path prefix (auto-detected from reverse proxy) | `/`, `/myproject` |
-| `{admin_path}` | Admin panel URL path (configurable, default: `admin`) | `admin`, `manage`, `control` |
-| `{api_version}` | API version prefix (default: `v1`) | `v1`, `v2` |
+| `admin` | Admin panel URL path (configurable, default: `admin`) | `admin`, `manage`, `control` |
+| `v1` | API version prefix (default: `v1`) | `v1`, `v2` |
 
 **Directory placeholders (with platform-specific defaults):**
 
@@ -1703,7 +1703,7 @@ This distinction exists for clarity. When referring to OS-level resources that b
 
 | Term | Definition |
 |------|------------|
-| **Server Web Setup** | Web-based setup flow at `/{admin_path}/server/setup` (HTML pages served by server, accessed in browser) - creates Primary Admin, customizes branding |
+| **Server Web Setup** | Web-based setup flow at `/admin/server/setup` (HTML pages served by server, accessed in browser) - creates Primary Admin, customizes branding |
 | **CLI Setup Wizard** | Built-in TUI/GUI wizard in CLI binary - prompts for server URL, tests connection, saves config (CLI is the ONLY binary with a built-in wizard) |
 | **Setup Token** | One-time 32-char hex token generated on server first-run, displayed in console, required to access server's web-based setup |
 
@@ -1723,7 +1723,7 @@ This distinction exists for clarity. When referring to OS-level resources that b
 | **TUI** | Terminal User Interface - interactive terminal app with menus/panels (client supports TUI mode) |
 | **Text Browsers** | INTERACTIVE browsers (lynx, w3m, links, elinks) that receive **no-JS HTML** and render it in text mode; NO JavaScript support - forms via POST, server-rendered only |
 | **HTTP Tools** | NON-INTERACTIVE tools (curl, wget, httpie) that receive pre-formatted text via HTML2TextConverter; they just dump output |
-| **Admin Panel** | WebUI at `/{admin_path}` for server administration (path is configurable, default: `admin`) |
+| **Admin Panel** | WebUI at `/admin` for server administration (path is configurable, default: `admin`) |
 | **WebUI** | Web User Interface - browser-based interface served by the server |
 | **SCM** | Windows Service Control Manager - manages Windows services (replaces PID files on Windows) |
 | **Hostname** | Short hostname (e.g., `web01`) - equivalent to `hostname -s` |
@@ -1738,7 +1738,7 @@ This distinction exists for clarity. When referring to OS-level resources that b
 
 | Purpose | Endpoints | Access | Format |
 |---------|-----------|--------|--------|
-| **Public server status/info** | `/healthz`, `/api/{api_version}/healthz` | **PUBLIC** | HTML/JSON/text |
+| **Public server status/info** | `/healthz`, `/api/v1/healthz` | **PUBLIC** | HTML/JSON/text |
 | **Prometheus metrics** | `/metrics` | **INTERNAL** | Prometheus text exposition (everything) |
 
 **Endpoints:**
@@ -1746,14 +1746,14 @@ This distinction exists for clarity. When referring to OS-level resources that b
 | Endpoint | Description |
 |----------|-------------|
 | `/healthz` | Frontend route - content negotiation (HTML for browsers, JSON for API clients, text for CLI) |
-| `/api/{api_version}/healthz` | API route - always JSON |
+| `/api/v1/healthz` | API route - always JSON |
 | `/metrics` | Prometheus - all metrics, internal only |
 
 **Key differences:**
 
 | Aspect | Public Status (PART 13) | Prometheus Metrics (PART 21) |
 |--------|-------------------------|------------------------------|
-| **Endpoints** | `/healthz`, `/api/{api_version}/healthz` | `/metrics` |
+| **Endpoints** | `/healthz`, `/api/v1/healthz` | `/metrics` |
 | **Visibility** | Public internet | Internal network only |
 | **Authentication** | None | Optional bearer token |
 | **Data** | Public-safe status/info only | Everything (all telemetry) |
@@ -2995,7 +2995,7 @@ When the specification is unclear:
 | **CI/CD workflows** | GitHub/Gitea/Jenkins pipeline structure |
 | **Directory layout** | `src/`, `docker/`, `binaries/`, etc. |
 | **Config file format** | YAML structure, standard keys |
-| **Health endpoints** | `/healthz`, `/api/{api_version}/healthz` format |
+| **Health endpoints** | `/healthz`, `/api/v1/healthz` format |
 | **API response format** | JSON structure, error format, pagination |
 
 ### What Projects CAN Customize
@@ -3005,7 +3005,7 @@ When the specification is unclear:
 | **Dockerfile packages** | Add packages app needs | `RUN apk add --no-cache ffmpeg` |
 | **Base image** | Change if app requires | `debian:latest` instead of `alpine` |
 | **Config values** | App-specific settings | `search.engines`, `jokes.categories` |
-| **Routes** | App-specific endpoints | `/api/{api_version}/search`, `/api/{api_version}/jokes` |
+| **Routes** | App-specific endpoints | `/api/v1/search`, `/api/v1/jokes` |
 | **Database schema** | App-specific tables | `searches`, `jokes`, `engines` |
 | **Business logic** | App's core functionality | Search algorithms, joke selection |
 | **UI/branding** | App-specific styling | Colors, logos, page content |
@@ -3742,15 +3742,15 @@ Every feature MUST work via:
 **Endpoint Pattern (applies to ENTIRE app):**
 | Web Route (HTML) | API Route (JSON) | Purpose |
 |------------------|------------------|---------|
-| `/` | `/api/{api_version}/` | Homepage / API root |
-| `/healthz` | `/api/{api_version}/healthz` | Health status (both exist independently) |
-| `/{admin_path}/dashboard` | `/api/{api_version}/{admin_path}/dashboard` | Admin dashboard |
-| `/{admin_path}/server/settings` | `/api/{api_version}/{admin_path}/server/settings` | Server settings |
-| `/{admin_path}/users` | `/api/{api_version}/{admin_path}/users` | User management |
-| `/quotes` | `/api/{api_version}/quotes` | Project feature (example) |
-| `/quotes/random` | `/api/{api_version}/quotes/random` | Project feature (example) |
-| `/openapi` | `/openapi.json` | API documentation (root-level, not /api/{api_version}/) |
-| `/graphql` | `/api/{api_version}/graphql` | GraphQL endpoint |
+| `/` | `/api/v1/` | Homepage / API root |
+| `/healthz` | `/api/v1/healthz` | Health status (both exist independently) |
+| `/admin/dashboard` | `/api/v1/admin/dashboard` | Admin dashboard |
+| `/admin/server/settings` | `/api/v1/admin/server/settings` | Server settings |
+| `/admin/users` | `/api/v1/admin/users` | User management |
+| `/quotes` | `/api/v1/quotes` | Project feature (example) |
+| `/quotes/random` | `/api/v1/quotes/random` | Project feature (example) |
+| `/openapi` | `/openapi.json` | API documentation (root-level, not /api/v1/) |
+| `/graphql` | `/api/v1/graphql` | GraphQL endpoint |
 
 **This pattern applies to ALL features:**
 - Every admin page has a corresponding admin API
@@ -4220,12 +4220,12 @@ IDEA.md (project spec - update as needed)
 
 1. **Title & Badges** - Project name, build status, version, license, docs badges
 2. **About** - Brief description of what the project does
-3. **Official Site** - Link to official site (if `{officialsite}` is defined)
+3. **Official Site** - Link to official site (if `https://wthr.top` is defined)
 4. **Features** - Key features list
 5. **Production** - Production deployment instructions (Docker, binary, systemd)
 6. **Client** - Client installation and usage (if applicable)
 7. **Configuration** - Key configuration options
-8. **API** - API endpoints summary with full URLs if `{officialsite}` is set
+8. **API** - API endpoints summary with full URLs if `https://wthr.top` is set
 9. **Other** - Additional info (troubleshooting, FAQ, etc.)
 10. **Development** - Development setup (ALWAYS LAST - for contributors only)
 11. **Disclaimer** - Clear, readable disclaimer (see template below)
@@ -4274,7 +4274,7 @@ Detect platform by checking for workflow files in this order:
 [![Docs](https://readthedocs.org/projects/{RTD_PROJECT}/badge/?version=latest)](https://{RTD_URL})
 
 # Gitea/Forgejo (use shields.io with custom endpoint or static badge)
-[![Release](https://img.shields.io/badge/dynamic/json?url=https://git.example.com/api/{api_version}/repos/apimgr/weather/releases/latest&query=$.tag_name&label=release)](https://git.example.com/apimgr/weather/releases)
+[![Release](https://img.shields.io/badge/dynamic/json?url=https://git.example.com/api/v1/repos/apimgr/weather/releases/latest&query=$.tag_name&label=release)](https://git.example.com/apimgr/weather/releases)
 [![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 [![Docs](https://readthedocs.org/projects/{RTD_PROJECT}/badge/?version=latest)](https://{RTD_URL})
 
@@ -4406,7 +4406,7 @@ By using this software, you acknowledge that you have read and understood this d
 
 | Context | URL Format | Example |
 |---------|------------|---------|
-| **Documentation** (README, docs/, examples) | `{officialsite}/path` | `GET https://api.example.com/healthz` |
+| **Documentation** (README, docs/, examples) | `https://wthr.top/path` | `GET https://api.example.com/healthz` |
 | **Embedded code** (Go, JS, templates) | `{fqdn}/path` | `fmt.Sprintf("https://%s/healthz", cfg.FQDN)` |
 
 **Why the distinction:**
@@ -4415,14 +4415,14 @@ By using this software, you acknowledge that you have read and understood this d
 
 ---
 
-**{officialsite} - Documentation URLs (README, docs/, API docs, examples)**
+**https://wthr.top - Documentation URLs (README, docs/, API docs, examples)**
 
-If `{officialsite}` is defined, ALL documentation examples MUST use the full URL.
+If `https://wthr.top` is defined, ALL documentation examples MUST use the full URL.
 
 | Scenario | Example Format |
 |----------|----------------|
-| **{officialsite} is set** | `GET https://api.example.com/v1/users` |
-| **{officialsite} is NOT set** | `GET /v1/users` |
+| **https://wthr.top is set** | `GET https://api.example.com/v1/users` |
+| **https://wthr.top is NOT set** | `GET /v1/users` |
 
 **Applies to:**
 - README.md
@@ -4434,7 +4434,7 @@ If `{officialsite}` is defined, ALL documentation examples MUST use the full URL
 - Troubleshooting guides
 - Any user-facing documentation
 
-**Example transformation when {officialsite} = `https://api.example.com`:**
+**Example transformation when https://wthr.top = `https://api.example.com`:**
 
 ```markdown
 # ❌ WRONG - Relative paths when officialsite exists
@@ -4451,10 +4451,10 @@ curl -q -LSsf https://api.example.com/api/v1/data
 ```
 
 **Rules:**
-1. **API examples**: Always use `{officialsite}` as base URL
-2. **curl commands**: Use `{officialsite}`, not `localhost` or relative paths
-3. **Client examples**: Show connecting to `{officialsite}` by default
-4. **Endpoint tables**: Show full URLs: `GET {officialsite}/api/v1/users`
+1. **API examples**: Always use `https://wthr.top` as base URL
+2. **curl commands**: Use `https://wthr.top`, not `localhost` or relative paths
+3. **Client examples**: Show connecting to `https://wthr.top` by default
+4. **Endpoint tables**: Show full URLs: `GET https://wthr.top/api/v1/users`
 5. **Docker examples**: OK to use localhost for local deployment instructions
 6. **Development section**: OK to use localhost (it's for local dev)
 
@@ -4464,26 +4464,26 @@ curl -q -LSsf https://api.example.com/api/v1/data
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET {officialsite}/healthz` | Health check |
-| `GET {officialsite}/api/v1/users` | List users |
-| `POST {officialsite}/api/v1/users` | Create user |
-| `GET {officialsite}/api/autoconfig` | Auto-configuration |
+| `GET https://wthr.top/healthz` | Health check |
+| `GET https://wthr.top/api/v1/users` | List users |
+| `POST https://wthr.top/api/v1/users` | Create user |
+| `GET https://wthr.top/api/autoconfig` | Auto-configuration |
 
 ### Examples
 
 ```bash
 # Get server status
-curl -q -LSsf {officialsite}/healthz
+curl -q -LSsf https://wthr.top/healthz
 
 # List all users (requires auth)
-curl -q -LSsf -H "Authorization: Bearer TOKEN" {officialsite}/api/v1/users
+curl -q -LSsf -H "Authorization: Bearer TOKEN" https://wthr.top/api/v1/users
 
 # Auto-config for clients
-curl -q -LSsf {officialsite}/api/autoconfig
+curl -q -LSsf https://wthr.top/api/autoconfig
 ```
 ```
 
-**If {officialsite} is not defined:**
+**If https://wthr.top is not defined:**
 - Use relative paths: `GET /healthz`, `GET /api/v1/users`
 - Use placeholder in curl: `curl -q -LSsf http://YOUR_SERVER/healthz`
 - Document that user must specify their server URL
@@ -4561,8 +4561,8 @@ router.GET("/healthz", handleHealth)
 
 | Location | Format | Example |
 |----------|--------|---------|
-| README.md | `{officialsite}/path` | `GET https://api.example.com/healthz` |
-| docs/*.md | `{officialsite}/path` | `curl -q -LSsf https://api.example.com/api/v1/users` |
+| README.md | `https://wthr.top/path` | `GET https://api.example.com/healthz` |
+| docs/*.md | `https://wthr.top/path` | `curl -q -LSsf https://api.example.com/api/v1/users` |
 | Go code | `{fqdn}/path` | `fmt.Sprintf("https://%s/path", cfg.FQDN)` |
 | JS code | `origin/path` | `${window.location.origin}/path` |
 | Email templates | `{fqdn}/path` | `https://{{.FQDN}}/verify` |
@@ -4595,7 +4595,7 @@ router.GET("/healthz", handleHealth)
 
 ## Official Site
 
-{officialsite}
+https://wthr.top
 
 ## Features
 
@@ -4651,7 +4651,7 @@ sudo mv weather-cli-linux-amd64 /usr/local/bin/weather-cli
 
 ```bash
 # Connect to official server (creates ~/.config/apimgr/weather/cli.yml)
-weather-cli --server {officialsite} --token YOUR_API_TOKEN
+weather-cli --server https://wthr.top --token YOUR_API_TOKEN
 ```
 
 ### Usage
@@ -4663,7 +4663,7 @@ weather-cli [command] --help
 
 ## Configuration
 
-Configuration is auto-generated on first run. Edit via admin panel at `{proto}://{fqdn}/{admin_path}` (admin_path defaults to "admin").
+Configuration is auto-generated on first run. Edit via admin panel at `{proto}://{fqdn}/admin` (admin_path defaults to "admin").
 
 Key settings:
 - `server.port` - Listen port (default: random 64xxx)
@@ -4671,21 +4671,21 @@ Key settings:
 
 ## API
 
-API documentation available at `{officialsite}/api/{api_version}/` when running.
+API documentation available at `https://wthr.top/api/v1/` when running.
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET {officialsite}/healthz` | Health check |
-| `GET {officialsite}/api/{api_version}/...` | API endpoints |
+| `GET https://wthr.top/healthz` | Health check |
+| `GET https://wthr.top/api/v1/...` | API endpoints |
 
 ### Examples
 
 ```bash
 # Health check
-curl -q -LSsf {officialsite}/healthz
+curl -q -LSsf https://wthr.top/healthz
 
 # API request (requires auth)
-curl -q -LSsf -H "Authorization: Bearer TOKEN" {officialsite}/api/{api_version}/resource
+curl -q -LSsf -H "Authorization: Bearer TOKEN" https://wthr.top/api/v1/resource
 ```
 
 ## Other
@@ -4693,7 +4693,7 @@ curl -q -LSsf -H "Authorization: Bearer TOKEN" {officialsite}/api/{api_version}/
 ### Troubleshooting
 
 - Check logs: `docker logs weather`
-- Health check: `curl -q -LSsf {officialsite}/healthz`
+- Health check: `curl -q -LSsf https://wthr.top/healthz`
 
 ## Development
 
@@ -6704,11 +6704,11 @@ func PathSecurityMiddleware(next http.Handler) http.Handler {
 
 | Request | Result | Status |
 |---------|--------|--------|
-| `GET /admin//dashboard` | `/{admin_path}/dashboard` | 200 |
-| `GET //api///v1//users` | `/api/{api_version}/users` | 200 |
+| `GET /admin//dashboard` | `/admin/dashboard` | 200 |
+| `GET //api///v1//users` | `/api/v1/users` | 200 |
 | `GET ///` | `/` | 200 |
 | `GET /static/../admin` | Blocked | 400 |
-| `GET /api/{api_version}/files/..%2F..%2Fetc/passwd` | Blocked | 400 |
+| `GET /api/v1/files/..%2F..%2Fetc/passwd` | Blocked | 400 |
 | `GET /admin/....//secret` | Blocked | 400 |
 
 ### File Path Security
@@ -6962,7 +6962,7 @@ Self-Healing Successful?                        │
 
 **The admin panel remains accessible and provides guidance for fixing issues.**
 
-#### Maintenance Dashboard (`/{admin_path}`)
+#### Maintenance Dashboard (`/admin`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -8208,7 +8208,7 @@ server:
 
 ### Admin Panel
 
-Port can be changed via `/{admin_path}/server/settings`, but **requires server restart** (with warning shown to user).
+Port can be changed via `/admin/server/settings`, but **requires server restart** (with warning shown to user).
 
 ### Example Structure
 
@@ -8228,7 +8228,7 @@ server:
   mode: production
   # Admin panel path (default: admin) - see PART 17
   admin_path: admin
-  # API version prefix (default: v1) - used in /api/{api_version}/ routes
+  # API version prefix (default: v1) - used in /api/v1/ routes
   api_version: v1
 
   # Branding & SEO - see PART 16 for full details
@@ -9840,7 +9840,7 @@ NO_COLOR=1 weather --status | grep -E '✅|❌|⚠️|🚀'  # Should find nothi
 
 ```bash
 $ weather --help
-weather {projectversion} - {project description}
+weather 1.0.0 - {project description}
 
 Usage:
   weather [flags]
@@ -11878,7 +11878,7 @@ func categorizeChanges(changes []string) (hotReload, needsRestart []string) {
 **Admin UI Restart Notification:**
 
 ```go
-// GET /{admin_path}/api/status returns pending restart info
+// GET /admin/api/status returns pending restart info
 func adminStatusHandler(w http.ResponseWriter, r *http.Request) {
     status := map[string]interface{}{
         "running":         true,
@@ -11908,7 +11908,7 @@ func adminStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 ```go
 // GET /healthz - full health response (see PART 13 for JSON structure)
-// GET /api/{api_version}/healthz - same response, always JSON
+// GET /api/v1/healthz - same response, always JSON
 func healthHandler(w http.ResponseWriter, r *http.Request) {
     // Content negotiation handled by middleware (PART 14)
     // This returns the data; middleware formats as HTML/JSON/text
@@ -12295,8 +12295,8 @@ volumes:
 
 | WRONG | RIGHT |
 |-------|-------|
-| `GET /api/{api_version}/resource/random` | `https://api.example.com/api/{api_version}/resource/random` |
-| `POST /api/{api_version}/{admin_path}/server/settings` | `https://api.example.com/api/{api_version}/{admin_path}/server/settings` |
+| `GET /api/v1/resource/random` | `https://api.example.com/api/v1/resource/random` |
+| `POST /api/v1/admin/server/settings` | `https://api.example.com/api/v1/admin/server/settings` |
 | `http://localhost:8080/api` | `http://192.168.1.100:64580/api` |
 | `http://0.0.0.0:80/healthz` | `https://myserver.example.com/healthz` |
 
@@ -12965,7 +12965,7 @@ func logError(ctx context.Context, err *AppError) {
   "request_id": "req_abc123",
   "http_status": 500,
   "internal": "pq: connection refused",
-  "path": "/api/{api_version}/users",
+  "path": "/api/v1/users",
   "method": "GET",
   "ip": "192.168.1.100"
 }
@@ -13409,7 +13409,7 @@ If now - last_seen > 5 minutes:
          │
          ▼
 Admin manually removes dead nodes via:
-   /{admin_path}/server/cluster → Remove Node
+   /admin/server/cluster → Remove Node
 ```
 
 **Primary Election:**
@@ -13828,9 +13828,9 @@ adm_ghi789...  "monitoring"   read       1 year
 
 | Prefix | Scope | Route | Description |
 |--------|-------|-------|-------------|
-| `adm_agt_` | Admin | `/api/{api_version}/{admin_path}/server/agents/*` | Server infrastructure agents |
-| `usr_agt_` | User | `/api/{api_version}/users/agents/*` | User's personal agents (SaaS) |
-| `org_agt_` | Org | `/api/{api_version}/orgs/{slug}/agents/*` | Organization agents |
+| `adm_agt_` | Admin | `/api/v1/admin/server/agents/*` | Server infrastructure agents |
+| `usr_agt_` | User | `/api/v1/users/agents/*` | User's personal agents (SaaS) |
+| `org_agt_` | Org | `/api/v1/orgs/{slug}/agents/*` | Organization agents |
 
 **Same setup procedure across all scopes** - one-line config, same registration flow.
 
@@ -13950,14 +13950,14 @@ func validateAgentToken(token string, scope TokenScope) (*TokenInfo, error) {
 
 | Token Type | Allowed Routes | Description |
 |------------|----------------|-------------|
-| `adm_` | `/api/{api_version}/{admin_path}/*` | Server admin panel |
-| `adm_` | `/api/{api_version}/{admin_path}/server/*` | Server settings (within admin) |
-| `usr_` | `/api/{api_version}/users/*`, `/api/{api_version}/orgs/{allowed}/*` | User + orgs they belong to |
-| `org_` | `/api/{api_version}/orgs/{specific}/*` | Single org only |
-| `adm_agt_` | `/api/{api_version}/{admin_path}/server/agents/*` | Admin infrastructure agent |
-| `usr_agt_` | `/api/{api_version}/users/agents/*` | User's personal agent |
-| `org_agt_` | `/api/{api_version}/orgs/{slug}/agents/*` | Organization agent |
-| (no token) | `/api/{api_version}/`, `/api/{api_version}/server/*`, `/api/{api_version}/{resource}/*` | Public routes (no auth) |
+| `adm_` | `/api/v1/admin/*` | Server admin panel |
+| `adm_` | `/api/v1/admin/server/*` | Server settings (within admin) |
+| `usr_` | `/api/v1/users/*`, `/api/v1/orgs/{allowed}/*` | User + orgs they belong to |
+| `org_` | `/api/v1/orgs/{specific}/*` | Single org only |
+| `adm_agt_` | `/api/v1/admin/server/agents/*` | Admin infrastructure agent |
+| `usr_agt_` | `/api/v1/users/agents/*` | User's personal agent |
+| `org_agt_` | `/api/v1/orgs/{slug}/agents/*` | Organization agent |
+| (no token) | `/api/v1/`, `/api/v1/server/*`, `/api/v1/{resource}/*` | Public routes (no auth) |
 
 **Context Types:**
 
@@ -13966,14 +13966,14 @@ type TargetType int
 
 const (
     TargetUnknown       TargetType = iota // Unknown/invalid target
-    TargetPublic                          // Public routes (/, /api/{api_version}/, project-specific like /jokes, /weather, /ip)
-    TargetServerPages                     // Server pages - about, help, contact, privacy (/server/*, /api/{api_version}/server/*)
-    TargetAuth                            // Auth flows (/auth/*, /api/{api_version}/auth/*)
-    TargetCurrentUser                     // Current user from token (/users/*, /api/{api_version}/users/*)
-    TargetUser                            // Specific user (/users/{username}/*, /api/{api_version}/users/{username}/*)
-    TargetOrg                             // Organization (/orgs/{slug}/*, /api/{api_version}/orgs/{slug}/*)
-    TargetAdmin                           // Server admin panel (/{admin_path}/*, /api/{api_version}/{admin_path}/*)
-    TargetAdminServer                     // Server settings within admin (/{admin_path}/server/*, /api/{api_version}/{admin_path}/server/*)
+    TargetPublic                          // Public routes (/, /api/v1/, project-specific like /jokes, /weather, /ip)
+    TargetServerPages                     // Server pages - about, help, contact, privacy (/server/*, /api/v1/server/*)
+    TargetAuth                            // Auth flows (/auth/*, /api/v1/auth/*)
+    TargetCurrentUser                     // Current user from token (/users/*, /api/v1/users/*)
+    TargetUser                            // Specific user (/users/{username}/*, /api/v1/users/{username}/*)
+    TargetOrg                             // Organization (/orgs/{slug}/*, /api/v1/orgs/{slug}/*)
+    TargetAdmin                           // Server admin panel (/admin/*, /api/v1/admin/*)
+    TargetAdminServer                     // Server settings within admin (/admin/server/*, /api/v1/admin/server/*)
 )
 ```
 
@@ -14011,53 +14011,53 @@ func ContextMiddleware(next http.Handler) http.Handler {
 
 // extractContextFromPath determines context from URL path
 func extractContextFromPath(path string) (*Context, error) {
-    // /api/{api_version}/ → Public (project root)
-    // /api/{api_version}/server/* → Server Pages (about, help, contact, privacy)
-    // /api/{api_version}/auth/* → Auth flows
-    // /api/{api_version}/users/* → User context (current user or {username})
-    // /api/{api_version}/orgs/{slug}/* → Org context
-    // /api/{api_version}/{admin_path}/* → Server Admin
-    // /api/{api_version}/{admin_path}/server/* → Server Settings (within admin)
-    // /api/{api_version}/{resource}/* → Public routes (project-specific: jokes, weather, ip, etc.)
+    // /api/v1/ → Public (project root)
+    // /api/v1/server/* → Server Pages (about, help, contact, privacy)
+    // /api/v1/auth/* → Auth flows
+    // /api/v1/users/* → User context (current user or {username})
+    // /api/v1/orgs/{slug}/* → Org context
+    // /api/v1/admin/* → Server Admin
+    // /api/v1/admin/server/* → Server Settings (within admin)
+    // /api/v1/{resource}/* → Public routes (project-specific: jokes, weather, ip, etc.)
 
-    apiBase := APIBasePath() + "/" // e.g., "/api/{api_version}/"
+    apiBase := APIBasePath() + "/" // e.g., "/api/v1/"
     parts := strings.Split(strings.TrimPrefix(path, apiBase), "/")
     if len(parts) == 0 {
         return &Context{Type: TargetPublic}, nil
     }
 
     switch parts[0] {
-    case "": // Root /api/{api_version}/
+    case "": // Root /api/v1/
         return &Context{Type: TargetPublic}, nil
     case "server":
-        // /api/{api_version}/server/* - public server pages (about, help, contact, privacy)
+        // /api/v1/server/* - public server pages (about, help, contact, privacy)
         return &Context{Type: TargetServerPages}, nil
     case "auth":
-        // /api/{api_version}/auth/* - authentication flows (public)
+        // /api/v1/auth/* - authentication flows (public)
         return &Context{Type: TargetAuth}, nil
     case "users":
         if len(parts) > 1 && parts[1] != "" {
-            // /api/{api_version}/users/{username}/* - specific user
+            // /api/v1/users/{username}/* - specific user
             return &Context{Name: parts[1], Type: TargetUser}, nil
         }
-        // /api/{api_version}/users/* - current user (from token)
+        // /api/v1/users/* - current user (from token)
         return &Context{Type: TargetCurrentUser}, nil
     case "orgs":
         if len(parts) < 2 || parts[1] == "" {
             return nil, ErrMissingOrgSlug
         }
-        // /api/{api_version}/orgs/{slug}/*
+        // /api/v1/orgs/{slug}/*
         return &Context{Name: parts[1], Type: TargetOrg}, nil
     case cfg.AdminPath: // Configurable admin path
         // Check for server settings within admin
         if len(parts) > 1 && parts[1] == "server" {
-            // /api/{api_version}/{admin_path}/server/* - server settings
+            // /api/v1/admin/server/* - server settings
             return &Context{Type: TargetAdminServer}, nil
         }
-        // /api/{api_version}/{admin_path}/* - admin panel
+        // /api/v1/admin/* - admin panel
         return &Context{Type: TargetAdmin}, nil
     default:
-        // Project-specific public routes (e.g., /api/{api_version}/jokes, /weather, /ip)
+        // Project-specific public routes (e.g., /api/v1/jokes, /weather, /ip)
         return &Context{Type: TargetPublic}, nil
     }
 }
@@ -14114,7 +14114,7 @@ func extractContextFromPath(path string) (*Context, error) {
 
 | Account Type | Stored In | After Login Redirect |
 |--------------|-----------|---------------------|
-| **Server Admin** | `admins` table | `/{admin_path}` (default: `/admin`) |
+| **Server Admin** | `admins` table | `/admin` (default: `/admin`) |
 | **Regular User** | `users` table | `/users` or `?redirect=` param |
 
 **Login Flow:**
@@ -14133,7 +14133,7 @@ Set admin_session    Check `users` table (if multi-user)
     │                    │
     ↓               ┌─── Match found? ───┐
 Redirect to         │                    │
-/{admin_path}      YES                   NO
+/admin      YES                   NO
                     │                    │
                     ↓                    ↓
                Set user_session    Return error:
@@ -14232,7 +14232,7 @@ web:
 | `Contact` | YES | Email for reporting vulnerabilities (mailto: prefix added automatically) |
 | `Expires` | YES | Expiration date (auto-renewed yearly by default) |
 
-### Admin Panel (/{admin_path}/web)
+### Admin Panel (/admin/web)
 
 **robots.txt Settings:**
 
@@ -14268,9 +14268,9 @@ web:
 **Access Log Formats:**
 | Format | Description | Example |
 |--------|-------------|---------|
-| `apache` | Apache Combined Log Format (default) | `127.0.0.1 - - [10/Oct/2024:13:55:36 -0700] "GET /api/{api_version}/healthz HTTP/1.1" 200 2326 "-" "curl/7.64.1"` |
-| `nginx` | Nginx Common Log Format | `127.0.0.1 - - [10/Oct/2024:13:55:36 -0700] "GET /api/{api_version}/healthz HTTP/1.1" 200 2326` |
-| `json` | Structured JSON | `{"ip":"127.0.0.1","time":"2024-10-10T13:55:36Z","method":"GET","path":"/api/{api_version}/healthz","status":200,"size":2326,"ua":"curl/7.64.1"}` |
+| `apache` | Apache Combined Log Format (default) | `127.0.0.1 - - [10/Oct/2024:13:55:36 -0700] "GET /api/v1/healthz HTTP/1.1" 200 2326 "-" "curl/7.64.1"` |
+| `nginx` | Nginx Common Log Format | `127.0.0.1 - - [10/Oct/2024:13:55:36 -0700] "GET /api/v1/healthz HTTP/1.1" 200 2326` |
+| `json` | Structured JSON | `{"ip":"127.0.0.1","time":"2024-10-10T13:55:36Z","method":"GET","path":"/api/v1/healthz","status":200,"size":2326,"ua":"curl/7.64.1"}` |
 
 **Security Log Formats:**
 | Format | Description | Use Case |
@@ -14568,11 +14568,11 @@ server:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/orgs/{slug}/security/audit` | GET | List audit events (paginated) |
-| `/api/{api_version}/orgs/{slug}/security/audit/export` | POST | Request audit export |
-| `/api/{api_version}/orgs/{slug}/security/audit/export/{id}` | GET | Download audit export |
-| `/api/{api_version}/orgs/{slug}/security/audit/retention` | GET | Get retention settings |
-| `/api/{api_version}/orgs/{slug}/security/audit/retention` | PATCH | Update retention (org owner only) |
+| `/api/v1/orgs/{slug}/security/audit` | GET | List audit events (paginated) |
+| `/api/v1/orgs/{slug}/security/audit/export` | POST | Request audit export |
+| `/api/v1/orgs/{slug}/security/audit/export/{id}` | GET | Download audit export |
+| `/api/v1/orgs/{slug}/security/audit/retention` | GET | Get retention settings |
+| `/api/v1/orgs/{slug}/security/audit/retention` | PATCH | Update retention (org owner only) |
 
 ### OIDC/LDAP Events
 
@@ -14787,7 +14787,7 @@ server:
 - Show only first 8 characters: `token_abc12345...`
 - Or use separate ID field that doesn't expose token value
 
-## Admin Panel (`/{admin_path}/server/logs/audit`)
+## Admin Panel (`/admin/server/logs/audit`)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -15100,28 +15100,28 @@ When GDPR/CCPA (right to erasure) conflicts with HIPAA/SOC2 (retention requireme
 | `/users/consents` | PATCH | Update consent preferences |
 | `/server/privacy` | GET | Privacy policy |
 | `/server/dpo` | GET | Data Protection Officer contact (GDPR) |
-| `/{admin_path}/server/compliance` | GET | Compliance dashboard |
-| `/{admin_path}/server/compliance/report` | POST | Generate compliance report |
-| `/{admin_path}/server/compliance/breach` | POST | Report data breach |
+| `/admin/server/compliance` | GET | Compliance dashboard |
+| `/admin/server/compliance/report` | POST | Generate compliance report |
+| `/admin/server/compliance/breach` | POST | Report data breach |
 
 ### Compliance API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/users/data/export` | POST | Request data export |
-| `/api/{api_version}/users/data/export/{export_id}` | GET | Download export |
-| `/api/{api_version}/users/data/delete` | POST | Request deletion |
-| `/api/{api_version}/users/consents` | GET | Get consents |
-| `/api/{api_version}/users/consents` | PATCH | Update consents |
-| `/api/{api_version}/{admin_path}/server/compliance` | GET | Compliance status |
-| `/api/{api_version}/{admin_path}/server/compliance/standards` | GET | Enabled standards |
-| `/api/{api_version}/{admin_path}/server/compliance/report` | POST | Generate report |
-| `/api/{api_version}/{admin_path}/server/compliance/breach` | POST | Report breach |
-| `/api/{api_version}/{admin_path}/server/compliance/audit` | GET | Compliance audit log |
+| `/api/v1/users/data/export` | POST | Request data export |
+| `/api/v1/users/data/export/{export_id}` | GET | Download export |
+| `/api/v1/users/data/delete` | POST | Request deletion |
+| `/api/v1/users/consents` | GET | Get consents |
+| `/api/v1/users/consents` | PATCH | Update consents |
+| `/api/v1/admin/server/compliance` | GET | Compliance status |
+| `/api/v1/admin/server/compliance/standards` | GET | Enabled standards |
+| `/api/v1/admin/server/compliance/report` | POST | Generate report |
+| `/api/v1/admin/server/compliance/breach` | POST | Report breach |
+| `/api/v1/admin/server/compliance/audit` | GET | Compliance audit log |
 
 ### Admin UI: Compliance Dashboard
 
-**Location:** `/{admin_path}/server/compliance`
+**Location:** `/admin/server/compliance`
 
 | Section | Description |
 |---------|-------------|
@@ -15383,32 +15383,32 @@ type IPBlock struct {
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/security/blocked-ips` | GET | List blocked IPs |
-| `/api/{api_version}/{admin_path}/server/security/blocked-ips` | POST | Manually block IP/CIDR |
-| `/api/{api_version}/{admin_path}/server/security/blocked-ips/{ip}` | GET | Get block details |
-| `/api/{api_version}/{admin_path}/server/security/blocked-ips/{ip}` | DELETE | Unblock IP |
-| `/api/{api_version}/{admin_path}/server/security/blocked-ips/expired` | DELETE | Purge expired blocks from log |
-| `/api/{api_version}/{admin_path}/server/security/allowlist` | GET | List allowed IPs |
-| `/api/{api_version}/{admin_path}/server/security/allowlist` | POST | Add IP/CIDR to allowlist |
-| `/api/{api_version}/{admin_path}/server/security/allowlist/{ip}` | DELETE | Remove from allowlist |
+| `/api/v1/admin/server/security/blocked-ips` | GET | List blocked IPs |
+| `/api/v1/admin/server/security/blocked-ips` | POST | Manually block IP/CIDR |
+| `/api/v1/admin/server/security/blocked-ips/{ip}` | GET | Get block details |
+| `/api/v1/admin/server/security/blocked-ips/{ip}` | DELETE | Unblock IP |
+| `/api/v1/admin/server/security/blocked-ips/expired` | DELETE | Purge expired blocks from log |
+| `/api/v1/admin/server/security/allowlist` | GET | List allowed IPs |
+| `/api/v1/admin/server/security/allowlist` | POST | Add IP/CIDR to allowlist |
+| `/api/v1/admin/server/security/allowlist/{ip}` | DELETE | Remove from allowlist |
 
 **Account Lockout API:**
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/security/locked-accounts` | GET | List locked accounts |
-| `/api/{api_version}/{admin_path}/server/security/locked-accounts/{id}` | DELETE | Unlock account |
+| `/api/v1/admin/server/security/locked-accounts` | GET | List locked accounts |
+| `/api/v1/admin/server/security/locked-accounts/{id}` | DELETE | Unlock account |
 
 **Security Settings API:**
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/security/settings` | GET | Get all security settings |
-| `/api/{api_version}/{admin_path}/server/security/settings` | PATCH | Update security settings |
-| `/api/{api_version}/{admin_path}/server/security/auth` | GET | Get auth settings (password policy, etc.) |
-| `/api/{api_version}/{admin_path}/server/security/auth` | PATCH | Update auth settings |
-| `/api/{api_version}/{admin_path}/server/security/ratelimit` | GET | Get rate limit settings |
-| `/api/{api_version}/{admin_path}/server/security/ratelimit` | PATCH | Update rate limit settings |
+| `/api/v1/admin/server/security/settings` | GET | Get all security settings |
+| `/api/v1/admin/server/security/settings` | PATCH | Update security settings |
+| `/api/v1/admin/server/security/auth` | GET | Get auth settings (password policy, etc.) |
+| `/api/v1/admin/server/security/auth` | PATCH | Update auth settings |
+| `/api/v1/admin/server/security/ratelimit` | GET | Get rate limit settings |
+| `/api/v1/admin/server/security/ratelimit` | PATCH | Update rate limit settings |
 
 **Password Policy (Sane Defaults):**
 
@@ -15448,9 +15448,9 @@ When compliance standards are enabled, password policy automatically upgrades:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/security/tokens` | GET | List all API tokens (admin view) |
-| `/api/{api_version}/{admin_path}/server/security/tokens/{id}` | DELETE | Revoke token |
-| `/api/{api_version}/{admin_path}/server/security/tokens/{id}/rotate` | POST | Force token rotation |
+| `/api/v1/admin/server/security/tokens` | GET | List all API tokens (admin view) |
+| `/api/v1/admin/server/security/tokens/{id}` | DELETE | Revoke token |
+| `/api/v1/admin/server/security/tokens/{id}/rotate` | POST | Force token rotation |
 
 **Token Expiry (Sane Defaults):**
 
@@ -15485,7 +15485,7 @@ server:
 
 **Admin UI: IP Blocks**
 
-**Location:** `/{admin_path}/server/security/blocked-ips`
+**Location:** `/admin/server/security/blocked-ips`
 
 | Section | Description |
 |---------|-------------|
@@ -15552,17 +15552,17 @@ server:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/breaches` | GET | List all breaches |
-| `/api/{api_version}/{admin_path}/server/breaches` | POST | Report new breach |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}` | GET | Get breach details |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}` | PATCH | Update breach status |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/investigate` | POST | Start investigation |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/contain` | POST | Mark as contained |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/notify` | POST | Send notifications |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/resolve` | POST | Mark as resolved |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/affected` | GET | List affected users |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/timeline` | GET | Breach timeline/events |
-| `/api/{api_version}/{admin_path}/server/breaches/{id}/report` | GET | Generate breach report |
+| `/api/v1/admin/server/breaches` | GET | List all breaches |
+| `/api/v1/admin/server/breaches` | POST | Report new breach |
+| `/api/v1/admin/server/breaches/{id}` | GET | Get breach details |
+| `/api/v1/admin/server/breaches/{id}` | PATCH | Update breach status |
+| `/api/v1/admin/server/breaches/{id}/investigate` | POST | Start investigation |
+| `/api/v1/admin/server/breaches/{id}/contain` | POST | Mark as contained |
+| `/api/v1/admin/server/breaches/{id}/notify` | POST | Send notifications |
+| `/api/v1/admin/server/breaches/{id}/resolve` | POST | Mark as resolved |
+| `/api/v1/admin/server/breaches/{id}/affected` | GET | List affected users |
+| `/api/v1/admin/server/breaches/{id}/timeline` | GET | Breach timeline/events |
+| `/api/v1/admin/server/breaches/{id}/report` | GET | Generate breach report |
 
 **Breach Data Model:**
 
@@ -15607,7 +15607,7 @@ const (
 
 **Admin UI: Breach Management**
 
-**Location:** `/{admin_path}/server/compliance/breaches`
+**Location:** `/admin/server/compliance/breaches`
 
 | Section | Description |
 |---------|-------------|
@@ -15722,7 +15722,7 @@ labels:
 **Behavior:**
 - All routes prefixed with baseurl (e.g., `/myproject/healthz`, `/myproject/api/v1/...`)
 - Static assets served from `{baseurl}/static/`
-- Admin panel at `{baseurl}/{admin_path}/`
+- Admin panel at `{baseurl}/admin/`
 - Generated URLs (redirects, links) use detected baseurl
 - Trailing slash normalized (both `/myproject` and `/myproject/` work)
 - Empty string treated as `/`
@@ -16076,7 +16076,7 @@ func TrackingScript() template.HTML {
 {{ trackingScript }}
 ```
 
-### Admin Panel (/{admin_path}/server/tracking)
+### Admin Panel (/admin/server/tracking)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -16558,7 +16558,7 @@ type ConsentState struct {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Admin Panel (/{admin_path}/server/privacy)
+### Admin Panel (/admin/server/privacy)
 
 | Section | Elements |
 |---------|----------|
@@ -16742,7 +16742,7 @@ server:
 | Pub/Sub events | Yes | Real-time state sync |
 | Distributed locks | Yes | Prevent duplicate task execution |
 
-## Admin Panel (/{admin_path}/server/settings)
+## Admin Panel (/admin/server/settings)
 
 All settings above MUST be configurable via admin panel:
 
@@ -16766,7 +16766,7 @@ All settings above MUST be configurable via admin panel:
 
 **Endpoints:**
 - `/healthz` - Frontend route (follows PART 14 content negotiation rules)
-- `/api/{api_version}/healthz` - API route (always JSON)
+- `/api/v1/healthz` - API route (always JSON)
 
 **Content negotiation:** Follows standard frontend rules (see PART 14). No special /healthz rules.
 
@@ -17294,7 +17294,7 @@ type StatsInfo struct {
 }
 ```
 
-### /api/{api_version}/healthz Security Rules 
+### /api/v1/healthz Security Rules 
 
 **NEVER expose in /healthz response:**
 
@@ -17380,7 +17380,7 @@ stats.requests_24h: 45678
 stats.active_connections: 42
 ```
 
-### /api/{api_version}/healthz (JSON only)
+### /api/v1/healthz (JSON only)
 
 Same JSON response as `/healthz` with `Accept: application/json`. Always returns JSON regardless of Accept header.
 
@@ -17502,7 +17502,7 @@ When not in cluster mode:
 ### --version Output
 
 ```
-weather {projectversion}
+weather 1.0.0
 Built: {BUILD_DATE}
 Go: {GO_VERSION}
 OS/Arch: {GOOS}/{GOARCH}
@@ -17533,7 +17533,7 @@ OS/Arch: {GOOS}/{GOARCH}
 
 ## API Versioning
 
-**Use versioned API: `/api/{api_version}`**
+**Use versioned API: `/api/v1`**
 
 ## Route Compliance 
 
@@ -17543,12 +17543,12 @@ OS/Arch: {GOOS}/{GOARCH}
 
 | Rule | Requirement | Wrong | Correct |
 |------|-------------|-------|---------|
-| **Versioning** | All API routes MUST be versioned | `/api/users` | `/api/{api_version}/users` |
-| **Plural nouns** | All resource names MUST be plural | `/api/{api_version}/user` | `/api/{api_version}/users` |
-| **Lowercase** | All routes MUST be lowercase | `/api/{api_version}/Users` | `/api/{api_version}/users` |
-| **Hyphens** | Multi-word routes use hyphens | `/api/{api_version}/api_keys` | `/api/{api_version}/api-keys` |
-| **No trailing slash** | Routes MUST NOT end with `/` (see PART 16 URL Normalization) | `/api/{api_version}/users/` | `/api/{api_version}/users` |
-| **No verbs** | Routes are nouns, not actions | `/api/{api_version}/getUsers` | `GET /api/{api_version}/users` |
+| **Versioning** | All API routes MUST be versioned | `/api/users` | `/api/v1/users` |
+| **Plural nouns** | All resource names MUST be plural | `/api/v1/user` | `/api/v1/users` |
+| **Lowercase** | All routes MUST be lowercase | `/api/v1/Users` | `/api/v1/users` |
+| **Hyphens** | Multi-word routes use hyphens | `/api/v1/api_keys` | `/api/v1/api-keys` |
+| **No trailing slash** | Routes MUST NOT end with `/` (see PART 16 URL Normalization) | `/api/v1/users/` | `/api/v1/users` |
+| **No verbs** | Routes are nouns, not actions | `/api/v1/getUsers` | `GET /api/v1/users` |
 
 ### Frontend-Backend Integration 
 
@@ -17556,11 +17556,11 @@ OS/Arch: {GOOS}/{GOARCH}
 
 | API Type | Frontend Required | Example |
 |----------|-------------------|---------|
-| **User-facing features** | Yes | `/api/{api_version}/users` → `/users` page |
-| **Admin features** | Yes | `/api/{api_version}/{admin_path}/*` → `/{admin_path}/*` pages |
-| **Health/status** | Yes | `/healthz` has HTML frontend (with emojis), `/api/{api_version}/healthz` is JSON |
-| **Agent endpoints** | No | `/api/{api_version}/*/agents/*` - CLI/agent only |
-| **Cluster nodes** | No | `/api/{api_version}/{admin_path}/server/nodes/*` - node-to-node only |
+| **User-facing features** | Yes | `/api/v1/users` → `/users` page |
+| **Admin features** | Yes | `/api/v1/admin/*` → `/admin/*` pages |
+| **Health/status** | Yes | `/healthz` has HTML frontend (with emojis), `/api/v1/healthz` is JSON |
+| **Agent endpoints** | No | `/api/v1/*/agents/*` - CLI/agent only |
+| **Cluster nodes** | No | `/api/v1/admin/server/nodes/*` - node-to-node only |
 
 | Requirement | Description |
 |-------------|-------------|
@@ -17573,18 +17573,18 @@ OS/Arch: {GOOS}/{GOARCH}
 
 | Backend API | Frontend | Purpose |
 |-------------|----------|---------|
-| `GET /api/{api_version}/users` | `GET /users` | View user profile |
-| `PATCH /api/{api_version}/users` | `POST /users` (form) | Update user profile |
-| `GET /api/{api_version}/users/tokens` | `GET /users/tokens` | List tokens |
-| `POST /api/{api_version}/users/tokens` | `POST /users/tokens` (form) | Create token |
-| `DELETE /api/{api_version}/users/tokens/{id}` | `POST /users/tokens/{id}/delete` | Delete token |
+| `GET /api/v1/users` | `GET /users` | View user profile |
+| `PATCH /api/v1/users` | `POST /users` (form) | Update user profile |
+| `GET /api/v1/users/tokens` | `GET /users/tokens` | List tokens |
+| `POST /api/v1/users/tokens` | `POST /users/tokens` (form) | Create token |
+| `DELETE /api/v1/users/tokens/{id}` | `POST /users/tokens/{id}/delete` | Delete token |
 
 **API-only (no frontend needed):**
 
 | API Endpoint | Why No Frontend |
 |--------------|-----------------|
-| `/api/{api_version}/{admin_path}/server/agents/*` | Agent binary uses directly |
-| `/api/{api_version}/{admin_path}/server/nodes/*` | Node-to-node cluster communication |
+| `/api/v1/admin/server/agents/*` | Agent binary uses directly |
+| `/api/v1/admin/server/nodes/*` | Node-to-node cluster communication |
 
 ### Frontend Functionality Requirements 
 
@@ -17646,7 +17646,7 @@ This is a server application, not a client-side SPA. The server should handle as
 
 Before adding ANY route, verify:
 
-- [ ] Is it versioned? (`/api/{api_version}/...`)
+- [ ] Is it versioned? (`/api/v1/...`)
 - [ ] Is the resource name plural? (`users`, not `user`)
 - [ ] Is it lowercase with hyphens? (`api-keys`, not `API_Keys`)
 - [ ] Does the route follow scope rules? (`/auth/`, `/users/`, `/orgs/`, `/admin/`)
@@ -17661,22 +17661,22 @@ Before adding ANY route, verify:
 
 | ✓ Correct | ✗ Wrong |
 |-----------|---------|
-| `/api/{api_version}/users` | `/api/{api_version}/user` |
-| `/api/{api_version}/orgs` | `/api/{api_version}/org` |
-| `/api/{api_version}/orgs/{slug}/members` | `/api/{api_version}/org/{slug}/members` |
+| `/api/v1/users` | `/api/v1/user` |
+| `/api/v1/orgs` | `/api/v1/org` |
+| `/api/v1/orgs/{slug}/members` | `/api/v1/org/{slug}/members` |
 
 ### Route Scopes
 
 | Scope | Web Route | API Route | ID Required | Description |
 |-------|-----------|-----------|-------------|-------------|
-| **Server** | `/server/*` | `/api/{api_version}/server/*` | No | About, privacy, contact, help, terms |
-| **Auth** | `/auth/*` | `/api/{api_version}/auth/*` | No | Login, register, logout, OAuth |
-| **Users** | `/users/*` | `/api/{api_version}/users/*` | **No** | Current user's resources (from session) |
-| **Orgs** | `/orgs/*` | `/api/{api_version}/orgs/*` | **Yes** (`{slug}`) | User can own multiple orgs |
-| **Admin** | `/{admin_path}/*` | `/api/{api_version}/{admin_path}/*` | No | Server administration |
-| **Project** | `/*` | `/api/{api_version}/*` | Varies | Project-specific (jokes, pastes, etc.) |
+| **Server** | `/server/*` | `/api/v1/server/*` | No | About, privacy, contact, help, terms |
+| **Auth** | `/auth/*` | `/api/v1/auth/*` | No | Login, register, logout, OAuth |
+| **Users** | `/users/*` | `/api/v1/users/*` | **No** | Current user's resources (from session) |
+| **Orgs** | `/orgs/*` | `/api/v1/orgs/*` | **Yes** (`{slug}`) | User can own multiple orgs |
+| **Admin** | `/admin/*` | `/api/v1/admin/*` | No | Server administration |
+| **Project** | `/*` | `/api/v1/*` | Varies | Project-specific (jokes, pastes, etc.) |
 
-**Note:** Examples throughout this document use `/api/{api_version}/` as the default value. In code, always use `APIBasePath()` or `{api_version}` - never hardcode `v1`.
+**Note:** Examples throughout this document use `/api/v1/` as the default value. In code, always use `APIBasePath()` or `v1` - never hardcode `v1`.
 
 ### User Routes - No ID Required 
 
@@ -17684,19 +17684,19 @@ Before adding ANY route, verify:
 
 | Route | Description |
 |-------|-------------|
-| `GET /api/{api_version}/users` | Current user's profile |
-| `PATCH /api/{api_version}/users` | Update current user's profile |
-| `GET /api/{api_version}/users/tokens` | Current user's API tokens |
-| `GET /api/{api_version}/users/security` | Current user's security settings |
-| `GET /api/{api_version}/users/settings` | Current user's preferences |
+| `GET /api/v1/users` | Current user's profile |
+| `PATCH /api/v1/users` | Update current user's profile |
+| `GET /api/v1/users/tokens` | Current user's API tokens |
+| `GET /api/v1/users/security` | Current user's security settings |
+| `GET /api/v1/users/settings` | Current user's preferences |
 
-**Admin routes for managing OTHER users use `/{admin_path}/users/{id}`:**
+**Admin routes for managing OTHER users use `/admin/users/{id}`:**
 
 | Route | Description |
 |-------|-------------|
-| `GET /api/{api_version}/{admin_path}/users` | List all users (admin) |
-| `GET /api/{api_version}/{admin_path}/users/{id}` | View specific user (admin) |
-| `PATCH /api/{api_version}/{admin_path}/users/{id}` | Edit specific user (admin) |
+| `GET /api/v1/admin/users` | List all users (admin) |
+| `GET /api/v1/admin/users/{id}` | View specific user (admin) |
+| `PATCH /api/v1/admin/users/{id}` | Edit specific user (admin) |
 
 ### Org Routes - Slug Required 
 
@@ -17704,11 +17704,11 @@ Before adding ANY route, verify:
 
 | Route | Description |
 |-------|-------------|
-| `GET /api/{api_version}/orgs` | List user's organizations |
-| `POST /api/{api_version}/orgs` | Create new organization |
-| `GET /api/{api_version}/orgs/{slug}` | Get specific org |
-| `GET /api/{api_version}/orgs/{slug}/members` | Get org members |
-| `GET /api/{api_version}/orgs/{slug}/settings` | Get org settings |
+| `GET /api/v1/orgs` | List user's organizations |
+| `POST /api/v1/orgs` | Create new organization |
+| `GET /api/v1/orgs/{slug}` | Get specific org |
+| `GET /api/v1/orgs/{slug}/members` | Get org members |
+| `GET /api/v1/orgs/{slug}/settings` | Get org settings |
 
 ### Frontend Must Match Backend
 
@@ -17716,13 +17716,13 @@ Before adding ANY route, verify:
 
 | API Route | Frontend Route | Notes |
 |-----------|----------------|-------|
-| `/api/{api_version}/users` | `/users` | Current user profile |
-| `/api/{api_version}/users/tokens` | `/users/tokens` | Current user's tokens |
-| `/api/{api_version}/users/settings` | `/users/settings` | Current user's settings |
-| `/api/{api_version}/orgs` | `/orgs` | User's org list |
-| `/api/{api_version}/orgs/{slug}` | `/orgs/{slug}` | Specific org |
-| `/api/{api_version}/orgs/{slug}/members` | `/orgs/{slug}/members` | Org members |
-| `/api/{api_version}/server/about` | `/server/about` | About page |
+| `/api/v1/users` | `/users` | Current user profile |
+| `/api/v1/users/tokens` | `/users/tokens` | Current user's tokens |
+| `/api/v1/users/settings` | `/users/settings` | Current user's settings |
+| `/api/v1/orgs` | `/orgs` | User's org list |
+| `/api/v1/orgs/{slug}` | `/orgs/{slug}` | Specific org |
+| `/api/v1/orgs/{slug}/members` | `/orgs/{slug}/members` | Org members |
+| `/api/v1/server/about` | `/server/about` | About page |
 
 **Frontend uses same routes, different response format:**
 - Browser request → HTML page
@@ -17733,7 +17733,7 @@ Before adding ANY route, verify:
 
 | Direction | Example | Reason |
 |-----------|---------|--------|
-| **API-only** | `/api/{api_version}/{admin_path}/server/agents/*`, `/api/{api_version}/{admin_path}/server/nodes/*` | Machine/system use only (see table above) |
+| **API-only** | `/api/v1/admin/server/agents/*`, `/api/v1/admin/server/nodes/*` | Machine/system use only (see table above) |
 | **Frontend-only** | `/server` → `/server/about` redirect | UX convenience redirects, no API equivalent needed |
 
 ### ID/Slug Consistency
@@ -17754,27 +17754,27 @@ Before adding ANY route, verify:
 
 | Parameter Type | Use When | Example |
 |----------------|----------|---------|
-| **Path params** | Identifying a resource | `/api/{api_version}/users/{username}/repos/{id}`, `/api/{api_version}/jokes/{category}` |
+| **Path params** | Identifying a resource | `/api/v1/users/{username}/repos/{id}`, `/api/v1/jokes/{category}` |
 | **Query params** | Filtering, sorting, pagination | `?page=2&limit=10&sort=date` |
 
 **Path Parameters (Preferred):**
 ```
-GET /api/{api_version}/users/repos/123        ✓ Good - current user's repo by ID
-GET /api/{api_version}/users/alice/repos/123  ✓ Good - user alice's repo by ID
-GET /api/{api_version}/orgs/acme/repos/123    ✓ Good - org acme's repo by ID
-GET /api/{api_version}/jokes/programming      ✓ Good - category in path (project-scoped)
-GET /api/{api_version}/search/golang          ✓ Good - search term in path
+GET /api/v1/users/repos/123        ✓ Good - current user's repo by ID
+GET /api/v1/users/alice/repos/123  ✓ Good - user alice's repo by ID
+GET /api/v1/orgs/acme/repos/123    ✓ Good - org acme's repo by ID
+GET /api/v1/jokes/programming      ✓ Good - category in path (project-scoped)
+GET /api/v1/search/golang          ✓ Good - search term in path
 
-GET /api/{api_version}/users/repos?id=123     ✗ Bad - should be path param
-GET /api/{api_version}/jokes?category=prog    ✗ Bad - should be path param
+GET /api/v1/users/repos?id=123     ✗ Bad - should be path param
+GET /api/v1/jokes?category=prog    ✗ Bad - should be path param
 ```
 
 **Query Parameters (When Needed):**
 ```
-GET /api/{api_version}/users/repos?page=2&limit=10    ✓ Pagination
-GET /api/{api_version}/jokes?sort=rating&order=desc   ✓ Sorting (project-scoped)
-GET /api/{api_version}/search/golang?safe=true        ✓ Filtering/options
-GET /api/{api_version}/{admin_path}/users?status=active&role=admin ✓ Admin filters
+GET /api/v1/users/repos?page=2&limit=10    ✓ Pagination
+GET /api/v1/jokes?sort=rating&order=desc   ✓ Sorting (project-scoped)
+GET /api/v1/search/golang?safe=true        ✓ Filtering/options
+GET /api/v1/admin/users?status=active&role=admin ✓ Admin filters
 ```
 
 **Rules:**
@@ -17934,7 +17934,7 @@ function handleClick(event) {
     name: "test"
   };
 
-  fetch('/api/{api_version}/users', {
+  fetch('/api/v1/users', {
     method: 'POST',
     body: JSON.stringify(data)
   });
@@ -17980,8 +17980,8 @@ tail -c 2 file.txt | od -An -tx1
 | Endpoint | Default | Browser | curl/CLI | API Client |
 |----------|---------|---------|----------|------------|
 | `/` (public pages) | HTML | HTML | Text | HTML |
-| `/{admin_path}/*` | HTML | HTML | HTML | HTML |
-| `/api/{api_version}/*` | JSON | JSON | Text | JSON |
+| `/admin/*` | HTML | HTML | HTML | HTML |
+| `/api/v1/*` | JSON | JSON | Text | JSON |
 | `/healthz` | HTML | HTML | Text | JSON (Accept: application/json) |
 | `*.txt` extension | Text | Text | Text | Text |
 
@@ -18006,7 +18006,7 @@ tail -c 2 file.txt | od -An -tx1
 |-----------|-----------------|
 | Default (browser, API client) | JSON |
 | Non-interactive client detected | Plain text (raw data) |
-| `.txt` extension (e.g., `/api/{api_version}/joke.txt`) | Plain text (raw data) |
+| `.txt` extension (e.g., `/api/v1/joke.txt`) | Plain text (raw data) |
 | `Accept: text/plain` header | Plain text (raw data) |
 
 **API routes return raw data as plain text (NOT HTML2TextConverter) because there's no HTML to convert.**
@@ -18044,19 +18044,19 @@ func getAPIResponseFormat(r *http.Request) string {
 ```
 
 **`.txt` extension support for API routes:**
-- ✓ ALL `/api/{api_version}/*` endpoints
-- ✓ Health API endpoints (`/api/{api_version}/healthz`)
+- ✓ ALL `/api/v1/*` endpoints
+- ✓ Health API endpoints (`/api/v1/healthz`)
 - ✓ Project-specific API endpoints
-- ✓ Admin API endpoints (`/api/{api_version}/{admin_path}/*`)
+- ✓ Admin API endpoints (`/api/v1/admin/*`)
 
 **API Routes (JSON default, text via CLI/.txt/Accept header):**
 
 | Endpoint | Default | CLI Tool | With `.txt` | Accept: text/plain |
 |----------|---------|----------|-------------|-------------------|
-| `/api/{api_version}/jokes/random` | JSON | Text | Text | Text |
-| `/api/{api_version}/healthz` | JSON | Text | Text | Text |
-| `/api/{api_version}/status` | JSON | Text | Text | Text |
-| `/api/{api_version}/users/{username}` | JSON | Text | Text | Text |
+| `/api/v1/jokes/random` | JSON | Text | Text | Text |
+| `/api/v1/healthz` | JSON | Text | Text | Text |
+| `/api/v1/status` | JSON | Text | Text | Text |
+| `/api/v1/users/{username}` | JSON | Text | Text | Text |
 
 **Frontend Routes (smart detection):**
 
@@ -18070,8 +18070,8 @@ func getAPIResponseFormat(r *http.Request) string {
 **Use cases:**
 
 **API with `.txt` extension:**
-- `curl -q -LSsf https://api.example.com/api/{api_version}/joke/random.txt` → Just the joke text
-- `curl -q -LSsf https://api.example.com/api/{api_version}/healthz.txt` → "OK" or "ERROR: ..."
+- `curl -q -LSsf https://api.example.com/api/v1/joke/random.txt` → Just the joke text
+- `curl -q -LSsf https://api.example.com/api/v1/healthz.txt` → "OK" or "ERROR: ..."
 - Scripts that need plain output without JSON parsing
 
 **Frontend with smart detection:**
@@ -18087,14 +18087,14 @@ func getAPIResponseFormat(r *http.Request) string {
 
 ### Content Negotiation Priority 
 
-**For API routes (`/api/{api_version}/*`), response format is determined in this order:**
+**For API routes (`/api/v1/*`), response format is determined in this order:**
 
 | Priority | Method | Example | Returns |
 |----------|--------|---------|---------|
-| **1** | `.txt` extension | `/api/{api_version}/joke.txt` | Plain text (ALWAYS) |
+| **1** | `.txt` extension | `/api/v1/joke.txt` | Plain text (ALWAYS) |
 | **2** | `Accept: application/json` header | `Accept: application/json` | JSON |
 | **3** | `Accept: text/plain` header | `Accept: text/plain` | Plain text |
-| **4** | Default | `/api/{api_version}/joke` | JSON |
+| **4** | Default | `/api/v1/joke` | JSON |
 
 **For frontend routes (`/**`), response format is determined in this order:**
 
@@ -18873,9 +18873,9 @@ When the user requests compatibility with external services (e.g., "compatible w
    - Preserve response content-type (JSON, XML, plain text, etc.)
 
 **3. Use our standard routes for everything else:**
-   - View: Use our standard `/api/{api_version}/{resource}/{id}` pattern
-   - List: Use our standard `/api/{api_version}/{resource}` pattern
-   - Search: Use our standard `/api/{api_version}/{resource}/search` pattern
+   - View: Use our standard `/api/v1/{resource}/{id}` pattern
+   - List: Use our standard `/api/v1/{resource}` pattern
+   - Search: Use our standard `/api/v1/{resource}/search` pattern
    - DO NOT replicate their entire API surface
 
 **Example - Pastebin Compatibility:**
@@ -18905,7 +18905,7 @@ Result:
 | **Research first** | NEVER guess - look up actual API documentation |
 | **Create/init only** | Implement creation endpoints, skip view/list/search/delete duplicates |
 | **Match response format** | Field names, structure, content-type must match target exactly |
-| **Standard routes for rest** | Use our `/api/{api_version}/*` patterns for all other operations |
+| **Standard routes for rest** | Use our `/api/v1/*` patterns for all other operations |
 | **Avoid complexity** | Do NOT add hundreds of redundant routes |
 | **Document compatibility** | List what IS and ISN'T compatible in AI.md |
 
@@ -19017,7 +19017,7 @@ AI Response:
 "Pastebin.com is a simple service, not a protocol.
 I'll implement:
 ✓ POST /api/api_post.php (create endpoint)
-✗ Skip view/list/delete (use our /api/{api_version}/* routes)
+✗ Skip view/list/delete (use our /api/v1/* routes)
 
 Need additional compatible endpoints?"
 ```
@@ -19047,11 +19047,11 @@ Need additional compatible endpoints?"
 | `/graphql` | GET | None | GraphiQL interface |
 | `/graphql` | POST | None | GraphQL queries |
 | `/metrics` | GET | Optional | Prometheus metrics |
-| `/{admin_path}` | GET | Session | Admin panel login |
-| `/{admin_path}/*` | ALL | Session | Admin panel pages |
+| `/admin` | GET | Session | Admin panel login |
+| `/admin/*` | ALL | Session | Admin panel pages |
 | `/api/autodiscover` | GET | None | Server settings, config schema, and options for CLI/agent (non-versioned) |
-| `/api/{api_version}/healthz` | GET | None | Health check (JSON) |
-| `/api/{api_version}/{admin_path}/*` | ALL | Bearer | Admin API |
+| `/api/v1/healthz` | GET | None | Health check (JSON) |
+| `/api/v1/admin/*` | ALL | Bearer | Admin API |
 
 **NOTE: No `/openapi.yaml` endpoint. JSON only.**
 
@@ -19162,7 +19162,7 @@ Before proceeding, confirm you understand:
 
 **ALL DNS providers are supported.** The admin WebUI provides a dropdown that dynamically shows the appropriate credential fields based on the selected provider.
 
-**Admin WebUI Flow (`/{admin_path}/server/ssl`):**
+**Admin WebUI Flow (`/admin/server/ssl`):**
 
 1. Select DNS provider from dropdown (all lego-supported providers available)
 2. Form dynamically shows required credential fields for that provider
@@ -19794,7 +19794,7 @@ formatURL(host, 8443, true)
 **Example (Production with SSL + Tor on 443):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19809,7 +19809,7 @@ formatURL(host, 8443, true)
 **Example (Full Banner with Tor + I2P + SMTP):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19828,7 +19828,7 @@ formatURL(host, 8443, true)
 **Example (Production on port 8080):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19842,7 +19842,7 @@ formatURL(host, 8443, true)
 **Example (Development on port 8080):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: development                          │
 ├───────────────────────────────────────────────────────────┤
@@ -19856,7 +19856,7 @@ formatURL(host, 8443, true)
 **Example (Development IPv6 on port 8080):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: development                          │
 ├───────────────────────────────────────────────────────────┤
@@ -19870,7 +19870,7 @@ formatURL(host, 8443, true)
 **Example (Production on port 80):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19884,7 +19884,7 @@ formatURL(host, 8443, true)
 **Example (Production with debugging enabled):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: {app_mode} [debugging]               │
 ├───────────────────────────────────────────────────────────┤
@@ -19898,7 +19898,7 @@ formatURL(host, 8443, true)
 **Example (First Run - Setup Required):**
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
@@ -19913,7 +19913,7 @@ formatURL(host, 8443, true)
 ├───────────────────────────────────────────────────────────┤
 │  Setup Token: {setup_token}                               │
 │                                                           │
-│  Go to {proto}://{fqdn}/{admin_path}/server/setup         │
+│  Go to {proto}://{fqdn}/admin/server/setup         │
 │  and enter this token to complete setup.                  │
 │                                                           │
 │  This token will only be shown ONCE.                      │
@@ -19930,7 +19930,7 @@ formatURL(host, 8443, true)
 
 **60-79 cols (Compact - no ASCII art, icons + text):**
 ```
-🚀 WEATHER v{projectversion}
+🚀 WEATHER v1.0.0
 🔒 Mode: {app_mode}
 🌐 {proto}://{fqdn}
 📡 Listening: {proto}://{address}:{port}
@@ -19939,7 +19939,7 @@ formatURL(host, 8443, true)
 
 **60-79 cols (Compact - First Run):**
 ```
-🚀 WEATHER v{projectversion}
+🚀 WEATHER v1.0.0
 🔧 Mode: {app_mode}
 🌐 {proto}://{address}:{port}
 📡 Listening: {proto}://{address}:{port}
@@ -19947,20 +19947,20 @@ formatURL(host, 8443, true)
 
 🔑 SETUP REQUIRED
 Token: {setup_token}
-Go to: {proto}://{fqdn}/{admin_path}/server/setup
+Go to: {proto}://{fqdn}/admin/server/setup
 (Token shown ONCE)
 ```
 
 **40-59 cols (Minimal - abbreviated, no icons):**
 ```
-WEATHER {projectversion}
+WEATHER 1.0.0
 {app_mode}
 {fqdn}:{port}
 ```
 
 **40-59 cols (Minimal - First Run):**
 ```
-WEATHER {projectversion}
+WEATHER 1.0.0
 {app_mode}
 {address}:{port}
 SETUP: {setup_token}
@@ -19978,7 +19978,7 @@ WEATHER :{port} [SETUP]
 
 **NO_COLOR / TERM=dumb (Plain text - no emojis, no box drawing, no colors):**
 ```
-WEATHER v{projectversion}
+WEATHER v1.0.0
 Mode: {app_mode}
 URL: {proto}://{fqdn}
 Listening: {proto}://{address}:{port}
@@ -19987,7 +19987,7 @@ Started: {startup_datetime}
 
 **NO_COLOR / TERM=dumb (Plain - First Run):**
 ```
-WEATHER v{projectversion}
+WEATHER v1.0.0
 Mode: {app_mode}
 URL: {proto}://{address}:{port}
 Listening: {proto}://{address}:{port}
@@ -19995,7 +19995,7 @@ Started: {startup_datetime}
 
 SETUP REQUIRED
 Token: {setup_token}
-Setup URL: {proto}://{fqdn}/{admin_path}/server/setup
+Setup URL: {proto}://{fqdn}/admin/server/setup
 This token will only be shown ONCE.
 ```
 
@@ -20149,14 +20149,14 @@ Startup (for configured FQDN)
 
 | API Route | Frontend Route | Page Type |
 |-----------|----------------|-----------|
-| `GET /api/{api_version}/users` | `GET /users` | Current user profile |
-| `PATCH /api/{api_version}/users` | `POST /users` | Profile update form |
-| `GET /api/{api_version}/users/tokens` | `GET /users/tokens` | Token list page |
-| `GET /api/{api_version}/users/settings` | `GET /users/settings` | User settings page |
-| `GET /api/{api_version}/users/security` | `GET /users/security` | Security settings page |
-| `GET /api/{api_version}/orgs` | `GET /orgs` | User's org list |
-| `GET /api/{api_version}/orgs/{slug}` | `GET /orgs/{slug}` | Org detail page |
-| `GET /api/{api_version}/server/about` | `GET /server/about` | About page |
+| `GET /api/v1/users` | `GET /users` | Current user profile |
+| `PATCH /api/v1/users` | `POST /users` | Profile update form |
+| `GET /api/v1/users/tokens` | `GET /users/tokens` | Token list page |
+| `GET /api/v1/users/settings` | `GET /users/settings` | User settings page |
+| `GET /api/v1/users/security` | `GET /users/security` | Security settings page |
+| `GET /api/v1/orgs` | `GET /orgs` | User's org list |
+| `GET /api/v1/orgs/{slug}` | `GET /orgs/{slug}` | Org detail page |
+| `GET /api/v1/server/about` | `GET /server/about` | About page |
 
 ### Vanity URLs (OPTIONAL - Requires PART 34/35)
 
@@ -20166,16 +20166,16 @@ This is OPTIONAL and only applies to apps where user/org profiles are a core fea
 
 | Vanity URL | Maps To | API Equivalent | Example Apps |
 |------------|---------|----------------|--------------|
-| `/{username}` | `/users/{username}` | `/api/{api_version}/users/{username}` | GitHub, Linktree, Twitter |
-| `/{orgname}` | `/orgs/{orgname}` | `/api/{api_version}/orgs/{orgname}` | GitHub, GitLab, Gitea |
-| `/{username}/{project}` | `/users/{username}/{project}` | `/api/{api_version}/users/{username}/projects/{project}` | GitHub repos |
-| `/{orgname}/{project}` | `/orgs/{orgname}/{project}` | `/api/{api_version}/orgs/{orgname}/projects/{project}` | GitHub org repos |
+| `/{username}` | `/users/{username}` | `/api/v1/users/{username}` | GitHub, Linktree, Twitter |
+| `/{orgname}` | `/orgs/{orgname}` | `/api/v1/orgs/{orgname}` | GitHub, GitLab, Gitea |
+| `/{username}/{project}` | `/users/{username}/{project}` | `/api/v1/users/{username}/projects/{project}` | GitHub repos |
+| `/{orgname}/{project}` | `/orgs/{orgname}/{project}` | `/api/v1/orgs/{orgname}/projects/{project}` | GitHub org repos |
 
 **Route Priority (NON-NEGOTIABLE when implemented):**
 
 ```
-1. /api/{api_version}/*          → API routes (highest priority)
-2. /{admin_path}/*     → Admin panel (configurable path)
+1. /api/v1/*          → API routes (highest priority)
+2. /admin/*     → Admin panel (configurable path)
 3. /healthz           → Health check
 4. /static/*          → Static assets
 5. /users/*           → Explicit user routes
@@ -20228,12 +20228,12 @@ func vanityHandler(w http.ResponseWriter, r *http.Request) {
 
     switch routeType {
     case "user":
-        // /{username} → proxy to /api/{api_version}/users/{username}
-        // /{username}/{repo} → proxy to /api/{api_version}/users/{username}/repos/{repo}
+        // /{username} → proxy to /api/v1/users/{username}
+        // /{username}/{repo} → proxy to /api/v1/users/{username}/repos/{repo}
         proxyToUserAPI(w, r, id, sub, item)
     case "org":
-        // /{orgname} → proxy to /api/{api_version}/orgs/{orgname}
-        // /{orgname}/{repo} → proxy to /api/{api_version}/orgs/{orgname}/repos/{repo}
+        // /{orgname} → proxy to /api/v1/orgs/{orgname}
+        // /{orgname}/{repo} → proxy to /api/v1/orgs/{orgname}/repos/{repo}
         proxyToOrgAPI(w, r, id, sub, item)
     case "reserved":
         http.Redirect(w, r, "/"+slug, http.StatusFound) // let normal router handle
@@ -20344,7 +20344,7 @@ func URLNormalizeMiddleware(next http.Handler) http.Handler {
 |-------|--------|--------|
 | `/users/` | `/users` | 301 redirect |
 | `/server/about/` | `/server/about` | 301 redirect |
-| `/api/{api_version}/users/` | `/api/{api_version}/users` | 301 redirect |
+| `/api/v1/users/` | `/api/v1/users` | 301 redirect |
 | `/users` | `/users` | No redirect (canonical) |
 | `/` | `/` | No redirect (root exception) |
 | `/static/css/style.css` | `/static/css/style.css` | No redirect (file) |
@@ -20466,10 +20466,10 @@ func detectClientType(r *http.Request) string {
 
 2. **API Endpoints** (programmatic):
    ```bash
-   curl -q -LSsf -X POST /api/{api_version}/auth/register -d '{"username":"test","email":"test@example.com"}'
-   curl -q -LSsf -X PATCH /api/{api_version}/users -d '{"email":"new@test.com"}'  # Current user
-   curl -q -LSsf -X PUT /api/{api_version}/{admin_path}/users/123 -d '{"email":"new@test.com"}'  # Admin
-   curl -q -LSsf -X DELETE /api/{api_version}/{admin_path}/users/123  # Admin
+   curl -q -LSsf -X POST /api/v1/auth/register -d '{"username":"test","email":"test@example.com"}'
+   curl -q -LSsf -X PATCH /api/v1/users -d '{"email":"new@test.com"}'  # Current user
+   curl -q -LSsf -X PUT /api/v1/admin/users/123 -d '{"email":"new@test.com"}'  # Admin
+   curl -q -LSsf -X DELETE /api/v1/admin/users/123  # Admin
    ```
 
 3. **Frontend Direct** (CLI/scripting):
@@ -22270,7 +22270,7 @@ self.addEventListener('notificationclick', event => {
 });
 ```
 
-**Admin Panel Settings (`/{admin_path}/server/notifications`):**
+**Admin Panel Settings (`/admin/server/notifications`):**
 - Enable/disable push notifications
 - VAPID key generation
 - Test push functionality
@@ -23119,7 +23119,7 @@ ERROR: VALIDATION_FAILED: email must be valid
 
 | Source | Content-Type | Format |
 |--------|--------------|--------|
-| API routes (`/api/{api_version}/*`) | `application/json` | JSON |
+| API routes (`/api/v1/*`) | `application/json` | JSON |
 | `.txt` suffix (API only) | `text/plain` | Text |
 | `Accept: application/json` | `application/json` | JSON |
 | `Accept: text/plain` | `text/plain` | Text |
@@ -23128,7 +23128,7 @@ ERROR: VALIDATION_FAILED: email must be valid
 | Frontend AJAX/fetch | Auto-detect from `Accept` | JSON/Text |
 
 **Notes:**
-- `.txt` suffix only works on API routes (`/api/{api_version}/*.txt`)
+- `.txt` suffix only works on API routes (`/api/v1/*.txt`)
 - No `.json` suffix exists - JSON is the default for API
 - Frontend uses `Accept` header for format negotiation (set by fetch/XMLHttpRequest)
 
@@ -23383,7 +23383,7 @@ src/server/template/
 | Layout | Routes | Design Philosophy |
 |--------|--------|-------------------|
 | `public.tmpl` | `/`, `/auth/*`, `/server/*`, `/users/*` | Clean, marketing-friendly, top navigation |
-| `admin.tmpl` | `/{admin_path}/*` | Dashboard-style, sidebar navigation, data-dense |
+| `admin.tmpl` | `/admin/*` | Dashboard-style, sidebar navigation, data-dense |
 
 ### Public Layout (`public.tmpl`)
 
@@ -23400,7 +23400,7 @@ src/server/template/
 │                                                                 │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
-│        About · Privacy · Contact · GitHub · {projectversion}    │  ← Footer (centered)
+│        About · Privacy · Contact · GitHub · 1.0.0    │  ← Footer (centered)
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -23451,7 +23451,7 @@ src/server/template/
 │              │                                                  │
 │  Sidebar     │                                                  │
 ├──────────────┴──────────────────────────────────────────────────┤
-│                    {projectversion} · Docs · Status             │  ← Footer
+│                    1.0.0 · Docs · Status             │  ← Footer
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -24488,7 +24488,7 @@ server:
 - Tags with invalid characters (potential XSS)
 - Tags exceeding max length
 
-**Admin Panel (/{admin_path}/server/seo):**
+**Admin Panel (/admin/server/seo):**
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -24563,7 +24563,7 @@ server:
 - Split into multiple sitemap files: `/sitemap-1.xml`, `/sitemap-2.xml`, etc.
 - Each sitemap file max 50,000 URLs
 
-### Admin Panel (/{admin_path}/server/branding)
+### Admin Panel (/admin/server/branding)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -24830,7 +24830,7 @@ messages:
     # User can dismiss
 ```
 
-### Admin Panel (/{admin_path}/server/announcements)
+### Admin Panel (/admin/server/announcements)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -24888,7 +24888,7 @@ web:
 | Production | `*` | Allow all origins by default (configure if needed) |
 | Development | `*` | Allow all origins |
 
-### Admin Panel (/{admin_path}/server/web)
+### Admin Panel (/admin/server/web)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -25068,7 +25068,7 @@ When admin edits `custom_html`, show:
 | `{currentyear}` | Current year (e.g., 2025) |
 | `weather` | Project name |
 | `apimgr` | Organization name |
-| `{projectversion}` | Application version |
+| `1.0.0` | Application version |
 | `{builddatetime}` | Build date/time |
 
 ### Default Application Footer (Always Shown)
@@ -25099,7 +25099,7 @@ When admin edits `custom_html`, show:
   <p>
     <a href="{PLATFORM_REPO_URL}" target="_blank">Made with</a> ❤️
     <span>•</span>
-    <span>{projectversion}</span>
+    <span>1.0.0</span>
   </p>
 
   <br />
@@ -25117,7 +25117,7 @@ When admin edits `custom_html`, show:
   <div class="admin-footer-content">
     <!-- Version info -->
     <span class="admin-footer-version">
-      <a href="/{admin_path}/server/info">weather {projectversion}</a>
+      <a href="/admin/server/info">weather 1.0.0</a>
     </span>
 
     <span class="admin-footer-separator">•</span>
@@ -25196,7 +25196,7 @@ When admin edits `custom_html`, show:
 
 | Element | Description |
 |---------|-------------|
-| Version | Links to `/{admin_path}/server/info` - shows project name and version |
+| Version | Links to `/admin/server/info` - shows project name and version |
 | Docs | External link to ReadTheDocs documentation |
 | Status | Server health indicator (green/yellow/red) with status text |
 
@@ -25209,7 +25209,7 @@ When admin edits `custom_html`, show:
 | **Status indicator** | Real-time server health from `/healthz` |
 | **Same position rules** | Bottom of page, scrolls with content, centered |
 
-### Admin Panel (/{admin_path}/server/footer)
+### Admin Panel (/admin/server/footer)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -25218,8 +25218,8 @@ When admin edits `custom_html`, show:
 | Rendered preview | Preview pane | Shows rendered footer |
 
 **Related admin pages:**
-- Analytics tracking: `/{admin_path}/server/tracking` (PART 12: Analytics Tracking)
-- Privacy & consent: `/{admin_path}/server/privacy` (PART 12: Privacy & Consent)
+- Analytics tracking: `/admin/server/tracking` (PART 12: Analytics Tracking)
+- Privacy & consent: `/admin/server/privacy` (PART 12: Privacy & Consent)
 
 ## Cookie Consent Banner 
 
@@ -25227,7 +25227,7 @@ When admin edits `custom_html`, show:
 
 **Configuration:** `server.privacy.consent` (see PART 12: Privacy & Consent)
 
-**Admin panel:** `/{admin_path}/server/privacy`
+**Admin panel:** `/admin/server/privacy`
 
 ### Banner Layout
 
@@ -25927,7 +25927,7 @@ func trackingScript(r *http.Request) template.HTML {
 </article>
 ```
 
-**API Endpoint (`/api/{api_version}/server/privacy`):**
+**API Endpoint (`/api/v1/server/privacy`):**
 
 ```json
 {
@@ -26006,7 +26006,7 @@ func trackingScript(r *http.Request) template.HTML {
 
 **Note:** The `tracking` and `third_party.services` fields are populated based on `server.tracking` config. If no tracking is configured, they remain empty.
 
-**Admin Panel (`/{admin_path}/server/privacy`):**
+**Admin Panel (`/admin/server/privacy`):**
 
 | Tab | Fields |
 |-----|--------|
@@ -26229,7 +26229,7 @@ server:
       content: ""
 ```
 
-### Admin Panel (/{admin_path}/server/pages)
+### Admin Panel (/admin/server/pages)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -26258,11 +26258,11 @@ server:
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/{api_version}/server/about` | GET | About information (JSON) |
-| `/api/{api_version}/server/privacy` | GET | Privacy policy (JSON) |
-| `/api/{api_version}/server/contact` | POST | Submit contact form |
-| `/api/{api_version}/server/help` | GET | Help content (JSON) |
-| `/api/{api_version}/server/terms` | GET | Terms of service (JSON) |
+| `/api/v1/server/about` | GET | About information (JSON) |
+| `/api/v1/server/privacy` | GET | Privacy policy (JSON) |
+| `/api/v1/server/contact` | POST | Submit contact form |
+| `/api/v1/server/help` | GET | Help content (JSON) |
+| `/api/v1/server/terms` | GET | Terms of service (JSON) |
 
 ### /server/ Frontend Routes
 
@@ -26296,9 +26296,9 @@ server:
 
 | Rule | Description |
 |------|-------------|
-| **NEVER link to admin path** | No links to `/{admin_path}` on ANY public routes (`/**`) |
+| **NEVER link to admin path** | No links to `/admin` on ANY public routes (`/**`) |
 | **Intentional access only** | Users must manually type admin path in browser |
-| **Separate authentication** | Admin account is ONLY valid for `/{admin_path}/**` routes |
+| **Separate authentication** | Admin account is ONLY valid for `/admin/**` routes |
 | **No admin mentions** | Don't advertise admin panel existence anywhere |
 | **Separate session** | Admin session is separate from user sessions |
 
@@ -26306,9 +26306,9 @@ server:
 
 | User Type | Valid Routes | Authentication |
 |-----------|--------------|----------------|
-| **Admin** | `/{admin_path}/**` ONLY | Admin credentials (username/password) |
-| **Guest/Anon** | `/**` (except `/{admin_path}`) | None |
-| **Normal User** | `/**` (except `/{admin_path}`) | User account (if multi-user enabled) |
+| **Admin** | `/admin/**` ONLY | Admin credentials (username/password) |
+| **Guest/Anon** | `/**` (except `/admin`) | None |
+| **Normal User** | `/**` (except `/admin`) | User account (if multi-user enabled) |
 
 **Admin credentials are stored in `users.db` (admins table), NOT in config file.**
 
@@ -26344,85 +26344,85 @@ server:
 ### Route Structure
 
 ```
-/{admin_path}/                          # Admin root (dashboard)
-/{admin_path}/profile                   # Admin's own profile/preferences
-/{admin_path}/preferences               # Admin's own preferences/settings
-/{admin_path}/notifications             # Admin's own notifications
-/{admin_path}/server/                   # Server management (EVERYTHING ELSE)
-/{admin_path}/server/settings           # Server settings
-/{admin_path}/server/ssl                # SSL/TLS configuration
-/{admin_path}/server/email              # Email configuration
-/{admin_path}/server/scheduler          # Scheduled tasks
-/{admin_path}/server/logs               # Server logs
-/{admin_path}/server/logs/audit         # Audit logs
-/{admin_path}/server/backup             # Backup/restore
-/{admin_path}/server/updates            # Update management
-/{admin_path}/server/info               # Server information
-/{admin_path}/server/metrics            # Metrics dashboard
-/{admin_path}/server/network/           # Network settings
-/{admin_path}/server/network/tor        # Tor configuration
-/{admin_path}/server/network/geoip      # GeoIP settings
-/{admin_path}/server/security/          # Security settings
-/{admin_path}/server/security/auth      # Authentication config
-/{admin_path}/server/security/tokens    # API token management
-/{admin_path}/server/security/firewall  # Firewall rules
-/{admin_path}/server/users/             # User management (if multi-user)
-/{admin_path}/server/orgs/              # Org management (if orgs enabled)
-/{admin_path}/server/cluster/           # Cluster management (if clustering)
-/{admin_path}/server/agents/            # Agent management (if agents)
+/admin/                          # Admin root (dashboard)
+/admin/profile                   # Admin's own profile/preferences
+/admin/preferences               # Admin's own preferences/settings
+/admin/notifications             # Admin's own notifications
+/admin/server/                   # Server management (EVERYTHING ELSE)
+/admin/server/settings           # Server settings
+/admin/server/ssl                # SSL/TLS configuration
+/admin/server/email              # Email configuration
+/admin/server/scheduler          # Scheduled tasks
+/admin/server/logs               # Server logs
+/admin/server/logs/audit         # Audit logs
+/admin/server/backup             # Backup/restore
+/admin/server/updates            # Update management
+/admin/server/info               # Server information
+/admin/server/metrics            # Metrics dashboard
+/admin/server/network/           # Network settings
+/admin/server/network/tor        # Tor configuration
+/admin/server/network/geoip      # GeoIP settings
+/admin/server/security/          # Security settings
+/admin/server/security/auth      # Authentication config
+/admin/server/security/tokens    # API token management
+/admin/server/security/firewall  # Firewall rules
+/admin/server/users/             # User management (if multi-user)
+/admin/server/orgs/              # Org management (if orgs enabled)
+/admin/server/cluster/           # Cluster management (if clustering)
+/admin/server/agents/            # Agent management (if agents)
 ```
 
 ### Route Hierarchy Rules 
 
 | Rule | Description |
 |------|-------------|
-| **`/{admin_path}/` root** | Dashboard ONLY |
-| **`/{admin_path}/profile`** | Admin's OWN profile (not server management) |
-| **`/{admin_path}/preferences`** | Admin's OWN preferences (not server settings) |
-| **`/{admin_path}/notifications`** | Admin's OWN notifications |
-| **`/{admin_path}/server/*`** | ALL server management goes here |
-| **No other direct children** | ONLY profile/preferences/notifications under `/{admin_path}/` |
+| **`/admin/` root** | Dashboard ONLY |
+| **`/admin/profile`** | Admin's OWN profile (not server management) |
+| **`/admin/preferences`** | Admin's OWN preferences (not server settings) |
+| **`/admin/notifications`** | Admin's OWN notifications |
+| **`/admin/server/*`** | ALL server management goes here |
+| **No other direct children** | ONLY profile/preferences/notifications under `/admin/` |
 
 ### What Goes Where
 
 | Route | Purpose | Example |
 |-------|---------|---------|
-| `/{admin_path}/` | Dashboard overview | System status, quick stats |
-| `/{admin_path}/profile` | Admin's personal account | Change own password, 2FA |
-| `/{admin_path}/preferences` | Admin's UI preferences | Theme, language, timezone |
-| `/{admin_path}/server/*` | **EVERYTHING server-related** | Config, users, logs, etc. |
+| `/admin/` | Dashboard overview | System status, quick stats |
+| `/admin/profile` | Admin's personal account | Change own password, 2FA |
+| `/admin/preferences` | Admin's UI preferences | Theme, language, timezone |
+| `/admin/server/*` | **EVERYTHING server-related** | Config, users, logs, etc. |
 
 ### INVALID Routes (NEVER DO THIS)
 
 ```
 # WRONG - Server management at admin root level
-/{admin_path}/settings          # ✗ WRONG - use /{admin_path}/server/settings
-/{admin_path}/users             # ✗ WRONG - use /{admin_path}/server/users
-/{admin_path}/logs              # ✗ WRONG - use /{admin_path}/server/logs
-/{admin_path}/security          # ✗ WRONG - use /{admin_path}/server/security
-/{admin_path}/email             # ✗ WRONG - use /{admin_path}/server/email
-/{admin_path}/tor               # ✗ WRONG - use /{admin_path}/server/network/tor
-/{admin_path}/tokens            # ✗ WRONG - use /{admin_path}/server/security/tokens
-/{admin_path}/agents            # ✗ WRONG - use /{admin_path}/server/agents
-/{admin_path}/cluster           # ✗ WRONG - use /{admin_path}/server/cluster
+/admin/settings          # ✗ WRONG - use /admin/server/settings
+/admin/users             # ✗ WRONG - use /admin/server/users
+/admin/logs              # ✗ WRONG - use /admin/server/logs
+/admin/security          # ✗ WRONG - use /admin/server/security
+/admin/email             # ✗ WRONG - use /admin/server/email
+/admin/tor               # ✗ WRONG - use /admin/server/network/tor
+/admin/tokens            # ✗ WRONG - use /admin/server/security/tokens
+/admin/agents            # ✗ WRONG - use /admin/server/agents
+/admin/cluster           # ✗ WRONG - use /admin/server/cluster
 
 # CORRECT
-/{admin_path}/profile           # ✓ Admin's own profile
-/{admin_path}/preferences       # ✓ Admin's own preferences
-/{admin_path}/server/settings   # ✓ Server settings
-/{admin_path}/server/users      # ✓ User management
+/admin/profile           # ✓ Admin's own profile
+/admin/preferences       # ✓ Admin's own preferences
+/admin/server/settings   # ✓ Server settings
+/admin/server/users      # ✓ User management
 ```
 
 ### API Route Hierarchy (Same Pattern)
 
 ```
-/api/{api_version}/{admin_path}/                         # Admin API root
-/api/{api_version}/{admin_path}/profile                  # Admin's own profile
-/api/{api_version}/{admin_path}/preferences              # Admin's own preferences
-/api/{api_version}/{admin_path}/server/                  # Server management API
-/api/{api_version}/{admin_path}/server/settings          # Server settings
-/api/{api_version}/{admin_path}/server/users             # User management
-/api/{api_version}/{admin_path}/server/agents            # Agent management
+/api/v1/admin/                         # Admin API root
+/api/v1/admin/profile                  # Admin's own profile
+/api/v1/admin/preferences              # Admin's own preferences
+/api/v1/admin/server/                  # Server management API
+/api/v1/admin/server/settings          # Server settings
+/api/v1/admin/server/users             # User management
+/api/v1/admin/server/agents            # Agent management
 ```
 
 ### Route Conflict Prevention
@@ -26432,7 +26432,7 @@ server:
 ```go
 // Admin route hierarchy validation
 var validAdminRootPaths = map[string]bool{
-    "":              true,  // Dashboard (/{admin_path}/)
+    "":              true,  // Dashboard (/admin/)
     "profile":       true,  // Admin's own profile
     "preferences":   true,  // Admin's own preferences
     "notifications": true,  // Admin's own notifications
@@ -26440,7 +26440,7 @@ var validAdminRootPaths = map[string]bool{
 }
 
 func validateAdminRoute(path string) error {
-    // Extract first segment after /{admin_path}/
+    // Extract first segment after /admin/
     parts := strings.Split(strings.Trim(path, "/"), "/")
     if len(parts) == 0 {
         return nil // Root path is OK
@@ -26473,8 +26473,8 @@ func validateAdminRoute(path string) error {
 | `server.admin_path` | `admin` | Path segment for admin panel (no leading slash) |
 
 **When changed, ALL admin routes update:**
-- `/admin/**` → `/{admin_path}/**`
-- `/api/{api_version}/{admin_path}/**` → `/api/{api_version}/{admin_path}/**`
+- `/admin/**` → `/admin/**`
+- `/api/v1/admin/**` → `/api/v1/admin/**`
 
 ### Validation Rules 
 
@@ -26517,7 +26517,7 @@ func validateAdminPath(newPath string, router *mux.Router) error {
 
 ### WebUI Change Flow 
 
-**When admin path changed via WebUI (`/{admin_path}/server/settings`):**
+**When admin path changed via WebUI (`/admin/server/settings`):**
 
 ```
 1. User submits new admin path
@@ -26534,7 +26534,7 @@ func validateAdminPath(newPath string, router *mux.Router) error {
 **Frontend JavaScript:**
 ```javascript
 async function changeAdminPath(newPath) {
-    const response = await fetch(`/api/{api_version}/{admin_path}/server/settings`, {
+    const response = await fetch(`/api/v1/admin/server/settings`, {
         method: 'PATCH',
         body: JSON.stringify({ admin_path: newPath })
     });
@@ -26582,7 +26582,7 @@ func APIVersion() string {
 
 // API base path helper
 func APIBasePath() string {
-    return "/api/" + APIVersion() // e.g., "/api/{api_version}"
+    return "/api/" + APIVersion() // e.g., "/api/v1"
 }
 
 // Use in route registration
@@ -26600,7 +26600,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 // Use in templates
 {{ .AdminPath }}   // Available in all templates
 {{ .APIVersion }}  // Available in all templates
-{{ .APIBasePath }} // e.g., "/api/{api_version}"
+{{ .APIBasePath }} // e.g., "/api/v1"
 ```
 
 ### Restart vs Reload
@@ -26734,7 +26734,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 
 | Feature | Description |
 |---------|-------------|
-| Login page | `/{admin_path}` (when not logged in) |
+| Login page | `/admin` (when not logged in) |
 | Login form | Username/password, centered card |
 | Session | Cookie-based (30 days default, configurable) |
 | CSRF | Protection on all forms |
@@ -26764,8 +26764,8 @@ func RegisterAdminRoutes(r *mux.Router) {
 
 | Route | Server Admin Access |
 |-------|---------------------|
-| `/{admin_path}/*` | Full access |
-| `/users/*` | NO - treated as guest (redirect to `/{admin_path}`) |
+| `/admin/*` | Full access |
+| `/users/*` | NO - treated as guest (redirect to `/admin`) |
 | `/auth/login` | Login page |
 | `/auth/logout` | Logout |
 | Public routes (`/`, `/server/*`, etc.) | Guest view (no user-specific content) |
@@ -26792,7 +26792,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 
 ```
 ╭───────────────────────────────────────────────────────────╮
-│  🚀 WEATHER · 📦 {projectversion}                   │
+│  🚀 WEATHER · 📦 1.0.0                   │
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
@@ -26807,7 +26807,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 ├───────────────────────────────────────────────────────────┤
 │  Setup Token: {setup_token}                               │
 │                                                           │
-│  Go to {proto}://{fqdn}/{admin_path}/server/setup         │
+│  Go to {proto}://{fqdn}/admin/server/setup         │
 │  and enter this token to complete setup.                  │
 │                                                           │
 │  This token will only be shown ONCE.                      │
@@ -26847,9 +26847,9 @@ On first run, a one-time setup token is generated and displayed in console. Admi
 | 1 | Server generates one-time setup token (displayed in console ONCE) |
 | 2 | User navigates to `/admin` |
 | 3 | User enters setup token |
-| 4 | Redirect to `/{admin_path}/server/setup` (setup wizard) |
+| 4 | Redirect to `/admin/server/setup` (setup wizard) |
 
-**Setup Wizard Steps (`/{admin_path}/server/setup`):**
+**Setup Wizard Steps (`/admin/server/setup`):**
 
 **Step 1: Create Admin Account**
 | Field | Default | Notes |
@@ -26903,7 +26903,7 @@ On first run, a one-time setup token is generated and displayed in console. Admi
 
 | Method | Description |
 |--------|-------------|
-| **Manual creation** | Primary admin invites additional admin accounts via `/{admin_path}/server/admins` |
+| **Manual creation** | Primary admin invites additional admin accounts via `/admin/server/admins` |
 | **OIDC/LDAP group mapping** | Map external identity provider groups to Server Admin role |
 
 ### Admin Hierarchy
@@ -26924,7 +26924,7 @@ On first run, a one-time setup token is generated and displayed in console. Admi
 ### Admin Invite Flow
 
 ```
-Admin Panel (/{admin_path}/server/admins)
+Admin Panel (/admin/server/admins)
 ┌─────────────────────────────────────────────────────────────┐
 │  Server Administrators                                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -27035,7 +27035,7 @@ Admin clicks "Invite New Admin"
 
 | Feature | Description |
 |---------|-------------|
-| **Registration** | Admin can register multiple passkeys at `/{admin_path}/profile/security` |
+| **Registration** | Admin can register multiple passkeys at `/admin/profile/security` |
 | **Login** | Passkey can be used as primary login or as 2FA |
 | **Device-bound** | Each passkey tied to specific device/authenticator |
 | **Naming** | Admin names each passkey for identification |
@@ -27046,7 +27046,7 @@ Admin clicks "Invite New Admin"
 
 | Feature | Description |
 |---------|-------------|
-| **Setup** | QR code + manual entry key at `/{admin_path}/profile/security` |
+| **Setup** | QR code + manual entry key at `/admin/profile/security` |
 | **Apps supported** | Any TOTP app (Google Authenticator, Authy, 1Password, etc.) |
 | **Backup codes** | 10 one-time recovery codes generated on setup |
 | **Regenerate** | Can regenerate backup codes (invalidates old ones) |
@@ -27136,7 +27136,7 @@ Admin clicks "Invite New Admin"
 - SMTP status shown in notification preferences
 - See PART 18: EMAIL & NOTIFICATIONS for SMTP configuration
 
-#### Admin Appearance Settings (`/{admin_path}/profile/preferences`)
+#### Admin Appearance Settings (`/admin/profile/preferences`)
 
 **Server admins can customize their admin panel appearance.**
 
@@ -27197,7 +27197,7 @@ Admin clicks "Invite New Admin"
 | Total admin count (number only) | Other admin 2FA secrets |
 | | Other admin session data |
 
-**Admin Panel (`/{admin_path}/server/admins`):**
+**Admin Panel (`/admin/server/admins`):**
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Server Administrators                                      │
@@ -27292,7 +27292,7 @@ Admin Panel Header:
 │         │                   │           │
 │         └───────────────────┘           │
 │                                         │
-│              {projectversion}           │
+│              1.0.0           │
 └─────────────────────────────────────────┘
 ```
 
@@ -27303,7 +27303,7 @@ Admin Panel Header:
 - Version number at bottom (small)
 - No "Forgot password" (admin resets via CLI if needed)
 
-### Dashboard (`/{admin_path}/dashboard`)
+### Dashboard (`/admin/dashboard`)
 
 **Overview of server status and system resources at a glance.**
 
@@ -27365,30 +27365,30 @@ Admin Panel Header:
 
 | Route | Page | Description |
 |-------|------|-------------|
-| `/{admin_path}` | Login | Login form (if not authenticated) |
-| `/{admin_path}/dashboard` | Dashboard | Overview, stats, quick actions |
-| `/{admin_path}/server/settings` | Server Settings | Port, mode, FQDN, etc. |
-| `/{admin_path}/server/branding` | Branding | Title, logo, favicon, colors |
-| `/{admin_path}/server/ssl` | SSL/TLS | Certificates, Let's Encrypt |
-| `/{admin_path}/server/scheduler` | Scheduler | View/edit scheduled tasks |
-| `/{admin_path}/server/email` | Email | SMTP settings, templates |
-| `/{admin_path}/server/logs` | Logs | View access, error, audit logs |
-| `/{admin_path}/server/security/auth` | Authentication | Password, MFA, sessions |
-| `/{admin_path}/server/security/tokens` | API Tokens | Generate, revoke tokens |
-| `/{admin_path}/server/security/ratelimit` | Rate Limiting | Configure rate limits |
-| `/{admin_path}/server/security/firewall` | Firewall | IP allow/block lists |
-| `/{admin_path}/server/network/tor` | Tor | View .onion address, status (auto-enabled if installed) |
-| `/{admin_path}/server/network/geoip` | GeoIP | Country blocking, database updates |
-| `/{admin_path}/server/network/blocklists` | Blocklists | IP/domain blocklists |
-| `/{admin_path}/server/moderation/users` | Users | User moderation (if multi-user) |
-| `/{admin_path}/server/users/invites` | Invites | Invite codes (if multi-user) |
-| `/{admin_path}/server/backup` | Backup | Create/restore backups |
-| `/{admin_path}/server/maintenance` | Maintenance | Maintenance mode |
-| `/{admin_path}/server/updates` | Updates | Check/apply updates |
-| `/{admin_path}/server/info` | Server Info | Version, environment, deps |
-| `/{admin_path}/server/cluster/nodes` | Nodes | Cluster node management |
-| `/{admin_path}/server/cluster/add` | Add Node | Generate join token |
-| `/{admin_path}/help` | Help | Documentation links |
+| `/admin` | Login | Login form (if not authenticated) |
+| `/admin/dashboard` | Dashboard | Overview, stats, quick actions |
+| `/admin/server/settings` | Server Settings | Port, mode, FQDN, etc. |
+| `/admin/server/branding` | Branding | Title, logo, favicon, colors |
+| `/admin/server/ssl` | SSL/TLS | Certificates, Let's Encrypt |
+| `/admin/server/scheduler` | Scheduler | View/edit scheduled tasks |
+| `/admin/server/email` | Email | SMTP settings, templates |
+| `/admin/server/logs` | Logs | View access, error, audit logs |
+| `/admin/server/security/auth` | Authentication | Password, MFA, sessions |
+| `/admin/server/security/tokens` | API Tokens | Generate, revoke tokens |
+| `/admin/server/security/ratelimit` | Rate Limiting | Configure rate limits |
+| `/admin/server/security/firewall` | Firewall | IP allow/block lists |
+| `/admin/server/network/tor` | Tor | View .onion address, status (auto-enabled if installed) |
+| `/admin/server/network/geoip` | GeoIP | Country blocking, database updates |
+| `/admin/server/network/blocklists` | Blocklists | IP/domain blocklists |
+| `/admin/server/moderation/users` | Users | User moderation (if multi-user) |
+| `/admin/server/users/invites` | Invites | Invite codes (if multi-user) |
+| `/admin/server/backup` | Backup | Create/restore backups |
+| `/admin/server/maintenance` | Maintenance | Maintenance mode |
+| `/admin/server/updates` | Updates | Check/apply updates |
+| `/admin/server/info` | Server Info | Version, environment, deps |
+| `/admin/server/cluster/nodes` | Nodes | Cluster node management |
+| `/admin/server/cluster/add` | Add Node | Generate join token |
+| `/admin/help` | Help | Documentation links |
 
 ### Settings Page Layout
 
@@ -27466,7 +27466,7 @@ Admin Panel Header:
 
 ### Server Settings Field Definitions
 
-**`/{admin_path}/server/settings` - All fields with control types:**
+**`/admin/server/settings` - All fields with control types:**
 
 #### General Section
 
@@ -27505,7 +27505,7 @@ Admin Panel Header:
 | `og_image` | File | (none) | No | OpenGraph image |
 | `twitter_handle` | Text | (empty) | No | Twitter @handle |
 
-#### Security Section (`/{admin_path}/server/security`)
+#### Security Section (`/admin/server/security`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27541,7 +27541,7 @@ Admin Panel Header:
 | `allowlist` | Tags | (empty) | No | IPs never blocked |
 | `blocklist` | Tags | (empty) | No | IPs always blocked |
 
-#### SSL/TLS Section (`/{admin_path}/server/security/ssl`)
+#### SSL/TLS Section (`/admin/server/security/ssl`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27554,7 +27554,7 @@ Admin Panel Header:
 | `ssl.letsencrypt.staging` | Toggle | Off | No | Use LE staging server |
 | `ssl.letsencrypt.challenge` | Dropdown | `http-01` | No | Challenge type |
 
-#### Authentication Section (`/{admin_path}/server/security/auth`)
+#### Authentication Section (`/admin/server/security/auth`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27567,7 +27567,7 @@ Admin Panel Header:
 | `password.require_number` | Toggle | On | No | Require number |
 | `password.require_special` | Toggle | Off | No | Require special char |
 
-#### Backup Section (`/{admin_path}/server/backup`)
+#### Backup Section (`/admin/server/backup`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27581,7 +27581,7 @@ Admin Panel Header:
 | `backup.encryption.enabled` | Toggle | Off | No | Encrypt backups |
 | `backup.encryption.password` | Password | (none) | No | Encryption password |
 
-#### Email/SMTP Section (`/{admin_path}/server/email`)
+#### Email/SMTP Section (`/admin/server/email`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27594,7 +27594,7 @@ Admin Panel Header:
 | `from.email` | Text | `no-reply@{fqdn}` | No | Sender email |
 | `[Test Connection]` | Button | - | - | Send test email |
 
-#### Notifications Section (`/{admin_path}/server/notifications`)
+#### Notifications Section (`/admin/server/notifications`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27605,7 +27605,7 @@ Admin Panel Header:
 | `notifications.security_alerts` | Toggle | On | No | Security event alerts |
 | `notifications.update_available` | Toggle | On | No | New version available |
 
-#### Scheduler Section (`/{admin_path}/server/scheduler`)
+#### Scheduler Section (`/admin/server/scheduler`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27618,7 +27618,7 @@ Admin Panel Header:
 | - Next run | Readonly | timestamp | - | Next execution |
 | - `[Run Now]` | Button | - | - | Trigger immediately |
 
-#### URL Detection Section (`/{admin_path}/server/url`)
+#### URL Detection Section (`/admin/server/url`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27630,7 +27630,7 @@ Admin Panel Header:
 | Detected domains | Readonly | - | - | Currently detected FQDNs |
 | Inferred wildcard | Readonly | - | - | `*.example.com` if detected |
 
-#### Tor Section (`/{admin_path}/server/tor`) - *if tor installed*
+#### Tor Section (`/admin/server/tor`) - *if tor installed*
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27639,7 +27639,7 @@ Admin Panel Header:
 | `tor.status` | Readonly | - | - | Running/Stopped |
 | `[Copy Address]` | Button | - | - | Copy onion to clipboard |
 
-#### GeoIP Section (`/{admin_path}/server/geoip`)
+#### GeoIP Section (`/admin/server/geoip`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27669,7 +27669,7 @@ Admin Panel Header:
 | Read-only info | **Readonly** |
 | Trigger action | **Button** |
 
-### Log Viewer (`/{admin_path}/server/logs`)
+### Log Viewer (`/admin/server/logs`)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -27679,10 +27679,10 @@ Admin Panel Header:
 │  [Access ▼]  [Last 100 ▼]  [Search...        ]  [Auto-refresh: ON]     │
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │ 2025-01-15 10:30:45  GET  /api/{api_version}/healthz 200  12ms  192.168.1.1│    │
-│  │ 2025-01-15 10:30:44  POST /api/{api_version}/data    201  45ms  192.168.1.2│    │
+│  │ 2025-01-15 10:30:45  GET  /api/v1/healthz 200  12ms  192.168.1.1│    │
+│  │ 2025-01-15 10:30:44  POST /api/v1/data    201  45ms  192.168.1.2│    │
 │  │ 2025-01-15 10:30:43  GET  /healthz        200  2ms   192.168.1.1│    │
-│  │ 2025-01-15 10:30:42  GET  /api/{api_version}/users   401  5ms   10.0.0.50  │    │
+│  │ 2025-01-15 10:30:42  GET  /api/v1/users   401  5ms   10.0.0.50  │    │
 │  │ ...                                                              │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
@@ -27761,7 +27761,7 @@ Check for valid admin session
 | Aspect | Admin Session | User Session |
 |--------|---------------|--------------|
 | Cookie name | `admin_session` | `user_session` |
-| Valid routes | `/{admin_path}/**` only | `/**` except `/{admin_path}/**` |
+| Valid routes | `/admin/**` only | `/**` except `/admin/**` |
 | Stored in | `server.db` (admin_sessions) | `users.db` (user_sessions) |
 | Credentials | `admins` table | `users` table |
 | Default duration | 30 days | 7 days |
@@ -27789,7 +27789,7 @@ The admin panel MUST include a scheduler section with:
 - `monthly` - Once per month (configurable day/time)
 - `custom` - Cron expression
 
-## /api/{api_version}/{admin_path} (REST API)
+## /api/v1/admin (REST API)
 
 ### Authentication
 
@@ -27797,144 +27797,144 @@ The admin panel MUST include a scheduler section with:
 
 **These admin API routes are ALWAYS available, regardless of whether Multi-User (PART 34) is implemented.**
 
-### Admin - Server (`/api/{api_version}/{admin_path}/server/`)
+### Admin - Server (`/api/v1/admin/server/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/setup` | GET | Get setup status |
-| `/api/{api_version}/{admin_path}/server/setup/verify` | POST | Verify setup token |
-| `/api/{api_version}/{admin_path}/server/setup/account` | POST | Create admin account (Step 1) |
-| `/api/{api_version}/{admin_path}/server/setup/token` | POST | Generate API token (Step 2) |
-| `/api/{api_version}/{admin_path}/server/setup/config` | POST | Save server config (Step 3) |
-| `/api/{api_version}/{admin_path}/server/setup/security` | POST | Security settings (Step 4) |
-| `/api/{api_version}/{admin_path}/server/setup/services` | POST | Configure services (Step 5) |
-| `/api/{api_version}/{admin_path}/server/setup/complete` | POST | Complete setup wizard (Step 6) |
-| `/api/{api_version}/{admin_path}/server/settings` | GET | Get server settings |
-| `/api/{api_version}/{admin_path}/server/settings` | PATCH | Update server settings |
-| `/api/{api_version}/{admin_path}/server/status` | GET | Server status (detailed) |
-| `/api/{api_version}/{admin_path}/server/stats` | GET | Statistics |
-| `/api/{api_version}/{admin_path}/server/restart` | POST | Restart server |
+| `/api/v1/admin/server/setup` | GET | Get setup status |
+| `/api/v1/admin/server/setup/verify` | POST | Verify setup token |
+| `/api/v1/admin/server/setup/account` | POST | Create admin account (Step 1) |
+| `/api/v1/admin/server/setup/token` | POST | Generate API token (Step 2) |
+| `/api/v1/admin/server/setup/config` | POST | Save server config (Step 3) |
+| `/api/v1/admin/server/setup/security` | POST | Security settings (Step 4) |
+| `/api/v1/admin/server/setup/services` | POST | Configure services (Step 5) |
+| `/api/v1/admin/server/setup/complete` | POST | Complete setup wizard (Step 6) |
+| `/api/v1/admin/server/settings` | GET | Get server settings |
+| `/api/v1/admin/server/settings` | PATCH | Update server settings |
+| `/api/v1/admin/server/status` | GET | Server status (detailed) |
+| `/api/v1/admin/server/stats` | GET | Statistics |
+| `/api/v1/admin/server/restart` | POST | Restart server |
 
-### Admin - Server Admins (`/api/{api_version}/{admin_path}/server/admins/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/admins` | GET | List Server Admins |
-| `/api/{api_version}/{admin_path}/server/admins/{id}` | GET | Get admin details |
-| `/api/{api_version}/{admin_path}/server/admins/{id}` | DELETE | Delete admin |
-| `/api/{api_version}/{admin_path}/server/admins/{id}/disable` | POST | Disable admin |
-| `/api/{api_version}/{admin_path}/server/admins/{id}/enable` | POST | Enable admin |
-| `/api/{api_version}/{admin_path}/server/admins/invite` | POST | Generate admin invite link |
-
-### Admin - Profile (`/api/{api_version}/{admin_path}/profile/`)
+### Admin - Server Admins (`/api/v1/admin/server/admins/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/profile` | GET | Get admin profile |
-| `/api/{api_version}/{admin_path}/profile` | PATCH | Update admin profile |
-| `/api/{api_version}/{admin_path}/profile/password` | POST | Change admin password |
-| `/api/{api_version}/{admin_path}/profile/token` | GET | Get current API token (masked) |
-| `/api/{api_version}/{admin_path}/profile/token` | POST | Regenerate API token |
-| `/api/{api_version}/{admin_path}/profile/preferences` | GET | Get admin preferences (theme, notifications) |
-| `/api/{api_version}/{admin_path}/profile/preferences` | PATCH | Update admin preferences |
+| `/api/v1/admin/server/admins` | GET | List Server Admins |
+| `/api/v1/admin/server/admins/{id}` | GET | Get admin details |
+| `/api/v1/admin/server/admins/{id}` | DELETE | Delete admin |
+| `/api/v1/admin/server/admins/{id}/disable` | POST | Disable admin |
+| `/api/v1/admin/server/admins/{id}/enable` | POST | Enable admin |
+| `/api/v1/admin/server/admins/invite` | POST | Generate admin invite link |
 
-### Admin - Branding (`/api/{api_version}/{admin_path}/server/branding/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/branding` | GET | Get branding settings |
-| `/api/{api_version}/{admin_path}/server/branding` | PATCH | Update branding |
-
-### Admin - SSL (`/api/{api_version}/{admin_path}/server/ssl/`)
+### Admin - Profile (`/api/v1/admin/profile/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/ssl` | GET | Get SSL settings |
-| `/api/{api_version}/{admin_path}/server/ssl` | PATCH | Update SSL settings |
-| `/api/{api_version}/{admin_path}/server/ssl/renew` | POST | Force certificate renewal |
+| `/api/v1/admin/profile` | GET | Get admin profile |
+| `/api/v1/admin/profile` | PATCH | Update admin profile |
+| `/api/v1/admin/profile/password` | POST | Change admin password |
+| `/api/v1/admin/profile/token` | GET | Get current API token (masked) |
+| `/api/v1/admin/profile/token` | POST | Regenerate API token |
+| `/api/v1/admin/profile/preferences` | GET | Get admin preferences (theme, notifications) |
+| `/api/v1/admin/profile/preferences` | PATCH | Update admin preferences |
 
-### Admin - Tor (`/api/{api_version}/{admin_path}/server/tor/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/tor` | GET | Get Tor status |
-| `/api/{api_version}/{admin_path}/server/tor` | PATCH | Update Tor settings |
-| `/api/{api_version}/{admin_path}/server/tor/regenerate` | POST | Regenerate .onion address |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | GET | Get vanity generation status |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | POST | Start vanity generation |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | DELETE | Cancel vanity generation |
-| `/api/{api_version}/{admin_path}/server/tor/vanity/apply` | POST | Apply vanity address |
-| `/api/{api_version}/{admin_path}/server/tor/import` | POST | Import external keys |
-
-### Admin - Web (`/api/{api_version}/{admin_path}/server/web/`)
+### Admin - Branding (`/api/v1/admin/server/branding/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/web` | GET | Get web settings |
-| `/api/{api_version}/{admin_path}/server/web` | PATCH | Update web settings |
-| `/api/{api_version}/{admin_path}/server/web/robots` | GET | Get robots.txt config |
-| `/api/{api_version}/{admin_path}/server/web/robots` | PATCH | Update robots.txt |
-| `/api/{api_version}/{admin_path}/server/web/robots/preview` | GET | Preview robots.txt |
-| `/api/{api_version}/{admin_path}/server/web/security` | GET | Get security.txt config |
-| `/api/{api_version}/{admin_path}/server/web/security` | PATCH | Update security.txt |
-| `/api/{api_version}/{admin_path}/server/web/security/preview` | GET | Preview security.txt |
+| `/api/v1/admin/server/branding` | GET | Get branding settings |
+| `/api/v1/admin/server/branding` | PATCH | Update branding |
 
-### Admin - Pages (`/api/{api_version}/{admin_path}/server/pages/`)
+### Admin - SSL (`/api/v1/admin/server/ssl/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/pages` | GET | Get all page settings |
-| `/api/{api_version}/{admin_path}/server/pages/about` | GET | Get about page content |
-| `/api/{api_version}/{admin_path}/server/pages/about` | PATCH | Update about page |
-| `/api/{api_version}/{admin_path}/server/pages/privacy` | GET | Get privacy policy |
-| `/api/{api_version}/{admin_path}/server/pages/privacy` | PATCH | Update privacy policy |
-| `/api/{api_version}/{admin_path}/server/pages/contact` | GET | Get contact page settings |
-| `/api/{api_version}/{admin_path}/server/pages/contact` | PATCH | Update contact page |
-| `/api/{api_version}/{admin_path}/server/pages/help` | GET | Get help page content |
-| `/api/{api_version}/{admin_path}/server/pages/help` | PATCH | Update help page |
+| `/api/v1/admin/server/ssl` | GET | Get SSL settings |
+| `/api/v1/admin/server/ssl` | PATCH | Update SSL settings |
+| `/api/v1/admin/server/ssl/renew` | POST | Force certificate renewal |
 
-### Admin - Email (`/api/{api_version}/{admin_path}/server/email/`)
+### Admin - Tor (`/api/v1/admin/server/tor/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/email` | GET | Get email settings |
-| `/api/{api_version}/{admin_path}/server/email` | PATCH | Update email settings |
-| `/api/{api_version}/{admin_path}/server/email/test` | POST | Send test email |
-| `/api/{api_version}/{admin_path}/server/email/templates` | GET | List email templates |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}` | GET | Get template |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}` | PUT | Update template |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}/reset` | POST | Reset to default |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}/preview` | POST | Preview template |
+| `/api/v1/admin/server/tor` | GET | Get Tor status |
+| `/api/v1/admin/server/tor` | PATCH | Update Tor settings |
+| `/api/v1/admin/server/tor/regenerate` | POST | Regenerate .onion address |
+| `/api/v1/admin/server/tor/vanity` | GET | Get vanity generation status |
+| `/api/v1/admin/server/tor/vanity` | POST | Start vanity generation |
+| `/api/v1/admin/server/tor/vanity` | DELETE | Cancel vanity generation |
+| `/api/v1/admin/server/tor/vanity/apply` | POST | Apply vanity address |
+| `/api/v1/admin/server/tor/import` | POST | Import external keys |
 
-### Admin - Scheduler (`/api/{api_version}/{admin_path}/server/scheduler/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/scheduler` | GET | List scheduled tasks |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}` | GET | Get task details |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}` | PATCH | Update task |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/run` | POST | Run task now |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/enable` | POST | Enable task |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/disable` | POST | Disable task |
-
-### Admin - Backup (`/api/{api_version}/{admin_path}/server/backup/`)
+### Admin - Web (`/api/v1/admin/server/web/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/backup` | GET | List backups |
-| `/api/{api_version}/{admin_path}/server/backup` | POST | Create backup |
-| `/api/{api_version}/{admin_path}/server/backup/{id}` | GET | Get backup details |
-| `/api/{api_version}/{admin_path}/server/backup/{id}` | DELETE | Delete backup |
-| `/api/{api_version}/{admin_path}/server/backup/{id}/download` | GET | Download backup file |
-| `/api/{api_version}/{admin_path}/server/backup/restore` | POST | Restore from backup |
+| `/api/v1/admin/server/web` | GET | Get web settings |
+| `/api/v1/admin/server/web` | PATCH | Update web settings |
+| `/api/v1/admin/server/web/robots` | GET | Get robots.txt config |
+| `/api/v1/admin/server/web/robots` | PATCH | Update robots.txt |
+| `/api/v1/admin/server/web/robots/preview` | GET | Preview robots.txt |
+| `/api/v1/admin/server/web/security` | GET | Get security.txt config |
+| `/api/v1/admin/server/web/security` | PATCH | Update security.txt |
+| `/api/v1/admin/server/web/security/preview` | GET | Preview security.txt |
 
-### Admin - Logs (`/api/{api_version}/{admin_path}/server/logs/`)
+### Admin - Pages (`/api/v1/admin/server/pages/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/logs` | GET | List log files |
-| `/api/{api_version}/{admin_path}/server/logs/{type}` | GET | Get log entries |
-| `/api/{api_version}/{admin_path}/server/logs/{type}/download` | GET | Download log file |
+| `/api/v1/admin/server/pages` | GET | Get all page settings |
+| `/api/v1/admin/server/pages/about` | GET | Get about page content |
+| `/api/v1/admin/server/pages/about` | PATCH | Update about page |
+| `/api/v1/admin/server/pages/privacy` | GET | Get privacy policy |
+| `/api/v1/admin/server/pages/privacy` | PATCH | Update privacy policy |
+| `/api/v1/admin/server/pages/contact` | GET | Get contact page settings |
+| `/api/v1/admin/server/pages/contact` | PATCH | Update contact page |
+| `/api/v1/admin/server/pages/help` | GET | Get help page content |
+| `/api/v1/admin/server/pages/help` | PATCH | Update help page |
+
+### Admin - Email (`/api/v1/admin/server/email/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/email` | GET | Get email settings |
+| `/api/v1/admin/server/email` | PATCH | Update email settings |
+| `/api/v1/admin/server/email/test` | POST | Send test email |
+| `/api/v1/admin/server/email/templates` | GET | List email templates |
+| `/api/v1/admin/server/email/templates/{name}` | GET | Get template |
+| `/api/v1/admin/server/email/templates/{name}` | PUT | Update template |
+| `/api/v1/admin/server/email/templates/{name}/reset` | POST | Reset to default |
+| `/api/v1/admin/server/email/templates/{name}/preview` | POST | Preview template |
+
+### Admin - Scheduler (`/api/v1/admin/server/scheduler/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/scheduler` | GET | List scheduled tasks |
+| `/api/v1/admin/server/scheduler/{id}` | GET | Get task details |
+| `/api/v1/admin/server/scheduler/{id}` | PATCH | Update task |
+| `/api/v1/admin/server/scheduler/{id}/run` | POST | Run task now |
+| `/api/v1/admin/server/scheduler/{id}/enable` | POST | Enable task |
+| `/api/v1/admin/server/scheduler/{id}/disable` | POST | Disable task |
+
+### Admin - Backup (`/api/v1/admin/server/backup/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/backup` | GET | List backups |
+| `/api/v1/admin/server/backup` | POST | Create backup |
+| `/api/v1/admin/server/backup/{id}` | GET | Get backup details |
+| `/api/v1/admin/server/backup/{id}` | DELETE | Delete backup |
+| `/api/v1/admin/server/backup/{id}/download` | GET | Download backup file |
+| `/api/v1/admin/server/backup/restore` | POST | Restore from backup |
+
+### Admin - Logs (`/api/v1/admin/server/logs/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/logs` | GET | List log files |
+| `/api/v1/admin/server/logs/{type}` | GET | Get log entries |
+| `/api/v1/admin/server/logs/{type}/download` | GET | Download log file |
 
 ## Agent Management (OPTIONAL - When Agent is Enabled)
 
@@ -27942,13 +27942,13 @@ The admin panel MUST include a scheduler section with:
 
 **See PART 33 for full agent binary and setup details.**
 
-### Admin Panel (`/{admin_path}/server/agents`)
+### Admin Panel (`/admin/server/agents`)
 
 **Main agent dashboard showing all registered agents:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  /{admin_path}/server/agents                                                         │
+│  /admin/server/agents                                                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  Connected Agents                                              [+ Add Agent] │
@@ -27977,13 +27977,13 @@ The admin panel MUST include a scheduler section with:
 | **Last Seen** | Time since last heartbeat/report |
 | **Health** | ✓ Good / ⚠ Warn / ✗ Error (based on agent metrics) |
 
-### Admin Panel (`/{admin_path}/server/agents/{name}`)
+### Admin Panel (`/admin/server/agents/{name}`)
 
 **Detailed view of a single agent:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  /{admin_path}/server/agents/web-server-01                         [← Back to List] │
+│  /admin/server/agents/web-server-01                         [← Back to List] │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  web-server-01                                             ● Online         │
@@ -28030,13 +28030,13 @@ The admin panel MUST include a scheduler section with:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Admin Panel (`/{admin_path}/server/agents/add`)
+### Admin Panel (`/admin/server/agents/add`)
 
 **Simple agent registration page:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  /{admin_path}/server/agents/add                                   [← Back to List] │
+│  /admin/server/agents/add                                   [← Back to List] │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  Add New Agent                                                              │
@@ -28146,13 +28146,13 @@ func getDefaultAgentName() string {
 - Agent reconnection after disconnect
 - Agent status change (online/offline)
 
-### Admin Panel (`/{admin_path}/server/agents/remove`)
+### Admin Panel (`/admin/server/agents/remove`)
 
 **Agent removal page with confirmation:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  /{admin_path}/server/agents/remove                                [← Back to List] │
+│  /admin/server/agents/remove                                [← Back to List] │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  Remove Agent                                                               │
@@ -28201,9 +28201,9 @@ func getDefaultAgentName() string {
 
 | Scope | Base Route | Owner Token | Agent Token |
 |-------|------------|-------------|-------------|
-| Admin | `/api/{api_version}/{admin_path}/server/agents/` | `adm_` | `adm_agt_` |
-| User | `/api/{api_version}/users/agents/` | `usr_` | `usr_agt_` |
-| Org | `/api/{api_version}/orgs/{slug}/agents/` | `org_` | `org_agt_` |
+| Admin | `/api/v1/admin/server/agents/` | `adm_` | `adm_agt_` |
+| User | `/api/v1/users/agents/` | `usr_` | `usr_agt_` |
+| Org | `/api/v1/orgs/{slug}/agents/` | `org_` | `org_agt_` |
 
 **Same endpoints for all scopes (replace `{base}` with scope route above):**
 
@@ -28227,15 +28227,15 @@ func getDefaultAgentName() string {
 **Examples:**
 ```
 # Admin agent (server infrastructure)
-POST /api/{api_version}/{admin_path}/server/agents/register
+POST /api/v1/admin/server/agents/register
 Authorization: Bearer adm_agt_abc123...
 
 # User agent (personal SaaS monitoring)
-POST /api/{api_version}/users/agents/register
+POST /api/v1/users/agents/register
 Authorization: Bearer usr_agt_xyz789...
 
 # Org agent (organization resources)
-POST /api/{api_version}/orgs/acme-corp/agents/register
+POST /api/v1/orgs/acme-corp/agents/register
 Authorization: Bearer org_agt_def456...
 ```
 
@@ -28245,7 +28245,7 @@ Agent data can be exposed via project-specific routes for different audiences:
 
 | Route | Description | Example |
 |-------|-------------|---------|
-| `/{admin_path}/server/agents/*` | Admin management UI | Full control |
+| `/admin/server/agents/*` | Admin management UI | Full control |
 | `/users/agents/*` | User's agent dashboard | Personal agents |
 | `/orgs/{slug}/agents/*` | Org agent dashboard | Org agents |
 | `/{custom}/status` | Public status page | Status dashboard |
@@ -28448,7 +28448,7 @@ server:
 - ✓ Show clear message: "Email features require SMTP configuration"
 
 **Admin Panel:**
-- If SMTP not configured, show banner: "⚠️ SMTP not configured. Email features disabled. [Configure SMTP](/{admin_path}/server/email)"
+- If SMTP not configured, show banner: "⚠️ SMTP not configured. Email features disabled. [Configure SMTP](/admin/server/email)"
 - Email-dependent features (password reset link, etc.) hidden until SMTP configured
 - Test email button validates SMTP actually works before enabling email features
 
@@ -29206,7 +29206,7 @@ Do not reply to this email.
 | `{notify_deadline}` | Deadline for user notification (based on strictest standard) |
 | `{admin_url}` | Admin panel URL |
 
-## Admin Panel (/{admin_path}/server/email/templates)
+## Admin Panel (/admin/server/email/templates)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -29467,7 +29467,7 @@ Do not reply to this email.
   "type": "warning",
   "title": "SSL Certificate Expiring",
   "message": "Certificate expires in 3 days",
-  "link": "/{admin_path}/server/ssl",
+  "link": "/admin/server/ssl",
   "read": false,
   "created_at": "2025-01-15T10:30:00Z"
 }
@@ -29488,7 +29488,7 @@ Do not reply to this email.
 
 **Both Server Admins and users can configure their notification preferences.**
 
-### Admin Notification Preferences (`/{admin_path}/profile/notifications`)
+### Admin Notification Preferences (`/admin/profile/notifications`)
 
 | Category | Events | Default | Can Disable? |
 |----------|--------|---------|--------------|
@@ -29501,7 +29501,7 @@ Do not reply to this email.
 **Security notifications cannot be disabled** - these are critical for account security.
 
 ```
-Admin Notification Preferences (/{admin_path}/profile/notifications)
+Admin Notification Preferences (/admin/profile/notifications)
 ┌─────────────────────────────────────────────────────────────┐
 │  Notification Preferences                                   │
 ├─────────────────────────────────────────────────────────────┤
@@ -29973,7 +29973,7 @@ Execute task
 | `retry_delay` | 5m | Delay between retries |
 | `backoff` | exponential | Delay multiplier (5m, 10m, 20m) |
 
-### Admin Panel (/{admin_path}/server/scheduler)
+### Admin Panel (/admin/server/scheduler)
 
 | Section | Contents |
 |---------|----------|
@@ -30080,13 +30080,13 @@ Execute task
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/scheduler` | GET | List all tasks |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}` | GET | Get task details |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}` | PATCH | Update task settings |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/run` | POST | Run task immediately |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/enable` | POST | Enable task |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/disable` | POST | Disable task |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/history` | GET | Get execution history |
+| `/api/v1/admin/server/scheduler` | GET | List all tasks |
+| `/api/v1/admin/server/scheduler/{id}` | GET | Get task details |
+| `/api/v1/admin/server/scheduler/{id}` | PATCH | Update task settings |
+| `/api/v1/admin/server/scheduler/{id}/run` | POST | Run task immediately |
+| `/api/v1/admin/server/scheduler/{id}/enable` | POST | Enable task |
+| `/api/v1/admin/server/scheduler/{id}/disable` | POST | Disable task |
+| `/api/v1/admin/server/scheduler/{id}/history` | GET | Get execution history |
 
 ### Shutdown Behavior
 
@@ -30186,7 +30186,7 @@ All databases from [sapics/ip-location-db](https://github.com/sapics/ip-location
 | City | `city`, `region`, `postal_code`, `latitude`, `longitude`, `timezone` |
 | WHOIS | `registrant_org`, `asn`, `country_code` (combined lookup) |
 
-## Admin Panel (/{admin_path}/server/network/geoip)
+## Admin Panel (/admin/server/network/geoip)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -31438,16 +31438,16 @@ func StartUptimeUpdater() {
 ```
 # HELP weather_http_requests_total Total number of HTTP requests
 # TYPE weather_http_requests_total counter
-weather_http_requests_total{method="GET",path="/api/{api_version}/users",status="200"} 1523
-weather_http_requests_total{method="POST",path="/api/{api_version}/users",status="201"} 42
+weather_http_requests_total{method="GET",path="/api/v1/users",status="200"} 1523
+weather_http_requests_total{method="POST",path="/api/v1/users",status="201"} 42
 
 # HELP weather_http_request_duration_seconds HTTP request duration in seconds
 # TYPE weather_http_request_duration_seconds histogram
-weather_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="0.01"} 1400
-weather_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="0.1"} 1520
-weather_http_request_duration_seconds_bucket{method="GET",path="/api/{api_version}/users",le="+Inf"} 1523
-weather_http_request_duration_seconds_sum{method="GET",path="/api/{api_version}/users"} 12.456
-weather_http_request_duration_seconds_count{method="GET",path="/api/{api_version}/users"} 1523
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.01"} 1400
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="0.1"} 1520
+weather_http_request_duration_seconds_bucket{method="GET",path="/api/v1/users",le="+Inf"} 1523
+weather_http_request_duration_seconds_sum{method="GET",path="/api/v1/users"} 12.456
+weather_http_request_duration_seconds_count{method="GET",path="/api/v1/users"} 1523
 
 # HELP weather_db_connections_open Number of open database connections
 # TYPE weather_db_connections_open gauge
@@ -31633,7 +31633,7 @@ groups:
 }
 ```
 
-## Admin Panel (/{admin_path}/server/metrics)
+## Admin Panel (/admin/server/metrics)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -31774,8 +31774,8 @@ When `server.compliance.enabled: true`:
 | Action | Location | Notes |
 |--------|----------|-------|
 | Set during setup | Setup wizard Step 4 | Optional (unless compliance) |
-| Set later | `/{admin_path}/server/backup` | Click "Set Encryption Password" |
-| Change password | `/{admin_path}/server/backup` | New backups use new password |
+| Set later | `/admin/server/backup` | Click "Set Encryption Password" |
+| Change password | `/admin/server/backup` | New backups use new password |
 | Remove encryption | Only if compliance disabled | Cannot remove if compliance enabled |
 
 **Important:**
@@ -31801,7 +31801,7 @@ weather --maintenance restore backup.tar.gz.enc
 **API Backup with Encryption:**
 
 ```
-POST /api/{api_version}/{admin_path}/server/backup
+POST /api/v1/admin/server/backup
 Content-Type: application/json
 
 {
@@ -31826,7 +31826,7 @@ Content-Type: application/json
 
 Shown on:
 - First backup if encryption not configured
-- `/{admin_path}/server/backup` page (dismissable)
+- `/admin/server/backup` page (dismissable)
 
 ### Backup Retention
 
@@ -32176,14 +32176,14 @@ weather --maintenance restore backup_2025-01-15.tar.gz
 
 ```bash
 # Encrypted backup - password required
-POST /api/{api_version}/{admin_path}/server/restore
+POST /api/v1/admin/server/restore
 {
   "backup_file": "backup_2025-01-15.tar.gz.enc",
   "password": "backup-encryption-password"
 }
 
 # Unencrypted backup - no password
-POST /api/{api_version}/{admin_path}/server/restore
+POST /api/v1/admin/server/restore
 {
   "backup_file": "backup_2025-01-15.tar.gz"
 }
@@ -32223,7 +32223,7 @@ POST /api/{api_version}/{admin_path}/server/restore
 ├─────────────────────────────────────────────────────────────┤
 │  Setup Token: a1b2c3d4e5f67890abcdef1234567890              │
 │                                                             │
-│  Go to {proto}://{fqdn}/{admin_path} and enter this token   │
+│  Go to {proto}://{fqdn}/admin and enter this token   │
 │  to verify you are the server administrator.                │
 │                                                             │
 │  Your existing password and settings will be preserved.     │
@@ -32312,7 +32312,7 @@ weather --maintenance setup
 # │  Setup Token: a1b2c3d4e5f67890abcdef1234567890              │
 # │                                                             │
 # │  1. Start the service: weather --service start        │
-# │  2. Go to: {proto}://{fqdn}/{admin_path}                    │
+# │  2. Go to: {proto}://{fqdn}/admin                    │
 # │  3. Enter the setup token above                             │
 # │  4. Create new admin account via setup wizard               │
 # │                                                             │
@@ -32343,7 +32343,7 @@ weather --service start
 | Admin locked out of 2FA | ✓ Yes (only if no recovery keys) |
 | User forgot password | ✗ No (use password reset) |
 | User locked out | ✗ No (admin can help via UI) |
-| Routine password change | ✗ No (use /{admin_path}/profile) |
+| Routine password change | ✗ No (use /admin/profile) |
 
 ### Recovery Flow
 
@@ -33073,7 +33073,7 @@ Examples:
   weather --update branch beta
 
 Current:
-  Version:  {projectversion}
+  Version:  1.0.0
   Branch:   stable
   Latest:   {latest_version} (if different)
 ```
@@ -37480,7 +37480,7 @@ jobs:
           # Use Gitea API to delete previous daily release
           curl -X DELETE \
             -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
-            "${{ gitea.server_url }}/api/{api_version}/repos/${{ gitea.repository }}/releases/tags/daily" || true
+            "${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/releases/tags/daily" || true
           git push origin :refs/tags/daily 2>/dev/null || true
 
       - name: Create Release
@@ -39432,7 +39432,7 @@ rm -rf "${TMPDIR:-/tmp}/$APIMGR/"
 **Integration tests MUST be comprehensive:**
 - ✓ Test ALL project-specific endpoints (IDEA.md)
 - ✓ If project has CRUD → Test full CRUD (Create, Read, Update, Delete)
-- ✓ Test both API endpoints (`/api/{api_version}/*`) AND frontend routes (`/**`)
+- ✓ Test both API endpoints (`/api/v1/*`) AND frontend routes (`/**`)
 - ✓ Test ALL `.txt` endpoints (robots.txt, security.txt, API .txt extension)
 - ✓ Test content negotiation with ALL required Accept headers (see below)
 - ✓ Test frontend smart detection (browser → HTML, CLI → formatted text)
@@ -39543,18 +39543,18 @@ done
 **Example: User management project MUST test:**
 ```bash
 # API - Current user (authenticated)
-GET    /api/{api_version}/users           # Get current user profile (API JSON)
-PATCH  /api/{api_version}/users           # Update current user profile (API JSON)
+GET    /api/v1/users           # Get current user profile (API JSON)
+PATCH  /api/v1/users           # Update current user profile (API JSON)
 
 # API - Public profiles (by username)
-GET    /api/{api_version}/users/{username}     # Read public profile (API JSON)
-GET    /api/{api_version}/users/{username}.txt # Read public profile (API plain text)
+GET    /api/v1/users/{username}     # Read public profile (API JSON)
+GET    /api/v1/users/{username}.txt # Read public profile (API plain text)
 
 # API - Admin managing users (by ID)
-GET    /api/{api_version}/{admin_path}/users        # List all users (admin)
-GET    /api/{api_version}/{admin_path}/users/1      # Read specific user (admin)
-PATCH  /api/{api_version}/{admin_path}/users/1      # Update specific user (admin)
-DELETE /api/{api_version}/{admin_path}/users/1      # Delete specific user (admin)
+GET    /api/v1/admin/users        # List all users (admin)
+GET    /api/v1/admin/users/1      # Read specific user (admin)
+PATCH  /api/v1/admin/users/1      # Update specific user (admin)
+DELETE /api/v1/admin/users/1      # Delete specific user (admin)
 
 # Frontend routes (smart detection) - CLI gets beautiful formatted text via HTML2TextConverter
 curl -q -LSsf /users                              # CLI → formatted text (current user)
@@ -39567,10 +39567,10 @@ curl -q -LSsf -H "Accept: text/html" /{username}  # HTML (Accept header)
 **Example: Jokes API (read-only) MUST test:**
 ```bash
 # API endpoints
-GET /api/{api_version}/jokes/random             # Random joke (JSON)
-GET /api/{api_version}/jokes/random.txt         # Random joke (text)
-GET /api/{api_version}/jokes/programming        # Category filter (JSON)
-GET /api/{api_version}/jokes/search?q=bug       # Search (JSON)
+GET /api/v1/jokes/random             # Random joke (JSON)
+GET /api/v1/jokes/random.txt         # Random joke (text)
+GET /api/v1/jokes/programming        # Category filter (JSON)
+GET /api/v1/jokes/search?q=bug       # Search (JSON)
 
 # Frontend endpoints (smart detection) - CLI gets formatted text
 curl -q -LSsf /jokes/random                   # CLI → formatted text
@@ -39581,14 +39581,14 @@ curl -q -LSsf -H "Accept: text/html" /jokes   # Browser → HTML
 **Example: Weather API (external integration) MUST test:**
 ```bash
 # API endpoints with location params
-GET /api/{api_version}/weather/current/New%20York        # Current weather (JSON)
-GET /api/{api_version}/weather/current/New%20York.txt    # Current weather (text)
-GET /api/{api_version}/weather/forecast/10001            # ZIP code forecast (JSON)
-GET /api/{api_version}/weather/alerts/40.7128,-74.0060   # Lat/long alerts (JSON)
+GET /api/v1/weather/current/New%20York        # Current weather (JSON)
+GET /api/v1/weather/current/New%20York.txt    # Current weather (text)
+GET /api/v1/weather/forecast/10001            # ZIP code forecast (JSON)
+GET /api/v1/weather/alerts/40.7128,-74.0060   # Lat/long alerts (JSON)
 
 # Test caching behavior
-GET /api/{api_version}/weather/current/Chicago           # First call (cache miss)
-GET /api/{api_version}/weather/current/Chicago           # Second call (cache hit, faster)
+GET /api/v1/weather/current/Chicago           # First call (cache miss)
+GET /api/v1/weather/current/Chicago           # Second call (cache hit, faster)
 
 # Frontend (smart detection) - CLI gets formatted text
 curl -q -LSsf /weather/Chicago                # CLI → formatted text
@@ -39598,10 +39598,10 @@ curl -q -LSsf /weather/forecast/90210         # CLI → formatted text forecast
 **Example: Link Shortener (URL mapping) MUST test:**
 ```bash
 # API CRUD for short links
-POST   /api/{api_version}/links -d '{"url":"https://example.com/long/url"}'  # Create
-GET    /api/{api_version}/links/abc123         # Get link details (JSON)
-PUT    /api/{api_version}/links/abc123 -d '{"url":"https://new.com"}'        # Update
-DELETE /api/{api_version}/links/abc123         # Delete
+POST   /api/v1/links -d '{"url":"https://example.com/long/url"}'  # Create
+GET    /api/v1/links/abc123         # Get link details (JSON)
+PUT    /api/v1/links/abc123 -d '{"url":"https://new.com"}'        # Update
+DELETE /api/v1/links/abc123         # Delete
 
 # Redirect resolution
 GET /abc123                          # Should redirect to destination
@@ -39671,10 +39671,10 @@ make test
 
 | Endpoint Type | Must Test |
 |--------------|-----------|
-| **Public API** | All `/api/{api_version}/*` endpoints |
+| **Public API** | All `/api/v1/*` endpoints |
 | **Public Web** | All frontend routes |
-| **Admin API** | All `/api/{api_version}/{admin_path}/*` endpoints |
-| **Admin Web** | All `/{admin_path}/*` routes |
+| **Admin API** | All `/api/v1/admin/*` endpoints |
+| **Admin Web** | All `/admin/*` routes |
 | **Error cases** | 400, 401, 403, 404, 500 responses |
 | **Edge cases** | Empty data, invalid input, rate limits |
 
@@ -39790,14 +39790,14 @@ test_endpoint() {
 }
 
 # PUBLIC API
-test_endpoint GET "/api/{api_version}/jokes/random"
-test_endpoint GET "/api/{api_version}/jokes/categories"
-test_endpoint GET "/api/{api_version}/jokes/{id}"
+test_endpoint GET "/api/v1/jokes/random"
+test_endpoint GET "/api/v1/jokes/categories"
+test_endpoint GET "/api/v1/jokes/{id}"
 
 # ADMIN API (with auth)
-test_endpoint GET "/api/{api_version}/{admin_path}/server/settings"
-test_endpoint PUT "/api/{api_version}/{admin_path}/server/settings"
-test_endpoint GET "/api/{api_version}/{admin_path}/server/logs"
+test_endpoint GET "/api/v1/admin/server/settings"
+test_endpoint PUT "/api/v1/admin/server/settings"
+test_endpoint GET "/api/v1/admin/server/logs"
 
 # At end: verify ALL endpoints were tested
 verify_all_endpoints_tested
@@ -40014,10 +40014,10 @@ docker run --rm \
 
     echo '=== API Endpoint Tests ==='
     # Test JSON response (default)
-    curl -q -LSsf http://localhost:64580/api/{api_version}/healthz || echo 'FAILED: /api/{api_version}/healthz'
+    curl -q -LSsf http://localhost:64580/api/v1/healthz || echo 'FAILED: /api/v1/healthz'
 
     # Test .txt extension (plain text)
-    curl -q -LSsf http://localhost:64580/api/{api_version}/healthz.txt || echo 'FAILED: /api/{api_version}/healthz.txt'
+    curl -q -LSsf http://localhost:64580/api/v1/healthz.txt || echo 'FAILED: /api/v1/healthz.txt'
 
     # Test Accept header: application/json
     curl -q -LSsf -H 'Accept: application/json' http://localhost:64580/healthz || echo 'FAILED: Accept JSON'
@@ -40030,9 +40030,9 @@ docker run --rm \
     # Test FULL CRUD if project has CRUD operations
     #
     # Example for jokes API (API routes with .txt extension):
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/jokes/random || echo 'FAILED: API JSON'
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/jokes/random.txt || echo 'FAILED: API .txt'
-    #   curl -q -LSsf -H 'Accept: text/plain' http://localhost:64580/api/{api_version}/jokes/random || echo 'FAILED: API Accept text'
+    #   curl -q -LSsf http://localhost:64580/api/v1/jokes/random || echo 'FAILED: API JSON'
+    #   curl -q -LSsf http://localhost:64580/api/v1/jokes/random.txt || echo 'FAILED: API .txt'
+    #   curl -q -LSsf -H 'Accept: text/plain' http://localhost:64580/api/v1/jokes/random || echo 'FAILED: API Accept text'
     #
     # Example for jokes frontend (smart detection, no .txt - test with text for simplicity):
     #   JOKE=\$(curl -q -LSsf http://localhost:64580/jokes/random)  # CLI auto-detects text
@@ -40042,15 +40042,15 @@ docker run --rm \
     #
     # Example for user CRUD (full test suite):
     #   # API - Current user
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/users || echo 'FAILED: GET current user API'
-    #   curl -q -LSsf -X PATCH -H 'Content-Type: application/json' -d '{\"email\":\"new@test.com\"}' http://localhost:64580/api/{api_version}/users || echo 'FAILED: UPDATE current user API'
+    #   curl -q -LSsf http://localhost:64580/api/v1/users || echo 'FAILED: GET current user API'
+    #   curl -q -LSsf -X PATCH -H 'Content-Type: application/json' -d '{\"email\":\"new@test.com\"}' http://localhost:64580/api/v1/users || echo 'FAILED: UPDATE current user API'
     #   # API - Public profile (by username)
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/users/testuser || echo 'FAILED: READ public profile API JSON'
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/users/testuser.txt || echo 'FAILED: READ public profile API .txt'
+    #   curl -q -LSsf http://localhost:64580/api/v1/users/testuser || echo 'FAILED: READ public profile API JSON'
+    #   curl -q -LSsf http://localhost:64580/api/v1/users/testuser.txt || echo 'FAILED: READ public profile API .txt'
     #   # API - Admin routes (by ID)
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/{admin_path}/users || echo 'FAILED: LIST users admin API'
-    #   curl -q -LSsf http://localhost:64580/api/{api_version}/{admin_path}/users/1 || echo 'FAILED: READ user admin API'
-    #   curl -q -LSsf -X DELETE http://localhost:64580/api/{api_version}/{admin_path}/users/1 || echo 'FAILED: DELETE user admin API'
+    #   curl -q -LSsf http://localhost:64580/api/v1/admin/users || echo 'FAILED: LIST users admin API'
+    #   curl -q -LSsf http://localhost:64580/api/v1/admin/users/1 || echo 'FAILED: READ user admin API'
+    #   curl -q -LSsf -X DELETE http://localhost:64580/api/v1/admin/users/1 || echo 'FAILED: DELETE user admin API'
     #   # Frontend (smart detection - test with text for simplicity)
     #   USERS=\$(curl -q -LSsf http://localhost:64580/users)  # CLI auto-detects text (current user)
     #   USER=\$(curl -q -LSsf http://localhost:64580/testuser)  # CLI auto-detects text (public profile)
@@ -40069,13 +40069,13 @@ docker run --rm \
             -H \"X-Setup-Token: \$SETUP_TOKEN\" \\
             -H \"Content-Type: application/json\" \\
             -d '{\"username\":\"testadmin\",\"password\":\"TestPass123!\"}' \\
-            http://localhost:64580/api/{api_version}/{admin_path}/setup || echo 'Admin setup failed (may already exist)'
+            http://localhost:64580/api/v1/admin/setup || echo 'Admin setup failed (may already exist)'
 
         # Login and get session
         SESSION=\$(curl -q -LSsf -X POST \\
             -H \"Content-Type: application/json\" \\
             -d '{\"username\":\"testadmin\",\"password\":\"TestPass123!\"}' \\
-            http://localhost:64580/api/{api_version}/{admin_path}/login | grep -oP '\"session_token\":\\s*\"\\K[^\"]+' || echo '')
+            http://localhost:64580/api/v1/admin/login | grep -oP '\"session_token\":\\s*\"\\K[^\"]+' || echo '')
 
         if [ -n \"\$SESSION\" ]; then
             echo '✓ Admin login successful'
@@ -40083,7 +40083,7 @@ docker run --rm \
             # Generate API token for CLI/Agent testing
             API_TOKEN=\$(curl -q -LSsf -X POST \\
                 -H \"Authorization: Bearer \$SESSION\" \\
-                http://localhost:64580/api/{api_version}/{admin_path}/profile/token | grep -oP '\"token\":\\s*\"\\K[^\"]+' || echo '')
+                http://localhost:64580/api/v1/admin/profile/token | grep -oP '\"token\":\\s*\"\\K[^\"]+' || echo '')
 
             if [ -n \"\$API_TOKEN\" ]; then
                 echo \"✓ API token created: \${API_TOKEN:0:12}...\"
@@ -40281,10 +40281,10 @@ incus exec "$CONTAINER_NAME" -- bash -c "
 
     echo '=== API Endpoint Tests ==='
     # Test JSON response (default)
-    curl -q -LSsf http://localhost:80/api/{api_version}/healthz || echo 'FAILED: /api/{api_version}/healthz'
+    curl -q -LSsf http://localhost:80/api/v1/healthz || echo 'FAILED: /api/v1/healthz'
 
     # Test .txt extension (plain text)
-    curl -q -LSsf http://localhost:80/api/{api_version}/healthz.txt || echo 'FAILED: /api/{api_version}/healthz.txt'
+    curl -q -LSsf http://localhost:80/api/v1/healthz.txt || echo 'FAILED: /api/v1/healthz.txt'
 
     # Test Accept header: application/json
     curl -q -LSsf -H 'Accept: application/json' http://localhost:80/healthz || echo 'FAILED: Accept JSON'
@@ -40297,9 +40297,9 @@ incus exec "$CONTAINER_NAME" -- bash -c "
     # Test FULL CRUD if project has CRUD operations
     #
     # Example for jokes API (API routes with .txt extension):
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/jokes/random || echo 'FAILED: API JSON'
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/jokes/random.txt || echo 'FAILED: API .txt'
-    #   curl -q -LSsf -H 'Accept: text/plain' http://localhost:80/api/{api_version}/jokes/random || echo 'FAILED: API Accept text'
+    #   curl -q -LSsf http://localhost:80/api/v1/jokes/random || echo 'FAILED: API JSON'
+    #   curl -q -LSsf http://localhost:80/api/v1/jokes/random.txt || echo 'FAILED: API .txt'
+    #   curl -q -LSsf -H 'Accept: text/plain' http://localhost:80/api/v1/jokes/random || echo 'FAILED: API Accept text'
     #
     # Example for jokes frontend (smart detection, no .txt - test with text for simplicity):
     #   JOKE=\$(curl -q -LSsf http://localhost:80/jokes/random)  # CLI auto-detects text
@@ -40309,15 +40309,15 @@ incus exec "$CONTAINER_NAME" -- bash -c "
     #
     # Example for user CRUD (full test suite):
     #   # API - Current user
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/users || echo 'FAILED: GET current user API'
-    #   curl -q -LSsf -X PATCH -H 'Content-Type: application/json' -d '{\"email\":\"new@test.com\"}' http://localhost:80/api/{api_version}/users || echo 'FAILED: UPDATE current user API'
+    #   curl -q -LSsf http://localhost:80/api/v1/users || echo 'FAILED: GET current user API'
+    #   curl -q -LSsf -X PATCH -H 'Content-Type: application/json' -d '{\"email\":\"new@test.com\"}' http://localhost:80/api/v1/users || echo 'FAILED: UPDATE current user API'
     #   # API - Public profile (by username)
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/users/testuser || echo 'FAILED: READ public profile API JSON'
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/users/testuser.txt || echo 'FAILED: READ public profile API .txt'
+    #   curl -q -LSsf http://localhost:80/api/v1/users/testuser || echo 'FAILED: READ public profile API JSON'
+    #   curl -q -LSsf http://localhost:80/api/v1/users/testuser.txt || echo 'FAILED: READ public profile API .txt'
     #   # API - Admin routes (by ID)
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/{admin_path}/users || echo 'FAILED: LIST users admin API'
-    #   curl -q -LSsf http://localhost:80/api/{api_version}/{admin_path}/users/1 || echo 'FAILED: READ user admin API'
-    #   curl -q -LSsf -X DELETE http://localhost:80/api/{api_version}/{admin_path}/users/1 || echo 'FAILED: DELETE user admin API'
+    #   curl -q -LSsf http://localhost:80/api/v1/admin/users || echo 'FAILED: LIST users admin API'
+    #   curl -q -LSsf http://localhost:80/api/v1/admin/users/1 || echo 'FAILED: READ user admin API'
+    #   curl -q -LSsf -X DELETE http://localhost:80/api/v1/admin/users/1 || echo 'FAILED: DELETE user admin API'
     #   # Frontend (smart detection - test with text for simplicity)
     #   USERS=\$(curl -q -LSsf http://localhost:80/users)  # CLI auto-detects text (current user)
     #   USER=\$(curl -q -LSsf http://localhost:80/testuser)  # CLI auto-detects text (public profile)
@@ -40336,13 +40336,13 @@ incus exec "$CONTAINER_NAME" -- bash -c "
             -H \"X-Setup-Token: \$SETUP_TOKEN\" \\
             -H \"Content-Type: application/json\" \\
             -d '{\"username\":\"testadmin\",\"password\":\"TestPass123!\"}' \\
-            http://localhost:80/api/{api_version}/{admin_path}/setup || echo 'Admin setup failed (may already exist)'
+            http://localhost:80/api/v1/admin/setup || echo 'Admin setup failed (may already exist)'
 
         # Login and get session
         SESSION=\$(curl -q -LSsf -X POST \\
             -H \"Content-Type: application/json\" \\
             -d '{\"username\":\"testadmin\",\"password\":\"TestPass123!\"}' \\
-            http://localhost:80/api/{api_version}/{admin_path}/login | grep -oP '\"session_token\":\\s*\"\\K[^\"]+' || echo '')
+            http://localhost:80/api/v1/admin/login | grep -oP '\"session_token\":\\s*\"\\K[^\"]+' || echo '')
 
         if [ -n \"\$SESSION\" ]; then
             echo '✓ Admin login successful'
@@ -40350,7 +40350,7 @@ incus exec "$CONTAINER_NAME" -- bash -c "
             # Generate API token for CLI/Agent testing
             API_TOKEN=\$(curl -q -LSsf -X POST \\
                 -H \"Authorization: Bearer \$SESSION\" \\
-                http://localhost:80/api/{api_version}/{admin_path}/profile/token | grep -oP '\"token\":\\s*\"\\K[^\"]+' || echo '')
+                http://localhost:80/api/v1/admin/profile/token | grep -oP '\"token\":\\s*\"\\K[^\"]+' || echo '')
 
             if [ -n \"\$API_TOKEN\" ]; then
                 echo \"✓ API token created: \${API_TOKEN:0:12}...\"
@@ -40536,7 +40536,7 @@ sleep 3
 # 1. Test that unauthenticated access is REJECTED
 echo "Testing unauthenticated access is blocked..."
 # Note: Use -q -LSs (no -f) when capturing HTTP status codes, since -f exits on 4xx/5xx
-HTTP_CODE=$(curl -q -LSs -o /dev/null -w "%{http_code}" http://localhost:64580/{admin_path})
+HTTP_CODE=$(curl -q -LSs -o /dev/null -w "%{http_code}" http://localhost:64580/admin)
 if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "401" ]; then
     echo "✓ Unauthenticated access properly rejected"
 else
@@ -40560,7 +40560,7 @@ echo "✓ Setup token found: ${SETUP_TOKEN:0:8}..."
 echo "Testing admin access with setup token..."
 HTTP_CODE=$(curl -q -LSs -o /dev/null -w "%{http_code}" \
     -H "X-Setup-Token: $SETUP_TOKEN" \
-    http://localhost:64580/{admin_path})
+    http://localhost:64580/admin)
 
 if [ "$HTTP_CODE" = "200" ]; then
     echo "✓ Admin access works with setup token"
@@ -40576,14 +40576,14 @@ curl -q -LSsf -X POST \
     -H "X-Setup-Token: $SETUP_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"username":"testadmin","password":"TestPass123!"}' \
-    http://localhost:64580/api/{api_version}/{admin_path}/setup
+    http://localhost:64580/api/v1/admin/setup
 
 # 5. Test login with created admin
 echo "Testing admin login..."
 SESSION=$(curl -q -LSsf -X POST \
     -H "Content-Type: application/json" \
     -d '{"username":"testadmin","password":"TestPass123!"}' \
-    http://localhost:64580/api/{api_version}/{admin_path}/login | jq -r '.session_token')
+    http://localhost:64580/api/v1/admin/login | jq -r '.session_token')
 
 if [ -z "$SESSION" ] || [ "$SESSION" = "null" ]; then
     echo "✗ FAILED: Admin login failed"
@@ -40596,7 +40596,7 @@ echo "✓ Admin login successful"
 # 6. Test admin routes with valid session
 echo "Testing admin routes with session..."
 curl -q -LSsf -H "Authorization: Bearer $SESSION" \
-    http://localhost:64580/api/{api_version}/{admin_path}/users > /dev/null
+    http://localhost:64580/api/v1/admin/users > /dev/null
 
 echo "✓ Admin routes work with authentication"
 
@@ -40607,7 +40607,7 @@ INVALID=$(curl -q -LSs -X POST \
     -H "Content-Type: application/json" \
     -d '{"username":"testadmin","password":"wrongpassword"}' \
     -w "%{http_code}" \
-    http://localhost:64580/api/{api_version}/{admin_path}/login)
+    http://localhost:64580/api/v1/admin/login)
 
 if echo "$INVALID" | grep -q "401\|403"; then
     echo "✓ Invalid credentials properly rejected"
@@ -41593,14 +41593,14 @@ All settings are configurable via the WebUI at `/admin`.
 
 ## REST API
 
-Base URL: `/api/{api_version}/`
+Base URL: `/api/v1/`
 
 ### Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/healthz` | GET | Health check |
-| `/api/{api_version}/{resource}` | GET | List resources |
+| `/api/v1/healthz` | GET | Health check |
+| `/api/v1/{resource}` | GET | List resources |
 
 ## Swagger UI
 
@@ -41639,7 +41639,7 @@ GraphQL playground: [/graphql](/graphql)
 
 ## Admin API
 
-Programmatic access via `/api/{api_version}/{admin_path}/` with bearer token authentication.
+Programmatic access via `/api/v1/admin/` with bearer token authentication.
 ```
 
 ### docs/development.md
@@ -41707,77 +41707,1261 @@ make test
 
 ---
 
-# PART 31: I18N & A11Y 
+# PART 31: I18N & A11Y
 
 ## Internationalization (i18n)
+
+### Scope
+
+**Every human-readable string in the entire application MUST be translatable.** This includes:
+
+| Layer | What Gets Translated |
+|-------|---------------------|
+| **Web Frontend** | All UI text: navigation, headings, labels, buttons, tooltips, placeholders, footers, legal pages |
+| **Admin Panel** | All admin UI: dashboard, settings forms, labels, tooltips, wizard steps, notifications |
+| **API Responses** | Error messages, validation messages, status descriptions |
+| **Swagger/OpenAPI** | Endpoint descriptions, parameter descriptions, schema descriptions, error examples |
+| **GraphQL** | Type descriptions, field descriptions, query/mutation descriptions |
+| **Email Templates** | Subject lines, body text, headings, CTAs, regulatory/compliance notices |
+| **CLI Output** | Help text, status messages, error messages, console banners |
+| **Health Page** | Status labels, section headings, field labels |
+| **Cookie Consent** | Banner text, category descriptions, button labels |
+| **Privacy/Terms** | Full legal page content |
+
+**Rule: If a human reads it, it gets translated. No exceptions.**
 
 ### Core Requirements
 
 | Requirement | Description |
 |-------------|-------------|
 | **Encoding** | UTF-8 everywhere - files, database, HTTP responses |
-| **Accept-Language** | Respect browser header for language selection |
 | **Default language** | English (en) when no preference detected |
-| **Fallback chain** | `user preference → Accept-Language → default (en)` |
+| **Fallback chain** | `?lang= query param (sets cookie) → lang cookie → Accept-Language header → default (en)` |
+| **100% coverage** | Every user-facing string uses a translation key - no hardcoded text |
+| **Missing key fallback** | If a key is missing in the active language, fall back to English (`en`) |
+| **Key validation** | Build-time check ensures all languages have the same keys as `en.json` |
+
+### Supported Languages
+
+| Code | Language | Direction | Plural Categories |
+|------|----------|-----------|-------------------|
+| `en` | English | `ltr` | one, other |
+| `es` | Spanish | `ltr` | one, other |
+| `zh` | Chinese (Mandarin) | `ltr` | other (no plural forms) |
+| `fr` | French | `ltr` | one, other (0 is "one") |
+| `ar` | Arabic | `rtl` | zero, one, two, few, many, other |
+| `de` | German | `ltr` | one, other |
+| `ja` | Japanese | `ltr` | other (no plural forms) |
+
+### Language Selection via Query Parameter
+
+**`?lang=` sets the language and persists it via cookie.** No URL path prefixes (avoids route conflicts).
+
+```
+GET /dashboard?lang=es
+  → Sets cookie: lang=es; Max-Age=31536000; Path=/; SameSite=Lax
+  → Renders page in Spanish
+  → All subsequent requests use Spanish (cookie persists)
+
+GET /dashboard
+  → Reads lang cookie → Spanish
+  → No cookie? → Accept-Language header
+  → No header? → English (default)
+```
+
+**Fallback chain (in order):**
+
+```
+1. ?lang= query parameter (if present → set cookie + use immediately)
+2. lang cookie (persistent, 1 year)
+3. Accept-Language HTTP header (browser preference)
+4. Default: en
+```
+
+**Implementation:**
+
+```go
+func LanguageMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        lang := ""
+
+        // 1. Query parameter (highest priority, also sets cookie)
+        if q := r.URL.Query().Get("lang"); q != "" && isSupported(q) {
+            lang = q
+            http.SetCookie(w, &http.Cookie{
+                Name:     "lang",
+                Value:    lang,
+                Path:     "/",
+                MaxAge:   365 * 24 * 60 * 60, // 1 year
+                SameSite: http.SameSiteLaxMode,
+                Secure:   r.TLS != nil,
+                HttpOnly: true,
+            })
+        }
+
+        // 2. Cookie
+        if lang == "" {
+            if c, err := r.Cookie("lang"); err == nil && isSupported(c.Value) {
+                lang = c.Value
+            }
+        }
+
+        // 3. Accept-Language header
+        if lang == "" {
+            lang = parseAcceptLanguage(r.Header.Get("Accept-Language"))
+        }
+
+        // 4. Default
+        if lang == "" {
+            lang = "en"
+        }
+
+        ctx := context.WithValue(r.Context(), langKey, lang)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+```
+
+**Language selector UI (in header/footer):**
+
+```html
+<select onchange="window.location.search='?lang='+this.value" aria-label="{{t .Lang `common.select_language`}}">
+  {{range .AvailableLanguages}}
+    <option value="{{.Code}}" {{if eq .Code $.Lang}}selected{{end}}>{{.NativeName}}</option>
+  {{end}}
+</select>
+```
+
+**Shareable links:** Users can share `https://example.com/page?lang=fr` to force French for the recipient. After the first visit, the cookie persists and `?lang=` is no longer needed.
 
 ### Translation File Format
 
 **Location:** `locales/{lang}.json`
 
+**Every key in `en.json` MUST exist in all other language files.** Build-time validation enforces this.
+
 ```json
 {
   "meta": {
     "language": "es",
-    "name": "Español",
+    "name": "Spanish",
     "native_name": "Español",
     "direction": "ltr",
     "version": "1.0.0"
   },
+
   "common": {
+    "select_language": "Seleccionar idioma",
     "save": "Guardar",
+    "save_all": "Guardar todo",
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "edit": "Editar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "search": "Buscar",
+    "search_placeholder": "Buscar...",
+    "filter": "Filtrar",
+    "refresh": "Actualizar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "copy": "Copiar",
+    "copy_to_clipboard": "Copiar al portapapeles",
+    "copied": "Copiado",
     "loading": "Cargando...",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "yes": "Sí",
+    "no": "No",
+    "on": "Activado",
+    "off": "Desactivado",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "required": "Obligatorio",
+    "optional": "Opcional",
+    "none": "Ninguno",
+    "all": "Todos",
+    "actions": "Acciones",
+    "details": "Detalles",
+    "settings": "Configuración",
+    "preferences": "Preferencias",
+    "view": "Ver",
+    "expand": "Expandir",
+    "collapse": "Contraer",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "more": "Más",
+    "less": "Menos",
+    "done": "Listo",
+    "unsaved_changes": "Cambios sin guardar",
+    "requires_restart": "Requiere reinicio",
+    "page_x_of_y": "Página {current} de {total}",
+    "showing_x_of_y": "Mostrando {count} de {total}",
+    "last_updated": "Última actualización: {datetime}",
+    "made_with": "Hecho con"
   },
+
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "auto": "Automático"
+  },
+
   "auth": {
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "register": "Registrarse",
-    "forgot_password": "¿Olvidaste tu contraseña?"
+    "forgot_password": "¿Olvidaste tu contraseña?",
+    "reset_password": "Restablecer contraseña",
+    "remember_me": "Recordarme",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "confirm_password": "Confirmar contraseña",
+    "email": "Correo electrónico",
+    "already_have_account": "¿Ya tienes una cuenta? Inicia sesión",
+    "no_account": "¿No tienes cuenta? Regístrate",
+    "show_password": "Mostrar contraseña",
+    "hide_password": "Ocultar contraseña",
+    "password_requirements": "Requisitos de contraseña",
+    "min_length": "Al menos {min} caracteres",
+    "require_uppercase": "Contiene mayúsculas y minúsculas",
+    "require_number": "Contiene un número",
+    "require_special": "Contiene un carácter especial",
+    "2fa_required": "Autenticación de dos factores requerida",
+    "2fa_code": "Código de verificación",
+    "2fa_enter_code": "Ingrese el código de su aplicación de autenticación",
+    "2fa_enable": "Habilitar autenticación de dos factores",
+    "2fa_disable": "Deshabilitar autenticación de dos factores",
+    "2fa_enabled": "Autenticación de dos factores habilitada",
+    "2fa_disabled": "Autenticación de dos factores deshabilitada",
+    "recovery_key": "Clave de recuperación",
+    "session_timeout": "Tiempo de espera de sesión",
+    "extend_on_activity": "Extender con actividad"
   },
+
+  "nav": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "help": "Ayuda",
+    "privacy": "Privacidad",
+    "terms": "Términos de servicio",
+    "docs": "Documentación",
+    "api_docs": "Documentación de API",
+    "status": "Estado",
+    "skip_to_content": "Saltar al contenido principal",
+    "skip_to_navigation": "Saltar a la navegación",
+    "main_navigation": "Navegación principal"
+  },
+
+  "health": {
+    "title": "Estado del sistema",
+    "all_operational": "Todos los sistemas operativos",
+    "degraded": "Degradado",
+    "unhealthy": "No saludable",
+    "healthy": "Saludable",
+    "version": "Versión",
+    "go_version": "Versión de Go",
+    "build": "Compilación",
+    "uptime": "Tiempo de actividad",
+    "mode": "Modo",
+    "status": "Estado",
+    "primary": "Primario",
+    "role": "Rol",
+    "nodes": "Nodos",
+    "cluster": "Clúster",
+    "features": "Características",
+    "component_status": "Estado de componentes",
+    "server_statistics": "Estadísticas del servidor",
+    "total_requests": "Solicitudes totales",
+    "requests_24h": "Solicitudes (24h)",
+    "active_connections": "Conexiones activas",
+    "last_checked": "Última verificación:",
+    "auto_refresh": "Auto-actualización en {seconds}s",
+    "ok": "OK",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "production": "Producción",
+    "development": "Desarrollo"
+  },
+
+  "status_values": {
+    "online": "En línea",
+    "offline": "Fuera de línea",
+    "maintenance": "Mantenimiento",
+    "starting": "Iniciando",
+    "stopping": "Deteniendo",
+    "error": "Error",
+    "good": "Bueno",
+    "warn": "Advertencia"
+  },
+
+  "contact": {
+    "title": "Contacto",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "subject": "Asunto",
+    "message": "Mensaje",
+    "send": "Enviar mensaje",
+    "success": "Gracias por tu mensaje. Responderemos pronto."
+  },
+
+  "help": {
+    "title": "Ayuda",
+    "getting_started": "Primeros pasos",
+    "features": "Características",
+    "api_documentation": "Documentación de API",
+    "swagger_description": "Swagger UI - Explorador interactivo de API REST",
+    "graphql_description": "Explorador interactivo de GraphQL",
+    "tor_access": "Acceso Tor",
+    "onion_address": "Dirección Onion",
+    "how_to_connect": "Cómo conectarse",
+    "download_tor": "Descargar Tor Browser",
+    "open_tor": "Abra Tor Browser y espere a que se conecte",
+    "paste_onion": "Copie la dirección onion arriba y péguela en la barra de direcciones de Tor Browser",
+    "tor_privacy": "Usar Tor proporciona privacidad adicional...",
+    "faq": "Preguntas frecuentes",
+    "troubleshooting": "Solución de problemas"
+  },
+
+  "privacy": {
+    "title": "Política de privacidad",
+    "last_updated": "Última actualización:",
+    "summary": "Resumen",
+    "data_stored": "Sus datos se almacenan en nuestros servidores",
+    "never_sell": "Nunca vendemos sus datos",
+    "may_sell": "Sus datos pueden ser vendidos",
+    "you_control": "Usted controla sus datos",
+    "cookie_policy": "Política de cookies",
+    "essential_cookies": "Cookies esenciales",
+    "preference_cookies": "Cookies de preferencia",
+    "analytics_cookies": "Cookies de análisis",
+    "no_analytics": "No usamos seguimiento analítico en este sitio.",
+    "manage_cookies": "Gestionar preferencias de cookies",
+    "data_we_collect": "Datos que recopilamos",
+    "how_we_use": "Cómo usamos sus datos",
+    "data_security": "Seguridad de datos",
+    "data_storage": "Almacenamiento de datos y terceros",
+    "all_data_stored": "Todos sus datos se almacenan en nuestros servidores.",
+    "when_shared": "Cuándo se pueden compartir los datos",
+    "data_retention": "Retención de datos",
+    "your_rights": "Sus derechos",
+    "right_access": "Acceso",
+    "right_export": "Exportación",
+    "right_deletion": "Eliminación",
+    "right_correction": "Corrección",
+    "right_cookie_control": "Control de cookies",
+    "third_party_services": "Servicios de terceros",
+    "service": "Servicio",
+    "purpose": "Propósito",
+    "data_sent": "Datos enviados",
+    "no_third_party": "Actualmente no usamos servicios de terceros que reciban sus datos.",
+    "view_policy": "Ver política",
+    "contact_us": "Contáctenos",
+    "privacy_inquiries": "Para consultas relacionadas con la privacidad, contáctenos.",
+    "ccpa_title": "Derechos de privacidad de California (CCPA)",
+    "ccpa_do_not_sell": "No vender mi información personal",
+    "ccpa_opted_out": "Ha optado por no participar en la venta de datos.",
+    "ccpa_opt_back_in": "Optar por participar nuevamente"
+  },
+
+  "terms": {
+    "title": "Términos de servicio",
+    "acceptance": "Aceptación",
+    "account_terms": "Términos de la cuenta",
+    "acceptable_use": "Uso aceptable",
+    "content": "Contenido",
+    "termination": "Terminación",
+    "liability": "Responsabilidad",
+    "changes": "Cambios",
+    "governing_law": "Ley aplicable"
+  },
+
+  "cookie_consent": {
+    "message": "De acuerdo con la ley GDPR de la UE, se muestra este mensaje.",
+    "accept": "Acepto",
+    "decline": "Rechazar",
+    "manage_preferences": "Gestionar preferencias",
+    "blocked_content": "Contenido externo bloqueado debido a las preferencias de cookies.",
+    "essential_description": "Necesarias para el funcionamiento del sitio. No se pueden desactivar.",
+    "preference_description": "Recordar su configuración como tema (claro/oscuro), idioma y preferencias de interfaz. Desactivarlas restablecerá los valores predeterminados en cada visita.",
+    "analytics_description": "Nos ayudan a entender cómo se utiliza el sitio."
+  },
+
+  "about": {
+    "title": "Acerca de",
+    "features": "Características",
+    "version": "Versión",
+    "links": "Enlaces"
+  },
+
+  "announcements": {
+    "warning": "Advertencia",
+    "info": "Información",
+    "error": "Error",
+    "success": "Éxito",
+    "scheduled_maintenance": "Mantenimiento programado"
+  },
+
+  "pwa": {
+    "install": "Instalar aplicación",
+    "installed": "Aplicación instalada",
+    "offline_message": "No hay conexión a internet. Mostrando contenido almacenado."
+  },
+
   "errors": {
     "required": "Este campo es obligatorio",
     "invalid_email": "Correo electrónico inválido",
     "too_short": "Debe tener al menos {min} caracteres",
-    "too_long": "No puede exceder {max} caracteres"
+    "too_long": "No puede exceder {max} caracteres",
+    "passwords_dont_match": "Las contraseñas no coinciden",
+    "invalid_format": "Formato inválido",
+    "already_exists": "Ya existe",
+    "not_found": "No encontrado",
+    "bad_request": "Formato de solicitud inválido",
+    "validation_failed": "La validación falló: {details}",
+    "unauthorized": "Autenticación requerida",
+    "token_expired": "El token ha expirado",
+    "token_invalid": "Token inválido",
+    "2fa_required": "Autenticación de dos factores requerida",
+    "2fa_invalid": "Código 2FA inválido",
+    "forbidden": "Permiso denegado",
+    "account_locked": "Cuenta bloqueada",
+    "method_not_allowed": "Método no permitido",
+    "conflict": "El recurso ya existe",
+    "rate_limited": "Demasiadas solicitudes",
+    "server_error": "Error interno del servidor",
+    "maintenance_mode": "Servicio no disponible"
   },
+
   "plurals": {
     "items": {
       "zero": "Sin elementos",
       "one": "{count} elemento",
       "other": "{count} elementos"
+    },
+    "results": {
+      "zero": "Sin resultados",
+      "one": "{count} resultado",
+      "other": "{count} resultados"
+    },
+    "users": {
+      "zero": "Sin usuarios",
+      "one": "{count} usuario",
+      "other": "{count} usuarios"
+    },
+    "days": {
+      "one": "{count} día",
+      "other": "{count} días"
+    },
+    "hours": {
+      "one": "{count} hora",
+      "other": "{count} horas"
+    },
+    "minutes": {
+      "one": "{count} minuto",
+      "other": "{count} minutos"
     }
+  },
+
+  "admin": {
+    "panel_title": "Panel de administración de {app_name}",
+
+    "nav": {
+      "dashboard": "Panel de control",
+      "server": "Servidor",
+      "settings": "Configuración",
+      "branding": "Marca",
+      "ssl_tls": "SSL/TLS",
+      "scheduler": "Programador",
+      "email": "Correo electrónico",
+      "logs": "Registros",
+      "backup": "Respaldo",
+      "maintenance": "Mantenimiento",
+      "updates": "Actualizaciones",
+      "info": "Información",
+      "security": "Seguridad",
+      "authentication": "Autenticación",
+      "api_tokens": "Tokens de API",
+      "rate_limiting": "Límite de velocidad",
+      "firewall": "Cortafuegos",
+      "network": "Red",
+      "tor": "Tor",
+      "geoip": "GeoIP",
+      "blocklists": "Listas de bloqueo",
+      "users": "Usuarios",
+      "user_list": "Lista de usuarios",
+      "invites": "Invitaciones",
+      "roles": "Roles",
+      "cluster": "Clúster",
+      "add_node": "Agregar nodo",
+      "help": "Ayuda",
+      "documentation": "Documentación"
+    },
+
+    "header": {
+      "search_placeholder": "Buscar...",
+      "logout": "Cerrar sesión",
+      "admins_online": "Administradores en línea"
+    },
+
+    "dashboard": {
+      "title": "Panel de control",
+      "status": "ESTADO",
+      "uptime": "TIEMPO DE ACTIVIDAD",
+      "requests": "SOLICITUDES",
+      "errors": "ERRORES",
+      "period_24h": "(24h)",
+      "system_resources": "RECURSOS DEL SISTEMA",
+      "cpu": "CPU:",
+      "memory": "Memoria:",
+      "disk": "Disco:",
+      "quick_actions": "ACCIONES RÁPIDAS",
+      "restart_server": "Reiniciar servidor",
+      "clear_cache": "Limpiar caché",
+      "create_backup": "Crear respaldo",
+      "view_logs": "Ver registros",
+      "recent_activity": "ACTIVIDAD RECIENTE",
+      "config_updated": "Configuración actualizada",
+      "admin_login": "Inicio de sesión de administrador",
+      "backup_completed": "Respaldo completado",
+      "ssl_renewed": "SSL renovado",
+      "scheduled_tasks": "TAREAS PROGRAMADAS",
+      "in_x_days": "en {count} días",
+      "in_x_hours": "en {count} horas",
+      "in_x_minutes": "en {count} minutos",
+      "alerts_warnings": "ALERTAS / ADVERTENCIAS",
+      "ssl_expires_in": "El certificado SSL expira en {count} días",
+      "disk_usage_above": "Uso de disco por encima del umbral del {percent}%",
+      "update_available": "Actualización disponible: v{version}"
+    },
+
+    "settings": {
+      "title": "Configuración del servidor",
+      "general": "General",
+      "process": "Proceso",
+      "advanced": "Avanzado",
+      "port": "Puerto",
+      "mode": "Modo",
+      "fqdn": "FQDN",
+      "daemonize": "Demonizar",
+      "tooltip_port": "El puerto en el que escucha el servidor",
+      "tooltip_mode": "Producción aplica validación estricta de host",
+      "tooltip_fqdn": "Nombre de dominio completo (auto-detectado)",
+      "tooltip_daemonize": "Separar del terminal al iniciar (para inicio manual)"
+    },
+
+    "branding": {
+      "title": "Marca",
+      "site_title": "Título",
+      "tagline": "Eslogan",
+      "description": "Descripción",
+      "keywords": "Palabras clave",
+      "author": "Autor",
+      "og_image": "Imagen OG",
+      "twitter_handle": "Usuario de Twitter",
+      "favicon": "Favicon",
+      "logo": "Logo"
+    },
+
+    "security": {
+      "title": "Configuración de seguridad",
+      "rate_limiting": "Límite de velocidad",
+      "requests_per_window": "Solicitudes por ventana",
+      "window": "Ventana",
+      "cors": "CORS",
+      "origins": "Orígenes",
+      "methods": "Métodos",
+      "csp": "Política de seguridad de contenido",
+      "hsts": "HSTS",
+      "account_lockout": "Bloqueo de cuenta",
+      "soft_lock_attempts": "Intentos de bloqueo suave",
+      "soft_lock_duration": "Duración del bloqueo suave",
+      "hard_lock_attempts": "Intentos de bloqueo duro",
+      "ip_blocking": "Bloqueo de IP",
+      "enable_ip_blocking": "Habilitar bloqueo de IP",
+      "escalating_durations": "Duraciones de bloqueo escalonadas",
+      "first_block_duration": "Duración del primer bloqueo",
+      "min_password_length": "Longitud mínima de contraseña",
+      "require_uppercase": "Requerir mayúsculas",
+      "require_number": "Requerir número",
+      "require_special": "Requerir carácter especial",
+      "require_mfa": "Requerir MFA",
+      "allowed_mfa_methods": "Métodos MFA permitidos"
+    },
+
+    "ssl": {
+      "title": "Configuración SSL/TLS",
+      "enable_https": "Habilitar HTTPS",
+      "certificate": "Certificado",
+      "private_key": "Clave privada",
+      "min_tls_version": "Versión mínima de TLS",
+      "lets_encrypt": "Let's Encrypt",
+      "contact_email": "Correo de contacto",
+      "staging_server": "Servidor de pruebas",
+      "challenge_type": "Tipo de desafío"
+    },
+
+    "backup": {
+      "title": "Configuración de respaldo",
+      "enable_scheduled": "Habilitar respaldos programados",
+      "daily_schedule": "Horario diario",
+      "backups_to_keep": "Respaldos a conservar",
+      "weekly_backups": "Respaldos semanales",
+      "monthly_backups": "Respaldos mensuales",
+      "yearly_backups": "Respaldos anuales",
+      "encrypt_backups": "Cifrar respaldos",
+      "encryption_password": "Contraseña de cifrado"
+    },
+
+    "email_settings": {
+      "title": "Configuración de correo electrónico",
+      "smtp_server": "Servidor SMTP",
+      "smtp_port": "Puerto SMTP",
+      "smtp_username": "Usuario SMTP",
+      "smtp_password": "Contraseña SMTP",
+      "tls_mode": "Modo TLS",
+      "sender_name": "Nombre del remitente",
+      "sender_email": "Correo del remitente",
+      "test_connection": "Probar conexión"
+    },
+
+    "scheduler": {
+      "title": "Programador",
+      "task_name": "Nombre de tarea",
+      "schedule": "Horario",
+      "last_run": "Última ejecución",
+      "next_run": "Próxima ejecución",
+      "run_now": "Ejecutar ahora",
+      "hourly": "Cada hora",
+      "daily": "Diario",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "custom": "Personalizado"
+    },
+
+    "logs": {
+      "title": "Registros",
+      "access": "Acceso",
+      "error": "Error",
+      "audit": "Auditoría",
+      "security": "Seguridad",
+      "debug": "Depuración",
+      "last_100": "Últimos 100",
+      "auto_refresh_on": "Auto-actualización: ACTIVADA",
+      "auto_refresh_off": "Auto-actualización: DESACTIVADA",
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "clear_logs": "Limpiar registros"
+    },
+
+    "setup": {
+      "title": "CONFIGURACIÓN REQUERIDA",
+      "token_label": "Token de configuración: {token}",
+      "go_to_url": "Vaya a {url} e ingrese este token para completar la configuración.",
+      "token_once": "Este token solo se mostrará UNA VEZ.",
+      "step_admin": "Crear cuenta de administrador",
+      "step_api_token": "Token de API",
+      "step_server": "Configuración del servidor",
+      "step_security": "Configuración de seguridad",
+      "step_optional": "Servicios opcionales",
+      "step_complete": "Completar",
+      "app_name": "Nombre de la aplicación",
+      "domain_fqdn": "Dominio/FQDN",
+      "timezone": "Zona horaria",
+      "save_configuration": "Guardar configuración",
+      "mark_complete": "Marcar configuración como completa"
+    },
+
+    "admins": {
+      "title": "Administradores del servidor",
+      "your_account": "Su cuenta:",
+      "total_admins": "Total de administradores:",
+      "currently_online": "Actualmente en línea:",
+      "invite_new": "Invitar nuevo administrador",
+      "invite_title": "Invitar nuevo administrador del servidor",
+      "invite_expires": "La invitación expira en:",
+      "generate_invite": "Generar invitación",
+      "invite_created": "Invitación de administrador creada",
+      "invite_url": "URL de invitación (compartir con el nuevo administrador):",
+      "copy_url": "Copiar URL",
+      "invite_once": "Este enlace solo funcionará UNA VEZ y expira en {duration}.",
+      "invite_password_note": "El nuevo administrador establecerá su propia contraseña en el primer uso.",
+      "privacy_note": "Por seguridad, no puede ver otras cuentas de administrador. Cada administrador gestiona sus propias credenciales de forma independiente.",
+      "1_hour": "1 hora",
+      "6_hours": "6 horas",
+      "24_hours": "24 horas",
+      "48_hours": "48 horas",
+      "7_days": "7 días"
+    },
+
+    "profile": {
+      "account_email": "Correo de la cuenta (notificaciones de seguridad):",
+      "notification_email": "Correo de notificaciones (notificaciones generales):",
+      "use_account_email": "Usar correo de la cuenta para todas las notificaciones",
+      "account_email_used_for": "Usado para: restablecimiento de contraseña, recuperación 2FA, alertas de seguridad",
+      "notification_email_used_for": "Usado para: actualizaciones del sistema, estado de respaldo, fallos de tareas",
+      "notification_preferences": "Preferencias de notificación",
+      "security_cannot_disable": "Seguridad (no se puede desactivar):",
+      "account_notifications": "Cuenta:",
+      "system_notifications": "Sistema:",
+      "delivery_email": "Entrega: Correo electrónico",
+      "save_preferences": "Guardar preferencias",
+      "appearance": "Configuración de apariencia",
+      "font_size": "Tamaño de fuente",
+      "font_small": "Pequeño",
+      "font_medium": "Mediano",
+      "font_large": "Grande",
+      "reduce_motion": "Reducir movimiento",
+      "reduce_motion_desc": "Minimizar animaciones y transiciones.",
+      "date_format": "Formato de fecha:",
+      "time_format": "Formato de hora:",
+      "save_changes": "Guardar cambios"
+    },
+
+    "agents": {
+      "title": "Agentes conectados",
+      "add_agent": "Agregar agente",
+      "name": "Nombre",
+      "connected": "Conectado",
+      "last_seen": "Última vez visto",
+      "summary": "Resumen: {online} en línea, {offline} fuera de línea",
+      "system_info": "Información del sistema",
+      "hostname": "Nombre de host:",
+      "os": "SO:",
+      "arch": "Arquitectura:",
+      "agent_version": "Versión del agente:",
+      "tags": "Etiquetas:",
+      "connection": "Conexión",
+      "last_report": "Último informe:",
+      "ip_address": "Dirección IP:",
+      "system_metrics": "Métricas del sistema",
+      "network": "Red:",
+      "load": "Carga:",
+      "refresh_now": "Actualizar ahora",
+      "edit_tags": "Editar etiquetas",
+      "regenerate_token": "Regenerar token",
+      "remove_agent": "Eliminar agente",
+      "requires_confirmation": "Requiere confirmación",
+      "back_to_list": "Volver a la lista",
+      "add_new": "Agregar nuevo agente",
+      "agent_name": "Nombre del agente (opcional):",
+      "name_hint": "Dejar en blanco para usar el nombre de host.",
+      "tags_optional": "Etiquetas (opcional):",
+      "tags_hint": "Separadas por comas. Usadas para filtrar y agrupar.",
+      "token_expiry": "Expiración del token:",
+      "1_hour": "1 hora",
+      "24_hours": "24 horas (recomendado)",
+      "7_days": "7 días",
+      "never_expires": "Nunca expira",
+      "generate_token": "Generar token de agente",
+      "token_generated": "Token de agente generado",
+      "run_command": "Ejecute este comando en la máquina de destino:",
+      "or_manually": "O manualmente:",
+      "token_expires_in": "El token expira en {duration} y solo se puede usar una vez.",
+      "agent_connected": "{name} se ha conectado. El agente ahora envía datos al servidor.",
+      "view_agent": "Ver agente",
+      "dismiss": "Descartar",
+      "remove_confirm": "¿Está seguro de que desea eliminar el agente '{name}'?",
+      "remove_warning": "Esto hará lo siguiente:",
+      "no_cancel": "No, cancelar",
+      "yes_remove": "Sí, eliminar agente"
+    },
+
+    "footer": {
+      "healthy": "Saludable",
+      "degraded": "Degradado",
+      "issues": "Problemas",
+      "tooltip_healthy": "Todos los sistemas operativos",
+      "tooltip_degraded": "Algunos problemas detectados",
+      "tooltip_issues": "Problemas del sistema"
+    }
+  },
+
+  "notifications": {
+    "title": "Notificaciones",
+    "mark_all_read": "Marcar todo como leído",
+    "clear_all": "Limpiar todo",
+    "ssl_expiring": "El certificado SSL expira en {count} días",
+    "backup_completed": "Respaldo completado",
+    "backup_failed": "Respaldo fallido",
+    "login_new_location": "Inicio de sesión desde nueva ubicación",
+    "update_available": "Actualización disponible",
+    "disk_space_low": "Espacio en disco bajo",
+    "task_failed": "Tarea fallida",
+    "task_triggered": "Tarea ejecutada manualmente",
+    "admin_logged_in": "Administrador ha iniciado sesión",
+    "admin_logged_out": "Administrador ha cerrado sesión",
+    "password_changed": "Contraseña cambiada",
+    "2fa_enabled": "2FA habilitado",
+    "2fa_disabled": "2FA deshabilitado",
+    "api_token_regenerated": "Token de API regenerado",
+    "ssl_renewed": "Certificado SSL renovado",
+    "preferences": {
+      "webui": "WebUI",
+      "email": "Correo electrónico",
+      "security_cannot_disable": "Seguridad (no se puede desactivar)",
+      "server": "Servidor",
+      "backup": "Respaldo",
+      "scheduler": "Programador",
+      "other_admins": "Otros administradores"
+    }
+  },
+
+  "email": {
+    "subjects": {
+      "welcome": "Bienvenido a {app_name}",
+      "admin_welcome": "Bienvenido a {app_name} - Configuración de administrador completada",
+      "password_reset": "Solicitud de restablecimiento de contraseña - {app_name}",
+      "verify_email": "Verifique su correo electrónico - {app_name}",
+      "new_login": "Nuevo inicio de sesión detectado - {app_name}",
+      "security_alert": "Alerta de seguridad - {app_name}",
+      "2fa_enabled": "Autenticación de dos factores habilitada - {app_name}",
+      "2fa_disabled": "Autenticación de dos factores deshabilitada - {app_name}",
+      "password_changed": "Su contraseña fue cambiada - {app_name}",
+      "backup_completed": "Respaldo completado - {app_name}",
+      "backup_failed": "Respaldo fallido - {app_name}",
+      "ssl_expiring": "Certificado SSL por expirar - {app_name}",
+      "ssl_renewed": "Certificado SSL renovado - {app_name}",
+      "task_failed": "Tarea programada fallida - {app_name}",
+      "security_notice": "Aviso de seguridad importante - {app_name}",
+      "security_breach": "[{severity}] Brecha de seguridad detectada - {app_name}",
+      "test_email": "Correo de prueba - {app_name}"
+    },
+    "body": {
+      "welcome_heading": "BIENVENIDO A {APP_NAME}",
+      "admin_setup_heading": "CONFIGURACIÓN DE ADMINISTRADOR COMPLETADA",
+      "password_reset_heading": "SOLICITUD DE RESTABLECIMIENTO DE CONTRASEÑA",
+      "email_verification_heading": "VERIFICACIÓN DE CORREO ELECTRÓNICO",
+      "new_login_heading": "NUEVO INICIO DE SESIÓN DETECTADO",
+      "security_alert_heading": "ALERTA DE SEGURIDAD",
+      "2fa_disabled_heading": "2FA DESHABILITADO",
+      "password_changed_heading": "CONTRASEÑA CAMBIADA",
+      "security_notice_heading": "AVISO DE SEGURIDAD IMPORTANTE",
+      "getting_started": "PRIMEROS PASOS",
+      "important_next_steps": "PRÓXIMOS PASOS IMPORTANTES",
+      "did_not_request": "¿NO SOLICITÓ ESTO?",
+      "not_you": "¿NO FUE USTED?",
+      "recommended_actions": "ACCIONES RECOMENDADAS",
+      "did_not_do_this": "¿NO HIZO ESTO?",
+      "did_not_change_password": "¿NO CAMBIÓ SU CONTRASEÑA?",
+      "what_happened": "QUÉ SUCEDIÓ",
+      "what_info_involved": "QUÉ INFORMACIÓN ESTUVO INVOLUCRADA",
+      "what_we_are_doing": "QUÉ ESTAMOS HACIENDO",
+      "what_you_should_do": "QUÉ DEBE HACER",
+      "contact_information": "INFORMACIÓN DE CONTACTO",
+      "sent_to": "Este correo fue enviado a: {recipient_email}",
+      "from": "De: {app_name} ({fqdn})",
+      "ignore_if_not_requested": "Si no solicitó esto, ignore este mensaje.",
+      "no_action_required": "No se requiere ninguna acción de su parte.",
+      "password_not_changed": "Su contraseña no será cambiada a menos que haga clic en el enlace anterior.",
+      "link_expires": "Este enlace expira en {expires}.",
+      "change_password_immediately": "Cambie su contraseña inmediatamente:",
+      "review_sessions": "Revise sus sesiones activas:",
+      "enable_2fa": "Habilite 2FA si aún no lo ha hecho:",
+      "re_enable_2fa": "Vuelva a habilitar 2FA:",
+      "contact_support": "Contacte al soporte:",
+      "complete_profile": "Complete su perfil",
+      "enable_2fa_security": "Habilite la autenticación de dos factores para mayor seguridad",
+      "explore_features": "Explore las funciones disponibles",
+      "keep_credentials_secure": "Mantenga sus credenciales de administrador seguras.",
+      "mfa_setup_now": "Configurar ahora",
+      "mfa_dont_remind": "No recordar"
+    },
+    "regulatory": {
+      "gdpr_notice": "Esta notificación se proporciona de acuerdo con el Artículo 34 del RGPD...",
+      "hipaa_notice": "Aviso de HIPAA",
+      "ccpa_notice": "Aviso de CCPA",
+      "lgpd_notice": "Aviso de LGPD",
+      "pipeda_notice": "Aviso de PIPEDA",
+      "appi_notice": "Aviso de APPI",
+      "pdpa_notice": "Aviso de PDPA"
+    }
+  },
+
+  "swagger": {
+    "title": "Documentación de API - {app_name}",
+    "description": "Explorador interactivo de API REST",
+    "try_it_out": "Probar",
+    "authorize": "Autorizar",
+    "no_description": "Sin descripción disponible",
+    "request_body": "Cuerpo de la solicitud",
+    "responses": "Respuestas",
+    "parameters": "Parámetros",
+    "example_value": "Valor de ejemplo",
+    "model": "Modelo",
+    "headers": "Encabezados",
+    "media_type": "Tipo de medio",
+    "endpoint_descriptions": {
+      "health_check": "Verificar el estado del servidor",
+      "get_version": "Obtener información de la versión",
+      "get_config": "Obtener configuración actual",
+      "update_config": "Actualizar configuración",
+      "list_items": "Listar elementos",
+      "get_item": "Obtener elemento por ID",
+      "create_item": "Crear nuevo elemento",
+      "update_item": "Actualizar elemento existente",
+      "delete_item": "Eliminar elemento"
+    },
+    "parameter_descriptions": {
+      "id": "Identificador único del recurso",
+      "page": "Número de página para paginación",
+      "per_page": "Elementos por página",
+      "sort": "Campo de ordenamiento",
+      "order": "Dirección de ordenamiento (asc/desc)",
+      "search": "Término de búsqueda",
+      "filter": "Expresión de filtro"
+    },
+    "error_descriptions": {
+      "400": "Solicitud incorrecta - La solicitud no se pudo procesar",
+      "401": "No autorizado - Se requiere autenticación",
+      "403": "Prohibido - Permisos insuficientes",
+      "404": "No encontrado - El recurso no existe",
+      "409": "Conflicto - El recurso ya existe",
+      "429": "Demasiadas solicitudes - Límite de velocidad excedido",
+      "500": "Error del servidor - Error interno"
+    }
+  },
+
+  "graphql": {
+    "title": "Explorador GraphQL - {app_name}",
+    "description": "Explorador interactivo de GraphQL",
+    "query": "Consulta",
+    "mutation": "Mutación",
+    "subscription": "Suscripción",
+    "variables": "Variables",
+    "docs": "Documentación",
+    "schema": "Esquema",
+    "type_descriptions": {
+      "query": "Consultas disponibles para obtener datos",
+      "mutation": "Mutaciones disponibles para modificar datos",
+      "subscription": "Suscripciones para datos en tiempo real"
+    }
+  },
+
+  "users": {
+    "registration": {
+      "title": "Registrarse",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirm_password": "Confirmar contraseña",
+      "register_button": "Registrarse",
+      "already_have_account": "¿Ya tiene una cuenta? Inicie sesión"
+    },
+    "profile": {
+      "title": "Perfil",
+      "name": "Nombre",
+      "avatar": "Avatar",
+      "bio": "Biografía",
+      "security": "Seguridad",
+      "sessions": "Sesiones",
+      "login_history": "Historial de inicio de sesión",
+      "api_usage": "Uso de API"
+    },
+    "tokens": {
+      "title": "Tokens de API",
+      "create_new": "Crear nuevo token",
+      "name": "Nombre",
+      "scopes": "Alcances",
+      "scope_read": "Lectura",
+      "scope_write": "Escritura",
+      "expiry": "Expiración",
+      "revoke": "Revocar",
+      "last_used": "Última vez: hace {duration}"
+    },
+    "moderation": {
+      "title": "Moderación de usuarios",
+      "delete_user": "Eliminar usuario",
+      "impersonate": "Suplantar",
+      "disable_user": "Deshabilitar usuario",
+      "enable_user": "Habilitar usuario",
+      "revoke_sessions": "Revocar sesiones",
+      "profile_tab": "Perfil",
+      "security_tab": "Seguridad",
+      "activity_tab": "Actividad",
+      "actions_tab": "Acciones"
+    },
+    "roles": {
+      "title": "Gestión de roles",
+      "public": "Público",
+      "private": "Privado",
+      "disabled": "Deshabilitado"
+    }
+  },
+
+  "cli": {
+    "description": "weather 1.0.0 - {project_description}",
+    "usage": "Uso:",
+    "information": "Información:",
+    "shell_integration": "Integración de shell:",
+    "server_configuration": "Configuración del servidor:",
+    "service_management": "Gestión del servicio:",
+    "show_help": "Mostrar ayuda",
+    "show_version": "Mostrar versión",
+    "show_status": "Mostrar estado y salud del servidor",
+    "print_completions": "Imprimir completaciones de shell",
+    "print_init": "Imprimir comando de inicialización de shell",
+    "app_mode": "Modo de aplicación",
+    "config_dir": "Directorio de configuración",
+    "data_dir": "Directorio de datos",
+    "run_help": "Ejecute 'weather <command> --help' para ayuda detallada sobre cualquier comando.",
+    "running_pid": "weather está en ejecución (PID {pid})",
+    "daemon_started": "Demonio iniciado con PID {pid}",
+    "already_running": "Ya en ejecución (pid {pid})",
+    "running_in_mode": "Ejecutando en modo: {app_mode}",
+    "http_address": "HTTP: {proto}://{fqdn}:{port}",
+    "listening_on": "Escuchando en {proto}://{address}:{port}",
+    "server_started_on": "Servidor iniciado en {startup_datetime}",
+    "server_started_ok": "Servidor iniciado exitosamente",
+    "received_signal": "Recibida señal {signal}, iniciando apagado graceful...",
+    "received_sigusr1": "Recibida SIGUSR1, reabriendo registros...",
+    "received_sigusr2": "Recibida SIGUSR2, volcando estado...",
+    "graceful_shutdown": "Apagado graceful completado",
+    "shutdown_error": "Error de apagado del servidor HTTP: {error}",
+    "windows_daemon_warning": "Advertencia: --daemon no es compatible en Windows",
+    "windows_service_hint": "Use --service install && --service start para Servicio de Windows",
+    "error_create_dir": "Error al crear directorio {path}: {error}",
+    "error_not_writable": "El directorio {path} no es escribible: {error}",
+    "error_reserved_path": "'{path}' es una ruta reservada",
+    "error_route_conflict": "'{path}' entra en conflicto con la ruta existente: {route}",
+    "error_corrupt_pid": "Archivo PID corrupto"
+  },
+
+  "version": {
+    "name_version": "weather 1.0.0",
+    "built": "Compilado: {build_date}",
+    "go": "Go: {go_version}",
+    "os_arch": "SO/Arq: {goos}/{goarch}"
+  },
+
+  "confirm": {
+    "delete_title": "Confirmar eliminación",
+    "delete_message": "¿Está seguro de que desea eliminar este elemento?",
+    "action_irreversible": "Esta acción no se puede deshacer."
+  },
+
+  "form": {
+    "required_field": "(obligatorio)",
+    "optional_field": "(opcional)",
+    "hint_email": "Nunca compartiremos su correo electrónico.",
+    "errors_count": "El formulario tiene {count} errores"
+  },
+
+  "a11y": {
+    "skip_to_content": "Saltar al contenido principal",
+    "skip_to_navigation": "Saltar a la navegación",
+    "loading": "Cargando...",
+    "item_saved": "Elemento guardado exitosamente",
+    "search_results": "{count} resultados de búsqueda encontrados"
   }
 }
 ```
 
+### Translation Key Rules
+
+| Rule | Description |
+|------|-------------|
+| **No hardcoded strings** | Every user-facing string MUST use `t(key)` or `{{t .Lang key}}` |
+| **Key naming** | Use dot-separated lowercase: `admin.dashboard.title` |
+| **Interpolation** | Use `{variable}` syntax: `"Hello, {name}"` |
+| **Plurals** | Nested under key with `zero`, `one`, `two`, `few`, `many`, `other` |
+| **HTML content** | Store plain text in translations, apply HTML in templates |
+| **Context** | Same word with different meanings gets different keys (e.g., `common.close` vs `nav.close`) |
+
+### Template Usage
+
+**Go HTML templates:**
+
+```go
+// Template function
+funcMap := template.FuncMap{
+    "t": func(lang, key string) string {
+        return i18n.Translate(lang, key)
+    },
+    "tf": func(lang, key string, args ...interface{}) string {
+        return i18n.TranslateFormat(lang, key, args...)
+    },
+    "tp": func(lang, key string, count int) string {
+        return i18n.TranslatePlural(lang, key, count)
+    },
+}
+```
+
+```html
+<!-- Simple translation -->
+<h1>{{t .Lang "admin.dashboard.title"}}</h1>
+
+<!-- With interpolation -->
+<p>{{tf .Lang "admin.dashboard.ssl_expires_in" .Days}}</p>
+
+<!-- Plurals -->
+<span>{{tp .Lang "plurals.items" .Count}}</span>
+
+<!-- Attributes -->
+<input placeholder="{{t .Lang "common.search_placeholder"}}">
+<button aria-label="{{t .Lang "common.close"}}">X</button>
+```
+
+**JavaScript (for dynamic frontend strings):**
+
+```javascript
+// Load translations for current language
+const translations = await fetch(`/locales/${lang}.json`).then(r => r.json());
+
+function t(key) {
+    return key.split('.').reduce((obj, k) => obj?.[k], translations) || key;
+}
+
+function tf(key, vars) {
+    let str = t(key);
+    for (const [k, v] of Object.entries(vars)) {
+        str = str.replace(`{${k}}`, v);
+    }
+    return str;
+}
+
+// Usage
+announce(t('a11y.item_saved'));
+document.title = tf('admin.panel_title', { app_name: config.appName });
+```
+
+### API Response Translation
+
+**API error messages are translated based on the request language:**
+
+```go
+func handleError(w http.ResponseWriter, r *http.Request, code string) {
+    lang := r.Context().Value(langKey).(string)
+    msg := i18n.Translate(lang, "errors." + strings.ToLower(code))
+    writeJSON(w, ErrorResponse{Code: code, Message: msg})
+}
+```
+
+```json
+// GET /api/v1/items/999?lang=es
+// Response:
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "No encontrado"
+  }
+}
+```
+
+### Swagger/OpenAPI Translation
+
+**Swagger UI descriptions are served in the requested language:**
+
+```go
+func SwaggerHandler(w http.ResponseWriter, r *http.Request) {
+    lang := r.Context().Value(langKey).(string)
+    spec := generateSwaggerSpec(lang) // Translates descriptions
+    writeJSON(w, spec)
+}
+```
+
+The OpenAPI spec `description`, `summary`, and `x-description` fields are populated from `swagger.*` translation keys.
+
+### GraphQL Schema Translation
+
+**GraphQL type and field descriptions are translated:**
+
+```go
+func buildSchema(lang string) *graphql.Schema {
+    queryType := graphql.NewObject(graphql.ObjectConfig{
+        Name:        "Query",
+        Description: i18n.Translate(lang, "graphql.type_descriptions.query"),
+        Fields: graphql.Fields{
+            // ...
+        },
+    })
+    return graphql.MustNewSchema(graphql.SchemaConfig{Query: queryType})
+}
+```
+
+### Email Template Translation
+
+**All email templates use translation keys, not hardcoded strings:**
+
+```go
+func sendWelcomeEmail(user User, lang string) {
+    subject := i18n.TranslateFormat(lang, "email.subjects.welcome", map[string]string{
+        "app_name": config.AppName,
+    })
+    // Body uses translated section headings and content
+    body := renderEmailTemplate("welcome", lang, map[string]interface{}{
+        "heading":       i18n.Translate(lang, "email.body.welcome_heading"),
+        "getting_started": i18n.Translate(lang, "email.body.getting_started"),
+        // ...
+    })
+    send(user.Email, subject, body)
+}
+```
+
+### CLI Output Translation
+
+**CLI output respects the `LANG` / `LC_ALL` environment variable:**
+
+```go
+func getCLILanguage() string {
+    if lang := os.Getenv("LANG"); lang != "" {
+        // Parse "es_ES.UTF-8" → "es"
+        return strings.Split(lang, "_")[0]
+    }
+    return "en"
+}
+```
+
+```bash
+# CLI output in Spanish
+LANG=es_ES.UTF-8 myapp --help
+# Uso:
+#   myapp [opciones]
+# ...
+
+# CLI output in English (default)
+myapp --help
+# Usage:
+#   myapp [options]
+# ...
+```
+
 ### Adding New Languages
 
-1. Create `locales/{lang}.json` with all keys from `locales/en.json`
-2. Add language to `config.server.i18n.available_languages`
-3. Language automatically appears in language selector
+1. Copy `locales/en.json` to `locales/{lang}.json`
+2. Translate ALL keys (no key may be omitted)
+3. Add language code to `config.server.i18n.available_languages`
+4. Language automatically appears in the language selector
+5. Run `make i18n-validate` to verify all keys are present
+
+### Build-Time Validation
+
+```bash
+# Makefile target
+i18n-validate:
+	@echo "Validating translation files..."
+	@go run cmd/i18n-validate/main.go locales/
+
+# Validates:
+# - All language files have identical key sets to en.json
+# - No empty string values
+# - All interpolation variables ({var}) match across languages
+# - All plural categories required by the language are present
+# - No orphaned keys (keys in other languages not in en.json)
+```
 
 ### RTL (Right-to-Left) Support
 
-| Language | Code | Direction |
-|----------|------|-----------|
-| Arabic | `ar` | `rtl` |
-| Hebrew | `he` | `rtl` |
-| Persian | `fa` | `rtl` |
-| Urdu | `ur` | `rtl` |
+**Arabic (`ar`) requires RTL layout. The `dir` attribute is set from the translation file's `meta.direction`.**
 
 **HTML Implementation:**
 ```html
@@ -41803,13 +42987,13 @@ make test
 
 **Use Go's `golang.org/x/text` package for locale-aware formatting.**
 
-| Format Type | Example (en-US) | Example (de-DE) | Example (ar-SA) |
-|-------------|-----------------|-----------------|-----------------|
-| Date | 12/31/2024 | 31.12.2024 | ٣١/١٢/٢٠٢٤ |
-| Time | 2:30 PM | 14:30 | ٢:٣٠ م |
-| Number | 1,234.56 | 1.234,56 | ١٬٢٣٤٫٥٦ |
-| Currency | $1,234.56 | 1.234,56 € | ١٬٢٣٤٫٥٦ ر.س |
-| Percentage | 45.5% | 45,5 % | ٤٥٫٥٪ |
+| Format Type | Example (en-US) | Example (de-DE) | Example (ar-SA) | Example (ja-JP) |
+|-------------|-----------------|-----------------|-----------------|-----------------|
+| Date | 12/31/2024 | 31.12.2024 | ٣١/١٢/٢٠٢٤ | 2024/12/31 |
+| Time | 2:30 PM | 14:30 | ٢:٣٠ م | 14:30 |
+| Number | 1,234.56 | 1.234,56 | ١٬٢٣٤٫٥٦ | 1,234.56 |
+| Currency | $1,234.56 | 1.234,56 € | ١٬٢٣٤٫٥٦ ر.س | ¥1,235 |
+| Percentage | 45.5% | 45,5 % | ٤٥٫٥٪ | 45.5% |
 
 **Implementation:**
 ```go
@@ -41829,11 +43013,13 @@ func FormatNumber(n float64, lang string) string {
 
 | Language | Categories Used |
 |----------|-----------------|
-| English | one, other |
-| French | one, other (0 is "one") |
-| Russian | one, few, many, other |
-| Arabic | zero, one, two, few, many, other |
-| Japanese | other (no plural forms) |
+| English (en) | one, other |
+| Spanish (es) | one, other |
+| French (fr) | one, other (0 is "one") |
+| German (de) | one, other |
+| Arabic (ar) | zero, one, two, few, many, other |
+| Chinese (zh) | other (no plural forms) |
+| Japanese (ja) | other (no plural forms) |
 
 **Go Implementation:**
 ```go
@@ -41857,11 +43043,11 @@ server:
     available_languages:
       - en
       - es
-      - de
+      - zh
       - fr
       - ar
+      - de
       - ja
-      - zh
     fallback_language: en
     cookie_name: lang
     cookie_max_age: 365d  # 1 year
@@ -43475,7 +44661,7 @@ func ensureTorFile(path string, content []byte) error {
 
 ## Admin Panel
 
-### /{admin_path}/server/tor (WebUI)
+### /admin/server/tor (WebUI)
 
 **Hidden service is ALWAYS enabled if Tor binary is found.** No enable/disable toggle.
 
@@ -43767,20 +44953,20 @@ make
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/tor` | GET | Get Tor status, config, and .onion address |
-| `/api/{api_version}/{admin_path}/server/tor` | PATCH | Update Tor settings (validates before saving) |
-| `/api/{api_version}/{admin_path}/server/tor/validate` | POST | Validate config without saving |
-| `/api/{api_version}/{admin_path}/server/tor/regenerate` | POST | Regenerate .onion address |
-| `/api/{api_version}/{admin_path}/server/tor/restart` | POST | Restart Tor process |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | GET | Get vanity generation status |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | POST | Start vanity generation |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | DELETE | Cancel vanity generation |
-| `/api/{api_version}/{admin_path}/server/tor/vanity/apply` | POST | Apply vanity address |
-| `/api/{api_version}/{admin_path}/server/tor/import` | POST | Import external keys |
+| `/api/v1/admin/server/tor` | GET | Get Tor status, config, and .onion address |
+| `/api/v1/admin/server/tor` | PATCH | Update Tor settings (validates before saving) |
+| `/api/v1/admin/server/tor/validate` | POST | Validate config without saving |
+| `/api/v1/admin/server/tor/regenerate` | POST | Regenerate .onion address |
+| `/api/v1/admin/server/tor/restart` | POST | Restart Tor process |
+| `/api/v1/admin/server/tor/vanity` | GET | Get vanity generation status |
+| `/api/v1/admin/server/tor/vanity` | POST | Start vanity generation |
+| `/api/v1/admin/server/tor/vanity` | DELETE | Cancel vanity generation |
+| `/api/v1/admin/server/tor/vanity/apply` | POST | Apply vanity address |
+| `/api/v1/admin/server/tor/import` | POST | Import external keys |
 
 ### Response Format
 
-**GET `/api/{api_version}/{admin_path}/server/tor`**
+**GET `/api/v1/admin/server/tor`**
 
 ```json
 {
@@ -43809,7 +44995,7 @@ make
 }
 ```
 
-**POST `/api/{api_version}/{admin_path}/server/tor/validate`** (or PATCH with invalid config)
+**POST `/api/v1/admin/server/tor/validate`** (or PATCH with invalid config)
 
 ```json
 {
@@ -43827,7 +45013,7 @@ make
 }
 ```
 
-**PATCH `/api/{api_version}/{admin_path}/server/tor`** (success)
+**PATCH `/api/v1/admin/server/tor`** (success)
 
 ```json
 {
@@ -44112,17 +45298,17 @@ func ValidateAccess(ctx context.Context, token *Token, target string, action str
 
 ```bash
 # Default: use token owner's personal context (no --user flag)
-weather-cli list                    # GET /api/{api_version}/users/{resource} (current user)
+weather-cli list                    # GET /api/v1/users/{resource} (current user)
 
 # Explicit user context (view another user's public resources)
-weather-cli --user @alice list      # GET /api/{api_version}/users/alice/{resource}
+weather-cli --user @alice list      # GET /api/v1/users/alice/{resource}
 
 # Org context (user must have org access)
-weather-cli --user +acme-corp list  # GET /api/{api_version}/orgs/acme-corp/{resource}
+weather-cli --user +acme-corp list  # GET /api/v1/orgs/acme-corp/{resource}
 
 # Auto-detect: CLI determines if name is user or org
-weather-cli --user alice list       # GET /api/{api_version}/users/alice/{resource} (if user)
-weather-cli --user acme-corp list   # GET /api/{api_version}/orgs/acme-corp/{resource} (if org)
+weather-cli --user alice list       # GET /api/v1/users/alice/{resource} (if user)
+weather-cli --user acme-corp list   # GET /api/v1/orgs/acme-corp/{resource} (if org)
 ```
 
 **Note:** `{resource}` is the project-specific resource type (e.g., `repos`, `pastes`, `links`). See IDEA.md for your project's resources.
@@ -44133,17 +45319,17 @@ weather-cli --user acme-corp list   # GET /api/{api_version}/orgs/acme-corp/{res
 
 | CLI Command | API Route |
 |-------------|-----------|
-| `list` (no flag) | `GET /api/{api_version}/users/{resource}` (current user) |
-| `--user @alice list` | `GET /api/{api_version}/users/alice/{resource}` |
-| `--user +acme-corp list` | `GET /api/{api_version}/orgs/acme-corp/{resource}` |
-| `--user alice list` | Auto-detect → `/api/{api_version}/users/alice/{resource}` or `/api/{api_version}/orgs/alice/{resource}` |
+| `list` (no flag) | `GET /api/v1/users/{resource}` (current user) |
+| `--user @alice list` | `GET /api/v1/users/alice/{resource}` |
+| `--user +acme-corp list` | `GET /api/v1/orgs/acme-corp/{resource}` |
+| `--user alice list` | Auto-detect → `/api/v1/users/alice/{resource}` or `/api/v1/orgs/alice/{resource}` |
 
 ```bash
 # CLI translates --user to URL-scoped route
 weather-cli --user acme-corp list
 
 # Becomes:
-GET /api/{api_version}/orgs/acme-corp/{resource}
+GET /api/v1/orgs/acme-corp/{resource}
 Authorization: Bearer usr_abc123...
 ```
 
@@ -44153,15 +45339,15 @@ Authorization: Bearer usr_abc123...
 CLI receives --user flag
 │
 ├─► No --user flag
-│   └─► Use /api/{api_version}/users/{resource} (current user from token)
+│   └─► Use /api/v1/users/{resource} (current user from token)
 │
 ├─► --user NAME provided
-│   ├─► Prefix @? → Use /api/{api_version}/users/{name}/{resource}
-│   ├─► Prefix +? → Use /api/{api_version}/orgs/{name}/{resource}
+│   ├─► Prefix @? → Use /api/v1/users/{name}/{resource}
+│   ├─► Prefix +? → Use /api/v1/orgs/{name}/{resource}
 │   └─► No prefix → CLI auto-detects:
 │       ├─► Query server for name type
-│       ├─► User? → /api/{api_version}/users/{name}/{resource}
-│       ├─► Org? → /api/{api_version}/orgs/{name}/{resource}
+│       ├─► User? → /api/v1/users/{name}/{resource}
+│       ├─► Org? → /api/v1/orgs/{name}/{resource}
 │       └─► Neither → Error: not found
 │
 └─► Server validates token has access to resource
@@ -44469,7 +45655,7 @@ if env.IsAutoDetectDisplayModeGUI() {
 
 | Binary | First Run | Configuration Method |
 |--------|-----------|---------------------|
-| **Server** | Start with defaults, show status banner | WebUI at `/{admin_path}` |
+| **Server** | Start with defaults, show status banner | WebUI at `/admin` |
 | **CLI** | Setup wizard (GUI/TUI) | Setup wizard (no WebUI for CLI) |
 | **Agent** | Start with connection string, show status banner | Server provides connection string |
 
@@ -44486,11 +45672,11 @@ if env.IsAutoDetectDisplayModeGUI() {
 | **Headless/daemon** | Log to file |
 
 **No built-in TUI/GUI wizard for Server or Agent binaries.** They just run:
-- **Server**: Has web-based setup at `/{admin_path}/server/setup` (accessed via browser, see PART 17)
+- **Server**: Has web-based setup at `/admin/server/setup` (accessed via browser, see PART 17)
 - **Agent**: Configured via connection string from server admin panel
 
 **Note:** "Setup wizard" has two meanings:
-1. **Server's web-based setup** - HTML pages served by server, accessed in browser at `/{admin_path}/server/setup`
+1. **Server's web-based setup** - HTML pages served by server, accessed in browser at `/admin/server/setup`
 2. **CLI's built-in TUI/GUI wizard** - interactive wizard built into CLI binary itself
 
 Only CLI has a built-in wizard. Server serves web pages for setup.
@@ -45867,7 +47053,7 @@ weather-cli --config ~/work/prod.yml list  # Uses absolute path
 
 # Server connection
 server:
-  primary: ""                      # Server URL (empty = use {officialsite} or prompt)
+  primary: ""                      # Server URL (empty = use https://wthr.top or prompt)
   cluster: []                      # Auto-discovered cluster nodes
   api_version: v1                  # API version prefix (default: v1, must match server)
   admin_path: admin                # Admin path (default: admin, must match server)
@@ -45959,7 +47145,7 @@ On every CLI command:
 2. Try server.primary
 3. If fails → try server.cluster nodes (silent failover)
 4. Execute command on first available node
-5. Background: GET /api/{api_version}/healthz
+5. Background: GET /api/v1/healthz
 6. Read cluster.primary and cluster.nodes from response
 7. Update server.primary and server.cluster in cli.yml (async, non-blocking)
 ```
@@ -45977,7 +47163,7 @@ On every CLI command:
 1. `--server` flag (if provided)
 2. `server.primary` in `cli.yml` (if set)
 3. `server.cluster` nodes (if primary fails)
-4. `{officialsite}` compiled default (if project has official site)
+4. `https://wthr.top` compiled default (if project has official site)
 5. Error with setup instructions
 
 **Behavior:**
@@ -45987,7 +47173,7 @@ On every CLI command:
 | `--server` flag used | Use that server, **save to `server.primary` in cli.yml** |
 | `server.primary` in cli.yml | Use configured primary server |
 | Primary fails, cluster exists | Silently try cluster nodes |
-| Project has `{officialsite}` | Use official site as default |
+| Project has `https://wthr.top` | Use official site as default |
 | No server available | Error with setup instructions |
 
 **Config save rule: Validate everything, only save valid, never clear valid.**
@@ -46037,7 +47223,7 @@ Flags:
 ...
 ```
 
-**Official site (`{officialsite}`) is defined in the project's AI.md or README.md and compiled into the binary.**
+**Official site (`https://wthr.top`) is defined in the project's AI.md or README.md and compiled into the binary.**
 
 **What official site affects:**
 - README.md: Default production site URL in examples
@@ -46050,7 +47236,7 @@ Flags:
 - Any runtime behavior (just a compiled default)
 
 Sources for official site (check in order):
-1. AI.md: `Official Site: https://...` or `{officialsite}: https://...`
+1. AI.md: `Official Site: https://...` or `https://wthr.top: https://...`
 2. README.md: `Official site is: https://...` or `Site: https://...`
 3. AI asks user (if not found in docs)
 4. If user selects "none", project has no default server
@@ -46347,7 +47533,7 @@ func printInit(shell, binaryName string) {
 
 ```bash
 $ weather-cli --help
-weather-cli {projectversion} - CLI for weather
+weather-cli 1.0.0 - CLI for weather
 
 Usage:
   weather-cli [args] [flags]
@@ -46383,7 +47569,7 @@ Run 'weather-cli <command> --help' for detailed help on any command.
 **If user renames binary:**
 ```bash
 $ mypaste --help
-mypaste {projectversion} - client for weather API   # Shows actual binary name
+mypaste 1.0.0 - client for weather API   # Shows actual binary name
 
 Usage:
   mypaste [command] [flags]                     # Shows actual binary name
@@ -46396,17 +47582,17 @@ Usage:
 
 ```bash
 $ weather-cli --version
-weather-cli {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
+weather-cli 1.0.0 ({COMMIT_SHA}) built {BUILD_DATE}
 
 # If renamed:
 $ mypaste --version
-mypaste {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}   # Shows actual name
+mypaste 1.0.0 ({COMMIT_SHA}) built {BUILD_DATE}   # Shows actual name
 ```
 
 Same format as server:
 ```bash
 $ pastebin --version
-pastebin {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
+pastebin 1.0.0 ({COMMIT_SHA}) built {BUILD_DATE}
 ```
 
 ## Commands
@@ -46430,7 +47616,7 @@ Example commands (project-dependent):
 
 | Auth Type | When Used |
 |-----------|-----------|
-| None | Public endpoints (e.g., `GET /api/{api_version}/pastes/{id}`) |
+| None | Public endpoints (e.g., `GET /api/v1/pastes/{id}`) |
 | API Token | Protected endpoints, user-specific data |
 | Session | Admin operations (if CLI supports admin features) |
 
@@ -46595,16 +47781,16 @@ func BuildQueryString(params map[string]string) string {
 
 ```go
 // NEVER do this - injection vulnerability!
-badURL := fmt.Sprintf("%s/api/{api_version}/users/%s/pastes", serverURL, username)
+badURL := fmt.Sprintf("%s/api/v1/users/%s/pastes", serverURL, username)
 
 // ALWAYS do this - properly encoded
-goodURL := urlutil.BuildAPIURL(serverURL, "/api/{api_version}/users/{username}/pastes",
+goodURL := urlutil.BuildAPIURL(serverURL, "/api/v1/users/{username}/pastes",
     map[string]string{"username": username},
     nil,
 )
 
 // With query parameters
-searchURL := urlutil.BuildAPIURL(serverURL, "/api/{api_version}/search",
+searchURL := urlutil.BuildAPIURL(serverURL, "/api/v1/search",
     nil,
     map[string]string{
         "q": searchTerm,
@@ -46614,7 +47800,7 @@ searchURL := urlutil.BuildAPIURL(serverURL, "/api/{api_version}/search",
 )
 
 // For single segments
-path := "/api/{api_version}/users/" + urlutil.EncodePathSegment(username) + "/pastes"
+path := "/api/v1/users/" + urlutil.EncodePathSegment(username) + "/pastes"
 ```
 
 ### What MUST Be Encoded
@@ -46672,7 +47858,7 @@ func NewAPIClient(baseURL, token string) *APIClient {
 
 // GetUserResource fetches a user's resource with proper URL encoding
 func (c *APIClient) GetUserResource(username, resourceType string) (*APIResponse, error) {
-    apiURL := urlutil.BuildAPIURL(c.baseURL, "/api/{api_version}/users/{username}/{resource}",
+    apiURL := urlutil.BuildAPIURL(c.baseURL, "/api/v1/users/{username}/{resource}",
         map[string]string{
             "username": username,
             "resource": resourceType,
@@ -46684,7 +47870,7 @@ func (c *APIClient) GetUserResource(username, resourceType string) (*APIResponse
 
 // SearchResources searches with proper query encoding
 func (c *APIClient) SearchResources(query string, limit int) (*APIResponse, error) {
-    apiURL := urlutil.BuildAPIURL(c.baseURL, "/api/{api_version}/search",
+    apiURL := urlutil.BuildAPIURL(c.baseURL, "/api/v1/search",
         nil,
         map[string]string{
             "q":     query,
@@ -47228,17 +48414,17 @@ When server is reachable, `--version` can show extended info:
 
 ```bash
 $ weather-cli --version
-weather-cli {projectversion} ({COMMIT_SHA}) built {BUILD_DATE}
+weather-cli 1.0.0 ({COMMIT_SHA}) built {BUILD_DATE}
 
 Server: https://weather.example.com
-Server Version: {projectversion} (compatible)
+Server Version: 1.0.0 (compatible)
 
 Build Info:
   Go: {GO_VERSION}
   OS/Arch: {GOOS}/{GOARCH}
 ```
 
-**Version compatibility check:** CLI queries server `/api/{api_version}/version` and warns if versions differ significantly.
+**Version compatibility check:** CLI queries server `/api/v1/version` and warns if versions differ significantly.
 
 ## Determining If Project Needs CLI
 
@@ -47697,7 +48883,7 @@ register                      # Interactive registration with server
 
 ```bash
 $ weather-agent --help
-weather-agent {projectversion} - Agent for weather
+weather-agent 1.0.0 - Agent for weather
 
 Usage:
   weather-agent [flags]
@@ -47817,9 +49003,9 @@ func GenerateAgentCommand(serverURL, token string) string {
 
 | Scope | Token Prefix | Issued By | Route |
 |-------|--------------|-----------|-------|
-| Admin | `adm_agt_` | Admin panel | `/api/{api_version}/{admin_path}/server/agents/*` |
-| User | `usr_agt_` | User settings | `/api/{api_version}/users/agents/*` |
-| Org | `org_agt_` | Org settings | `/api/{api_version}/orgs/{slug}/agents/*` |
+| Admin | `adm_agt_` | Admin panel | `/api/v1/admin/server/agents/*` |
+| User | `usr_agt_` | User settings | `/api/v1/users/agents/*` |
+| Org | `org_agt_` | Org settings | `/api/v1/orgs/{slug}/agents/*` |
 
 ```go
 // Agent token generation (server-side) - scoped by owner type
@@ -47844,9 +49030,9 @@ func GenerateAgentToken(scope AgentScope) string {
 
 | Scope | Endpoint |
 |-------|----------|
-| Admin | `POST /api/{api_version}/{admin_path}/server/agents/register` |
-| User | `POST /api/{api_version}/users/agents/register` |
-| Org | `POST /api/{api_version}/orgs/{slug}/agents/register` |
+| Admin | `POST /api/v1/admin/server/agents/register` |
+| User | `POST /api/v1/users/agents/register` |
+| Org | `POST /api/v1/orgs/{slug}/agents/register` |
 
 **Request:**
 ```json
@@ -47976,7 +49162,7 @@ WEATHER_DEBUG=true
 **Failover Flow:**
 ```
 1. Agent connects to server.primary
-2. Agent calls GET /api/{api_version}/healthz
+2. Agent calls GET /api/v1/healthz
 3. Agent reads cluster.primary and cluster.nodes from response
 4. Agent saves to server.primary and server.cluster in agent.yml
 5. If primary fails:
@@ -47993,7 +49179,7 @@ WEATHER_DEBUG=true
 1. Load agent.yml
 2. Try server.primary
 3. If fails → try server.cluster nodes
-4. Once connected → GET /api/{api_version}/healthz
+4. Once connected → GET /api/v1/healthz
 5. Update server.primary and server.cluster from response
 6. Begin normal operation
 ```
@@ -48161,7 +49347,7 @@ The Agent is essentially the Server's "little sibling" - same professional struc
 |--------|--------|-------|
 | **Listens for connections** | ✅ Yes (`--port`, `--address`) | ❌ No |
 | **Connects to parent server** | ❌ No (IS the server) | ✅ Yes (`--server`, `--token`) |
-| **Setup** | ✅ Web-based (token entered at `/{admin_path}/server/setup`) | ❌ No (registers with server via connection string) |
+| **Setup** | ✅ Web-based (token entered at `/admin/server/setup`) | ❌ No (registers with server via connection string) |
 | **Admin operations** | N/A (IS the server) | ❌ No (Client's job) |
 | **WebUI** | ✅ Yes | ❌ No (headless) |
 | **Database** | ✅ `server.db` | ✅ `agent.db` (if needed) |
@@ -48345,7 +49531,7 @@ binaries/
 | **Purpose** | Manage server, configuration | Use application features |
 | **Storage** | `admins` table | `users` table |
 | **Required** | **YES - all projects** | **NO - optional** |
-| **Access** | `/{admin_path}/*` only | `/users/*` routes |
+| **Access** | `/admin/*` only | `/users/*` routes |
 | **Created by** | Setup wizard, admin invite | Registration, admin invitation |
 
 **See PART 17: ADMIN PANEL for Server Admin authentication, setup wizard, MFA, and admin management.**
@@ -48396,7 +49582,7 @@ users:
 **Admin controls all user creation. Same flow as Server Admin invites (see PART 17).**
 
 ```
-Admin Panel (/{admin_path}/server/users)
+Admin Panel (/admin/server/users)
 ┌─────────────────────────────────────────────────────────────────┐
 │  Users                                                          │
 ├─────────────────────────────────────────────────────────────────┤
@@ -48490,7 +49676,7 @@ Admin clicks "Invite New User"
 │     └── Status: FULLY FUNCTIONAL ✓                                       │
 │                                                                          │
 │  3. ADMIN OPTIONALLY CHANGES REGISTRATION MODE                           │
-│     └── /{admin_path}/server/settings → registration mode                       │
+│     └── /admin/server/settings → registration mode                       │
 │     └── Mode: public (default) | private | disabled                      │
 │     └── Admin can ALWAYS invite users (mode controls public reg only)    │
 │                                                                          │
@@ -48536,7 +49722,7 @@ Admin clicks "Invite New User"
 
 | Route | Regular User Access |
 |-------|---------------------|
-| `/{admin_path}/*` | NO - 403 Forbidden (unless user has admin role) |
+| `/admin/*` | NO - 403 Forbidden (unless user has admin role) |
 | `/users/*` | Full access to own profile, settings, tokens |
 | `/auth/login` | Login page |
 | `/auth/logout` | Logout |
@@ -48802,7 +49988,7 @@ func DetectIdentifierType(input string) string {
 
 **API Request:**
 
-`POST /api/{api_version}/auth/login`
+`POST /api/v1/auth/login`
 
 Identifier can be: username, user_id, or email.
 
@@ -49064,18 +50250,18 @@ func GetGravatarURL(email string, size int) string {
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `GET /api/{api_version}/users/avatar` | GET | Get current user's avatar URL |
-| `POST /api/{api_version}/users/avatar` | POST | Upload new avatar |
-| `PATCH /api/{api_version}/users/avatar` | PATCH | Update avatar settings (type, URL) |
-| `DELETE /api/{api_version}/users/avatar` | DELETE | Reset to Gravatar |
-| `GET /api/{api_version}/orgs/{slug}/avatar` | GET | Get org's avatar URL |
-| `POST /api/{api_version}/orgs/{slug}/avatar` | POST | Upload org avatar |
-| `PATCH /api/{api_version}/orgs/{slug}/avatar` | PATCH | Update org avatar settings |
-| `DELETE /api/{api_version}/orgs/{slug}/avatar` | DELETE | Reset org to Gravatar |
+| `GET /api/v1/users/avatar` | GET | Get current user's avatar URL |
+| `POST /api/v1/users/avatar` | POST | Upload new avatar |
+| `PATCH /api/v1/users/avatar` | PATCH | Update avatar settings (type, URL) |
+| `DELETE /api/v1/users/avatar` | DELETE | Reset to Gravatar |
+| `GET /api/v1/orgs/{slug}/avatar` | GET | Get org's avatar URL |
+| `POST /api/v1/orgs/{slug}/avatar` | POST | Upload org avatar |
+| `PATCH /api/v1/orgs/{slug}/avatar` | PATCH | Update org avatar settings |
+| `DELETE /api/v1/orgs/{slug}/avatar` | DELETE | Reset org to Gravatar |
 
 **Avatar Upload Request:**
 ```
-POST /api/{api_version}/users/avatar
+POST /api/v1/users/avatar
 Content-Type: multipart/form-data
 
 file: <binary image data>
@@ -49083,7 +50269,7 @@ file: <binary image data>
 
 **Avatar URL Request:**
 ```json
-PATCH /api/{api_version}/users/avatar
+PATCH /api/v1/users/avatar
 {
     "type": "url",
     "url": "https://example.com/my-avatar.png"
@@ -49131,7 +50317,7 @@ PATCH /api/{api_version}/users/avatar
 
 **Admin Password Reset Flow:**
 ```
-Admin Panel (/{admin_path}/server/moderation/users/{id})
+Admin Panel (/admin/server/moderation/users/{id})
 ┌─────────────────────────────────────────────────────────────┐
 │  User: johndoe                                              │
 │  Email: j***n@e***.com (masked)                             │
@@ -49247,7 +50433,7 @@ User receives: "Password reset requested by administrator.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Admin Panel MFA Setup (`/{admin_path}/account/security`):**
+**Admin Panel MFA Setup (`/admin/account/security`):**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -49272,7 +50458,7 @@ User receives: "Password reset requested by administrator.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**TOTP Setup Flow (`/{admin_path}/account/security/totp/setup`):**
+**TOTP Setup Flow (`/admin/account/security/totp/setup`):**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -49298,7 +50484,7 @@ User receives: "Password reset requested by administrator.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Passkey Setup Flow (`/{admin_path}/account/security/passkey/setup`):**
+**Passkey Setup Flow (`/admin/account/security/passkey/setup`):**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -49475,19 +50661,19 @@ See **PART 22: BACKUP & RESTORE → Admin Recovery Command** for full details.
 
 **Recovery Key API Flow:**
 ```
-POST /api/{api_version}/auth/login
+POST /api/v1/auth/login
   → { "identifier": "john@example.com", "password": "secretpassword" }
   ← { "ok": true, "data": { "requires_2fa": true, "session_token": "temp_xxx" } }
 
-POST /api/{api_version}/auth/recovery/use
+POST /api/v1/auth/recovery/use
   → { "session_token": "temp_xxx", "recovery_key": "a1b2c3d4-e5f6" }
   ← { "ok": true, "data": { "token": "auth_xxx", "remaining_keys": 9 } }
 
 # Now authenticated - can manage 2FA via /users/security/
-POST /api/{api_version}/users/security/2fa/disable
+POST /api/v1/users/security/2fa/disable
   ← { "ok": true, "data": {} }
      OR (setup new device)
-POST /api/{api_version}/users/security/2fa/enable
+POST /api/v1/users/security/2fa/enable
   ← { "ok": true, "data": { "qr_code": "base64", "secret": "JBSWY3DPEHPK3PXP", "recovery_keys": [] } }
 ```
 
@@ -49578,7 +50764,7 @@ server:
 5. On next login, group membership is re-evaluated
 6. If user is removed from all `admin_groups` → admin access revoked
 
-**Admin Panel (`/{admin_path}/server/security/auth`):**
+**Admin Panel (`/admin/server/security/auth`):**
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -49729,7 +50915,7 @@ server:
 
 **Private/Disabled Mode (Admin Invite):**
 ```
-1. Admin creates invite at /{admin_path}/server/users (sets username)
+1. Admin creates invite at /admin/server/users (sets username)
 2. Admin shares invite URL with new user
 3. User clicks link → sets own password (admin cannot set)
 4. Account active
@@ -49788,7 +50974,7 @@ server:
 
 **Profile Example (API Response):**
 ```json
-GET /api/{api_version}/users
+GET /api/v1/users
 {
     "id": 12345,
     "username": "johndoe",
@@ -49815,7 +51001,7 @@ GET /api/{api_version}/users
 
 **Public Profile Example (what others see):**
 ```json
-GET /api/{api_version}/public/users/johndoe
+GET /api/v1/public/users/johndoe
 {
     "username": "johndoe",
     "display_name": "John Doe",
@@ -50056,7 +51242,7 @@ func GetOrCreatePreferences(userID int) (*UserPreferences, error) {
 
 **Get All Settings:**
 ```json
-GET /api/{api_version}/users/settings
+GET /api/v1/users/settings
 {
     "account": {
         "display_name": "John Doe",
@@ -50094,7 +51280,7 @@ GET /api/{api_version}/users/settings
 
 **Update Settings (partial update):**
 ```json
-PATCH /api/{api_version}/users/settings
+PATCH /api/v1/users/settings
 {
     "privacy": {
         "visibility": "public",
@@ -50139,7 +51325,7 @@ PATCH /api/{api_version}/users/settings
 
 ## Admin Panel
 
-### /{admin_path}/server/moderation/users (User Moderation)
+### /admin/server/moderation/users (User Moderation)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -50149,7 +51335,7 @@ PATCH /api/{api_version}/users/settings
 | Disable/Enable | Toggle | Temporarily disable account |
 | Revoke sessions | Button | Log user out everywhere |
 
-### /{admin_path}/server/moderation/users/{id} (User Detail)
+### /admin/server/moderation/users/{id} (User Detail)
 
 | Section | Contents |
 |---------|----------|
@@ -50158,7 +51344,7 @@ PATCH /api/{api_version}/users/settings
 | Activity | Login history, API usage |
 | Actions | Disable, delete, impersonate |
 
-### /{admin_path}/server/roles (Role Management)
+### /admin/server/roles (Role Management)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -50167,7 +51353,7 @@ PATCH /api/{api_version}/users/settings
 | Edit permissions | Checkboxes | Set role permissions |
 | Delete role | Button | Remove role (reassign users first) |
 
-### /{admin_path}/server/users/invites (User Invitation Codes)
+### /admin/server/users/invites (User Invitation Codes)
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -50185,40 +51371,40 @@ PATCH /api/{api_version}/users/settings
 | Rule | Description |
 |------|-------------|
 | **Scoped** | Routes grouped by scope: `/auth`, `/user`, `/org`, `/admin` |
-| **Mirrored** | Web (`/`) and API (`/api/{api_version}/`) use same structure |
+| **Mirrored** | Web (`/`) and API (`/api/v1/`) use same structure |
 | **Intuitive** | Simple, predictable paths |
 | **Params over queries** | Use path params, limit query params to defined cases |
 | **Duplicated when needed** | Same resource may exist in multiple scopes |
 | **Auth under /auth/** | NEVER `/login`, `/register`, `/password/*` at root - ALWAYS `/auth/login`, `/auth/register`, `/auth/password/*`, etc. |
-| **Admin scoped** | `/{admin_path}/**` requires authenticated admin - unauthenticated flows (invites) go through `/auth/` |
+| **Admin scoped** | `/admin/**` requires authenticated admin - unauthenticated flows (invites) go through `/auth/` |
 
-**Note:** `{api_version}` defaults to `v1` but is configurable via `server.api_version` in server.yml. Do not hardcode `v1` in code.
+**Note:** `v1` defaults to `v1` but is configurable via `server.api_version` in server.yml. Do not hardcode `v1` in code.
 
 ### Response Formats
 
 | Route | Default | Options |
 |-------|---------|---------|
 | `/` (web) | HTML | - |
-| `/api/{api_version}/` | JSON (`application/json`) | JSON, Text |
-| `/api/{api_version}/**/*.txt` | Text (`text/plain`) | - |
+| `/api/v1/` | JSON (`application/json`) | JSON, Text |
+| `/api/v1/**/*.txt` | Text (`text/plain`) | - |
 
 ### Scopes
 
 | Scope | Web | API | Description |
 |-------|-----|-----|-------------|
-| Public | `/**` | `/api/{api_version}/**` | Public resources, unauthenticated (project-specific) |
-| Server Pages | `/server/` | `/api/{api_version}/server/` | Public pages (about, help, contact, privacy, etc.) |
-| Auth | `/auth/` | `/api/{api_version}/auth/` | Authentication flows |
-| Users | `/users/` | `/api/{api_version}/users/` | User resources |
-| Orgs | `/orgs/` | `/api/{api_version}/orgs/` | Organization resources |
-| Server Admin | `/{admin_path}/` | `/api/{api_version}/{admin_path}/` | Admin panel |
-| Server Settings | `/{admin_path}/server/` | `/api/{api_version}/{admin_path}/server/` | Server configuration within admin |
+| Public | `/**` | `/api/v1/**` | Public resources, unauthenticated (project-specific) |
+| Server Pages | `/server/` | `/api/v1/server/` | Public pages (about, help, contact, privacy, etc.) |
+| Auth | `/auth/` | `/api/v1/auth/` | Authentication flows |
+| Users | `/users/` | `/api/v1/users/` | User resources |
+| Orgs | `/orgs/` | `/api/v1/orgs/` | Organization resources |
+| Server Admin | `/admin/` | `/api/v1/admin/` | Admin panel |
+| Server Settings | `/admin/server/` | `/api/v1/admin/server/` | Server configuration within admin |
 
 ### Public Scope Examples (Project-Specific)
 
-**The root routes `/` and `/api/{api_version}/` return project-specific public content:**
+**The root routes `/` and `/api/v1/` return project-specific public content:**
 
-| Project Type | `/` (Web) | `/api/{api_version}/` (API) |
+| Project Type | `/` (Web) | `/api/v1/` (API) |
 |--------------|-----------|------------------|
 | Jokes | Random joke (HTML) | Random joke (JSON) |
 | Weather | Current weather (HTML) | Current weather (JSON) |
@@ -50230,25 +51416,25 @@ PATCH /api/{api_version}/users/settings
 
 | Web Route | API Route | Example Usage |
 |-----------|-----------|---------------|
-| `/ip` | `/api/{api_version}/ip` | Return requester's IP address |
-| `/jokes/random` | `/api/{api_version}/jokes/random` | Random joke |
-| `/weather/{location}` | `/api/{api_version}/weather/{location}` | Weather for location |
-| `/search/{query}` | `/api/{api_version}/search/{query}` | Public search |
+| `/ip` | `/api/v1/ip` | Return requester's IP address |
+| `/jokes/random` | `/api/v1/jokes/random` | Random joke |
+| `/weather/{location}` | `/api/v1/weather/{location}` | Weather for location |
+| `/search/{query}` | `/api/v1/search/{query}` | Public search |
 
 **Query parameter search on root routes:**
 
 | Web Route | API Route | Example Usage |
 |-----------|-----------|---------------|
-| `/?q={term}` | `/api/{api_version}/?q={term}` | Search from root |
-| `/search?q={term}` | `/api/{api_version}/search?q={term}` | Dedicated search route |
+| `/?q={term}` | `/api/v1/?q={term}` | Search from root |
+| `/search?q={term}` | `/api/v1/search?q={term}` | Dedicated search route |
 
 ```bash
 # All of these are valid search patterns:
 curl "/?q=hello"                           # Web search from root
-curl "/api/{api_version}/?q=hello"                    # API search from root
+curl "/api/v1/?q=hello"                    # API search from root
 curl "/search?q=hello"                     # Web dedicated search
-curl "/api/{api_version}/search?q=hello"              # API dedicated search
-curl "/api/{api_version}/search/hello"                # Path-based search (also valid)
+curl "/api/v1/search?q=hello"              # API dedicated search
+curl "/api/v1/search/hello"                # Path-based search (also valid)
 ```
 
 ### /api/autodiscover 
@@ -50412,7 +51598,7 @@ Both CLI and agent binaries automatically call `/api/autodiscover` when connecti
 curl -q -LSsf https://api.example.com/api/autodiscover
 ```
 
-**Note:** This endpoint is NOT versioned (`/api/autodiscover` not `/api/{api_version}/autodiscover`) because clients need it BEFORE they know the API version.
+**Note:** This endpoint is NOT versioned (`/api/autodiscover` not `/api/v1/autodiscover`) because clients need it BEFORE they know the API version.
 
 **Note:** Public routes are defined in IDEA.md for each project. They do NOT require authentication and are NOT scoped to users/orgs.
 
@@ -50449,7 +51635,7 @@ curl -q -LSsf https://api.example.com/api/autodiscover
 
 | Cookie | Scope | Max Age | Notes |
 |--------|-------|---------|-------|
-| `admin_session` | `/{admin_path}/` | 30 days | Admin web sessions |
+| `admin_session` | `/admin/` | 30 days | Admin web sessions |
 | `user_session` | `/users/`, `/orgs/` | 7 days | User web sessions |
 
 ## Web Routes
@@ -50528,340 +51714,340 @@ Organizations - only for projects with multi-user collaboration.
 | `/orgs/{slug}/security/sessions` | Active sessions (org-wide) |
 | `/orgs/{slug}/billing` | Billing & subscription (if applicable) |
 
-### Admin (`/{admin_path}/`)
+### Admin (`/admin/`)
 
 | Path | Description |
 |------|-------------|
-| `/{admin_path}` | Dashboard |
-| `/{admin_path}/profile` | Your admin account (password, API token, 2FA) |
-| `/{admin_path}/profile/preferences` | Admin preferences (theme, notifications) |
+| `/admin` | Dashboard |
+| `/admin/profile` | Your admin account (password, API token, 2FA) |
+| `/admin/profile/preferences` | Admin preferences (theme, notifications) |
 
-### Admin - Server (`/{admin_path}/server/`)
-
-| Path | Description |
-|------|-------------|
-| `/{admin_path}/server/setup` | Initial setup wizard |
-| `/{admin_path}/server/settings` | Server settings |
-| `/{admin_path}/server/branding` | Branding & SEO |
-| `/{admin_path}/server/ssl` | SSL/TLS settings |
-| `/{admin_path}/server/tor` | Tor hidden service |
-| `/{admin_path}/server/web` | Web settings (robots.txt, security.txt) |
-| `/{admin_path}/server/pages` | Standard pages (about, privacy, contact) |
-| `/{admin_path}/server/email` | Email/SMTP settings |
-| `/{admin_path}/server/email/templates` | Email templates |
-| `/{admin_path}/server/notifications` | Notification settings |
-| `/{admin_path}/server/scheduler` | Scheduled tasks |
-| `/{admin_path}/server/backup` | Backup & restore |
-| `/{admin_path}/server/logs` | Log viewer |
-| `/{admin_path}/server/roles` | Role definitions |
-| `/{admin_path}/server/users/invites` | User registration invite codes (multi-user apps) |
-
-### Admin - Server Admins (`/{admin_path}/server/admins/`)
+### Admin - Server (`/admin/server/`)
 
 | Path | Description |
 |------|-------------|
-| `/{admin_path}/server/admins` | Server admin accounts |
-| `/{admin_path}/server/admins/invite` | Invite new Server Admin (generates link) |
-| `/{admin_path}/server/admins/{id}` | Admin detail |
+| `/admin/server/setup` | Initial setup wizard |
+| `/admin/server/settings` | Server settings |
+| `/admin/server/branding` | Branding & SEO |
+| `/admin/server/ssl` | SSL/TLS settings |
+| `/admin/server/tor` | Tor hidden service |
+| `/admin/server/web` | Web settings (robots.txt, security.txt) |
+| `/admin/server/pages` | Standard pages (about, privacy, contact) |
+| `/admin/server/email` | Email/SMTP settings |
+| `/admin/server/email/templates` | Email templates |
+| `/admin/server/notifications` | Notification settings |
+| `/admin/server/scheduler` | Scheduled tasks |
+| `/admin/server/backup` | Backup & restore |
+| `/admin/server/logs` | Log viewer |
+| `/admin/server/roles` | Role definitions |
+| `/admin/server/users/invites` | User registration invite codes (multi-user apps) |
 
-### Admin - Moderation (`/{admin_path}/server/moderation/`)
+### Admin - Server Admins (`/admin/server/admins/`)
 
 | Path | Description |
 |------|-------------|
-| `/{admin_path}/server/moderation/users` | User moderation |
-| `/{admin_path}/server/moderation/users/{id}` | User detail |
-| `/{admin_path}/server/moderation/orgs` | Org moderation |
-| `/{admin_path}/server/moderation/orgs/{slug}` | Org detail |
+| `/admin/server/admins` | Server admin accounts |
+| `/admin/server/admins/invite` | Invite new Server Admin (generates link) |
+| `/admin/server/admins/{id}` | Admin detail |
+
+### Admin - Moderation (`/admin/server/moderation/`)
+
+| Path | Description |
+|------|-------------|
+| `/admin/server/moderation/users` | User moderation |
+| `/admin/server/moderation/users/{id}` | User detail |
+| `/admin/server/moderation/orgs` | Org moderation |
+| `/admin/server/moderation/orgs/{slug}` | Org detail |
 
 ## API Routes
 
-### Public (`/api/{api_version}/`)
+### Public (`/api/v1/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/healthz` | GET | Health check |
+| `/api/v1/healthz` | GET | Health check |
 
-**Note:** `/openapi.json` is a root-level endpoint (not `/api/{api_version}/openapi.json`). See PART 14.
+**Note:** `/openapi.json` is a root-level endpoint (not `/api/v1/openapi.json`). See PART 14.
 
-### Server (`/api/{api_version}/server/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/server/about` | GET | About information |
-| `/api/{api_version}/server/privacy` | GET | Privacy policy |
-| `/api/{api_version}/server/contact` | POST | Submit contact form |
-| `/api/{api_version}/server/help` | GET | Help content |
-
-### Auth (`/api/{api_version}/auth/`)
+### Server (`/api/v1/server/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/auth/register` | POST | Register new user |
-| `/api/{api_version}/auth/login` | POST | User login (returns session or 2FA challenge) |
-| `/api/{api_version}/auth/logout` | POST | User logout |
-| `/api/{api_version}/auth/2fa` | POST | Complete 2FA verification |
-| `/api/{api_version}/auth/passkey/challenge` | POST | Get WebAuthn challenge |
-| `/api/{api_version}/auth/passkey/verify` | POST | Verify WebAuthn response |
-| `/api/{api_version}/auth/password/forgot` | POST | Request password reset (sends email) |
-| `/api/{api_version}/auth/password/reset` | POST | Set new password (with token from email) |
-| `/api/{api_version}/auth/username/forgot` | POST | Request username reminder (sends email) |
-| `/api/{api_version}/auth/recovery/use` | POST | Use recovery key (2FA bypass) |
-| `/api/{api_version}/auth/verify` | POST | Verify email address |
-| `/api/{api_version}/auth/refresh` | POST | Refresh session/token |
-| `/api/{api_version}/auth/invite/user/{token}` | GET | Validate user invite token |
-| `/api/{api_version}/auth/invite/user/{token}` | POST | Complete user invite (set username, password) |
-| `/api/{api_version}/auth/invite/server/{token}` | GET | Validate Server Admin invite token |
-| `/api/{api_version}/auth/invite/server/{token}` | POST | Complete admin invite (set username, password) |
-| `/api/{api_version}/auth/oidc/{provider}` | GET | Get OIDC authorization URL |
-| `/api/{api_version}/auth/oidc/{provider}/callback` | POST | Exchange OIDC code for session |
-| `/api/{api_version}/auth/ldap` | POST | LDAP authentication |
+| `/api/v1/server/about` | GET | About information |
+| `/api/v1/server/privacy` | GET | Privacy policy |
+| `/api/v1/server/contact` | POST | Submit contact form |
+| `/api/v1/server/help` | GET | Help content |
 
-### Users (`/api/{api_version}/users/`)
+### Auth (`/api/v1/auth/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/register` | POST | Register new user |
+| `/api/v1/auth/login` | POST | User login (returns session or 2FA challenge) |
+| `/api/v1/auth/logout` | POST | User logout |
+| `/api/v1/auth/2fa` | POST | Complete 2FA verification |
+| `/api/v1/auth/passkey/challenge` | POST | Get WebAuthn challenge |
+| `/api/v1/auth/passkey/verify` | POST | Verify WebAuthn response |
+| `/api/v1/auth/password/forgot` | POST | Request password reset (sends email) |
+| `/api/v1/auth/password/reset` | POST | Set new password (with token from email) |
+| `/api/v1/auth/username/forgot` | POST | Request username reminder (sends email) |
+| `/api/v1/auth/recovery/use` | POST | Use recovery key (2FA bypass) |
+| `/api/v1/auth/verify` | POST | Verify email address |
+| `/api/v1/auth/refresh` | POST | Refresh session/token |
+| `/api/v1/auth/invite/user/{token}` | GET | Validate user invite token |
+| `/api/v1/auth/invite/user/{token}` | POST | Complete user invite (set username, password) |
+| `/api/v1/auth/invite/server/{token}` | GET | Validate Server Admin invite token |
+| `/api/v1/auth/invite/server/{token}` | POST | Complete admin invite (set username, password) |
+| `/api/v1/auth/oidc/{provider}` | GET | Get OIDC authorization URL |
+| `/api/v1/auth/oidc/{provider}/callback` | POST | Exchange OIDC code for session |
+| `/api/v1/auth/ldap` | POST | LDAP authentication |
+
+### Users (`/api/v1/users/`)
 
 **No ID required - app knows current user from session/token.**
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/users` | GET | Current user's profile |
-| `/api/{api_version}/users` | PATCH | Update current user's profile |
-| `/api/{api_version}/users/tokens` | GET | List user's API tokens |
-| `/api/{api_version}/users/tokens` | POST | Create API token |
-| `/api/{api_version}/users/tokens/{token_id}` | GET | Get token details |
-| `/api/{api_version}/users/tokens/{token_id}` | DELETE | Revoke API token |
-| `/api/{api_version}/users/settings` | GET | Get user preferences |
-| `/api/{api_version}/users/settings` | PATCH | Update user preferences |
-| `/api/{api_version}/users/security/password` | POST | Change password |
-| `/api/{api_version}/users/security/sessions` | GET | List active sessions |
-| `/api/{api_version}/users/security/sessions/{session_id}` | DELETE | Revoke session |
-| `/api/{api_version}/users/security/2fa` | GET | Get 2FA status |
-| `/api/{api_version}/users/security/2fa/enable` | POST | Enable 2FA |
-| `/api/{api_version}/users/security/2fa/disable` | POST | Disable 2FA |
-| `/api/{api_version}/users/security/recovery` | GET | Get recovery keys status |
-| `/api/{api_version}/users/security/recovery/regenerate` | POST | Regenerate recovery keys |
-| `/api/{api_version}/users/security/passkeys` | GET | List passkeys |
-| `/api/{api_version}/users/security/passkeys` | POST | Register new passkey |
-| `/api/{api_version}/users/security/passkeys/{passkey_id}` | DELETE | Remove passkey |
+| `/api/v1/users` | GET | Current user's profile |
+| `/api/v1/users` | PATCH | Update current user's profile |
+| `/api/v1/users/tokens` | GET | List user's API tokens |
+| `/api/v1/users/tokens` | POST | Create API token |
+| `/api/v1/users/tokens/{token_id}` | GET | Get token details |
+| `/api/v1/users/tokens/{token_id}` | DELETE | Revoke API token |
+| `/api/v1/users/settings` | GET | Get user preferences |
+| `/api/v1/users/settings` | PATCH | Update user preferences |
+| `/api/v1/users/security/password` | POST | Change password |
+| `/api/v1/users/security/sessions` | GET | List active sessions |
+| `/api/v1/users/security/sessions/{session_id}` | DELETE | Revoke session |
+| `/api/v1/users/security/2fa` | GET | Get 2FA status |
+| `/api/v1/users/security/2fa/enable` | POST | Enable 2FA |
+| `/api/v1/users/security/2fa/disable` | POST | Disable 2FA |
+| `/api/v1/users/security/recovery` | GET | Get recovery keys status |
+| `/api/v1/users/security/recovery/regenerate` | POST | Regenerate recovery keys |
+| `/api/v1/users/security/passkeys` | GET | List passkeys |
+| `/api/v1/users/security/passkeys` | POST | Register new passkey |
+| `/api/v1/users/security/passkeys/{passkey_id}` | DELETE | Remove passkey |
 
-### Orgs (`/api/{api_version}/orgs/`)
+### Orgs (`/api/v1/orgs/`)
 
 Organizations - only for projects with multi-user collaboration.
 
-**Route scoping:** All routes use org slug. Client gets own orgs from `GET /api/{api_version}/orgs`.
+**Route scoping:** All routes use org slug. Client gets own orgs from `GET /api/v1/orgs`.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/orgs` | GET | Own orgs (user) or list all (admin) |
-| `/api/{api_version}/orgs` | POST | Create organization |
-| `/api/{api_version}/orgs/{slug}` | GET | Get organization details |
-| `/api/{api_version}/orgs/{slug}` | PATCH | Update organization |
-| `/api/{api_version}/orgs/{slug}` | DELETE | Delete organization |
-| `/api/{api_version}/orgs/{slug}/settings` | GET | Get org settings |
-| `/api/{api_version}/orgs/{slug}/settings` | PATCH | Update org settings |
-| `/api/{api_version}/orgs/{slug}/tokens` | GET | List org API tokens |
-| `/api/{api_version}/orgs/{slug}/tokens` | POST | Create org API token |
-| `/api/{api_version}/orgs/{slug}/tokens/{token_id}` | GET | Get token details |
-| `/api/{api_version}/orgs/{slug}/tokens/{token_id}` | DELETE | Revoke token |
-| `/api/{api_version}/orgs/{slug}/members` | GET | List members |
-| `/api/{api_version}/orgs/{slug}/members` | POST | Add member |
-| `/api/{api_version}/orgs/{slug}/members/{member_id}` | GET | Get member details |
-| `/api/{api_version}/orgs/{slug}/members/{member_id}` | PATCH | Update member role |
-| `/api/{api_version}/orgs/{slug}/members/{member_id}` | DELETE | Remove member |
-| `/api/{api_version}/orgs/{slug}/invites` | GET | List pending invites |
-| `/api/{api_version}/orgs/{slug}/invites` | POST | Create invite |
-| `/api/{api_version}/orgs/{slug}/invites/{invite_id}` | DELETE | Revoke invite |
-| `/api/{api_version}/orgs/{slug}/roles` | GET | List organization roles |
-| `/api/{api_version}/orgs/{slug}/roles` | POST | Create custom role |
-| `/api/{api_version}/orgs/{slug}/roles/{role_id}` | PATCH | Update role |
-| `/api/{api_version}/orgs/{slug}/roles/{role_id}` | DELETE | Delete role |
-| `/api/{api_version}/orgs/{slug}/security/audit` | GET | List audit events (paginated) |
-| `/api/{api_version}/orgs/{slug}/security/audit/export` | POST | Request audit export |
-| `/api/{api_version}/orgs/{slug}/security/audit/export/{export_id}` | GET | Download audit export |
-| `/api/{api_version}/orgs/{slug}/security/audit/retention` | GET | Get retention settings |
-| `/api/{api_version}/orgs/{slug}/security/audit/retention` | PATCH | Update retention (org owner only) |
-| `/api/{api_version}/orgs/{slug}/security/sessions` | GET | List org-wide sessions |
+| `/api/v1/orgs` | GET | Own orgs (user) or list all (admin) |
+| `/api/v1/orgs` | POST | Create organization |
+| `/api/v1/orgs/{slug}` | GET | Get organization details |
+| `/api/v1/orgs/{slug}` | PATCH | Update organization |
+| `/api/v1/orgs/{slug}` | DELETE | Delete organization |
+| `/api/v1/orgs/{slug}/settings` | GET | Get org settings |
+| `/api/v1/orgs/{slug}/settings` | PATCH | Update org settings |
+| `/api/v1/orgs/{slug}/tokens` | GET | List org API tokens |
+| `/api/v1/orgs/{slug}/tokens` | POST | Create org API token |
+| `/api/v1/orgs/{slug}/tokens/{token_id}` | GET | Get token details |
+| `/api/v1/orgs/{slug}/tokens/{token_id}` | DELETE | Revoke token |
+| `/api/v1/orgs/{slug}/members` | GET | List members |
+| `/api/v1/orgs/{slug}/members` | POST | Add member |
+| `/api/v1/orgs/{slug}/members/{member_id}` | GET | Get member details |
+| `/api/v1/orgs/{slug}/members/{member_id}` | PATCH | Update member role |
+| `/api/v1/orgs/{slug}/members/{member_id}` | DELETE | Remove member |
+| `/api/v1/orgs/{slug}/invites` | GET | List pending invites |
+| `/api/v1/orgs/{slug}/invites` | POST | Create invite |
+| `/api/v1/orgs/{slug}/invites/{invite_id}` | DELETE | Revoke invite |
+| `/api/v1/orgs/{slug}/roles` | GET | List organization roles |
+| `/api/v1/orgs/{slug}/roles` | POST | Create custom role |
+| `/api/v1/orgs/{slug}/roles/{role_id}` | PATCH | Update role |
+| `/api/v1/orgs/{slug}/roles/{role_id}` | DELETE | Delete role |
+| `/api/v1/orgs/{slug}/security/audit` | GET | List audit events (paginated) |
+| `/api/v1/orgs/{slug}/security/audit/export` | POST | Request audit export |
+| `/api/v1/orgs/{slug}/security/audit/export/{export_id}` | GET | Download audit export |
+| `/api/v1/orgs/{slug}/security/audit/retention` | GET | Get retention settings |
+| `/api/v1/orgs/{slug}/security/audit/retention` | PATCH | Update retention (org owner only) |
+| `/api/v1/orgs/{slug}/security/sessions` | GET | List org-wide sessions |
 
-### Admin - Server (`/api/{api_version}/{admin_path}/server/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/setup` | GET | Get setup status (is_complete, current_step) |
-| `/api/{api_version}/{admin_path}/server/setup/verify` | POST | Verify setup token |
-| `/api/{api_version}/{admin_path}/server/setup/account` | POST | Create admin account (Step 1) |
-| `/api/{api_version}/{admin_path}/server/setup/token` | POST | Generate API token (Step 2) |
-| `/api/{api_version}/{admin_path}/server/setup/config` | POST | Save server config (Step 3) |
-| `/api/{api_version}/{admin_path}/server/setup/security` | POST | Security settings - backup password, 2FA (Step 4) |
-| `/api/{api_version}/{admin_path}/server/setup/services` | POST | Configure services (Step 5) |
-| `/api/{api_version}/{admin_path}/server/setup/complete` | POST | Complete setup wizard (Step 6) |
-| `/api/{api_version}/{admin_path}/server/settings` | GET | Get server settings |
-| `/api/{api_version}/{admin_path}/server/settings` | PATCH | Update server settings |
-| `/api/{api_version}/{admin_path}/server/status` | GET | Server status (detailed, admin-only) |
-| `/api/{api_version}/{admin_path}/server/stats` | GET | Statistics |
-| `/api/{api_version}/{admin_path}/server/restart` | POST | Restart server |
-
-### Admin - Server Roles (`/api/{api_version}/{admin_path}/server/roles/`)
+### Admin - Server (`/api/v1/admin/server/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/roles` | GET | List roles |
-| `/api/{api_version}/{admin_path}/server/roles` | POST | Create role |
-| `/api/{api_version}/{admin_path}/server/roles/{id}` | GET | Get role details |
-| `/api/{api_version}/{admin_path}/server/roles/{id}` | PATCH | Update role |
-| `/api/{api_version}/{admin_path}/server/roles/{id}` | DELETE | Delete role |
+| `/api/v1/admin/server/setup` | GET | Get setup status (is_complete, current_step) |
+| `/api/v1/admin/server/setup/verify` | POST | Verify setup token |
+| `/api/v1/admin/server/setup/account` | POST | Create admin account (Step 1) |
+| `/api/v1/admin/server/setup/token` | POST | Generate API token (Step 2) |
+| `/api/v1/admin/server/setup/config` | POST | Save server config (Step 3) |
+| `/api/v1/admin/server/setup/security` | POST | Security settings - backup password, 2FA (Step 4) |
+| `/api/v1/admin/server/setup/services` | POST | Configure services (Step 5) |
+| `/api/v1/admin/server/setup/complete` | POST | Complete setup wizard (Step 6) |
+| `/api/v1/admin/server/settings` | GET | Get server settings |
+| `/api/v1/admin/server/settings` | PATCH | Update server settings |
+| `/api/v1/admin/server/status` | GET | Server status (detailed, admin-only) |
+| `/api/v1/admin/server/stats` | GET | Statistics |
+| `/api/v1/admin/server/restart` | POST | Restart server |
 
-### Admin - User Invites (`/api/{api_version}/{admin_path}/server/users/invites/`)
+### Admin - Server Roles (`/api/v1/admin/server/roles/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/roles` | GET | List roles |
+| `/api/v1/admin/server/roles` | POST | Create role |
+| `/api/v1/admin/server/roles/{id}` | GET | Get role details |
+| `/api/v1/admin/server/roles/{id}` | PATCH | Update role |
+| `/api/v1/admin/server/roles/{id}` | DELETE | Delete role |
+
+### Admin - User Invites (`/api/v1/admin/server/users/invites/`)
 
 User registration invite codes (multi-user apps only).
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/users/invites` | GET | List user invite codes |
-| `/api/{api_version}/{admin_path}/server/users/invites` | POST | Create user invite code |
-| `/api/{api_version}/{admin_path}/server/users/invites/{id}` | GET | Get invite details |
-| `/api/{api_version}/{admin_path}/server/users/invites/{id}` | DELETE | Revoke invite |
+| `/api/v1/admin/server/users/invites` | GET | List user invite codes |
+| `/api/v1/admin/server/users/invites` | POST | Create user invite code |
+| `/api/v1/admin/server/users/invites/{id}` | GET | Get invite details |
+| `/api/v1/admin/server/users/invites/{id}` | DELETE | Revoke invite |
 
-### Admin - Server Admins (`/api/{api_version}/{admin_path}/server/admins/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/admins` | GET | List Server Admins |
-| `/api/{api_version}/{admin_path}/server/admins/{id}` | GET | Get admin details |
-| `/api/{api_version}/{admin_path}/server/admins/{id}` | DELETE | Delete admin |
-| `/api/{api_version}/{admin_path}/server/admins/{id}/disable` | POST | Disable admin |
-| `/api/{api_version}/{admin_path}/server/admins/{id}/enable` | POST | Enable admin |
-| `/api/{api_version}/{admin_path}/server/admins/invite` | POST | Generate admin invite link |
-
-### Admin - Moderation Users (`/api/{api_version}/{admin_path}/server/moderation/users/`)
+### Admin - Server Admins (`/api/v1/admin/server/admins/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/moderation/users` | GET | List all users |
-| `/api/{api_version}/{admin_path}/server/moderation/users/{id}` | GET | Get user details |
-| `/api/{api_version}/{admin_path}/server/moderation/users/{id}` | DELETE | Delete user |
-| `/api/{api_version}/{admin_path}/server/moderation/users/disable` | POST | Disable user |
-| `/api/{api_version}/{admin_path}/server/moderation/users/enable` | POST | Enable user |
-| `/api/{api_version}/{admin_path}/server/moderation/users/impersonate` | POST | Get impersonation token |
+| `/api/v1/admin/server/admins` | GET | List Server Admins |
+| `/api/v1/admin/server/admins/{id}` | GET | Get admin details |
+| `/api/v1/admin/server/admins/{id}` | DELETE | Delete admin |
+| `/api/v1/admin/server/admins/{id}/disable` | POST | Disable admin |
+| `/api/v1/admin/server/admins/{id}/enable` | POST | Enable admin |
+| `/api/v1/admin/server/admins/invite` | POST | Generate admin invite link |
 
-### Admin - Moderation Orgs (`/api/{api_version}/{admin_path}/server/moderation/orgs/`)
+### Admin - Moderation Users (`/api/v1/admin/server/moderation/users/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/moderation/users` | GET | List all users |
+| `/api/v1/admin/server/moderation/users/{id}` | GET | Get user details |
+| `/api/v1/admin/server/moderation/users/{id}` | DELETE | Delete user |
+| `/api/v1/admin/server/moderation/users/disable` | POST | Disable user |
+| `/api/v1/admin/server/moderation/users/enable` | POST | Enable user |
+| `/api/v1/admin/server/moderation/users/impersonate` | POST | Get impersonation token |
+
+### Admin - Moderation Orgs (`/api/v1/admin/server/moderation/orgs/`)
 
 Moderation only - Server Admin does not manage org members/roles.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/moderation/orgs` | GET | List all organizations |
-| `/api/{api_version}/{admin_path}/server/moderation/orgs/{slug}` | GET | Get organization details |
-| `/api/{api_version}/{admin_path}/server/moderation/orgs/{slug}` | DELETE | Delete organization |
-| `/api/{api_version}/{admin_path}/server/moderation/orgs/{slug}/disable` | POST | Disable organization |
-| `/api/{api_version}/{admin_path}/server/moderation/orgs/{slug}/enable` | POST | Enable organization |
+| `/api/v1/admin/server/moderation/orgs` | GET | List all organizations |
+| `/api/v1/admin/server/moderation/orgs/{slug}` | GET | Get organization details |
+| `/api/v1/admin/server/moderation/orgs/{slug}` | DELETE | Delete organization |
+| `/api/v1/admin/server/moderation/orgs/{slug}/disable` | POST | Disable organization |
+| `/api/v1/admin/server/moderation/orgs/{slug}/enable` | POST | Enable organization |
 
-### Admin - Profile (`/api/{api_version}/{admin_path}/profile/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/profile` | GET | Get admin profile |
-| `/api/{api_version}/{admin_path}/profile` | PATCH | Update admin profile (username, icon) |
-| `/api/{api_version}/{admin_path}/profile/password` | POST | Change admin password |
-| `/api/{api_version}/{admin_path}/profile/token` | GET | Get current API token (masked) |
-| `/api/{api_version}/{admin_path}/profile/token` | POST | Regenerate API token (returns new token ONCE) |
-| `/api/{api_version}/{admin_path}/profile/preferences` | GET | Get admin preferences (theme, notifications) |
-| `/api/{api_version}/{admin_path}/profile/preferences` | PATCH | Update admin preferences |
-
-### Admin - Branding (`/api/{api_version}/{admin_path}/server/branding/`)
+### Admin - Profile (`/api/v1/admin/profile/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/branding` | GET | Get branding settings |
-| `/api/{api_version}/{admin_path}/server/branding` | PATCH | Update branding |
+| `/api/v1/admin/profile` | GET | Get admin profile |
+| `/api/v1/admin/profile` | PATCH | Update admin profile (username, icon) |
+| `/api/v1/admin/profile/password` | POST | Change admin password |
+| `/api/v1/admin/profile/token` | GET | Get current API token (masked) |
+| `/api/v1/admin/profile/token` | POST | Regenerate API token (returns new token ONCE) |
+| `/api/v1/admin/profile/preferences` | GET | Get admin preferences (theme, notifications) |
+| `/api/v1/admin/profile/preferences` | PATCH | Update admin preferences |
 
-### Admin - SSL (`/api/{api_version}/{admin_path}/server/ssl/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/ssl` | GET | Get SSL settings |
-| `/api/{api_version}/{admin_path}/server/ssl` | PATCH | Update SSL settings |
-| `/api/{api_version}/{admin_path}/server/ssl/renew` | POST | Force certificate renewal |
-
-### Admin - Tor (`/api/{api_version}/{admin_path}/server/tor/`)
+### Admin - Branding (`/api/v1/admin/server/branding/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/tor` | GET | Get Tor status |
-| `/api/{api_version}/{admin_path}/server/tor` | PATCH | Update Tor settings |
-| `/api/{api_version}/{admin_path}/server/tor/regenerate` | POST | Regenerate .onion address |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | GET | Get vanity generation status |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | POST | Start vanity generation |
-| `/api/{api_version}/{admin_path}/server/tor/vanity` | DELETE | Cancel vanity generation |
-| `/api/{api_version}/{admin_path}/server/tor/vanity/apply` | POST | Apply vanity address |
-| `/api/{api_version}/{admin_path}/server/tor/import` | POST | Import external keys |
+| `/api/v1/admin/server/branding` | GET | Get branding settings |
+| `/api/v1/admin/server/branding` | PATCH | Update branding |
 
-### Admin - Web (robots.txt, security.txt) (`/api/{api_version}/{admin_path}/server/web/`)
+### Admin - SSL (`/api/v1/admin/server/ssl/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/web` | GET | Get web settings |
-| `/api/{api_version}/{admin_path}/server/web` | PATCH | Update web settings |
-| `/api/{api_version}/{admin_path}/server/web/robots` | GET | Get robots.txt config |
-| `/api/{api_version}/{admin_path}/server/web/robots` | PATCH | Update robots.txt |
-| `/api/{api_version}/{admin_path}/server/web/robots/preview` | GET | Preview robots.txt |
-| `/api/{api_version}/{admin_path}/server/web/security` | GET | Get security.txt config |
-| `/api/{api_version}/{admin_path}/server/web/security` | PATCH | Update security.txt |
-| `/api/{api_version}/{admin_path}/server/web/security/preview` | GET | Preview security.txt |
+| `/api/v1/admin/server/ssl` | GET | Get SSL settings |
+| `/api/v1/admin/server/ssl` | PATCH | Update SSL settings |
+| `/api/v1/admin/server/ssl/renew` | POST | Force certificate renewal |
 
-### Admin - Pages (`/api/{api_version}/{admin_path}/server/pages/`)
+### Admin - Tor (`/api/v1/admin/server/tor/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/pages` | GET | Get all page settings |
-| `/api/{api_version}/{admin_path}/server/pages/about` | GET | Get about page content |
-| `/api/{api_version}/{admin_path}/server/pages/about` | PATCH | Update about page content |
-| `/api/{api_version}/{admin_path}/server/pages/privacy` | GET | Get privacy policy content |
-| `/api/{api_version}/{admin_path}/server/pages/privacy` | PATCH | Update privacy policy content |
-| `/api/{api_version}/{admin_path}/server/pages/contact` | GET | Get contact page settings |
-| `/api/{api_version}/{admin_path}/server/pages/contact` | PATCH | Update contact page settings |
-| `/api/{api_version}/{admin_path}/server/pages/help` | GET | Get help page content |
-| `/api/{api_version}/{admin_path}/server/pages/help` | PATCH | Update help page content |
+| `/api/v1/admin/server/tor` | GET | Get Tor status |
+| `/api/v1/admin/server/tor` | PATCH | Update Tor settings |
+| `/api/v1/admin/server/tor/regenerate` | POST | Regenerate .onion address |
+| `/api/v1/admin/server/tor/vanity` | GET | Get vanity generation status |
+| `/api/v1/admin/server/tor/vanity` | POST | Start vanity generation |
+| `/api/v1/admin/server/tor/vanity` | DELETE | Cancel vanity generation |
+| `/api/v1/admin/server/tor/vanity/apply` | POST | Apply vanity address |
+| `/api/v1/admin/server/tor/import` | POST | Import external keys |
 
-### Admin - Email (`/api/{api_version}/{admin_path}/server/email/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/email` | GET | Get email settings |
-| `/api/{api_version}/{admin_path}/server/email` | PATCH | Update email settings |
-| `/api/{api_version}/{admin_path}/server/email/test` | POST | Send test email |
-| `/api/{api_version}/{admin_path}/server/email/templates` | GET | List email templates |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}` | GET | Get template |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}` | PUT | Update template |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}/reset` | POST | Reset to default |
-| `/api/{api_version}/{admin_path}/server/email/templates/{name}/preview` | POST | Preview template |
-
-### Admin - Scheduler (`/api/{api_version}/{admin_path}/server/scheduler/`)
+### Admin - Web (robots.txt, security.txt) (`/api/v1/admin/server/web/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/scheduler` | GET | List scheduled tasks |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}` | GET | Get task details |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}` | PATCH | Update task |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/run` | POST | Run task now |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/enable` | POST | Enable task |
-| `/api/{api_version}/{admin_path}/server/scheduler/{id}/disable` | POST | Disable task |
+| `/api/v1/admin/server/web` | GET | Get web settings |
+| `/api/v1/admin/server/web` | PATCH | Update web settings |
+| `/api/v1/admin/server/web/robots` | GET | Get robots.txt config |
+| `/api/v1/admin/server/web/robots` | PATCH | Update robots.txt |
+| `/api/v1/admin/server/web/robots/preview` | GET | Preview robots.txt |
+| `/api/v1/admin/server/web/security` | GET | Get security.txt config |
+| `/api/v1/admin/server/web/security` | PATCH | Update security.txt |
+| `/api/v1/admin/server/web/security/preview` | GET | Preview security.txt |
 
-### Admin - Backup (`/api/{api_version}/{admin_path}/server/backup/`)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/backup` | GET | List backups |
-| `/api/{api_version}/{admin_path}/server/backup` | POST | Create backup |
-| `/api/{api_version}/{admin_path}/server/backup/{id}` | GET | Get backup details |
-| `/api/{api_version}/{admin_path}/server/backup/{id}` | DELETE | Delete backup |
-| `/api/{api_version}/{admin_path}/server/backup/{id}/download` | GET | Download backup file |
-| `/api/{api_version}/{admin_path}/server/backup/restore` | POST | Restore from backup |
-
-### Admin - Logs (`/api/{api_version}/{admin_path}/server/logs/`)
+### Admin - Pages (`/api/v1/admin/server/pages/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/logs` | GET | List log files |
-| `/api/{api_version}/{admin_path}/server/logs/{type}` | GET | Get log entries |
-| `/api/{api_version}/{admin_path}/server/logs/{type}/download` | GET | Download log file |
+| `/api/v1/admin/server/pages` | GET | Get all page settings |
+| `/api/v1/admin/server/pages/about` | GET | Get about page content |
+| `/api/v1/admin/server/pages/about` | PATCH | Update about page content |
+| `/api/v1/admin/server/pages/privacy` | GET | Get privacy policy content |
+| `/api/v1/admin/server/pages/privacy` | PATCH | Update privacy policy content |
+| `/api/v1/admin/server/pages/contact` | GET | Get contact page settings |
+| `/api/v1/admin/server/pages/contact` | PATCH | Update contact page settings |
+| `/api/v1/admin/server/pages/help` | GET | Get help page content |
+| `/api/v1/admin/server/pages/help` | PATCH | Update help page content |
+
+### Admin - Email (`/api/v1/admin/server/email/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/email` | GET | Get email settings |
+| `/api/v1/admin/server/email` | PATCH | Update email settings |
+| `/api/v1/admin/server/email/test` | POST | Send test email |
+| `/api/v1/admin/server/email/templates` | GET | List email templates |
+| `/api/v1/admin/server/email/templates/{name}` | GET | Get template |
+| `/api/v1/admin/server/email/templates/{name}` | PUT | Update template |
+| `/api/v1/admin/server/email/templates/{name}/reset` | POST | Reset to default |
+| `/api/v1/admin/server/email/templates/{name}/preview` | POST | Preview template |
+
+### Admin - Scheduler (`/api/v1/admin/server/scheduler/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/scheduler` | GET | List scheduled tasks |
+| `/api/v1/admin/server/scheduler/{id}` | GET | Get task details |
+| `/api/v1/admin/server/scheduler/{id}` | PATCH | Update task |
+| `/api/v1/admin/server/scheduler/{id}/run` | POST | Run task now |
+| `/api/v1/admin/server/scheduler/{id}/enable` | POST | Enable task |
+| `/api/v1/admin/server/scheduler/{id}/disable` | POST | Disable task |
+
+### Admin - Backup (`/api/v1/admin/server/backup/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/backup` | GET | List backups |
+| `/api/v1/admin/server/backup` | POST | Create backup |
+| `/api/v1/admin/server/backup/{id}` | GET | Get backup details |
+| `/api/v1/admin/server/backup/{id}` | DELETE | Delete backup |
+| `/api/v1/admin/server/backup/{id}/download` | GET | Download backup file |
+| `/api/v1/admin/server/backup/restore` | POST | Restore from backup |
+
+### Admin - Logs (`/api/v1/admin/server/logs/`)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/logs` | GET | List log files |
+| `/api/v1/admin/server/logs/{type}` | GET | Get log entries |
+| `/api/v1/admin/server/logs/{type}/download` | GET | Download log file |
 
 ## Email Templates (User-Related)
 
@@ -51129,7 +52315,7 @@ On restart, the application:
 
 **Method 2: Admin WebUI**
 
-`/{admin_path}/server/database`
+`/admin/server/database`
 
 | Element | Type | Description |
 |---------|------|-------------|
@@ -51226,7 +52412,7 @@ Settings can be stored in database OR config file. Sync between them:
 **SQLite → YAML (Export settings to file):**
 
 ```
-Admin WebUI: /{admin_path}/server/settings → "Export to YAML"
+Admin WebUI: /admin/server/settings → "Export to YAML"
          │
          ▼
 Read all settings from server.db
@@ -51385,7 +52571,7 @@ Local MariaDB INSERT                     Local PostgreSQL INSERT
 
 **On existing node:**
 
-1. Go to `/{admin_path}/server/nodes/add`
+1. Go to `/admin/server/nodes/add`
 2. Click "Generate Token" button
 3. Server generates:
    - Token: `node_{random_32_chars}`
@@ -51394,7 +52580,7 @@ Local MariaDB INSERT                     Local PostgreSQL INSERT
 
 **On new server:**
 
-1. Go to `/{admin_path}/server/nodes/add`
+1. Go to `/admin/server/nodes/add`
 2. Enter:
    - URL from existing node
    - Token from existing node
@@ -51409,7 +52595,7 @@ Local MariaDB INSERT                     Local PostgreSQL INSERT
 Existing Node                          New Node
      │                                      │
      ▼                                      │
-/{admin_path}/server/nodes/add               │
+/admin/server/nodes/add               │
      │                                      │
      ▼                                      │
 Generate Token                              │
@@ -51419,7 +52605,7 @@ Generate Token                              │
      └──────── Share token + URL ──────────►│
                                             │
                                             ▼
-                                   /{admin_path}/server/nodes/add
+                                   /admin/server/nodes/add
                                             │
                                             ▼
                                    Enter URL + Token
@@ -51438,7 +52624,7 @@ Generate Token                              │
 ```
 NEW NODE                                    EXISTING NODE
     │                                            │
-    │  1. POST /api/{api_version}/{admin_path}/server/nodes/join   │
+    │  1. POST /api/v1/admin/server/nodes/join   │
     │     Body: { "token": "node_xxx" }          │
     │─────────────────────────────────────────►  │
     │                                            │
@@ -51490,7 +52676,7 @@ NEW NODE                                    EXISTING NODE
 
 #### Bootstrap Data Structure
 
-**Response from existing node (`POST /api/{api_version}/{admin_path}/server/nodes/join`):**
+**Response from existing node (`POST /api/v1/admin/server/nodes/join`):**
 
 ```json
 {
@@ -51644,7 +52830,7 @@ func updateHeartbeat(db *sql.DB, nodeID string) {
 
 **A node can only remove ITSELF from the cluster.**
 
-1. Go to `/{admin_path}/server/nodes/remove` (on the node to remove)
+1. Go to `/admin/server/nodes/remove` (on the node to remove)
 2. Click "Remove from Cluster"
 3. Confirmation modal: "Are you sure you want to remove {nodename} from the cluster?"
    - [Yes, Remove] [Cancel]
@@ -51658,7 +52844,7 @@ func updateHeartbeat(db *sql.DB, nodeID string) {
 
 #### Viewing Nodes
 
-**`/{admin_path}/server/nodes`** - Node list
+**`/admin/server/nodes`** - Node list
 
 | Column | Description |
 |--------|-------------|
@@ -51668,7 +52854,7 @@ func updateHeartbeat(db *sql.DB, nodeID string) {
 | Version | Application version |
 | Last Seen | Last heartbeat time |
 
-**`/{admin_path}/server/nodes/{node}`** - Node detail
+**`/admin/server/nodes/{node}`** - Node detail
 
 | Section | Contents |
 |---------|----------|
@@ -51682,7 +52868,7 @@ func updateHeartbeat(db *sql.DB, nodeID string) {
 
 | Setting | Default | Changeable |
 |---------|---------|------------|
-| Node ID | `{hostname}` | Yes, via `/{admin_path}/server/nodes/settings` |
+| Node ID | `{hostname}` | Yes, via `/admin/server/nodes/settings` |
 | Display Name | `{hostname}` | Yes |
 
 #### First Node Behavior
@@ -51693,7 +52879,7 @@ func updateHeartbeat(db *sql.DB, nodeID string) {
 Single Instance (SQLite)
          │
          ▼
-Admin goes to /{admin_path}/server/nodes/add
+Admin goes to /admin/server/nodes/add
          │
          ▼
 Clicks "Generate Token"
@@ -51714,23 +52900,23 @@ On confirm:
 
 | Route | Description |
 |-------|-------------|
-| `/{admin_path}/server/nodes` | List all nodes |
-| `/{admin_path}/server/nodes/add` | Add node (generate token OR join) |
-| `/{admin_path}/server/nodes/remove` | Remove THIS node from cluster |
-| `/{admin_path}/server/nodes/settings` | Node identity settings |
-| `/{admin_path}/server/nodes/{node}` | View specific node details |
+| `/admin/server/nodes` | List all nodes |
+| `/admin/server/nodes/add` | Add node (generate token OR join) |
+| `/admin/server/nodes/remove` | Remove THIS node from cluster |
+| `/admin/server/nodes/settings` | Node identity settings |
+| `/admin/server/nodes/{node}` | View specific node details |
 
 #### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/nodes` | GET | List all nodes |
-| `/api/{api_version}/{admin_path}/server/nodes/token` | POST | Generate join token |
-| `/api/{api_version}/{admin_path}/server/nodes/join` | POST | Join cluster with token |
-| `/api/{api_version}/{admin_path}/server/nodes/leave` | POST | Remove this node from cluster |
-| `/api/{api_version}/{admin_path}/server/nodes/{node}` | GET | Get node details |
-| `/api/{api_version}/{admin_path}/server/nodes/settings` | GET | Get node identity settings |
-| `/api/{api_version}/{admin_path}/server/nodes/settings` | PATCH | Update node identity |
+| `/api/v1/admin/server/nodes` | GET | List all nodes |
+| `/api/v1/admin/server/nodes/token` | POST | Generate join token |
+| `/api/v1/admin/server/nodes/join` | POST | Join cluster with token |
+| `/api/v1/admin/server/nodes/leave` | POST | Remove this node from cluster |
+| `/api/v1/admin/server/nodes/{node}` | GET | Get node details |
+| `/api/v1/admin/server/nodes/settings` | GET | Get node identity settings |
+| `/api/v1/admin/server/nodes/settings` | PATCH | Update node identity |
 
 ### Supported Remote Databases
 
@@ -51778,7 +52964,7 @@ When using remote database, the same tables are created but with appropriate typ
 **Notes:**
 - Only ONE row ever exists (id=1)
 - Created via setup wizard on first run
-- Setup token displayed in console ONCE, used to access `/{admin_path}/server/setup`
+- Setup token displayed in console ONCE, used to access `/admin/server/setup`
 - Admin password and API token created during setup wizard (user must copy)
 
 #### Admin Sessions Table
@@ -51879,9 +53065,9 @@ This is OPTIONAL and only applies when user profiles should be publicly accessib
 
 | URL Pattern | Maps To | API Endpoint |
 |-------------|---------|--------------|
-| `/{username}` | User public profile | `GET /api/{api_version}/users/{username}` |
-| `/{username}/{resource}` | User's resource | `GET /api/{api_version}/users/{username}/{resource}` |
-| `/{username}/{resource}/{item}` | Specific item | `GET /api/{api_version}/users/{username}/{resource}/{item}` |
+| `/{username}` | User public profile | `GET /api/v1/users/{username}` |
+| `/{username}/{resource}` | User's resource | `GET /api/v1/users/{username}/{resource}` |
+| `/{username}/{resource}/{item}` | Specific item | `GET /api/v1/users/{username}/{resource}/{item}` |
 
 **Examples by App Type:**
 
@@ -51896,10 +53082,10 @@ This is OPTIONAL and only applies when user profiles should be publicly accessib
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `GET /api/{api_version}/users/{username}` | GET | None | Public profile (filtered fields) |
-| `GET /api/{api_version}/users/{username}/repos` | GET | None | User's public repositories |
-| `GET /api/{api_version}/users/{username}/followers` | GET | None | User's followers |
-| `GET /api/{api_version}/users/{username}/following` | GET | None | Users they follow |
+| `GET /api/v1/users/{username}` | GET | None | Public profile (filtered fields) |
+| `GET /api/v1/users/{username}/repos` | GET | None | User's public repositories |
+| `GET /api/v1/users/{username}/followers` | GET | None | User's followers |
+| `GET /api/v1/users/{username}/following` | GET | None | Users they follow |
 
 ### Public vs Private Profile Fields
 
@@ -52099,7 +53285,7 @@ Does your app have multiple users?
 
 **Org Profile Example (API Response):**
 ```json
-GET /api/{api_version}/orgs/acme-corp
+GET /api/v1/orgs/acme-corp
 {
     "id": 42,
     "slug": "acme-corp",
@@ -52359,7 +53545,7 @@ func GetOrCreateOrgPreferences(orgID int) (*OrgPreferences, error) {
 
 **Get Org Settings:**
 ```json
-GET /api/{api_version}/orgs/acme-corp/settings
+GET /api/v1/orgs/acme-corp/settings
 {
     "general": {
         "name": "Acme Corporation",
@@ -52414,7 +53600,7 @@ When a private user has `org_visibility: true`, org members can see:
 
 **Private user with org_visibility=true, viewed by org member:**
 ```json
-GET /api/{api_version}/orgs/acme-corp/members/private_user
+GET /api/v1/orgs/acme-corp/members/private_user
 {
     "username": "private_user",
     "display_name": "Private User",
@@ -52429,7 +53615,7 @@ GET /api/{api_version}/orgs/acme-corp/members/private_user
 
 **Private user with org_visibility=true, viewed publicly:**
 ```json
-GET /api/{api_version}/public/users/private_user
+GET /api/v1/public/users/private_user
 {
     "error": "not_found",
     "message": "User not found"
@@ -52439,7 +53625,7 @@ GET /api/{api_version}/public/users/private_user
 
 **Private user with org_visibility=false, viewed by org member:**
 ```json
-GET /api/{api_version}/orgs/acme-corp/members/very_private_user
+GET /api/v1/orgs/acme-corp/members/very_private_user
 {
     "username": "very_private_user",
     "role": "member",
@@ -52526,9 +53712,9 @@ This is OPTIONAL and only applies when org profiles should be publicly accessibl
 
 | URL Pattern | Maps To | API Endpoint |
 |-------------|---------|--------------|
-| `/{orgslug}` | Org public profile | `GET /api/{api_version}/orgs/{slug}` |
-| `/{orgslug}/{resource}` | Org's resource | `GET /api/{api_version}/orgs/{slug}/{resource}` |
-| `/{orgslug}/{resource}/{item}` | Specific item | `GET /api/{api_version}/orgs/{slug}/{resource}/{item}` |
+| `/{orgslug}` | Org public profile | `GET /api/v1/orgs/{slug}` |
+| `/{orgslug}/{resource}` | Org's resource | `GET /api/v1/orgs/{slug}/{resource}` |
+| `/{orgslug}/{resource}/{item}` | Specific item | `GET /api/v1/orgs/{slug}/{resource}/{item}` |
 
 **Examples by App Type:**
 
@@ -52543,10 +53729,10 @@ This is OPTIONAL and only applies when org profiles should be publicly accessibl
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `GET /api/{api_version}/orgs/{slug}` | GET | None* | Public org profile |
-| `GET /api/{api_version}/orgs/{slug}/repos` | GET | None* | Org's public repositories |
-| `GET /api/{api_version}/orgs/{slug}/members` | GET | None* | Public member list |
-| `GET /api/{api_version}/orgs/{slug}/teams` | GET | Member | Team list (members only) |
+| `GET /api/v1/orgs/{slug}` | GET | None* | Public org profile |
+| `GET /api/v1/orgs/{slug}/repos` | GET | None* | Org's public repositories |
+| `GET /api/v1/orgs/{slug}/members` | GET | None* | Public member list |
+| `GET /api/v1/orgs/{slug}/teams` | GET | Member | Team list (members only) |
 
 *Public orgs only. Private orgs require membership.
 
@@ -52995,46 +54181,46 @@ func CustomDomainMiddleware(resolver *DomainResolver) func(http.Handler) http.Ha
 | `/orgs/{slug}/domains/{domain}/verify` | Trigger verification |
 | `/orgs/{slug}/domains/{domain}/delete` | Delete confirmation |
 
-### Admin Domain Management (`/{admin_path}/server/domains/`)
+### Admin Domain Management (`/admin/server/domains/`)
 
 | Path | Description |
 |------|-------------|
-| `/{admin_path}/server/domains` | List all custom domains |
-| `/{admin_path}/server/domains/{domain}` | View/manage any domain |
-| `/{admin_path}/server/domains/{domain}/suspend` | Suspend domain |
-| `/{admin_path}/server/domains/{domain}/unsuspend` | Unsuspend domain |
-| `/{admin_path}/server/domains/{domain}/delete` | Force delete domain |
+| `/admin/server/domains` | List all custom domains |
+| `/admin/server/domains/{domain}` | View/manage any domain |
+| `/admin/server/domains/{domain}/suspend` | Suspend domain |
+| `/admin/server/domains/{domain}/unsuspend` | Unsuspend domain |
+| `/admin/server/domains/{domain}/delete` | Force delete domain |
 
 ## API Routes
 
-### User Domain API (`/api/{api_version}/users/domains/`)
+### User Domain API (`/api/v1/users/domains/`)
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/{api_version}/users/domains` | GET | List user's domains |
-| `/api/{api_version}/users/domains` | POST | Add new domain |
-| `/api/{api_version}/users/domains/{domain}` | GET | Get domain details |
-| `/api/{api_version}/users/domains/{domain}` | DELETE | Remove domain |
-| `/api/{api_version}/users/domains/{domain}/verify` | POST | Trigger verification |
-| `/api/{api_version}/users/domains/{domain}/dns` | GET | Get DNS records to configure |
-| `/api/{api_version}/users/domains/{domain}/ssl` | GET | Get SSL status |
-| `/api/{api_version}/users/domains/{domain}/ssl` | POST | Configure SSL (provider + credentials) |
-| `/api/{api_version}/users/domains/{domain}/ssl/renew` | POST | Force SSL renewal |
+| `/api/v1/users/domains` | GET | List user's domains |
+| `/api/v1/users/domains` | POST | Add new domain |
+| `/api/v1/users/domains/{domain}` | GET | Get domain details |
+| `/api/v1/users/domains/{domain}` | DELETE | Remove domain |
+| `/api/v1/users/domains/{domain}/verify` | POST | Trigger verification |
+| `/api/v1/users/domains/{domain}/dns` | GET | Get DNS records to configure |
+| `/api/v1/users/domains/{domain}/ssl` | GET | Get SSL status |
+| `/api/v1/users/domains/{domain}/ssl` | POST | Configure SSL (provider + credentials) |
+| `/api/v1/users/domains/{domain}/ssl/renew` | POST | Force SSL renewal |
 
-### Org Domain API (`/api/{api_version}/orgs/{slug}/domains/`)
+### Org Domain API (`/api/v1/orgs/{slug}/domains/`)
 
 Same routes as user, scoped to organization.
 
-### Admin Domain API (`/api/{api_version}/{admin_path}/server/domains/`)
+### Admin Domain API (`/api/v1/admin/server/domains/`)
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/{api_version}/{admin_path}/server/domains` | GET | List all domains (paginated) |
-| `/api/{api_version}/{admin_path}/server/domains/{domain}` | GET | Get any domain details |
-| `/api/{api_version}/{admin_path}/server/domains/{domain}` | DELETE | Force delete any domain |
-| `/api/{api_version}/{admin_path}/server/domains/{domain}/suspend` | POST | Suspend domain |
-| `/api/{api_version}/{admin_path}/server/domains/{domain}/unsuspend` | POST | Unsuspend domain |
-| `/api/{api_version}/{admin_path}/server/domains/{domain}/ssl/renew` | POST | Force SSL renewal |
+| `/api/v1/admin/server/domains` | GET | List all domains (paginated) |
+| `/api/v1/admin/server/domains/{domain}` | GET | Get any domain details |
+| `/api/v1/admin/server/domains/{domain}` | DELETE | Force delete any domain |
+| `/api/v1/admin/server/domains/{domain}/suspend` | POST | Suspend domain |
+| `/api/v1/admin/server/domains/{domain}/unsuspend` | POST | Unsuspend domain |
+| `/api/v1/admin/server/domains/{domain}/ssl/renew` | POST | Force SSL renewal |
 
 ## Verification Flow
 
@@ -53043,7 +54229,7 @@ Same routes as user, scoped to organization.
 ### Step 1: User Adds Domain
 
 ```
-POST /api/{api_version}/users/domains
+POST /api/v1/users/domains
 {
   "domain": "api.mycompany.com"
 }
@@ -53081,7 +54267,7 @@ mycompany.com.              300  IN  AAAA   2001:db8::1
 ### Step 3: User Triggers Verification
 
 ```
-POST /api/{api_version}/users/domains/api.mycompany.com/verify
+POST /api/v1/users/domains/api.mycompany.com/verify
 
 Response (success):
 {
@@ -53322,7 +54508,7 @@ func (s *DomainService) selectChallengeType(domain *CustomDomain) string {
 Challenge options: `auto`, `http-01`, `tls-alpn-01`
 
 ```
-POST /api/{api_version}/users/domains/api.mycompany.com/ssl
+POST /api/v1/users/domains/api.mycompany.com/ssl
 {
   "challenge": "auto"
 }
@@ -53349,7 +54535,7 @@ The server handles the ACME TLS-ALPN-01 challenge on port 443. This works behind
 **For wildcards or when HTTP/TLS challenges aren't available:**
 
 ```
-POST /api/{api_version}/users/domains/api.mycompany.com/ssl
+POST /api/v1/users/domains/api.mycompany.com/ssl
 {
   "challenge": "dns-01",
   "provider": "cloudflare",
@@ -53623,7 +54809,7 @@ When implementing custom domains for a project:
 - [ ] Create database tables (custom_domains, custom_domain_records, custom_domain_audit)
 - [ ] Implement domain resolver middleware
 - [ ] Create user web routes (/users/domains/*)
-- [ ] Create user API routes (/api/{api_version}/users/domains/*)
+- [ ] Create user API routes (/api/v1/users/domains/*)
 - [ ] Create org web/API routes (if orgs supported)
 - [ ] Create admin management routes
 - [ ] Implement DNS verification
@@ -53938,7 +55124,7 @@ A weather aggregation API that fetches data from external providers, caches it, 
 - [ ] No external runtime dependencies - everything embedded
 - [ ] Use ONLY approved libraries (see PART 5)
 - [ ] Follow exact config paths: `server.xxx`, not variations
-- [ ] Follow exact route patterns: `/api/{api_version}/{admin_path}/server/xxx`
+- [ ] Follow exact route patterns: `/api/v1/admin/server/xxx`
 - [ ] Token prefixes: `adm_` (admin), `usr_` (user), `org_` (org)
 - [ ] Setup token: 32 hex chars, no dashes
 
@@ -54193,7 +55379,7 @@ make docker # Build Docker image
 
 **PART 13: Health & Versioning**
 - [ ] `/healthz` endpoint exists (frontend - smart detection)
-- [ ] `/api/{api_version}/healthz` endpoint exists (API - supports .txt)
+- [ ] `/api/v1/healthz` endpoint exists (API - supports .txt)
 - [ ] Returns 200 OK when healthy
 - [ ] Smart detection: browser → HTML, CLI → formatted text
 - [ ] Extended healthz response includes:
@@ -54210,7 +55396,7 @@ make docker # Build Docker image
 - [ ] `--status` flag returns exit 0 (healthy) or 1 (unhealthy)
 
 **PART 14: API Structure**
-- [ ] REST API at `/api/{api_version}/`
+- [ ] REST API at `/api/v1/`
 - [ ] Consistent response format
 - [ ] Proper HTTP status codes
 - [ ] Pagination for list endpoints
@@ -54253,8 +55439,8 @@ make docker # Build Docker image
 ### Phase 6: Admin & Email (PARTS 17-18)
 
 **PART 17: Admin Panel**
-- [ ] Admin UI at `/{admin_path}`
-- [ ] Admin API at `/api/{api_version}/{admin_path}/`
+- [ ] Admin UI at `/admin`
+- [ ] Admin API at `/api/v1/admin/`
 - [ ] First-run setup wizard
 - [ ] All settings configurable via UI
 - [ ] Settings organized by category
@@ -54418,7 +55604,7 @@ make docker # Build Docker image
 - [ ] Tor status in admin panel
 - [ ] Tor config in `{config_dir}/tor/torrc`
 - [ ] Tor data in `{data_dir}/tor/`
-- [ ] Tor fields in `/api/{api_version}/healthz`:
+- [ ] Tor fields in `/api/v1/healthz`:
   - [ ] `features.tor.enabled` (yes/no)
   - [ ] `features.tor.running` (yes/no)
   - [ ] `features.tor.status` (healthy/error:{message})
@@ -54571,7 +55757,7 @@ make docker # Build Docker image
 - [ ] Server admins in separate table (`admins`)
 - [ ] Regular users in separate table (`users`)
 - [ ] Separate session tables (`admin_sessions`, `user_sessions`)
-- [ ] Admin routes protected (`/{admin_path}/*`)
+- [ ] Admin routes protected (`/admin/*`)
 - [ ] No privilege escalation path from user to admin
 
 ---
@@ -54626,20 +55812,20 @@ make docker # Build Docker image
 
 ### Route Compliance (MANDATORY)
 
-- [ ] ALL API routes are versioned (`/api/{api_version}/...`)
+- [ ] ALL API routes are versioned (`/api/v1/...`)
 - [ ] ALL resource names are plural (`users`, not `user`)
 - [ ] ALL routes are lowercase
 - [ ] Multi-word routes use hyphens (`api-keys`, not `api_keys`)
 - [ ] No trailing slashes on routes
 - [ ] No verbs in routes (use HTTP methods)
 - [ ] Every API route has corresponding frontend route
-- [ ] Frontend routes match API structure (`/users` ↔ `/api/{api_version}/users`)
+- [ ] Frontend routes match API structure (`/users` ↔ `/api/v1/users`)
 - [ ] Frontend is fully functional (not just display)
 - [ ] All CRUD operations work from both frontend and API
 - [ ] No orphan routes (frontend-only or API-only)
 - [ ] Routes follow scope rules (`/auth/`, `/users/`, `/orgs/`, `/admin/`)
 
-### REST API (`/api/{api_version}/`)
+### REST API (`/api/v1/`)
 
 - [ ] Consistent URL patterns
 - [ ] Proper HTTP methods (GET, POST, PUT, PATCH, DELETE)
@@ -54947,7 +56133,7 @@ make docker # Build Docker image
 - [ ] Stored as SHA-256 hash in `{config_dir}/setup_token.txt`
 - [ ] Plaintext token shown ONCE in console banner
 - [ ] File deleted after successful setup completion
-- [ ] Setup URL displayed: `{proto}://{fqdn}/{admin_path}/server/setup`
+- [ ] Setup URL displayed: `{proto}://{fqdn}/admin/server/setup`
 - [ ] Token section only appears on first run (never again after setup)
 
 ### CLI Flag Syntax (ALL Binaries)
@@ -54989,7 +56175,7 @@ make docker # Build Docker image
 - [ ] `{startup_datetime}` - Server start timestamp
 - [ ] `{setup_token}` - First-run setup token (shown ONCE)
 - [ ] `WEATHER` - Project name (uppercase for display)
-- [ ] `{projectversion}` - Current version
+- [ ] `1.0.0` - Current version
 
 ### Client TUI/GUI Dynamic Sizing
 
@@ -55113,7 +56299,7 @@ After each significant change:
 
 **If project has existing API that doesn't match spec:**
 
-1. Implement new spec-compliant API at `/api/{api_version}/`
+1. Implement new spec-compliant API at `/api/v1/`
 2. **DELETE old endpoints** - no deprecation periods, no shims
 3. Document breaking changes clearly in release notes
 4. Provide one-time migration script if data format changed

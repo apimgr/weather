@@ -3,72 +3,91 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Expose /metrics publicly (internal only)
-- ❌ Return detailed errors to users (internal info leak)
-- ❌ Use client-side routing (SPA)
-- ❌ Skip content negotiation
-- ❌ Hardcode API version in code
+
+- Never keep legacy or removed endpoints -- delete them
+- Never use unversioned API routes (/api/users -- wrong, use /api/v1/users)
+- Never use singular resource names (/api/v1/user -- wrong, use /api/v1/users)
+- Never use uppercase in routes (/api/v1/Users -- wrong)
+- Never add trailing slash to routes (/api/v1/users/ -- wrong)
+- Never manually edit OpenAPI JSON or GraphQL schema
+- Never put Swagger/GraphQL files in project root (use src/swagger/ and src/graphql/)
+- Never guess external API compatibility -- look up actual documentation first
+- Never expose admin_path in API responses or JSON outputs
 
 ## CRITICAL - ALWAYS DO
-- ✅ Every web page has corresponding API endpoint
-- ✅ Every API endpoint's data can be displayed in web page
-- ✅ Content negotiation: HTML for browsers, JSON for API clients, text for CLI
-- ✅ /healthz for public status (limited info)
-- ✅ /metrics for Prometheus (internal only)
-- ✅ OpenAPI/Swagger documentation at /openapi
-- ✅ GraphQL endpoint at /api/v1/graphql
-- ✅ SSL/TLS with Let's Encrypt support
 
-## ENDPOINT PATTERN
-| Web Route (HTML) | API Route (JSON) | Purpose |
-|------------------|------------------|---------|
-| `/` | `/api/v1/` | Homepage / API root |
-| `/healthz` | `/api/v1/healthz` | Health status |
-| `/{admin_path}/dashboard` | `/api/v1/{admin_path}/dashboard` | Admin dashboard |
-| `/openapi` | `/openapi.json` | API documentation |
-| `/graphql` | `/api/v1/graphql` | GraphQL endpoint |
+- Version all API routes: /api/v1/...
+- Use plural nouns for all resources
+- Use lowercase for all routes
+- Keep Swagger and GraphQL in sync with each other AND the project API
+- Use standardized locations: src/swagger/ and src/graphql/
+- Follow all relevant RFCs completely if implementing a protocol
+- End all non-HTML responses with a single newline
+- Indent all JSON responses
+- Test every route with ALL applicable Accept headers
 
-## HEALTH ENDPOINTS
-| Endpoint | Access | Format | Content |
-|----------|--------|--------|---------|
-| `/healthz` | PUBLIC | HTML/JSON/text | Status, version, uptime |
-| `/api/v1/healthz` | PUBLIC | JSON only | Same as above |
-| `/metrics` | INTERNAL | Prometheus | All metrics |
+## Route Standards
 
-## CONTENT NEGOTIATION
-| Accept Header | Response Format |
-|---------------|-----------------|
-| text/html | HTML page |
-| application/json | JSON response |
-| text/plain | Plain text (for curl, CLI) |
-| */* (default) | Based on User-Agent |
+| Rule | Wrong | Correct |
+|------|-------|---------|
+| Versioning | /api/users | /api/v1/users |
+| Plural nouns | /api/v1/user | /api/v1/users |
+| Lowercase | /api/v1/Users | /api/v1/users |
+| No trailing slash | /api/v1/users/ | /api/v1/users |
 
-## SSL/TLS (PART 15)
-- Let's Encrypt auto-renewal
-- HTTP-01 challenge on port 80
-- TLS-ALPN-01 challenge on port 443
-- Fallback to self-signed for localhost
-- Certificate storage in `{config_dir}/ssl/`
+## API Version
 
-## API RESPONSE FORMAT
-```json
-{
-  "data": {},
-  "meta": {
-    "request_id": "abc123",
-    "timestamp": "2025-01-15T10:30:00Z"
-  }
-}
-```
+- Current API version: v1
+- All routes: /api/v1/...
 
-## ERROR RESPONSE FORMAT
-```json
-{
-  "error": "Brief user message",
-  "code": "ERROR_CODE",
-  "status": 400
-}
-```
+## Response Formats
 
----
-For complete details, see AI.md PART 13, 14, 15
+- JSON: indented, ends with newline
+- Text: ends with single newline
+- HTML: valid HTML5, indented with 2 spaces, ends with newline
+
+## Content Negotiation (Required)
+
+Every API route MUST be tested with ALL applicable Accept headers:
+- application/json
+- text/plain
+- text/html
+- .txt extension on applicable endpoints
+
+## Swagger / OpenAPI
+
+- Location: src/swagger/
+- NEVER manually edit -- always auto-generate
+- MUST match current project API at all times
+- Swagger UI MUST match project-wide theme system
+
+## GraphQL
+
+- Location: src/graphql/
+- NEVER manually edit schema manually
+- MUST stay in sync with Swagger/OpenAPI
+- GraphiQL MUST match project-wide theme system
+
+## Versioning (SemVer)
+
+All stable releases MUST follow semantic versioning (MAJOR.MINOR.PATCH).
+
+## Healthz & Versioning
+
+- /healthz: public, never expose sensitive data
+- /api/v1/version: returns build info (all fields must be public-safe)
+
+## RFC Compliance (CRITICAL)
+
+If the application implements an RFC-defined protocol, it MUST follow ALL relevant RFCs completely. This is NOT optional -- non-compliance means the application is fundamentally broken.
+
+## External API Compatibility
+
+When implementing compatibility with external services:
+- Research actual API documentation -- NEVER guess
+- Focus on creation endpoints and response formats
+- Do NOT replicate their entire API surface
+
+## Reference
+
+For complete details, see AI.md PART 13 (16763-17513), PART 14 (17514-19146), PART 15 (19147-20117)

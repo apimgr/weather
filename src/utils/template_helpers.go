@@ -5,7 +5,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ServerContext holds server information for templates
+// LanguageInfo holds metadata about a supported language for UI display.
+// Defined here (in utils) to avoid import cycles with server/service.
+type LanguageInfo struct {
+	Code       string
+	Name       string
+	NativeName string
+	Direction  string
+}
+
+// langInfoProvider is a local interface so template_helpers does not
+// import server/service directly (which would create an import cycle).
+type langInfoProvider interface {
+	GetLanguageInfos() []LanguageInfo
+}
+
+// ServerContext holds server information for templates.
 type ServerContext struct {
 	Title       string
 	Tagline     string
@@ -26,7 +41,7 @@ type ServerContext struct {
 	VerifyFacebook  string
 }
 
-// TemplateData enriches template data with server context and user info
+// TemplateData enriches template data with server context, user info, and i18n data.
 func TemplateData(c *gin.Context, data gin.H) gin.H {
 	// Get server context from Gin context (set by middleware)
 	serverCtxInterface, exists := c.Get("server")
@@ -86,15 +101,33 @@ func TemplateData(c *gin.Context, data gin.H) gin.H {
 		adminAPIPath = cfg.GetAdminAPIPath()
 	}
 
+	// Get active language from i18n middleware (per AI.md PART 31 fallback chain)
+	lang := "en"
+	if l, ok := c.Get("lang"); ok {
+		if s, ok := l.(string); ok && s != "" {
+			lang = s
+		}
+	}
+
+	// Get available languages for language selector UI (per AI.md PART 31)
+	var availableLangs []LanguageInfo
+	if i18n, ok := c.Get("i18n"); ok {
+		if svc, ok := i18n.(langInfoProvider); ok {
+			availableLangs = svc.GetLanguageInfos()
+		}
+	}
+
 	// Create enriched data
 	enriched := gin.H{
-		"server":         serverCtx,
-		"user":           userCtx,
-		"csrf_token":     csrfToken,
-		"current_url":    currentURL,
-		"admin_path":     adminPath,
-		"api_path":       apiPath,
-		"admin_api_path": adminAPIPath,
+		"server":              serverCtx,
+		"user":                userCtx,
+		"csrf_token":          csrfToken,
+		"current_url":         currentURL,
+		"admin_path":          adminPath,
+		"api_path":            apiPath,
+		"admin_api_path":      adminAPIPath,
+		"lang":                lang,
+		"available_languages": availableLangs,
 	}
 
 	// Merge user-provided data

@@ -34,6 +34,11 @@
 | Primary Admin | `usr_admins` | First admin (cannot delete) |
 | Regular User | `usr_users` | End-user accounts |
 
+**Admin setup ≠ User registration** — completely separate flows:
+- Admin setup: `/{admin_path}/server/setup` (one-time setup token, creates first admin)
+- User registration: `/auth/register` → redirects to `/users` (or `?redirect=` param, blocked from admin routes)
+- NEVER redirect users to admin setup or vice versa
+
 ### USER ROUTES
 | Web Route | API Route | Purpose |
 |-----------|-----------|---------|

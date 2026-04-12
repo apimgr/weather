@@ -1,7 +1,9 @@
 {
+  "meta.name": "English",
+  "meta.native_name": "English",
+  "meta.direction": "ltr",
   "app.name": "Weather",
   "app.tagline": "Global Weather Information Platform",
-
   "nav.home": "Home",
   "nav.forecast": "Forecast",
   "nav.alerts": "Alerts",
@@ -12,7 +14,6 @@
   "nav.login": "Login",
   "nav.logout": "Logout",
   "nav.register": "Register",
-
   "weather.current": "Current Weather",
   "weather.forecast": "Forecast",
   "weather.today": "Today",
@@ -36,7 +37,6 @@
   "weather.high": "High",
   "weather.low": "Low",
   "weather.last_updated": "Last Updated",
-
   "condition.clear": "Clear",
   "condition.clear_sky": "Clear Sky",
   "condition.sunny": "Sunny",
@@ -65,7 +65,6 @@
   "condition.tornado": "Tornado",
   "condition.hurricane": "Hurricane",
   "condition.tropical_storm": "Tropical Storm",
-
   "alerts.title": "Severe Weather Alerts",
   "alerts.active": "Active Alerts",
   "alerts.none": "No active alerts",
@@ -86,7 +85,6 @@
   "alerts.certainty.observed": "Observed",
   "alerts.certainty.likely": "Likely",
   "alerts.certainty.possible": "Possible",
-
   "earthquake.title": "Earthquakes",
   "earthquake.recent": "Recent Earthquakes",
   "earthquake.magnitude": "Magnitude",
@@ -95,7 +93,6 @@
   "earthquake.time": "Time",
   "earthquake.tsunami_warning": "Tsunami Warning",
   "earthquake.more_info": "More Information",
-
   "hurricane.title": "Hurricanes",
   "hurricane.active": "Active Storms",
   "hurricane.name": "Name",
@@ -105,7 +102,6 @@
   "hurricane.movement": "Movement",
   "hurricane.forecast_track": "Forecast Track",
   "hurricane.advisory": "Advisory",
-
   "moon.title": "Moon Phase",
   "moon.phase": "Phase",
   "moon.illumination": "Illumination",
@@ -123,7 +119,6 @@
   "moon.phase.waning_gibbous": "Waning Gibbous",
   "moon.phase.last_quarter": "Last Quarter",
   "moon.phase.waning_crescent": "Waning Crescent",
-
   "location.search": "Search Location",
   "location.search_placeholder": "Enter city name or ZIP code",
   "location.detect": "Detect My Location",
@@ -133,7 +128,6 @@
   "location.remove": "Remove",
   "location.set_default": "Set as Default",
   "location.not_found": "Location not found",
-
   "units.celsius": "Celsius",
   "units.fahrenheit": "Fahrenheit",
   "units.metric": "Metric",
@@ -147,7 +141,6 @@
   "units.mm": "mm",
   "units.in": "in",
   "units.days": "days",
-
   "direction.n": "N",
   "direction.ne": "NE",
   "direction.e": "E",
@@ -164,7 +157,6 @@
   "direction.southwest": "Southwest",
   "direction.west": "West",
   "direction.northwest": "Northwest",
-
   "time.now": "Now",
   "time.today": "Today",
   "time.tomorrow": "Tomorrow",
@@ -177,14 +169,12 @@
   "time.night": "Night",
   "time.ago": "ago",
   "time.in": "in",
-
   "error.generic": "An error occurred",
   "error.not_found": "Not found",
   "error.invalid_location": "Invalid location",
   "error.network": "Network error",
   "error.server": "Server error",
   "error.try_again": "Please try again",
-
   "action.refresh": "Refresh",
   "action.search": "Search",
   "action.cancel": "Cancel",
@@ -194,16 +184,15 @@
   "action.close": "Close",
   "action.subscribe": "Subscribe",
   "action.unsubscribe": "Unsubscribe",
-
   "notification.alert_new": "New Weather Alert",
   "notification.alert_updated": "Alert Updated",
   "notification.alert_expired": "Alert Expired",
   "notification.subscribed": "Successfully subscribed to alerts",
   "notification.unsubscribed": "Unsubscribed from alerts",
-
   "footer.powered_by": "Powered by",
   "footer.data_sources": "Data Sources",
   "footer.privacy": "Privacy",
   "footer.terms": "Terms",
-  "footer.about": "About"
+  "footer.about": "About",
+  "common.select_language": "Select language"
 }

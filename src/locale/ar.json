@@ -1,7 +1,9 @@
 {
+  "meta.name": "Arabic",
+  "meta.native_name": "العربية",
+  "meta.direction": "rtl",
   "app.name": "الطقس",
   "app.tagline": "منصة معلومات الطقس العالمية",
-
   "nav.home": "الرئيسية",
   "nav.forecast": "التوقعات",
   "nav.alerts": "التنبيهات",
@@ -12,7 +14,6 @@
   "nav.login": "تسجيل الدخول",
   "nav.logout": "تسجيل الخروج",
   "nav.register": "التسجيل",
-
   "weather.current": "الطقس الحالي",
   "weather.forecast": "التوقعات",
   "weather.today": "اليوم",
@@ -36,7 +37,6 @@
   "weather.high": "العظمى",
   "weather.low": "الصغرى",
   "weather.last_updated": "آخر تحديث",
-
   "condition.clear": "صافٍ",
   "condition.clear_sky": "سماء صافية",
   "condition.sunny": "مشمس",
@@ -65,7 +65,6 @@
   "condition.tornado": "إعصار قمعي",
   "condition.hurricane": "إعصار",
   "condition.tropical_storm": "عاصفة استوائية",
-
   "alerts.title": "تنبيهات الطقس",
   "alerts.active": "التنبيهات النشطة",
   "alerts.none": "لا توجد تنبيهات نشطة",
@@ -86,7 +85,6 @@
   "alerts.certainty.observed": "مرصود",
   "alerts.certainty.likely": "محتمل",
   "alerts.certainty.possible": "ممكن",
-
   "earthquake.title": "الزلازل",
   "earthquake.recent": "الزلازل الأخيرة",
   "earthquake.magnitude": "القوة",
@@ -95,7 +93,6 @@
   "earthquake.time": "الوقت",
   "earthquake.tsunami_warning": "تحذير تسونامي",
   "earthquake.more_info": "مزيد من المعلومات",
-
   "hurricane.title": "الأعاصير",
   "hurricane.active": "العواصف النشطة",
   "hurricane.name": "الاسم",
@@ -105,7 +102,6 @@
   "hurricane.movement": "الحركة",
   "hurricane.forecast_track": "المسار المتوقع",
   "hurricane.advisory": "النشرة",
-
   "moon.title": "طور القمر",
   "moon.phase": "الطور",
   "moon.illumination": "الإضاءة",
@@ -123,7 +119,6 @@
   "moon.phase.waning_gibbous": "أحدب متناقص",
   "moon.phase.last_quarter": "التربيع الأخير",
   "moon.phase.waning_crescent": "هلال متناقص",
-
   "location.search": "البحث عن موقع",
   "location.search_placeholder": "أدخل اسم المدينة أو الرمز البريدي",
   "location.detect": "اكتشاف موقعي",
@@ -133,7 +128,6 @@
   "location.remove": "إزالة",
   "location.set_default": "تعيين كافتراضي",
   "location.not_found": "الموقع غير موجود",
-
   "units.celsius": "مئوية",
   "units.fahrenheit": "فهرنهايت",
   "units.metric": "متري",
@@ -147,7 +141,6 @@
   "units.mm": "مم",
   "units.in": "بوصة",
   "units.days": "أيام",
-
   "direction.n": "ش",
   "direction.ne": "ش.ش",
   "direction.e": "شر",
@@ -164,7 +157,6 @@
   "direction.southwest": "جنوب غرب",
   "direction.west": "غرب",
   "direction.northwest": "شمال غرب",
-
   "time.now": "الآن",
   "time.today": "اليوم",
   "time.tomorrow": "غداً",
@@ -177,14 +169,12 @@
   "time.night": "ليلاً",
   "time.ago": "منذ",
   "time.in": "بعد",
-
   "error.generic": "حدث خطأ",
   "error.not_found": "غير موجود",
   "error.invalid_location": "موقع غير صالح",
   "error.network": "خطأ في الشبكة",
   "error.server": "خطأ في الخادم",
   "error.try_again": "يرجى المحاولة مرة أخرى",
-
   "action.refresh": "تحديث",
   "action.search": "بحث",
   "action.cancel": "إلغاء",
@@ -194,16 +184,15 @@
   "action.close": "إغلاق",
   "action.subscribe": "اشتراك",
   "action.unsubscribe": "إلغاء الاشتراك",
-
   "notification.alert_new": "تنبيه طقس جديد",
   "notification.alert_updated": "تم تحديث التنبيه",
   "notification.alert_expired": "انتهى التنبيه",
   "notification.subscribed": "تم الاشتراك في التنبيهات بنجاح",
   "notification.unsubscribed": "تم إلغاء الاشتراك",
-
   "footer.powered_by": "مدعوم من",
   "footer.data_sources": "مصادر البيانات",
   "footer.privacy": "الخصوصية",
   "footer.terms": "الشروط",
-  "footer.about": "حول"
+  "footer.about": "حول",
+  "common.select_language": "اختر اللغة"
 }

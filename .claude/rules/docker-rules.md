@@ -3,85 +3,94 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Put Dockerfile in project root (must be `docker/Dockerfile`)
-- ❌ Copy or symlink binaries into container (build from source)
-- ❌ Use .env files (hardcode sane defaults)
-- ❌ Run docker-compose in project directory (use temp dir)
-- ❌ Add USER directive (binary handles privilege drop)
-- ❌ Modify ENTRYPOINT or CMD (use entrypoint.sh)
+
+- Never place Dockerfile or docker-compose.yml in project root -- always use docker/
+- Never modify ENTRYPOINT or CMD -- all customization goes in entrypoint.sh
+- Never include build: or version: in docker-compose.yml
+- Never use .env files -- hardcode sane defaults directly
+- Never push :dev or :test tags to production registry
+- Never run docker compose from the project directory -- always use temp dir workflow
+- Never create runtime rootfs/ in the project repo
+- Never put pre-built binaries in Docker images -- always multi-stage build
 
 ## CRITICAL - ALWAYS DO
-- ✅ Dockerfile location: `docker/Dockerfile`
-- ✅ Multi-stage build: golang:alpine → alpine:latest
-- ✅ Build from source inside container
-- ✅ STOPSIGNAL: SIGRTMIN+3
-- ✅ ENTRYPOINT: tini with entrypoint.sh
-- ✅ Required packages: git, curl, bash, tini, tor
-- ✅ Default timezone: America/New_York (override with TZ)
-- ✅ Default internal port: 80
 
-## DOCKERFILE STRUCTURE
-```dockerfile
-# Stage 1: Build
-FROM golang:alpine AS builder
-RUN apk add --no-cache git
-WORKDIR /build
-COPY go.mod go.sum ./
-RUN go mod download
-COPY src/ ./src/
-RUN CGO_ENABLED=0 go build -ldflags="..." -o weather ./src
+- Place ALL Docker files in docker/ directory
+- Use multi-stage build (no pre-built binaries needed)
+- Use entrypoint.sh for all container startup logic
+- Include required OCI labels in Dockerfile
+- Use x-logging anchor in every docker-compose.yml service
+- Hardcode environment variables with sane defaults
+- Database names are ALWAYS server.db and users.db (globally consistent)
+- Use temp directory workflow for all Docker testing
 
-# Stage 2: Runtime
-FROM alpine:latest
-RUN apk add --no-cache bash curl tini tor tzdata ca-certificates
-COPY --from=builder /build/weather /usr/local/bin/
-COPY docker/file_system/ /
-EXPOSE 80
-STOPSIGNAL SIGRTMIN+3
-ENTRYPOINT ["tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh"]
-```
+## Directory Structure
 
-## DOCKER COMPOSE FILES
-| File | Purpose | DEBUG |
-|------|---------|-------|
-| `docker-compose.yml` | Production | No |
-| `docker-compose.dev.yml` | Development | Yes |
-| `docker-compose.test.yml` | Testing | Yes |
+docker/
+  Dockerfile
+  docker-compose.yml
+  docker-compose.dev.yml
+  entrypoint.sh
+  file_system/            # Build-time rootfs (COPY into image)
 
-## PORT MAPPING
-```yaml
-ports:
-  - "64580:80"  # Random 64xxx:internal 80
-```
+## Required OCI Labels (Dockerfile)
 
-| Context | Address | Port |
-|---------|---------|------|
-| Container internal | 0.0.0.0 | 80 |
-| Container custom | 0.0.0.0 | PORT env |
-| Host mapping | - | 64xxx |
+- org.opencontainers.image.title
+- org.opencontainers.image.description
+- org.opencontainers.image.url
+- org.opencontainers.image.source
+- org.opencontainers.image.licenses
+- org.opencontainers.image.version
+- org.opencontainers.image.created
+- org.opencontainers.image.revision
 
-## VOLUME MOUNTS
-```yaml
-volumes:
-  - './rootfs/config:/config:z'
-  - './rootfs/data:/data:z'
-```
+For multi-arch images, OCI labels MUST also be set as manifest annotations.
 
-## CONTAINER PATHS
-| Type | Path |
-|------|------|
-| Binary | `/usr/local/bin/weather` |
-| Config | `/config/weather/server.yml` |
-| Data | `/data/weather/` |
-| SQLite | `/data/db/sqlite/` |
-| Logs | `/data/log/weather/` |
+## docker-compose.yml Rules
 
-## OCI LABELS (REQUIRED)
-```dockerfile
-LABEL org.opencontainers.image.title="Weather"
-LABEL org.opencontainers.image.source="https://github.com/apimgr/weather"
-LABEL org.opencontainers.image.licenses="MIT"
-```
+| Setting | Rule |
+|---------|------|
+| Environment variables | Hardcode with sane defaults (NEVER use .env files) |
+| build: section | NEVER include |
+| version: field | NEVER include |
+| x-logging | ALWAYS include anchor, ALWAYS use in every service |
+| rootfs/ volume | NEVER from project dir -- use temp dir |
 
----
-For complete details, see AI.md PART 27
+## Two rootfs/ Contexts
+
+| Context | Location | Purpose |
+|---------|----------|---------|
+| Build-time | docker/file_system/ | Files COPYd into image (in repo) |
+| Runtime | TEMP_DIR/rootfs/ | Volume mounts (config, data) -- NEVER in repo |
+
+## Registry Rules
+
+| Build Type | Registry |
+|------------|---------|
+| Release builds | PLATFORM_CONTAINER_REGISTRY/apimgr/weather |
+| Development builds | Local-only tags (no registry prefix) |
+| :dev or :test tags | NEVER push to production registry |
+
+## Environment Variables
+
+ALWAYS hardcode -- NEVER require .env files:
+- SERVER_HOST=0.0.0.0
+- SERVER_PORT=8080
+- DATA_DIR=/data
+
+NEVER use dollar-sign VAR or dollar-sign{VAR:-default} syntax requiring .env.
+
+## AI Testing Workflow
+
+Scripts docker.sh and incus.sh are FOR HUMAN USE ONLY.
+AI must use the AI/Automated Testing Workflow (temp dir, containers).
+AI must NEVER run docker.sh or incus.sh directly from the project directory.
+
+## Database Names
+
+- Server database: server.db (ALWAYS this name)
+- Users database: users.db (ALWAYS this name)
+
+## Reference
+
+For complete details, see AI.md PART 27 (lines 34717-36222)

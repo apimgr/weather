@@ -1,7 +1,9 @@
 {
+  "meta.name": "Spanish",
+  "meta.native_name": "Español",
+  "meta.direction": "ltr",
   "app.name": "Clima",
   "app.tagline": "Plataforma Global de Información Meteorológica",
-
   "nav.home": "Inicio",
   "nav.forecast": "Pronóstico",
   "nav.alerts": "Alertas",
@@ -12,7 +14,6 @@
   "nav.login": "Iniciar Sesión",
   "nav.logout": "Cerrar Sesión",
   "nav.register": "Registrarse",
-
   "weather.current": "Clima Actual",
   "weather.forecast": "Pronóstico",
   "weather.today": "Hoy",
@@ -36,7 +37,6 @@
   "weather.high": "Máxima",
   "weather.low": "Mínima",
   "weather.last_updated": "Última Actualización",
-
   "condition.clear": "Despejado",
   "condition.clear_sky": "Cielo Despejado",
   "condition.sunny": "Soleado",
@@ -65,7 +65,6 @@
   "condition.tornado": "Tornado",
   "condition.hurricane": "Huracán",
   "condition.tropical_storm": "Tormenta Tropical",
-
   "alerts.title": "Alertas Meteorológicas",
   "alerts.active": "Alertas Activas",
   "alerts.none": "Sin alertas activas",
@@ -86,7 +85,6 @@
   "alerts.certainty.observed": "Observada",
   "alerts.certainty.likely": "Probable",
   "alerts.certainty.possible": "Posible",
-
   "earthquake.title": "Terremotos",
   "earthquake.recent": "Terremotos Recientes",
   "earthquake.magnitude": "Magnitud",
@@ -95,7 +93,6 @@
   "earthquake.time": "Hora",
   "earthquake.tsunami_warning": "Alerta de Tsunami",
   "earthquake.more_info": "Más Información",
-
   "hurricane.title": "Huracanes",
   "hurricane.active": "Tormentas Activas",
   "hurricane.name": "Nombre",
@@ -105,7 +102,6 @@
   "hurricane.movement": "Movimiento",
   "hurricane.forecast_track": "Trayectoria Prevista",
   "hurricane.advisory": "Aviso",
-
   "moon.title": "Fase Lunar",
   "moon.phase": "Fase",
   "moon.illumination": "Iluminación",
@@ -123,7 +119,6 @@
   "moon.phase.waning_gibbous": "Gibosa Menguante",
   "moon.phase.last_quarter": "Cuarto Menguante",
   "moon.phase.waning_crescent": "Luna Menguante",
-
   "location.search": "Buscar Ubicación",
   "location.search_placeholder": "Ingrese ciudad o código postal",
   "location.detect": "Detectar Mi Ubicación",
@@ -133,7 +128,6 @@
   "location.remove": "Eliminar",
   "location.set_default": "Establecer como Predeterminada",
   "location.not_found": "Ubicación no encontrada",
-
   "units.celsius": "Celsius",
   "units.fahrenheit": "Fahrenheit",
   "units.metric": "Métrico",
@@ -147,7 +141,6 @@
   "units.mm": "mm",
   "units.in": "pulg",
   "units.days": "días",
-
   "direction.n": "N",
   "direction.ne": "NE",
   "direction.e": "E",
@@ -164,7 +157,6 @@
   "direction.southwest": "Suroeste",
   "direction.west": "Oeste",
   "direction.northwest": "Noroeste",
-
   "time.now": "Ahora",
   "time.today": "Hoy",
   "time.tomorrow": "Mañana",
@@ -177,14 +169,12 @@
   "time.night": "Noche",
   "time.ago": "hace",
   "time.in": "en",
-
   "error.generic": "Ocurrió un error",
   "error.not_found": "No encontrado",
   "error.invalid_location": "Ubicación inválida",
   "error.network": "Error de red",
   "error.server": "Error del servidor",
   "error.try_again": "Por favor intente de nuevo",
-
   "action.refresh": "Actualizar",
   "action.search": "Buscar",
   "action.cancel": "Cancelar",
@@ -194,16 +184,15 @@
   "action.close": "Cerrar",
   "action.subscribe": "Suscribirse",
   "action.unsubscribe": "Cancelar Suscripción",
-
   "notification.alert_new": "Nueva Alerta Meteorológica",
   "notification.alert_updated": "Alerta Actualizada",
   "notification.alert_expired": "Alerta Expirada",
   "notification.subscribed": "Suscrito exitosamente a alertas",
   "notification.unsubscribed": "Suscripción cancelada",
-
   "footer.powered_by": "Desarrollado por",
   "footer.data_sources": "Fuentes de Datos",
   "footer.privacy": "Privacidad",
   "footer.terms": "Términos",
-  "footer.about": "Acerca de"
+  "footer.about": "Acerca de",
+  "common.select_language": "Seleccionar idioma"
 }

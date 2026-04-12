@@ -1,7 +1,9 @@
 {
+  "meta.name": "Chinese",
+  "meta.native_name": "中文",
+  "meta.direction": "ltr",
   "app.name": "天气",
   "app.tagline": "全球天气信息平台",
-
   "nav.home": "首页",
   "nav.forecast": "预报",
   "nav.alerts": "预警",
@@ -12,7 +14,6 @@
   "nav.login": "登录",
   "nav.logout": "退出",
   "nav.register": "注册",
-
   "weather.current": "当前天气",
   "weather.forecast": "预报",
   "weather.today": "今天",
@@ -36,7 +37,6 @@
   "weather.high": "最高",
   "weather.low": "最低",
   "weather.last_updated": "最后更新",
-
   "condition.clear": "晴",
   "condition.clear_sky": "晴朗",
   "condition.sunny": "阳光明媚",
@@ -65,7 +65,6 @@
   "condition.tornado": "龙卷风",
   "condition.hurricane": "飓风",
   "condition.tropical_storm": "热带风暴",
-
   "alerts.title": "天气预警",
   "alerts.active": "活动预警",
   "alerts.none": "无活动预警",
@@ -86,7 +85,6 @@
   "alerts.certainty.observed": "已观测",
   "alerts.certainty.likely": "可能",
   "alerts.certainty.possible": "有可能",
-
   "earthquake.title": "地震",
   "earthquake.recent": "最近地震",
   "earthquake.magnitude": "震级",
@@ -95,7 +93,6 @@
   "earthquake.time": "时间",
   "earthquake.tsunami_warning": "海啸预警",
   "earthquake.more_info": "更多信息",
-
   "hurricane.title": "飓风",
   "hurricane.active": "活动风暴",
   "hurricane.name": "名称",
@@ -105,7 +102,6 @@
   "hurricane.movement": "移动",
   "hurricane.forecast_track": "预测路径",
   "hurricane.advisory": "公告",
-
   "moon.title": "月相",
   "moon.phase": "相位",
   "moon.illumination": "照度",
@@ -123,7 +119,6 @@
   "moon.phase.waning_gibbous": "亏凸月",
   "moon.phase.last_quarter": "下弦月",
   "moon.phase.waning_crescent": "残月",
-
   "location.search": "搜索位置",
   "location.search_placeholder": "输入城市名或邮政编码",
   "location.detect": "检测我的位置",
@@ -133,7 +128,6 @@
   "location.remove": "删除",
   "location.set_default": "设为默认",
   "location.not_found": "未找到位置",
-
   "units.celsius": "摄氏度",
   "units.fahrenheit": "华氏度",
   "units.metric": "公制",
@@ -147,7 +141,6 @@
   "units.mm": "毫米",
   "units.in": "英寸",
   "units.days": "天",
-
   "direction.n": "北",
   "direction.ne": "东北",
   "direction.e": "东",
@@ -164,7 +157,6 @@
   "direction.southwest": "西南",
   "direction.west": "西",
   "direction.northwest": "西北",
-
   "time.now": "现在",
   "time.today": "今天",
   "time.tomorrow": "明天",
@@ -177,14 +169,12 @@
   "time.night": "夜间",
   "time.ago": "前",
   "time.in": "后",
-
   "error.generic": "发生错误",
   "error.not_found": "未找到",
   "error.invalid_location": "无效位置",
   "error.network": "网络错误",
   "error.server": "服务器错误",
   "error.try_again": "请重试",
-
   "action.refresh": "刷新",
   "action.search": "搜索",
   "action.cancel": "取消",
@@ -194,16 +184,15 @@
   "action.close": "关闭",
   "action.subscribe": "订阅",
   "action.unsubscribe": "取消订阅",
-
   "notification.alert_new": "新天气预警",
   "notification.alert_updated": "预警已更新",
   "notification.alert_expired": "预警已过期",
   "notification.subscribed": "成功订阅预警",
   "notification.unsubscribed": "已取消订阅",
-
   "footer.powered_by": "技术支持",
   "footer.data_sources": "数据来源",
   "footer.privacy": "隐私",
   "footer.terms": "条款",
-  "footer.about": "关于"
+  "footer.about": "关于",
+  "common.select_language": "选择语言"
 }

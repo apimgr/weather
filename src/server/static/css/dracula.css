@@ -261,6 +261,28 @@ a:hover {
   gap: var(--space-md);
 }
 
+/* Language Selector (PART 31) */
+.lang-selector {
+  display: flex;
+  align-items: center;
+}
+
+.lang-select {
+  background: var(--dracula-current-line);
+  color: var(--dracula-foreground);
+  border: 1px solid var(--dracula-comment);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  max-width: 120px;
+}
+
+.lang-select:focus {
+  outline: 2px solid var(--dracula-cyan);
+  outline-offset: 2px;
+}
+
 /* Mobile Menu Toggle */
 .navbar-toggle {
   display: block;

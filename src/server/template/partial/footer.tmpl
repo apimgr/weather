@@ -1,12 +1,14 @@
 {{define "footer"}}
 <footer class="page-footer">
-    <p class="page-footer__text">Weather Service · Production-grade forecasts, alerts, and geo data</p>
+    <p class="page-footer__text">{{t .lang "app.name"}} · {{t .lang "app.tagline"}}</p>
     <p class="page-footer__links">
         <a href="https://github.com/apimgr/weather" target="_blank">GitHub</a>
         <span class="page-footer__divider">•</span>
-        <span>Made with <span class="text-red">❤️</span> by apimgr</span>
+        <a href="/privacy">{{t .lang "footer.privacy"}}</a>
         <span class="page-footer__divider">•</span>
-        <a href="/docs">Docs v2.0.0</a>
+        <a href="/terms">{{t .lang "footer.terms"}}</a>
+        <span class="page-footer__divider">•</span>
+        <a href="/docs">{{t .lang "footer.about"}}</a>
     </p>
 </footer>
 </body>

@@ -1,7 +1,9 @@
 {
+  "meta.name": "Japanese",
+  "meta.native_name": "日本語",
+  "meta.direction": "ltr",
   "app.name": "天気",
   "app.tagline": "グローバル気象情報プラットフォーム",
-
   "nav.home": "ホーム",
   "nav.forecast": "予報",
   "nav.alerts": "警報",
@@ -12,7 +14,6 @@
   "nav.login": "ログイン",
   "nav.logout": "ログアウト",
   "nav.register": "登録",
-
   "weather.current": "現在の天気",
   "weather.forecast": "予報",
   "weather.today": "今日",
@@ -36,7 +37,6 @@
   "weather.high": "最高",
   "weather.low": "最低",
   "weather.last_updated": "最終更新",
-
   "condition.clear": "晴れ",
   "condition.clear_sky": "快晴",
   "condition.sunny": "晴天",
@@ -65,7 +65,6 @@
   "condition.tornado": "竜巻",
   "condition.hurricane": "ハリケーン",
   "condition.tropical_storm": "熱帯低気圧",
-
   "alerts.title": "気象警報",
   "alerts.active": "発令中の警報",
   "alerts.none": "警報なし",
@@ -86,7 +85,6 @@
   "alerts.certainty.observed": "観測済み",
   "alerts.certainty.likely": "可能性高",
   "alerts.certainty.possible": "可能性あり",
-
   "earthquake.title": "地震",
   "earthquake.recent": "最近の地震",
   "earthquake.magnitude": "マグニチュード",
@@ -95,7 +93,6 @@
   "earthquake.time": "発生時刻",
   "earthquake.tsunami_warning": "津波警報",
   "earthquake.more_info": "詳細情報",
-
   "hurricane.title": "ハリケーン",
   "hurricane.active": "発生中の嵐",
   "hurricane.name": "名前",
@@ -105,7 +102,6 @@
   "hurricane.movement": "移動",
   "hurricane.forecast_track": "予想進路",
   "hurricane.advisory": "情報",
-
   "moon.title": "月相",
   "moon.phase": "月相",
   "moon.illumination": "輝面比",
@@ -123,7 +119,6 @@
   "moon.phase.waning_gibbous": "十六夜",
   "moon.phase.last_quarter": "下弦の月",
   "moon.phase.waning_crescent": "二十六夜",
-
   "location.search": "場所を検索",
   "location.search_placeholder": "都市名または郵便番号を入力",
   "location.detect": "現在地を検出",
@@ -133,7 +128,6 @@
   "location.remove": "削除",
   "location.set_default": "デフォルトに設定",
   "location.not_found": "場所が見つかりません",
-
   "units.celsius": "摂氏",
   "units.fahrenheit": "華氏",
   "units.metric": "メートル法",
@@ -147,7 +141,6 @@
   "units.mm": "mm",
   "units.in": "in",
   "units.days": "日",
-
   "direction.n": "北",
   "direction.ne": "北東",
   "direction.e": "東",
@@ -164,7 +157,6 @@
   "direction.southwest": "南西",
   "direction.west": "西",
   "direction.northwest": "北西",
-
   "time.now": "現在",
   "time.today": "今日",
   "time.tomorrow": "明日",
@@ -177,14 +169,12 @@
   "time.night": "夜",
   "time.ago": "前",
   "time.in": "後",
-
   "error.generic": "エラーが発生しました",
   "error.not_found": "見つかりません",
   "error.invalid_location": "無効な場所",
   "error.network": "ネットワークエラー",
   "error.server": "サーバーエラー",
   "error.try_again": "もう一度お試しください",
-
   "action.refresh": "更新",
   "action.search": "検索",
   "action.cancel": "キャンセル",
@@ -194,16 +184,15 @@
   "action.close": "閉じる",
   "action.subscribe": "登録",
   "action.unsubscribe": "登録解除",
-
   "notification.alert_new": "新しい気象警報",
   "notification.alert_updated": "警報が更新されました",
   "notification.alert_expired": "警報が終了しました",
   "notification.subscribed": "警報の登録が完了しました",
   "notification.unsubscribed": "登録を解除しました",
-
   "footer.powered_by": "提供",
   "footer.data_sources": "データソース",
   "footer.privacy": "プライバシー",
   "footer.terms": "利用規約",
-  "footer.about": "概要"
+  "footer.about": "概要",
+  "common.select_language": "言語を選択"
 }

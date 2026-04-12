@@ -488,10 +488,34 @@ func main() {
 	}
 	fmt.Printf("🌐 I18n initialized with languages: %v\n", i18nService.GetSupportedLanguages())
 
-	// I18n middleware - detects language from Accept-Language header
+	// I18n middleware - per AI.md PART 31 fallback chain:
+	// ?lang= query param (sets 1yr cookie) → lang cookie → Accept-Language → en
 	r.Use(func(c *gin.Context) {
-		acceptLang := c.GetHeader("Accept-Language")
-		lang := i18nService.ParseAcceptLanguage(acceptLang)
+		lang := ""
+
+		// 1. ?lang= query param (highest priority, also sets cookie)
+		if q := c.Query("lang"); q != "" && i18nService.IsSupported(q) {
+			lang = q
+			c.SetCookie("lang", lang, 365*24*60*60, "/", "", c.Request.TLS != nil, true)
+		}
+
+		// 2. lang cookie
+		if lang == "" {
+			if cookie, err := c.Cookie("lang"); err == nil && i18nService.IsSupported(cookie) {
+				lang = cookie
+			}
+		}
+
+		// 3. Accept-Language header
+		if lang == "" {
+			lang = i18nService.ParseAcceptLanguage(c.GetHeader("Accept-Language"))
+		}
+
+		// 4. Default: en
+		if lang == "" {
+			lang = "en"
+		}
+
 		c.Set("lang", lang)
 		c.Set("i18n", i18nService)
 		c.Next()

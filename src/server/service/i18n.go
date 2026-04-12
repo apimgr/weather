@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+
+	"github.com/apimgr/weather/src/utils"
 )
 
-// I18n provides internationalization support
-// TEMPLATE.md PART 29 - NON-NEGOTIABLE
+// I18n provides internationalization support.
+// AI.md PART 31 - NON-NEGOTIABLE
 type I18n struct {
-	mu            sync.RWMutex
-	// lang -> key -> translation
-	translations  map[string]map[string]string
-	defaultLang   string
+	mu           sync.RWMutex
+	translations map[string]map[string]string
+	defaultLang  string
 	supportedLang []string
 }
 
@@ -119,7 +120,12 @@ func (i *I18n) ParseAcceptLanguage(header string) string {
 	return bestMatch
 }
 
-// isSupported checks if a language is supported
+// IsSupported returns true if the language code is supported.
+func (i *I18n) IsSupported(lang string) bool {
+	return i.isSupported(lang)
+}
+
+// isSupported checks if a language is supported (internal, no lock).
 func (i *I18n) isSupported(lang string) bool {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
@@ -128,7 +134,7 @@ func (i *I18n) isSupported(lang string) bool {
 	return ok
 }
 
-// GetSupportedLanguages returns list of supported languages
+// GetSupportedLanguages returns list of supported language codes.
 func (i *I18n) GetSupportedLanguages() []string {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
@@ -138,7 +144,36 @@ func (i *I18n) GetSupportedLanguages() []string {
 	return langs
 }
 
-// GetDefaultLanguage returns the default language
+// GetLanguageInfos returns metadata for all supported languages, sorted by code.
+// Reads meta.name, meta.native_name, and meta.direction from each locale file.
+func (i *I18n) GetLanguageInfos() []utils.LanguageInfo {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	infos := make([]utils.LanguageInfo, 0, len(i.supportedLang))
+	for _, code := range i.supportedLang {
+		t := i.translations[code]
+		info := utils.LanguageInfo{
+			Code:       code,
+			Name:       t["meta.name"],
+			NativeName: t["meta.native_name"],
+			Direction:  t["meta.direction"],
+		}
+		if info.Name == "" {
+			info.Name = code
+		}
+		if info.NativeName == "" {
+			info.NativeName = code
+		}
+		if info.Direction == "" {
+			info.Direction = "ltr"
+		}
+		infos = append(infos, info)
+	}
+	return infos
+}
+
+// GetDefaultLanguage returns the default language code.
 func (i *I18n) GetDefaultLanguage() string {
 	return i.defaultLang
 }

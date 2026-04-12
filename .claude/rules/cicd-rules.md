@@ -3,91 +3,79 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use Makefile in CI/CD (explicit commands only)
-- ❌ Hardcode Go version (use `go-version: 'stable'`)
-- ❌ Skip any of the 8 platforms
-- ❌ Use v prefix in VERSION (strip it: v1.2.3 → 1.2.3)
-- ❌ Forget OfficialSite in LDFLAGS
+
+- Never use Makefile in CI/CD -- always use explicit commands
+- Never hardcode Go version -- use stable in workflows
+- Never include -musl suffix in released binary names
+- Never push :dev or :test tags to production registry
+- Never use CGO in CI/CD builds -- CGO_ENABLED=0 always
+- Never require interactive input in CI/CD
 
 ## CRITICAL - ALWAYS DO
-- ✅ Explicit commands with all env vars
-- ✅ Same logic across GitHub, Gitea, Jenkins
-- ✅ Build all 8 platforms (linux/darwin/windows/freebsd × amd64/arm64)
-- ✅ Docker builds on EVERY push
-- ✅ Proper LDFLAGS: Version, CommitID, BuildDate, OfficialSite
 
-## WORKFLOW FILES
-| Platform | Location |
-|----------|----------|
-| GitHub | `.github/workflows/*.yml` |
-| Gitea | `.gitea/workflows/*.yml` |
-| GitLab | `.gitlab-ci.yml` |
-| Jenkins | `Jenkinsfile` |
+- Use explicit commands in CI/CD (never Makefile targets)
+- Use go-version: stable in GitHub Actions workflows
+- Set CGO_ENABLED=0 in all build environment variables
+- Have a Jenkinsfile in the repository root
+- Have GitHub Actions workflows for all required checks
+- Support both amd64 and arm64 agent labels in Jenkins
 
-## REQUIRED WORKFLOWS
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `release.yml` | Tag push (v*) | Stable releases |
-| `beta.yml` | Branch: beta | Beta releases |
-| `daily.yml` | Branch: main, schedule | Daily builds |
-| `docker.yml` | Any push | Docker images |
+## CI/CD vs Local Development
 
-## VERSION FROM TAG
-```bash
-# Strip 'v' prefix from semver tags only
-VERSION=$(echo $TAG | sed 's/^v//')
-# v1.2.3 → 1.2.3
-# dev → dev (unchanged)
-# beta → beta (unchanged)
-```
+| Task | Local Development | CI/CD |
+|------|------------------|-------|
+| Build | make build | Explicit go build commands |
+| Test | make test | Explicit go test commands |
+| Docker | make docker | Explicit docker commands |
 
-## LDFLAGS
-```bash
-LDFLAGS="-s -w \
-  -X 'main.Version=${VERSION}' \
-  -X 'main.CommitID=${COMMIT}' \
-  -X 'main.BuildDate=${DATE}' \
-  -X 'main.OfficialSite=${SITE}'"
-```
+NEVER use Makefile targets in CI/CD pipelines.
 
-## 8 PLATFORM BUILD MATRIX
-```yaml
-strategy:
-  matrix:
-    goos: [linux, darwin, windows, freebsd]
-    goarch: [amd64, arm64]
-```
+## Required Environment Variables (All Workflows)
 
-## DOCKER TAGS
-| Trigger | Tags |
-|---------|------|
-| Any push | `devel`, `{commit}` |
-| Beta branch | adds `beta` |
-| Release tag | `{version}`, `latest`, `YYMM`, `{commit}` |
+- CGO_ENABLED=0
+- GOFLAGS=-mod=readonly
 
-## CLI BINARY NAMING
-```bash
-# Server binary
-weather-linux-amd64
-weather-darwin-arm64
-weather-windows-amd64.exe
+## GitHub Actions Rules
 
-# CLI binary (CORRECT)
-weather-cli-linux-amd64
-weather-cli-darwin-arm64
-weather-cli-windows-amd64.exe
+- Use go-version: stable (NEVER hardcode like 1.21)
+- Workflows MUST NOT use Makefile targets
+- Workflows MUST set CGO_ENABLED=0
+- Workflows MUST NOT require interactive input
 
-# WRONG
-weather-linux-amd64-cli
-```
+## Jenkinsfile Requirements
 
-## ENVIRONMENT VARIABLES
-```yaml
-env:
-  CGO_ENABLED: 0
-  GOOS: ${{ matrix.goos }}
-  GOARCH: ${{ matrix.goarch }}
-```
+- MUST exist in repository root
+- Agent labels: amd64 AND arm64 must be available
+- Pipeline stages: build, test, docker (at minimum)
 
----
-For complete details, see AI.md PART 28
+## CI/CD Workflow Requirements
+
+Workflows MUST:
+- Build all 8 platform binaries
+- Run unit tests with coverage
+- Build Docker image
+- Verify binary names (no -musl suffix)
+- Verify checksums
+
+Workflows MUST NOT:
+- Use Makefile
+- Hardcode Go version
+- Require .env files
+- Use CGO
+
+## Binary Naming in CI/CD
+
+| Platform | Server | CLI |
+|----------|--------|-----|
+| linux/amd64 | weather-linux-amd64 | weather-cli-linux-amd64 |
+| linux/arm64 | weather-linux-arm64 | weather-cli-linux-arm64 |
+| darwin/amd64 | weather-darwin-amd64 | weather-cli-darwin-amd64 |
+| darwin/arm64 | weather-darwin-arm64 | weather-cli-darwin-arm64 |
+| windows/amd64 | weather-windows-amd64.exe | weather-cli-windows-amd64.exe |
+| windows/arm64 | weather-windows-arm64.exe | weather-cli-windows-arm64.exe |
+| freebsd/amd64 | weather-freebsd-amd64 | weather-cli-freebsd-amd64 |
+| freebsd/arm64 | weather-freebsd-arm64 | weather-cli-freebsd-arm64 |
+
+## Reference
+
+For complete details, see AI.md PART 28 (lines 36223-39156)

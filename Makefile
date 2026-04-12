@@ -47,7 +47,7 @@ GO_DOCKER := docker run --rm \
 	-e CGO_ENABLED=0 \
 	golang:alpine
 
-.PHONY: build local release docker test dev clean
+.PHONY: build local release docker test dev clean i18n-validate
 
 # =============================================================================
 # BUILD - Build all platforms + local binary (via Docker with cached modules)
@@ -246,3 +246,11 @@ dev:
 # =============================================================================
 clean:
 	@rm -rf $(BINDIR) $(RELDIR)
+
+# =============================================================================
+# I18N-VALIDATE - Verify all locale files have matching keys to en.json
+# AI.md PART 31 - Build-time i18n key parity check
+# =============================================================================
+i18n-validate:
+	@echo "Validating i18n locale files..."
+	@python3 scripts/i18n-validate.sh src/locale

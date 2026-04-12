@@ -3,64 +3,88 @@
 ⚠️ **These rules are NON-NEGOTIABLE. Violations are bugs.** ⚠️
 
 ## CRITICAL - NEVER DO
-- ❌ Use bcrypt for passwords - use Argon2id
-- ❌ Store plaintext passwords anywhere
-- ❌ Use `mattn/go-sqlite3` (requires CGO) - use `modernc.org/sqlite`
-- ❌ Use `lib/pq` for PostgreSQL - use `jackc/pgx/v5`
-- ❌ Log passwords or tokens (even hashed)
-- ❌ Reveal internal errors to users
-- ❌ Use external cron/scheduler
+
+- Never expose sensitive data in /healthz response
+- Never log passwords (even hashed)
+- Never redirect admin login to user routes (or vice versa)
+- Never keep legacy/old API endpoints -- delete them
+- Never use bcrypt for passwords -- use Argon2id
+- Never use strconv.ParseBool() -- use config.ParseBool()
 
 ## CRITICAL - ALWAYS DO
-- ✅ Argon2id for password hashing (OWASP 2023 params)
-- ✅ SHA-256 for API token hashing (fast lookup needed)
-- ✅ `modernc.org/sqlite` for SQLite (pure Go, no CGO)
-- ✅ `jackc/pgx/v5` for PostgreSQL
-- ✅ Parameterized queries only (never string concatenation)
-- ✅ Separate error messages by audience (user, admin, console, log)
-- ✅ Built-in scheduler for all background tasks
-- ✅ Support Valkey/Redis for caching and clustering
 
-## PASSWORD HASHING (Argon2id)
-```go
-const (
-    ArgonTime    = 3        // Iterations
-    ArgonMemory  = 64*1024  // 64 MB
-    ArgonThreads = 4        // Parallelism
-    ArgonKeyLen  = 32       // Output length
-    ArgonSaltLen = 16       // Salt length
-)
-```
+- Support cluster mode with config sync
+- Use connection pooling for all database connections
+- Set timeouts on all database queries
+- Include Request ID in every request for tracing
+- Log all errors with context
+- Serve a valid security.txt file
+- Use raw text only in log FILES (no icons, no ASCII art)
+- Support Valkey/Redis for cluster and mixed-mode deployments
 
-## DATABASE DRIVERS
-| Database | Driver | Config Aliases |
-|----------|--------|----------------|
-| SQLite | `modernc.org/sqlite` | sqlite, sqlite2, sqlite3 |
-| PostgreSQL | `jackc/pgx/v5` | postgres, pgsql, postgresql |
-| MySQL | `go-sql-driver/mysql` | mysql, mariadb |
-| libSQL | `tursodatabase/libsql-client-go` | libsql, turso |
+## Error Code Standards
 
-## ERROR MESSAGES BY CONTEXT
-| Audience | Detail Level | Example |
-|----------|--------------|---------|
-| User | Minimal, helpful | "Invalid credentials" |
-| Admin | Actionable | "Login failed for user@example.com" |
-| Console | Full | Stack traces, full context |
-| Log | Structured | JSON with request_id, timestamps |
+| Code | HTTP | Message |
+|------|------|---------|
+| UNAUTHORIZED | 401 | "Unauthorized" |
+| TOKEN_EXPIRED | 401 | "Token expired" |
+| TOKEN_INVALID | 401 | "Invalid token" |
+| 2FA_REQUIRED | 401 | "Two-factor authentication required" |
+| 2FA_INVALID | 401 | "Invalid 2FA code" |
 
-## TOR HIDDEN SERVICE (PART 32)
-- Auto-enabled when Tor binary found on system
-- Binary controls Tor startup (not Docker)
-- Generate .onion address on first run
-- Store keys in `{data_dir}/tor/`
+## Healthz Endpoint Rules
 
-## RATE LIMITING
-| Endpoint | Default | Window |
-|----------|---------|--------|
-| Login | 5 attempts | 15 min |
-| Password reset | 3 attempts | 1 hour |
-| API (auth) | Configurable | 1 min |
-| API (anon) | Configurable | 1 min |
+- /healthz is PUBLIC -- never expose sensitive data
+- Database/cache checks MUST be vague (pass/fail only)
 
----
-For complete details, see AI.md PART 9, 10, 11, 32
+| Category | NEVER Include |
+|----------|--------------|
+| Internal IPs | Internal network addresses |
+| File paths | Server filesystem paths |
+| Credentials | Any secrets or tokens |
+| DB queries | Query details or schemas |
+
+## Logging Rules
+
+**ALWAYS Log:**
+- Request ID, method, path, status, duration
+- Auth events (login, logout, failures)
+- Admin actions with username and IP
+- Error events with context
+
+**NEVER Log:**
+- Passwords (even hashed)
+- API tokens (even hashed)
+- PII beyond what is necessary
+
+**Log Format:** Raw text only. No emoji, no icons, no special characters in log files.
+
+## Authentication Routing
+
+- Admin login NEVER redirects to user routes
+- User login NEVER redirects to admin routes
+- Auth routes under /auth/ -- NEVER at root (/login, /register)
+
+## Security.txt
+
+ALL projects MUST serve a valid security.txt at /.well-known/security.txt
+
+## Cluster Mode
+
+- ALL projects MUST support cluster mode with config sync
+- Valkey/Redis is REQUIRED for cluster or mixed-mode state sync
+- All databases MUST have identical schema across nodes
+
+## Tor Hidden Service (PART 32)
+
+- Hidden service is ALWAYS enabled if Tor binary is found
+- NEVER use default Tor ports (9050, 9051)
+- The application MUST start its OWN dedicated Tor process -- NEVER use system Tor
+- Server NEVER fails to start due to Tor issues
+- Tor runs as the same user the server runs as (after privilege drop)
+- Ports are NEVER hardcoded -- always detected at runtime
+- Tor dirs: {config_dir}/tor/, {data_dir}/tor/, {log_dir}/tor.log
+
+## Reference
+
+For complete details, see AI.md PART 9 (12821-13197), PART 10 (13198-13743), PART 11 (13744-15635), PART 32 (43317-45095)
