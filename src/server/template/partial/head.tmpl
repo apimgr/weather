@@ -1,6 +1,6 @@
 {{define "head"}}
 <!DOCTYPE html>
-<html lang="{{if .server.Lang}}{{.server.Lang}}{{else}}en{{end}}" data-theme="dark">
+<html lang="{{if .server.Lang}}{{.server.Lang}}{{else}}en{{end}}" class="theme-dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,7 +46,7 @@
         if (theme === 'auto') {
             theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.className = 'theme-' + theme;
 
         // Global API paths - available to all JavaScript
         window.API_PATHS = {
@@ -61,7 +61,7 @@
     <!-- Accessibility: Skip to main content link (TEMPLATE.md PART 29) -->
     <a href="#main-content" class="skip-link">{{t .server.Lang "aria_skip_to_main"}}</a>
 
-    <link rel="stylesheet" href="/static/css/dracula.css">
+    <link rel="stylesheet" href="/static/css/common.css">
     <link rel="stylesheet" href="/static/css/template-overrides.css">
     <link rel="stylesheet" href="/static/css/accessibility.css">
     <link rel="stylesheet" href="/static/css/notifications.css">

@@ -50,7 +50,7 @@
 
 .weather-form__button--location {
   flex: 1;
-  background-color: var(--dracula-cyan);
+  background-color: var(--color-info);
 }
 
 /* Location Details */
@@ -60,28 +60,28 @@
 }
 
 .location-detail-value--yellow {
-  color: var(--dracula-yellow);
+  color: var(--color-warning);
 }
 
 .location-detail-value--green {
-  color: var(--dracula-green);
+  color: var(--color-success);
 }
 
 .location-detail-value--orange {
-  color: var(--dracula-orange);
+  color: var(--color-warning);
 }
 
 /* Forecast Table Colors */
 .forecast-temp-high {
-  color: var(--dracula-orange);
+  color: var(--color-warning);
 }
 
 .forecast-temp-low {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
 }
 
 .forecast-feels-like {
-  color: var(--dracula-comment);
+  color: var(--color-muted);
   font-size: 0.875rem;
 }
 
@@ -97,29 +97,29 @@
 .console-container {
   margin-top: 30px;
   padding: 20px;
-  background-color: var(--dracula-bg);
+  background-color: var(--color-bg);
   border-radius: 6px;
 }
 
 .console-title {
-  color: var(--dracula-purple);
+  color: var(--color-primary);
   text-align: center;
   margin-top: 0;
 }
 
 .console-label {
-  color: var(--dracula-green);
+  color: var(--color-success);
 }
 
 /* Welcome Section */
 .welcome-container {
   text-align: center;
-  color: var(--dracula-comment);
+  color: var(--color-muted);
   margin: 30px 0;
 }
 
 .welcome-title {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
   font-size: 18px;
   margin-bottom: 15px;
 }
@@ -139,12 +139,12 @@
 .city-grid-container {
   margin-top: 30px;
   padding: 20px;
-  background-color: var(--dracula-current-line);
+  background-color: var(--color-bg-secondary);
   border-radius: 6px;
 }
 
 .city-grid-title {
-  color: var(--dracula-green);
+  color: var(--color-success);
 }
 
 /* Footer */
@@ -152,8 +152,8 @@
   text-align: center;
   margin-top: 3rem;
   padding: 2rem 1rem;
-  border-top: 1px solid var(--dracula-current-line);
-  color: var(--dracula-comment);
+  border-top: 1px solid var(--color-bg-secondary);
+  color: var(--color-muted);
 }
 
 .page-footer-text {
@@ -166,32 +166,32 @@
 }
 
 .page-footer-link {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
   text-decoration: none;
 }
 
 .page-footer-link--green {
-  color: var(--dracula-green);
+  color: var(--color-success);
   text-decoration: none;
 }
 
 .page-footer-divider {
-  color: var(--dracula-pink);
+  color: var(--color-accent);
 }
 
 .page-footer-heart {
-  color: var(--dracula-red);
+  color: var(--color-error);
 }
 
 /* ==================== ADMIN (admin.html) ==================== */
 .admin-stat-value--online {
   font-size: 1.5rem;
-  color: var(--dracula-green);
+  color: var(--color-success);
 }
 
 .admin-loading-text {
   text-align: center;
-  color: var(--dracula-comment);
+  color: var(--color-muted);
   padding: 2rem;
 }
 
@@ -201,7 +201,7 @@
 }
 
 .admin-table-header {
-  border-bottom: 2px solid var(--dracula-comment);
+  border-bottom: 2px solid var(--color-muted);
 }
 
 .admin-table-header-cell {
@@ -210,7 +210,7 @@
 }
 
 .admin-table-row {
-  border-bottom: 1px solid var(--dracula-comment);
+  border-bottom: 1px solid var(--color-muted);
 }
 
 .admin-table-cell {
@@ -223,7 +223,7 @@
 }
 
 .admin-user-badge {
-  background: var(--dracula-purple);
+  background: var(--color-primary);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.85rem;
@@ -231,11 +231,11 @@
 }
 
 .admin-user-badge--admin {
-  background: var(--dracula-red);
+  background: var(--color-error);
 }
 
 .admin-user-primary-indicator {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
   font-size: 0.8rem;
 }
 
@@ -245,17 +245,17 @@
 
 .admin-db-stat-value--success {
   font-size: 1.2rem;
-  color: var(--dracula-green);
+  color: var(--color-success);
 }
 
 .admin-section-title {
-  color: var(--dracula-purple);
+  color: var(--color-primary);
   margin-bottom: 1rem;
 }
 
 .admin-hr {
   margin: 2rem 0;
-  border-color: var(--dracula-comment);
+  border-color: var(--color-muted);
 }
 
 .admin-info-box {
@@ -269,20 +269,20 @@
   background: rgba(255, 85, 85, 0.1);
   padding: 1rem;
   border-radius: 4px;
-  border-left: 3px solid var(--dracula-red);
+  border-left: 3px solid var(--color-error);
   margin-top: 1rem;
 }
 
 .admin-settings-note {
-  background: var(--dracula-current-line);
+  background: var(--color-bg-secondary);
   padding: 1rem;
   border-radius: 8px;
-  border-left: 4px solid var(--dracula-cyan);
+  border-left: 4px solid var(--color-info);
   margin-top: 1rem;
 }
 
 .admin-settings-note-text {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
   margin: 0;
   font-size: 0.9rem;
 }
@@ -309,7 +309,7 @@
 }
 
 .profile-page-header-title {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
   margin-bottom: 0.5rem;
 }
 
@@ -318,7 +318,7 @@
 }
 
 .profile-card-header-title {
-  color: var(--dracula-purple);
+  color: var(--color-primary);
   margin: 0;
 }
 
@@ -350,12 +350,12 @@
 }
 
 .loading-page-title {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
   margin: 1rem 0;
 }
 
 .loading-page-status-box {
-  background-color: var(--dracula-current-line);
+  background-color: var(--color-bg-secondary);
   border-radius: 0.5rem;
   padding: 1rem;
   margin: 1rem 0;
@@ -363,26 +363,26 @@
 }
 
 .loading-page-status-item {
-  color: var(--dracula-yellow);
+  color: var(--color-warning);
   margin: 0.5rem 0;
 }
 
 .loading-page-status-item--green {
-  color: var(--dracula-green);
+  color: var(--color-success);
   margin: 0.5rem 0;
 }
 
 .loading-page-status-item--purple {
-  color: var(--dracula-purple);
+  color: var(--color-primary);
   margin: 0.5rem 0;
 }
 
 .loading-page-countdown-label {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
 }
 
 .loading-page-countdown-note {
-  color: var(--dracula-comment);
+  color: var(--color-muted);
   font-size: 0.875rem;
   margin-top: 0.5rem;
 }
@@ -398,24 +398,24 @@
 .loading-page-while-wait-box {
   margin: 2rem 0;
   padding: 1rem;
-  background-color: var(--dracula-bg);
+  background-color: var(--color-bg);
   border-radius: 0.375rem;
 }
 
 .loading-page-while-wait-title {
-  color: var(--dracula-orange);
+  color: var(--color-warning);
   margin-top: 0;
 }
 
 .loading-page-while-wait-text {
-  color: var(--dracula-foreground);
+  color: var(--color-text);
   font-size: 0.875rem;
   line-height: 1.6;
 }
 
 .loading-page-code-box {
   font-family: monospace;
-  background: var(--dracula-current-line);
+  background: var(--color-bg-secondary);
   padding: 0.75rem;
   border-radius: 0.25rem;
   margin: 0.75rem 0;
@@ -427,11 +427,11 @@
 }
 
 .loading-page-code-line--cyan {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
 }
 
 .loading-page-code-line--pink {
-  color: var(--dracula-pink);
+  color: var(--color-accent);
 }
 
 .loading-page-footer-text {
@@ -440,11 +440,11 @@
 
 /* ==================== REGISTER PAGE (register.html) ==================== */
 .register-password-mismatch {
-  border-color: var(--dracula-red);
+  border-color: var(--color-error);
 }
 
 .register-password-match {
-  border-color: var(--dracula-comment);
+  border-color: var(--color-muted);
 }
 
 /* JavaScript inline styles - converted to classes */
@@ -469,12 +469,12 @@
 
 /* ==================== SETUP PAGES ==================== */
 .setup-admin-form-hint {
-  color: var(--dracula-comment);
+  color: var(--color-muted);
   font-size: 0.8125rem;
 }
 
 .setup-complete-link {
-  color: var(--dracula-cyan);
+  color: var(--color-info);
 }
 
 /* ==================== UTILITY CLASSES ==================== */
@@ -599,16 +599,16 @@
   gap: 1.5rem;
 }
 
-.bg-dracula-bg {
-  background-color: var(--dracula-bg);
+.bg-color-bg {
+  background-color: var(--color-bg);
 }
 
-.bg-dracula-current-line {
-  background-color: var(--dracula-current-line);
+.bg-color-bg-secondary {
+  background-color: var(--color-bg-secondary);
 }
 
-.border-dracula-current-line {
-  border-color: var(--dracula-current-line);
+.border-color-bg-secondary {
+  border-color: var(--color-bg-secondary);
 }
 
 .border-1 {
@@ -684,13 +684,13 @@
 }
 
 .admin-header h1 {
-    color: var(--dracula-red);
+    color: var(--color-error);
     margin-bottom: 0.5rem;
 }
 
 .admin-badge {
     display: inline-block;
-    background: var(--dracula-red);
+    background: var(--color-error);
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
@@ -707,14 +707,14 @@
 }
 
 .stat-card {
-    background: var(--dracula-current-line);
+    background: var(--color-bg-secondary);
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stat-card h3 {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
 }
@@ -722,37 +722,37 @@
 .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--dracula-purple);
+    color: var(--color-primary);
 }
 
 .admin-tabs {
     display: flex;
     gap: 1rem;
     margin-bottom: 2rem;
-    border-bottom: 2px solid var(--dracula-current-line);
+    border-bottom: 2px solid var(--color-bg-secondary);
 }
 
 .tab {
     padding: 1rem 2rem;
     background: none;
     border: none;
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     cursor: pointer;
     transition: all 0.3s ease;
     border-bottom: 2px solid transparent;
 }
 
 .tab:hover {
-    color: var(--dracula-foreground);
+    color: var(--color-text);
 }
 
 .tab.active {
-    color: var(--dracula-purple);
-    border-bottom-color: var(--dracula-purple);
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
 }
 
 .tab:focus-visible {
-    outline: 3px solid var(--dracula-cyan);
+    outline: 3px solid var(--color-info);
     outline-offset: 2px;
 }
 
@@ -765,7 +765,7 @@
 }
 
 .admin-section {
-    background: var(--dracula-current-line);
+    background: var(--color-bg-secondary);
     padding: 2rem;
     border-radius: 8px;
     margin-bottom: 2rem;
@@ -779,7 +779,7 @@
 }
 
 .section-header h2 {
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 .btn {
@@ -794,16 +794,16 @@
 }
 
 .btn-primary {
-    background: var(--dracula-purple);
-    color: var(--dracula-bg);
+    background: var(--color-primary);
+    color: var(--color-bg);
 }
 
 .btn-primary:hover {
-    background: var(--dracula-pink);
+    background: var(--color-accent);
 }
 
 .btn-danger {
-    background: var(--dracula-red);
+    background: var(--color-error);
     color: white;
 }
 
@@ -812,7 +812,7 @@
 }
 
 .placeholder-text {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     text-align: center;
     padding: 3rem;
 }
@@ -827,7 +827,7 @@
 
 .form-label {
     display: block;
-    color: var(--dracula-cyan);
+    color: var(--color-info);
     font-weight: 600;
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
@@ -837,22 +837,22 @@
 .form-input:focus {
     width: 100%;
     padding: 0.75rem;
-    background: var(--dracula-bg);
-    border: 1px solid var(--dracula-comment);
+    background: var(--color-bg);
+    border: 1px solid var(--color-muted);
     border-radius: 4px;
-    color: var(--dracula-foreground);
+    color: var(--color-text);
     font-size: 1rem;
     font-family: inherit;
 }
 
 .form-input:focus {
     outline: none;
-    border-color: var(--dracula-purple);
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.1);
 }
 
 .form-input::placeholder {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
 }
 
 .form-grid {
@@ -866,14 +866,14 @@
     align-items: center;
     gap: 0.75rem;
     cursor: pointer;
-    color: var(--dracula-foreground);
+    color: var(--color-text);
 }
 
 .checkbox-label input[type="checkbox"] {
     width: 1.25rem;
     height: 1.25rem;
     cursor: pointer;
-    accent-color: var(--dracula-purple);
+    accent-color: var(--color-primary);
 }
 
 textarea.form-input {
@@ -895,12 +895,12 @@ select.form-input {
 
 .info-box {
     background: rgba(189, 147, 249, 0.1);
-    border-left: 3px solid var(--dracula-purple);
+    border-left: 3px solid var(--color-primary);
 }
 
 .warning-box {
     background: rgba(255, 85, 85, 0.1);
-    border-left: 3px solid var(--dracula-red);
+    border-left: 3px solid var(--color-error);
 }
 
 @media (max-width: 768px) {
@@ -930,7 +930,7 @@ select.form-input {
 /* Additional admin classes for inline styles */
 .admin-stat-value-online {
     font-size: 1.5rem;
-    color: var(--dracula-green);
+    color: var(--color-success);
 }
 
 .admin-stat-value-medium {
@@ -939,7 +939,7 @@ select.form-input {
 
 .admin-stat-value-medium-success {
     font-size: 1.2rem;
-    color: var(--dracula-green);
+    color: var(--color-success);
 }
 
 .admin-table-full {
@@ -948,7 +948,7 @@ select.form-input {
 }
 
 .admin-table-head-row {
-    border-bottom: 2px solid var(--dracula-comment);
+    border-bottom: 2px solid var(--color-muted);
 }
 
 .admin-table-head-cell {
@@ -962,7 +962,7 @@ select.form-input {
 }
 
 .admin-table-body-row {
-    border-bottom: 1px solid var(--dracula-comment);
+    border-bottom: 1px solid var(--color-muted);
 }
 
 .admin-table-body-cell {
@@ -975,7 +975,7 @@ select.form-input {
 }
 
 .admin-role-badge {
-    background: var(--dracula-purple);
+    background: var(--color-primary);
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
     font-size: 0.85rem;
@@ -983,7 +983,7 @@ select.form-input {
 }
 
 .admin-role-badge-admin {
-    background: var(--dracula-red);
+    background: var(--color-error);
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
     font-size: 0.85rem;
@@ -991,12 +991,12 @@ select.form-input {
 }
 
 .admin-user-primary {
-    color: var(--dracula-cyan);
+    color: var(--color-info);
     font-size: 0.8rem;
 }
 
 .admin-token-button {
-    background: var(--dracula-red);
+    background: var(--color-error);
     color: white;
     border: none;
     padding: 0.5rem 1rem;
@@ -1022,22 +1022,22 @@ select.form-input {
 
 .admin-logs-cell-cyan {
     padding: 0.75rem;
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 .admin-logs-cell-comment {
     padding: 0.75rem;
-    color: var(--dracula-comment);
+    color: var(--color-muted);
 }
 
 .admin-task-name {
     padding: 1rem;
     font-family: monospace;
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 .admin-task-status-running {
-    background: var(--dracula-green);
+    background: var(--color-success);
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
     font-size: 0.85rem;
@@ -1045,7 +1045,7 @@ select.form-input {
 }
 
 .admin-task-status-idle {
-    background: var(--dracula-comment);
+    background: var(--color-muted);
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
     font-size: 0.85rem;
@@ -1058,17 +1058,17 @@ select.form-input {
 
 .admin-task-countdown {
     font-size: 0.8rem;
-    color: var(--dracula-cyan);
+    color: var(--color-info);
     margin-top: 0.25rem;
 }
 
 .admin-error-text {
-    color: var(--dracula-red);
+    color: var(--color-error);
     text-align: center;
 }
 
 .admin-no-data-text {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     text-align: center;
     padding: 2rem;
 }
@@ -1083,39 +1083,39 @@ select.form-input {
 }
 
 .text-orange {
-    color: var(--dracula-orange);
+    color: var(--color-warning);
 }
 
 .text-green {
-    color: var(--dracula-green);
+    color: var(--color-success);
 }
 
 .text-pink {
-    color: var(--dracula-pink);
+    color: var(--color-accent);
 }
 
 .text-red {
-    color: var(--dracula-red);
+    color: var(--color-error);
 }
 
 .text-cyan {
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 .text-purple {
-    color: var(--dracula-purple);
+    color: var(--color-primary);
 }
 
 .text-yellow {
-    color: var(--dracula-yellow);
+    color: var(--color-warning);
 }
 
 .text-comment {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
 }
 
 .text-error {
-    color: var(--dracula-red);
+    color: var(--color-error);
 }
 
 .text-center {
@@ -1138,9 +1138,9 @@ select.form-input {
 .location-details-section {
     margin: 1.5rem 0;
     padding: 1rem;
-    background-color: var(--dracula-bg);
+    background-color: var(--color-bg);
     border-radius: 0.5rem;
-    border: 1px solid var(--dracula-current-line);
+    border: 1px solid var(--color-bg-secondary);
 }
 
 .location-detail {
@@ -1169,8 +1169,8 @@ select.form-input {
 }
 
 .error-message-box {
-    background-color: var(--dracula-red);
-    color: var(--dracula-bg);
+    background-color: var(--color-error);
+    color: var(--color-bg);
     padding: 10px;
     border-radius: 6px;
     margin: 20px 0;
@@ -1209,7 +1209,7 @@ select.form-input {
 }
 
 .status-info {
-    background-color: var(--dracula-current-line);
+    background-color: var(--color-bg-secondary);
     border-radius: 0.5rem;
     padding: 1rem;
     margin: 1rem 0;
@@ -1217,7 +1217,7 @@ select.form-input {
 }
 
 .retry-countdown {
-    color: var(--dracula-orange);
+    color: var(--color-warning);
     font-weight: bold;
     font-size: 1.2rem;
 }
@@ -1236,16 +1236,16 @@ select.form-input {
 }
 
 .error-title {
-    color: var(--dracula-red);
+    color: var(--color-error);
     font-size: 1.5rem;
     margin-bottom: 1rem;
 }
 
 .error-message {
-    color: var(--dracula-foreground);
+    color: var(--color-text);
     margin-bottom: 2rem;
     padding: 1rem;
-    background: var(--dracula-current-line);
+    background: var(--color-bg-secondary);
     border-radius: 8px;
 }
 
@@ -1264,21 +1264,21 @@ select.form-input {
 }
 
 .btn-primary {
-    background: var(--dracula-purple);
-    color: var(--dracula-bg);
+    background: var(--color-primary);
+    color: var(--color-bg);
 }
 
 .btn-primary:hover {
-    background: var(--dracula-pink);
+    background: var(--color-accent);
 }
 
 .btn-secondary {
-    background: var(--dracula-current-line);
-    color: var(--dracula-foreground);
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
 }
 
 .btn-secondary:hover {
-    background: var(--dracula-comment);
+    background: var(--color-muted);
 }
 
 /* ==================== REGISTER PAGE - EXTRACTED FROM register.html ==================== */
@@ -1286,7 +1286,7 @@ select.form-input {
     max-width: 450px;
     margin: 80px auto;
     padding: 2rem;
-    background: var(--dracula-current-line);
+    background: var(--color-bg-secondary);
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
@@ -1297,18 +1297,18 @@ select.form-input {
 }
 
 .register-header h1 {
-    color: var(--dracula-purple);
+    color: var(--color-primary);
     margin-bottom: 0.5rem;
 }
 
 .register-header p {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
 }
 
 .setup-badge {
     display: inline-block;
-    background: var(--dracula-green);
-    color: var(--dracula-bg);
+    background: var(--color-success);
+    color: var(--color-bg);
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
     font-size: 0.85rem;
@@ -1323,49 +1323,49 @@ select.form-input {
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--dracula-foreground);
+    color: var(--color-text);
     font-weight: 500;
 }
 
 .form-group input {
     width: 100%;
     padding: 0.75rem;
-    background: var(--dracula-bg);
-    border: 1px solid var(--dracula-comment);
+    background: var(--color-bg);
+    border: 1px solid var(--color-muted);
     border-radius: 4px;
-    color: var(--dracula-foreground);
+    color: var(--color-text);
     font-size: 1rem;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: var(--dracula-purple);
+    border-color: var(--color-primary);
 }
 
 .form-group small {
     display: block;
     margin-top: 0.25rem;
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     font-size: 0.85rem;
 }
 
 .btn-primary.setup {
-    background: var(--dracula-green);
+    background: var(--color-success);
 }
 
 .btn-primary.setup:hover {
-    background: var(--dracula-cyan);
+    background: var(--color-info);
 }
 
 .form-footer {
     text-align: center;
     margin-top: 1.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid var(--dracula-comment);
+    border-top: 1px solid var(--color-muted);
 }
 
 .form-footer a {
-    color: var(--dracula-cyan);
+    color: var(--color-info);
     text-decoration: none;
 }
 
@@ -1375,8 +1375,8 @@ select.form-input {
 
 .error-message {
     background: rgba(255, 85, 85, 0.1);
-    border: 1px solid var(--dracula-red);
-    color: var(--dracula-red);
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
     padding: 0.75rem;
     border-radius: 4px;
     margin-bottom: 1rem;
@@ -1385,7 +1385,7 @@ select.form-input {
 .password-strength {
     margin-top: 0.5rem;
     height: 4px;
-    background: var(--dracula-comment);
+    background: var(--color-muted);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -1398,17 +1398,17 @@ select.form-input {
 
 .password-strength-bar.weak {
     width: 33%;
-    background: var(--dracula-red);
+    background: var(--color-error);
 }
 
 .password-strength-bar.medium {
     width: 66%;
-    background: var(--dracula-yellow);
+    background: var(--color-warning);
 }
 
 .password-strength-bar.strong {
     width: 100%;
-    background: var(--dracula-green);
+    background: var(--color-success);
 }
 
 .back-link {
@@ -1417,13 +1417,13 @@ select.form-input {
 }
 
 .back-link a {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     text-decoration: none;
     font-size: 0.9rem;
 }
 
 .back-link a:hover {
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 /* ==================== LOGIN PAGE - EXTRACTED FROM login.html ==================== */
@@ -1431,7 +1431,7 @@ select.form-input {
     max-width: 400px;
     margin: 100px auto;
     padding: 2rem;
-    background: var(--dracula-current-line);
+    background: var(--color-bg-secondary);
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
@@ -1442,12 +1442,12 @@ select.form-input {
 }
 
 .login-header h1 {
-    color: var(--dracula-purple);
+    color: var(--color-primary);
     margin-bottom: 0.5rem;
 }
 
 .login-header p {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
 }
 
 /* ==================== ADD LOCATION PAGE - EXTRACTED FROM add-location.html ==================== */
@@ -1461,14 +1461,14 @@ select.form-input {
     display: flex;
     gap: var(--space-sm);
     margin-bottom: var(--space-lg);
-    border-bottom: 2px solid var(--dracula-current-line);
+    border-bottom: 2px solid var(--color-bg-secondary);
 }
 
 .tab {
     padding: var(--space-md) var(--space-lg);
     background: transparent;
     border: none;
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     cursor: pointer;
     font-weight: 600;
     font-size: 1rem;
@@ -1477,16 +1477,16 @@ select.form-input {
 }
 
 .tab:hover {
-    color: var(--dracula-foreground);
+    color: var(--color-text);
 }
 
 .tab.active {
-    color: var(--dracula-purple);
-    border-bottom-color: var(--dracula-purple);
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
 }
 
 .tab:focus-visible {
-    outline: 3px solid var(--dracula-cyan);
+    outline: 3px solid var(--color-info);
     outline-offset: 2px;
 }
 
@@ -1509,8 +1509,8 @@ select.form-input {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--dracula-current-line);
-    border: 1px solid var(--dracula-purple);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-primary);
     border-radius: var(--radius-md);
     max-height: 300px;
     overflow-y: auto;
@@ -1525,13 +1525,13 @@ select.form-input {
 .result-item {
     padding: var(--space-md);
     cursor: pointer;
-    border-bottom: 1px solid var(--dracula-bg);
+    border-bottom: 1px solid var(--color-bg);
     transition: all 0.2s ease;
 }
 
 .result-item:hover {
-    background: var(--dracula-purple);
-    color: var(--dracula-bg);
+    background: var(--color-primary);
+    color: var(--color-bg);
 }
 
 .result-item:last-child {
@@ -1540,21 +1540,21 @@ select.form-input {
 
 .result-city {
     font-weight: 700;
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 .result-item:hover .result-city {
-    color: var(--dracula-bg);
+    color: var(--color-bg);
 }
 
 .result-details {
     font-size: 0.875rem;
-    color: var(--dracula-comment);
+    color: var(--color-muted);
     margin-top: var(--space-xs);
 }
 
 .result-item:hover .result-details {
-    color: var(--dracula-bg);
+    color: var(--color-bg);
     opacity: 0.8;
 }
 
@@ -1568,14 +1568,14 @@ select.form-input {
 }
 
 .add-location-back-link {
-    color: var(--dracula-cyan);
+    color: var(--color-info);
 }
 
 .add-location-form-hidden {
     display: none;
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 2px solid var(--dracula-current-line);
+    border-top: 2px solid var(--color-bg-secondary);
 }
 
 .add-location-form-title {
@@ -1592,19 +1592,19 @@ select.form-input {
 
 /* Task Scheduler Status Colors */
 .status-success {
-    color: var(--dracula-green);
+    color: var(--color-success);
 }
 
 .status-error {
-    color: var(--dracula-red);
+    color: var(--color-error);
 }
 
 .status-enabled {
-    color: var(--dracula-green);
+    color: var(--color-success);
 }
 
 .status-disabled {
-    color: var(--dracula-comment);
+    color: var(--color-muted);
 }
 
 /* Task History Modal Scroll */

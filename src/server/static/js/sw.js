@@ -5,7 +5,7 @@ const RUNTIME_CACHE = 'weather-runtime';
 // Assets to cache on install
 const PRECACHE_URLS = [
   '/',
-  '/static/css/dracula.css',
+  '/static/css/common.css',
   '/static/manifest.json'
 ];
 

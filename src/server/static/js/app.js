@@ -1047,9 +1047,9 @@
       if (theme === 'auto') {
         effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
-      document.documentElement.setAttribute('data-theme', effectiveTheme);
+      document.documentElement.className = 'theme-' + effectiveTheme;
       // Update theme-color meta tag
-      var themeColor = effectiveTheme === 'dark' ? '#282a36' : '#ffffff';
+      var themeColor = effectiveTheme === 'dark' ? '#1a1b26' : '#ffffff';
       var metaThemeColor = document.querySelector('meta[name="theme-color"]');
       if (metaThemeColor) {
         metaThemeColor.setAttribute('content', themeColor);
