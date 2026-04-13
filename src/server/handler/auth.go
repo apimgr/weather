@@ -65,7 +65,8 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "page/login.tmpl", utils.TemplateData(c, gin.H{
-		"title": "Login",
+		"title":    "Login",
+		"verified": c.Query("verified") == "1",
 	}))
 }
 

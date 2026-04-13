@@ -10,45 +10,16 @@
 <body>
     <div class="auth-container">
         <div class="auth-card">
-            <h1>Verify Email</h1>
-            <p>Verifying your email address...</p>
+            <h1>Email Verification</h1>
 
             {{if .error}}
-            <div class="alert alert-error">{{.error}}</div>
-            {{end}}
-
-            <div class="auth-message">
-                <p>Please wait while we verify your email address.</p>
-            </div>
-
-            <script>
-                (function() {
-                    var code = "{{.code}}";
-                    if (code) {
-                        var form = document.createElement("form");
-                        form.method = "POST";
-                        form.action = "/auth/verify-email";
-                        var codeInput = document.createElement("input");
-                        codeInput.type = "hidden";
-                        codeInput.name = "code";
-                        codeInput.value = code;
-                        form.appendChild(codeInput);
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
-                })();
-            </script>
-
-            <noscript>
-                <form method="POST" action="/auth/verify-email" class="auth-form">
-                    <input type="hidden" name="code" value="{{.code}}">
-                    <button type="submit" class="btn btn-primary">Verify Email</button>
-                </form>
-            </noscript>
-
+            <div class="alert alert-error" role="alert">{{.error}}</div>
             <div class="auth-links">
                 <a href="/auth/login">Back to Login</a>
             </div>
+            {{else}}
+            <p>Verifying your email address...</p>
+            {{end}}
         </div>
     </div>
 </body>

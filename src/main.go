@@ -1228,12 +1228,52 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "Password has been reset successfully"})
 	})
 
-	// Email verification route (public)
+	// Email verification route (public) - per spec: GET /auth/verify/{code} verifies inline
 	r.GET("/auth/verify/:code", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/verify_email.tmpl", utils.TemplateData(c, gin.H{
-			"title": "Verify Email",
-			"code":  c.Param("code"),
-		}))
+		code := c.Param("code")
+		if code == "" {
+			c.HTML(http.StatusBadRequest, "page/verify_email.tmpl", utils.TemplateData(c, gin.H{
+				"title": "Verify Email",
+				"error": "Missing verification code",
+			}))
+			return
+		}
+
+		var verificationID int64
+		var userID int64
+		var expiresAt time.Time
+		err := db.DB.QueryRow(`
+			SELECT id, user_id, expires_at
+			FROM user_email_verifications
+			WHERE token = ? AND expires_at > ?
+		`, code, time.Now()).Scan(&verificationID, &userID, &expiresAt)
+
+		if err != nil {
+			c.HTML(http.StatusBadRequest, "page/verify_email.tmpl", utils.TemplateData(c, gin.H{
+				"title": "Verify Email",
+				"error": "Invalid or expired verification link. Please request a new one.",
+			}))
+			return
+		}
+
+		// Mark email as verified
+		_, err = db.DB.Exec(`
+			UPDATE user_accounts
+			SET email_verified = 1, updated_at = CURRENT_TIMESTAMP
+			WHERE id = ?
+		`, userID)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "page/verify_email.tmpl", utils.TemplateData(c, gin.H{
+				"title": "Verify Email",
+				"error": "Failed to verify email. Please try again.",
+			}))
+			return
+		}
+
+		// Delete used token
+		db.DB.Exec(`DELETE FROM user_email_verifications WHERE id = ?`, verificationID)
+
+		c.Redirect(http.StatusFound, "/auth/login?verified=1")
 	})
 
 	// Two-factor authentication routes (public)
@@ -1323,6 +1363,9 @@ func main() {
 		usersRoutes.GET("/settings/appearance", userSettingsHandler.ShowAppearanceSettings)
 		// /users/tokens per AI.md PART 34 spec (separate from settings)
 		usersRoutes.GET("/tokens", userSettingsHandler.ShowTokensSettings)
+
+		// /users/notifications - per AI.md PART 25: notifications page
+		usersRoutes.GET("/notifications", notificationHandler.ShowNotificationsPage)
 	}
 
 	// Admin setup token verification route (public - before auth check)

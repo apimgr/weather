@@ -18,6 +18,10 @@
         <div class="error-message" role="alert" aria-live="assertive">{{ .error }}</div>
         {{ end }}
 
+        {{ if .verified }}
+        <div class="success-message" role="status" aria-live="polite">✅ Email verified successfully. You can now log in.</div>
+        {{ end }}
+
         <form method="POST" action="/auth/login" role="form" aria-label="Login form">
     <input type="hidden" name="csrf_token" value="{{.csrf_token}}">
             <div class="form-group">
