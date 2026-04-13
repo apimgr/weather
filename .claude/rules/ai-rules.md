@@ -14,6 +14,7 @@
 - Never output "Found X issues" — fix them instead
 - Never skip optional PARTs that are marked as implemented for this project
 - Never modify PARTS 0-36 implementation patterns — they are fixed
+- Never truncate files with `head -N > file` — always use the edit tool for precise changes (truncation risks silent data loss if line count is wrong)
 
 ## CRITICAL - ALWAYS DO
 

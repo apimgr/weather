@@ -868,6 +868,7 @@ paths:
 - ❌ Create stub functions or "future" placeholders
 - ❌ Partial implementations - every feature must be 100% complete
 - ❌ "I'll come back to this later" - there is no later, do it NOW
+- ❌ Truncate files with `head -N > file` — always use the edit tool for precise changes (truncation risks silent data loss if line count is wrong)
 
 ## CRITICAL - ALWAYS DO
 - ✅ Read AI.md PART 0, 1 at start of EVERY conversation
