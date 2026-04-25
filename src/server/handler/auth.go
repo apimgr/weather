@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,6 +19,19 @@ import (
 
 type AuthHandler struct {
 	DB *sql.DB
+}
+
+type CurrentUserProfileResponse struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone,omitempty"`
+	Role     string `json:"role"`
+}
+
+type UpdateCurrentUserProfileRequest struct {
+	DisplayName string `json:"display_name"`
+	Phone       string `json:"phone"`
 }
 
 // LoginRequest represents login request payload
@@ -50,7 +64,7 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 		var adminID int
 		err := database.GetServerDB().QueryRow(`
 			SELECT admin_id FROM server_admin_sessions
-			WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP
+			WHERE id = ? AND expires_at > CURRENT_TIMESTAMP
 		`, adminSessionID).Scan(&adminID)
 		if err == nil {
 			c.Redirect(http.StatusFound, adminPath)
@@ -64,35 +78,31 @@ func (h *AuthHandler) ShowLoginPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "page/login.tmpl", utils.TemplateData(c, gin.H{
-		"title":    "Login",
-		"verified": c.Query("verified") == "1",
+	NegotiateResponse(c, "page/login.tmpl", utils.TemplateData(c, gin.H{
+		"title":              "Login",
+		"verified":           c.Query("verified") == "1",
+		"pendingVerification": c.Query("pending_verification") == "1",
+		"registrationPublic": isPublicRegistrationEnabled(),
 	}))
 }
 
 // ShowRegisterPage renders the registration page
 func (h *AuthHandler) ShowRegisterPage(c *gin.Context) {
+	if !isPublicRegistrationEnabled() {
+		NegotiateErrorResponse(c, http.StatusNotFound, "page/error.tmpl", ErrNotFound, "Registration is not available", utils.TemplateData(c, gin.H{
+			"title": "Not Found",
+		}))
+		return
+	}
+
 	// Check if already authenticated
 	if middleware.IsAuthenticated(c) {
 		c.Redirect(http.StatusFound, "/users/dashboard")
 		return
 	}
 
-	// Check if this is first user (setup mode)
-	userModel := &models.UserModel{DB: h.DB}
-	count, err := userModel.Count()
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "page/error.tmpl", utils.TemplateData(c, gin.H{
-			"error": "Database error",
-		}))
-		return
-	}
-
-	isSetup := count == 0
-
-	c.HTML(http.StatusOK, "page/register.tmpl", utils.TemplateData(c, gin.H{
-		"title":   "Register",
-		"isSetup": isSetup,
+	NegotiateResponse(c, "page/register.tmpl", utils.TemplateData(c, gin.H{
+		"title": "Register",
 	}))
 }
 
@@ -195,6 +205,11 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
+	if requiresEmailVerification() && !user.EmailVerified {
+		respondWithError(c, http.StatusUnauthorized, "Invalid credentials")
+		return
+	}
+
 	// Check if 2FA is enabled
 	if user.TwoFactorEnabled {
 		// If 2FA code not provided, return specific response
@@ -292,6 +307,11 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 
 // HandleRegister processes registration requests
 func (h *AuthHandler) HandleRegister(c *gin.Context) {
+	if !isPublicRegistrationEnabled() {
+		respondWithError(c, http.StatusNotFound, "Registration is not available")
+		return
+	}
+
 	var req RegisterRequest
 
 	// Support both JSON and form data
@@ -324,6 +344,11 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 		return
 	}
 
+	if err := utils.ValidateEmail(req.Email); err != nil {
+		respondWithError(c, http.StatusBadRequest, "Please enter a valid email address")
+		return
+	}
+
 	userModel := &models.UserModel{DB: h.DB}
 
 	// Validate username
@@ -335,18 +360,42 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 	// Normalize username
 	username := utils.NormalizeUsername(req.Username)
 
-	// All users created via /register are regular users
-	// Admin accounts are created through /users/setup/admin wizard (first run only)
+	// All users created via /register are regular users.
+	// Admin accounts are created through the /{admin_path}/server/setup wizard on first run.
 	role := "user"
 
 	// Create user
 	user, err := userModel.Create(username, req.Email, req.Password, role)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			respondWithError(c, http.StatusBadRequest, "Unable to create account. Please try a different email address.")
+			respondWithError(c, http.StatusBadRequest, "Unable to complete registration. [Forgot credentials?](/auth/password/forgot)")
 			return
 		}
 		respondWithError(c, http.StatusInternalServerError, "Failed to create account. Please try again later.")
+		return
+	}
+
+	if requiresEmailVerification() {
+		if _, err := createUserEmailVerification(user.ID, user.Email); err != nil {
+			respondWithError(c, http.StatusInternalServerError, "Failed to start email verification")
+			return
+		}
+
+		if strings.Contains(contentType, "application/json") {
+			c.JSON(http.StatusCreated, gin.H{
+				"message":               "Registration successful. Please verify your email before logging in.",
+				"verification_required": true,
+				"user": gin.H{
+					"id":       user.ID,
+					"username": user.Username,
+					"email":    user.Email,
+					"role":     user.Role,
+				},
+			})
+			return
+		}
+
+		c.Redirect(http.StatusFound, "/auth/login?pending_verification=1")
 		return
 	}
 
@@ -438,13 +487,13 @@ func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id":       user.ID,
-		"username": user.Username,
-		"email":    user.Email,
-		"phone":    user.Phone,
-		"role":     user.Role,
-	})
+	response, err := LoadCurrentUserProfile(h.DB, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load current user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // UpdateProfile updates user profile (display name and phone only)
@@ -455,23 +504,45 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		DisplayName string `json:"display_name"`
-		Phone       string `json:"phone"`
-	}
-
+	var req UpdateCurrentUserProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	userModel := &models.UserModel{DB: h.DB}
-	if err := userModel.UpdateProfile(user.ID, req.DisplayName, user.Email, req.Phone); err != nil {
+	if err := UpdateCurrentUserProfile(h.DB, user.ID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+}
+
+// LoadCurrentUserProfile returns the same current-user payload used by GET /api/v1/users.
+func LoadCurrentUserProfile(db *sql.DB, userID int64) (*CurrentUserProfileResponse, error) {
+	userModel := &models.UserModel{DB: db}
+	user, err := userModel.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CurrentUserProfileResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Role:     user.Role,
+	}, nil
+}
+
+// UpdateCurrentUserProfile applies the same profile update used by PATCH /api/v1/users.
+func UpdateCurrentUserProfile(db *sql.DB, userID int64, req *UpdateCurrentUserProfileRequest) error {
+	if req == nil {
+		return fmt.Errorf("invalid request")
+	}
+
+	userModel := &models.UserModel{DB: db}
+	return userModel.UpdateProfile(userID, strings.TrimSpace(req.DisplayName), strings.TrimSpace(req.Phone))
 }
 
 // Helper functions
@@ -503,8 +574,9 @@ func respondWithError(c *gin.Context, statusCode int, message string) {
 
 		if strings.Contains(path, "login") {
 			c.HTML(statusCode, "page/login.tmpl", utils.TemplateData(c, gin.H{
-				"title": "Login",
-				"error": message,
+				"title":              "Login",
+				"error":              message,
+				"registrationPublic": isPublicRegistrationEnabled(),
 			}))
 		} else if strings.Contains(path, "register") {
 			c.HTML(statusCode, "page/register.tmpl", utils.TemplateData(c, gin.H{
@@ -518,4 +590,22 @@ func respondWithError(c *gin.Context, statusCode int, message string) {
 			})
 		}
 	}
+}
+
+func isPublicRegistrationEnabled() bool {
+	return config.IsMultiUserEnabled() && config.IsRegistrationPublic()
+}
+
+func requiresEmailVerification() bool {
+	cfg := config.GetGlobalConfig()
+	if cfg == nil {
+		return false
+	}
+
+	return cfg.Users.Registration.RequireEmailVerification
+}
+
+func createUserEmailVerification(userID int64, email string) (*models.UserEmailVerification, error) {
+	verificationModel := &models.UserEmailVerificationModel{DB: database.GetUsersDB()}
+	return verificationModel.CreateVerification(userID, email)
 }

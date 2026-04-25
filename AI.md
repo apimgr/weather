@@ -4,76 +4,21 @@
 
 ---
 
-# 🆕 FIRST-TIME AI.md SETUP
+# AI.md Sync Status
 
-**If you see `weather` or `WEATHER` placeholders in this file, this is a fresh template that needs configuration.**
+This copy was refreshed from `~/Projects/github/apimgr/TEMPLATE.md` and configured for:
 
-## Detecting Fresh Template
+| Field | Value |
+|-------|-------|
+| Project | `weather` |
+| Organization | `apimgr` |
+| Version | `1.0.0` |
+| Official Site | `https://wthr.top` |
+| Admin Path | `admin` |
+| API Version | `v1` |
+| Repository | `https://github.com/apimgr/weather` |
 
-```bash
-# Check if placeholders exist (fresh template)
-grep -q 'weather' AI.md && echo "FRESH TEMPLATE - needs setup"
-```
-
-## Auto-Detecting Project Values
-
-**Project name and org can be inferred automatically:**
-
-| Value | Primary Source | Fallback |
-|-------|----------------|----------|
-| `weather` | IDEA.md (if exists) | `basename "$PWD"` |
-| `apimgr` | IDEA.md (if exists) | `basename "$(dirname "$PWD")"` |
-
-**Detection commands:**
-```bash
-# Project name: current directory name
-projectname=$(basename "$PWD")
-
-# Project org: parent directory name (assumes ~/org/project structure)
-projectorg=$(basename "$(dirname "$PWD")")
-
-# Example: /home/user/github/myorg/myproject
-#   projectname = myproject
-#   projectorg = myorg
-```
-
-## First-Time Setup Flow
-
-```
-AI reads AI.md for the first time
-│
-├─► Check: Does AI.md contain literal "weather"?
-│   │
-│   ├─► YES (fresh template)
-│   │   │
-│   │   ├─► 1. Check if IDEA.md exists
-│   │   │   ├─► YES: Extract projectname/projectorg from IDEA.md
-│   │   │   └─► NO: Infer from directory structure
-│   │   │
-│   │   ├─► 2. Confirm with user: "Project: weather, Org: apimgr - correct?"
-│   │   │
-│   │   ├─► 3. Replace ALL placeholders in AI.md:
-│   │   │   - weather → actual project name (lowercase)
-│   │   │   - WEATHER → actual project name (UPPERCASE)
-│   │   │   - apimgr → actual org name (lowercase)
-│   │   │   - APIMGR → actual org name (UPPERCASE)
-│   │   │
-│   │   └─► 4. Create IDEA.md if it doesn't exist (from template or ask user)
-│   │
-│   └─► NO (already configured)
-│       └─► Proceed with normal operation - read PART 0 first
-```
-
-## Placeholder Reference
-
-| Placeholder | Case | Example |
-|-------------|------|---------|
-| `weather` | lowercase | `myapp` |
-| `WEATHER` | UPPERCASE | `MYAPP` |
-| `apimgr` | lowercase | `myorg` |
-| `APIMGR` | UPPERCASE | `MYORG` |
-
-**After setup, this section becomes reference-only. The placeholders above will show actual values.**
+This section is now reference-only. If template placeholders are reintroduced in a future refresh, repeat the project-specific replacement step before using the spec.
 
 ---
 
@@ -593,6 +538,24 @@ src/
 │   ├── schema.go              # GraphQL schema generation
 │   ├── resolvers.go           # GraphQL resolvers
 │   └── theme.go               # GraphiQL theming (light/dark/auto)
+├── common/
+│   ├── i18n/
+│   │   ├── i18n.go            # Translation loading, lookup, fallback
+│   │   ├── locales/           # Translation files (embedded in ALL binaries)
+│   │   │   ├── en.json        # English (base language, always complete)
+│   │   │   ├── es.json        # Spanish
+│   │   │   ├── fr.json        # French
+│   │   │   ├── de.json        # German
+│   │   │   ├── zh.json        # Chinese
+│   │   │   ├── ar.json        # Arabic
+│   │   │   └── ja.json        # Japanese
+│   │   └── i18n_test.go       # Translation tests
+│   ├── display/
+│   │   └── detect.go          # Terminal/display detection
+│   ├── banner/
+│   │   └── banner.go          # Responsive startup banner
+│   └── theme/
+│       └── colors.go          # Shared color palette
 ├── mode/
 │   └── mode.go                # Application mode (production/development)
 ├── paths/
@@ -868,7 +831,6 @@ paths:
 - ❌ Create stub functions or "future" placeholders
 - ❌ Partial implementations - every feature must be 100% complete
 - ❌ "I'll come back to this later" - there is no later, do it NOW
-- ❌ Truncate files with `head -N > file` — always use the edit tool for precise changes (truncation risks silent data loss if line count is wrong)
 
 ## CRITICAL - ALWAYS DO
 - ✅ Read AI.md PART 0, 1 at start of EVERY conversation
@@ -1574,8 +1536,8 @@ Instructions for how this agent should behave...
 | `1.0.0` | Current version (semver format) | `1.0.0`, `2.3.1` |
 | `WEATHER` | Uppercase project name (for constants, env vars) | `JOKES`, `ECHOIP` |
 | `https://wthr.top` | Official project website | `https://jokes.example.com` |
-| `{fqdn}` | Fully qualified domain name | `api.example.com` |
-| `{baseurl}` | URL path prefix (auto-detected from reverse proxy) | `/`, `/myproject` |
+| `wthr.top` | Fully qualified domain name | `api.example.com` |
+| `/` | URL path prefix (auto-detected from reverse proxy) | `/`, `/myproject` |
 | `admin` | Admin panel URL path (configurable, default: `admin`) | `admin`, `manage`, `control` |
 | `v1` | API version prefix (default: `v1`) | `v1`, `v2` |
 
@@ -1805,45 +1767,45 @@ This distinction exists for clarity. When referring to OS-level resources that b
 
 | PART | Line | Topic | When to Read |
 |------|------|-------|--------------|
-| 0 | ~1939 | AI Assistant Rules | **ALWAYS READ FIRST**, **AI Behavior Rules** |
-| 1 | ~3723 | Critical Rules | **ALWAYS READ FIRST** |
-| 2 | ~4974 | License & Attribution | License requirements |
-| 3 | ~5308 | Project Structure | Setting up new project, **CI/CD badge detection** |
-| 4 | ~6269 | OS-Specific Paths | Path handling |
-| 5 | ~6463 | Configuration | Config file work, **Path Security**, **Privileged Ports**, **Escalation** |
-| 6 | ~8375 | Application Modes | Mode handling, debug endpoints |
-| 7 | ~8983 | Binary Requirements | Binary building, **Display detection**, **TERM=dumb**, **NO_COLOR** |
-| 8 | ~9646 | Server Binary CLI | CLI flags/commands, **NO_COLOR Support**, **--color flag** |
-| 9 | ~12821 | Error Handling & Caching | Error/cache patterns |
-| 10 | ~13198 | Database & Cluster | Database work |
-| 11 | ~13744 | Security & Logging | Security features, **Scoped Agent Tokens**, **Context Detection** |
-| 12 | ~15636 | Server Configuration | Server settings |
-| 13 | ~16763 | Health & Versioning | Health endpoints |
-| 14 | ~17514 | API Structure | REST/GraphQL/Route Compliance, **Non-Interactive Text Output** |
-| 15 | ~19147 | SSL/TLS & Let's Encrypt | SSL certificates |
-| 16 | ~20118 | Web Frontend | Frontend/UI, **Sitemap**, **Site Verification**, **Branding/SEO** |
-| 17 | ~26287 | Admin Panel | Admin UI, **Server Admin**, **Scoped Agents API** |
-| 18 | ~28324 | Email & Notifications | Email/SMTP, **SMTP Auto-Detection** |
-| 19 | ~29647 | Scheduler | Background tasks, **NO external schedulers**, **Backup tasks** |
-| 20 | ~30132 | GeoIP | GeoIP features |
-| 21 | ~30205 | Metrics | Prometheus metrics, **INTERNAL only** |
-| 22 | ~31650 | Backup & Restore | Backup features, **Compliance encryption**, **Cluster backups** |
-| 23 | ~32379 | Update Command | Update feature |
-| 24 | ~32858 | Privilege Escalation & Service | Service/privilege work |
-| 25 | ~33756 | Service Support | Systemd/runit/rc.d/launchd templates |
-| 26 | ~33940 | Makefile | Local dev/tests/debug only, **NOT used in CI/CD** |
-| 27 | ~34717 | Docker | Docker/containers, **NEVER copy/symlink binaries** |
-| 28 | ~36223 | CI/CD Workflows | GitHub/GitLab/Gitea Actions |
-| 29 | ~39157 | Testing & Development | Testing/dev workflow, **AI Docker Compose Rules**, **Content Negotiation Testing** |
-| 30 | ~40978 | ReadTheDocs Documentation | Documentation |
-| 31 | ~41710 | I18N & A11Y | Internationalization |
-| 32 | ~42131 | Tor Hidden Service | Tor support, **binary controls Tor** |
-| 33 | ~43910 | Client & Agent | Client **REQUIRED**, Agent optional - CLI/TUI/GUI, **Scoped Agent Tokens**, **Smart Context**, **First-Run Wizard** |
-| 34 | ~48325 | Multi-User | **OPTIONAL** - Regular User accounts/registration, vanity URLs |
-| 35 | ~51977 | Organizations | **OPTIONAL** - multi-user orgs, vanity URLs |
-| 36 | ~52618 | Custom Domains | **OPTIONAL** - user/org branded domains |
-| 37 | ~53641 | IDEA.md Reference | **Examples only** - NEVER modify |
-| FINAL | ~53895 | Compliance Checklist | Final verification, **AI Quick Reference Rules**, **Console/Banner Checklist** |
+| 0 | ~1957 | AI Assistant Rules | **ALWAYS READ FIRST**, **AI Behavior Rules**, **Translation Rule** |
+| 1 | ~3775 | Critical Rules | **ALWAYS READ FIRST** |
+| 2 | ~5026 | License & Attribution | License requirements |
+| 3 | ~5360 | Project Structure | Setting up new project, **CI/CD badge detection** |
+| 4 | ~6321 | OS-Specific Paths | Path handling |
+| 5 | ~6515 | Configuration | Config file work, **Path Security**, **Privileged Ports**, **Escalation** |
+| 6 | ~8431 | Application Modes | Mode handling, debug endpoints |
+| 7 | ~9039 | Binary Requirements | Binary building, **Display detection**, **TERM=dumb**, **NO_COLOR** |
+| 8 | ~9688 | Server Binary CLI | CLI flags/commands, **NO_COLOR Support**, **--color/--lang flags** |
+| 9 | ~12865 | Error Handling & Caching | Error/cache patterns |
+| 10 | ~13242 | Database & Cluster | Database work |
+| 11 | ~13788 | Security & Logging | Security features, **Scoped Agent Tokens**, **Context Detection** |
+| 12 | ~15824 | Server Configuration | Server settings, **Allowlist**, **Blocklists**, **GeoIP** |
+| 13 | ~16951 | Health & Versioning | Health endpoints |
+| 14 | ~17702 | API Structure | REST/GraphQL/Route Compliance, **Non-Interactive Text Output** |
+| 15 | ~19335 | SSL/TLS & Let's Encrypt | SSL certificates |
+| 16 | ~20306 | Web Frontend | Frontend/UI, **Sitemap**, **Site Verification**, **Branding/SEO** |
+| 17 | ~26479 | Admin Panel | Admin UI, **Server Admin**, **Scoped Agents API**, **Blocklists**, **Allowlist**, **GeoIP** |
+| 18 | ~28890 | Email & Notifications | Email/SMTP, **SMTP Auto-Detection** |
+| 19 | ~30213 | Scheduler | Background tasks, **NO external schedulers**, **Backup tasks** |
+| 20 | ~30698 | GeoIP | GeoIP features, **Country blocking (deny/allow)** |
+| 21 | ~30795 | Metrics | Prometheus metrics, **INTERNAL only** |
+| 22 | ~32240 | Backup & Restore | Backup features, **Compliance encryption**, **Cluster backups** |
+| 23 | ~32969 | Update Command | Update feature |
+| 24 | ~33448 | Privilege Escalation & Service | Service/privilege work |
+| 25 | ~34357 | Service Support | Systemd/runit/rc.d/launchd templates |
+| 26 | ~34541 | Makefile | Local dev/tests/debug only, **NOT used in CI/CD** |
+| 27 | ~35318 | Docker | Docker/containers, **NEVER copy/symlink binaries** |
+| 28 | ~36826 | CI/CD Workflows | GitHub/GitLab/Gitea Actions |
+| 29 | ~39760 | Testing & Development | Testing/dev workflow, **AI Docker Compose Rules**, **Content Negotiation Testing** |
+| 30 | ~41581 | ReadTheDocs Documentation | Documentation |
+| 31 | ~42313 | I18N & A11Y | Internationalization, **Translation parity (all binaries)**, **--lang flag** |
+| 32 | ~44275 | Tor Hidden Service | Tor support, **binary controls Tor** |
+| 33 | ~46027 | Client & Agent | Client **REQUIRED**, Agent optional - CLI/TUI/GUI, **Scoped Agent Tokens**, **Smart Context**, **First-Run Wizard** |
+| 34 | ~50450 | Multi-User | **OPTIONAL** - Regular User accounts/registration, vanity URLs |
+| 35 | ~54102 | Organizations | **OPTIONAL** - multi-user orgs, vanity URLs |
+| 36 | ~54743 | Custom Domains | **OPTIONAL** - user/org branded domains |
+| 37 | ~55766 | IDEA.md Reference | **Examples only** - NEVER modify |
+| FINAL | ~56020 | Compliance Checklist | Final verification, **AI Quick Reference Rules**, **Console/Banner Checklist**, **I18N Checklist** |
 
 **When Implementing OPTIONAL PARTs (34-36, Agent from 33):**
 1. Change PART title from `OPTIONAL` → `NON-NEGOTIABLE` in AI.md
@@ -2185,6 +2147,7 @@ Before I proceed, can you confirm [specific question]?
 | Docker | — | PART 27 |
 | Config | IDEA.md | PART 5 |
 | CLI | — | PART 8 |
+| Translation/i18n | — | PART 31 |
 
 ### Prohibited Actions
 
@@ -2194,6 +2157,39 @@ Before I proceed, can you confirm [specific question]?
 - Create report/analysis files (fix directly instead)
 - Rely on memory (ALWAYS re-read)
 - Add unrequested features
+
+### Translation Rule (ALL Code Changes)
+
+**Every time AI writes or modifies code that contains user-facing text, it MUST be translated.**
+
+| Trigger | Required Action |
+|---------|-----------------|
+| Adding a new `http.Error()` call | Use `t(r, "errors.*")` — never hardcoded English |
+| Adding `fmt.Printf`/`fmt.Fprintf` with user-visible text | Use `i18n.T(lang, "key")` or `i18n.Tf(lang, "key", args)` |
+| Adding a new admin page/section | Add translation keys for ALL labels, buttons, messages, tooltips |
+| Adding a new CLI command/flag | Add `cli.*` translation keys for help text and output |
+| Adding a new agent feature | Add `agent.*` translation keys for status/output |
+| Adding a new notification type | Add notification translation key |
+| Adding a new error type | Add `errors.*` translation key |
+| Adding new config with user-visible default | Ensure default falls back to translation key |
+| Adding HTML templates | Use `{{t .Lang "key"}}` — never hardcoded text |
+| Adding JavaScript UI text | Use `translations[key]` from loaded locale |
+| Modifying `<html>` tag | Use `lang="{{.Lang}}" dir="{{.Dir}}"` — never hardcoded `lang="en"` |
+
+**After adding translation keys, AI MUST:**
+1. Add the key to the Spanish (`es.json`) example in PART 31 with proper translation
+2. Note that ALL other language files (`fr`, `de`, `zh`, `ar`, `ja`) need the same key added
+3. Ensure the key exists in the English base file (`en.json`)
+
+**If AI is unsure whether text is user-facing → treat it as user-facing and translate it.**
+
+Exceptions (do NOT translate):
+- Log messages (structured logs are for operators, not users)
+- Internal error messages passed to `log.Error()` / `slog.Error()`
+- Test assertion strings
+- Machine-readable responses (health check `OK`, HTTP status codes)
+- System commands and code snippets (shell init output)
+- Technical identifiers (config keys, header names, MIME types)
 
 ### If Spec Seems Wrong
 
@@ -2495,7 +2491,7 @@ Implement country-based access control using ip-location-db.
 
 - Add GeoIP database download on first run
 - Add scheduler task for weekly updates
-- Add deny_countries config option
+- Add deny_countries/allow_countries config options
 - Add admin panel for country management
 ```
 
@@ -3856,7 +3852,7 @@ go build -o binary/weather ./src
 |------|----------------|
 | **Validate everything** | Type, length, format, range - before processing |
 | **Sanitize for context** | HTML-encode for HTML, SQL-parameterize for SQL |
-| **Reject unknown** | Whitelist allowed values, reject everything else |
+| **Reject unknown** | Allowlist permitted values, reject everything else |
 | **No direct execution** | Never pass user input directly to shell, SQL, eval |
 | **Trim whitespace** | `strings.TrimSpace()` on ALL text inputs before processing |
 | **Password whitespace** | Passwords must NOT start or end with whitespace (reject, don't trim) |
@@ -4408,7 +4404,7 @@ By using this software, you acknowledge that you have read and understood this d
 | Context | URL Format | Example |
 |---------|------------|---------|
 | **Documentation** (README, docs/, examples) | `https://wthr.top/path` | `GET https://api.example.com/healthz` |
-| **Embedded code** (Go, JS, templates) | `{fqdn}/path` | `fmt.Sprintf("https://%s/healthz", cfg.FQDN)` |
+| **Embedded code** (Go, JS, templates) | `wthr.top/path` | `fmt.Sprintf("https://%s/healthz", cfg.FQDN)` |
 
 **Why the distinction:**
 - **Documentation**: Users copy-paste. Full URLs work immediately.
@@ -4491,16 +4487,16 @@ curl -q -LSsf https://wthr.top/api/autoconfig
 
 ---
 
-**{fqdn} - Embedded Code URLs (Go, JavaScript, templates)**
+**wthr.top - Embedded Code URLs (Go, JavaScript, templates)**
 
-For code that runs in the application, NEVER use bare `/path`. Always use `{fqdn}/path`.
+For code that runs in the application, NEVER use bare `/path`. Always use `wthr.top/path`.
 
 | Context | ❌ Wrong | ✅ Correct |
 |---------|----------|------------|
 | **Go code** | `"/api/v1/users"` | `fmt.Sprintf("https://%s/api/v1/users", cfg.FQDN)` |
 | **JavaScript** | `fetch('/api/v1/users')` | `fetch(\`${window.location.origin}/api/v1/users\`)` |
 | **HTML templates** | `href="/api/docs"` | `href="https://{{.FQDN}}/api/docs"` |
-| **Config files** | `url: /callback` | `url: https://{fqdn}/callback` |
+| **Config files** | `url: /callback` | `url: https://wthr.top/callback` |
 | **Email templates** | `<a href="/verify">` | `<a href="https://{{.FQDN}}/verify">` |
 
 **Why:** Bare paths break when:
@@ -4564,9 +4560,9 @@ router.GET("/healthz", handleHealth)
 |----------|--------|---------|
 | README.md | `https://wthr.top/path` | `GET https://api.example.com/healthz` |
 | docs/*.md | `https://wthr.top/path` | `curl -q -LSsf https://api.example.com/api/v1/users` |
-| Go code | `{fqdn}/path` | `fmt.Sprintf("https://%s/path", cfg.FQDN)` |
+| Go code | `wthr.top/path` | `fmt.Sprintf("https://%s/path", cfg.FQDN)` |
 | JS code | `origin/path` | `${window.location.origin}/path` |
-| Email templates | `{fqdn}/path` | `https://{{.FQDN}}/verify` |
+| Email templates | `wthr.top/path` | `https://{{.FQDN}}/verify` |
 | Router registration | `/path` | `router.GET("/api/v1/users", ...)` (internal only) |
 
 **Platform-Specific URLs:**
@@ -4664,7 +4660,7 @@ weather-cli [command] --help
 
 ## Configuration
 
-Configuration is auto-generated on first run. Edit via admin panel at `{proto}://{fqdn}/admin` (admin_path defaults to "admin").
+Configuration is auto-generated on first run. Edit via admin panel at `{proto}://wthr.top/admin` (admin_path defaults to "admin").
 
 Key settings:
 - `server.port` - Listen port (default: random 64xxx)
@@ -4709,7 +4705,7 @@ curl -q -LSsf -H "Authorization: Bearer TOKEN" https://wthr.top/api/v1/resource
 
 ```bash
 # Clone
-git clone {PLATFORM_REPO_URL}
+git clone https://github.com/apimgr/weather
 cd weather
 
 # Quick dev build (outputs to OS temp dir)
@@ -5314,8 +5310,8 @@ package main
 |-------|-------|
 | **Name** | weather |
 | **Organization** | apimgr |
-| **Official Site** | https://weather.apimgr.us |
-| **Repository** | {PLATFORM_REPO_URL} |
+| **Official Site** | https://wthr.top |
+| **Repository** | https://github.com/apimgr/weather |
 | **README** | README.md |
 | **License** | MIT > LICENSE.md |
 | **Embedded Licenses** | Added to bottom of LICENSE.md |
@@ -5369,8 +5365,8 @@ PROJECTORG=$(git remote get-url origin 2>/dev/null | sed -E 's|.*/([^/]+)/[^/]+(
 | Format | Use Case | Example |
 |--------|----------|---------|
 | `weather` | Lowercase (filenames, paths, commands) | `jokes`, `/etc/apimgr/jokes/` |
-| `{projectName}` | camelCase (Go variables, JSON keys) | `projectName := "jokes"` |
-| `{Projectname}` | PascalCase (Go types, display names) | `type JokesServer struct` |
+| `weather` | camelCase (Go variables, JSON keys) | `projectName := "jokes"` |
+| `Weather` | PascalCase (Go types, display names) | `type JokesServer struct` |
 | `WEATHER` | UPPERCASE (env vars, Makefile vars) | `PROJECTNAME=jokes` |
 
 **Examples (assuming no git remote, inferred from path):**
@@ -6285,7 +6281,7 @@ Before proceeding, confirm you understand:
 | Backup | `/mnt/Backups/apimgr/weather/` |
 | PID File | `/var/run/apimgr/weather.pid` |
 | SSL | `/etc/apimgr/weather/ssl/` (letsencrypt/, local/) |
-| Security | `/etc/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| Security | `/var/lib/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
 | SQLite DB | `/var/lib/apimgr/weather/db/` (server.db, users.db) |
 | Service | `/etc/systemd/system/weather.service` |
 
@@ -6303,7 +6299,7 @@ Before proceeding, confirm you understand:
 | Backup | `~/.local/share/Backups/apimgr/weather/` |
 | PID File | `~/.local/share/apimgr/weather/weather.pid` |
 | SSL | `~/.config/apimgr/weather/ssl/` (letsencrypt/, local/) |
-| Security | `~/.config/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| Security | `~/.local/share/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
 | SQLite DB | `~/.local/share/apimgr/weather/db/` (server.db, users.db) |
 
 ---
@@ -6324,7 +6320,7 @@ Before proceeding, confirm you understand:
 | Backup | `/Library/Backups/apimgr/weather/` |
 | PID File | `/var/run/apimgr/weather.pid` |
 | SSL | `/Library/Application Support/apimgr/weather/ssl/` (letsencrypt/, local/) |
-| Security | `/Library/Application Support/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| Security | `/Library/Application Support/apimgr/weather/data/security/` (geoip/, blocklists/, cve/, trivy/) |
 | SQLite DB | `/Library/Application Support/apimgr/weather/db/` (server.db, users.db) |
 | Service | `/Library/LaunchDaemons/com.apimgr.weather.plist` |
 
@@ -6342,7 +6338,7 @@ Before proceeding, confirm you understand:
 | Backup | `~/Library/Backups/apimgr/weather/` |
 | PID File | `~/Library/Application Support/apimgr/weather/weather.pid` |
 | SSL | `~/Library/Application Support/apimgr/weather/ssl/` (letsencrypt/, local/) |
-| Security | `~/Library/Application Support/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| Security | `~/Library/Application Support/apimgr/weather/data/security/` (geoip/, blocklists/, cve/, trivy/) |
 | SQLite DB | `~/Library/Application Support/apimgr/weather/db/` (server.db, users.db) |
 | Service | `~/Library/LaunchAgents/com.apimgr.weather.plist` |
 
@@ -6364,7 +6360,7 @@ Before proceeding, confirm you understand:
 | Backup | `/var/backups/apimgr/weather/` |
 | PID File | `/var/run/apimgr/weather.pid` |
 | SSL | `/usr/local/etc/apimgr/weather/ssl/` (letsencrypt/, local/) |
-| Security | `/usr/local/etc/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| Security | `/var/db/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
 | SQLite DB | `/var/db/apimgr/weather/db/` (server.db, users.db) |
 | Service | `/usr/local/etc/rc.d/weather` |
 
@@ -6382,7 +6378,7 @@ Before proceeding, confirm you understand:
 | Backup | `~/.local/share/Backups/apimgr/weather/` |
 | PID File | `~/.local/share/apimgr/weather/weather.pid` |
 | SSL | `~/.config/apimgr/weather/ssl/` (letsencrypt/, local/) |
-| Security | `~/.config/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
+| Security | `~/.local/share/apimgr/weather/security/` (geoip/, blocklists/, cve/, trivy/) |
 | SQLite DB | `~/.local/share/apimgr/weather/db/` (server.db, users.db) |
 
 ---
@@ -6402,7 +6398,7 @@ Before proceeding, confirm you understand:
 | Log File | `%ProgramData%\apimgr\weather\logs\server.log` |
 | Backup | `%ProgramData%\Backups\apimgr\weather\` |
 | SSL | `%ProgramData%\apimgr\weather\ssl\` (letsencrypt\, local\) |
-| Security | `%ProgramData%\apimgr\weather\security\` (geoip\, blocklists\, cve\, trivy\) |
+| Security | `%ProgramData%\apimgr\weather\data\security\` (geoip\, blocklists\, cve\, trivy\) |
 | SQLite DB | `%ProgramData%\apimgr\weather\db\` (server.db, users.db) |
 | Service | Windows Service Manager |
 
@@ -6419,7 +6415,7 @@ Before proceeding, confirm you understand:
 | Log File | `%LocalAppData%\apimgr\weather\logs\server.log` |
 | Backup | `%LocalAppData%\Backups\apimgr\weather\` |
 | SSL | `%AppData%\apimgr\weather\ssl\` (letsencrypt\, local\) |
-| Security | `%AppData%\apimgr\weather\security\` (geoip\, blocklists\, cve\, trivy\) |
+| Security | `%LocalAppData%\apimgr\weather\security\` (geoip\, blocklists\, cve\, trivy\) |
 | SQLite DB | `%LocalAppData%\apimgr\weather\db\` (server.db, users.db) |
 
 ---
@@ -6433,7 +6429,7 @@ Before proceeding, confirm you understand:
 | Binary | `/usr/local/bin/weather` |
 | Config | `/config/weather/` |
 | Config File | `/config/weather/server.yml` |
-| Security DBs | `/config/weather/security/` (geoip, blocklists, cve, trivy) |
+| Security DBs | `/data/weather/security/` (geoip, blocklists, cve, trivy) |
 | Data | `/data/weather/` |
 | Cache | `/data/weather/cache/` |
 | Logs | `/data/log/weather/` |
@@ -6644,7 +6640,7 @@ func handleFileRequest(w http.ResponseWriter, r *http.Request) {
 
     safe, err := SafePath(filename)
     if err != nil {
-        http.Error(w, "Invalid path", http.StatusBadRequest)
+        http.Error(w, t(r, "errors.invalid_format"), http.StatusBadRequest)
         return
     }
 
@@ -6676,7 +6672,7 @@ func PathSecurityMiddleware(next http.Handler) http.Handler {
         if strings.Contains(original, "..") ||
             strings.Contains(rawPath, "..") ||
             strings.Contains(strings.ToLower(rawPath), "%2e") {
-            http.Error(w, "Bad Request", http.StatusBadRequest)
+            http.Error(w, t(r, "errors.bad_request"), http.StatusBadRequest)
             return
         }
 
@@ -6752,10 +6748,14 @@ func SafeFilePath(baseDir, userPath string) (string, error) {
 
 ```go
 func setupMiddleware(handler http.Handler) http.Handler {
-    // Order matters - security first!
-    handler = LoggingMiddleware(handler)           // 6. Log requests
-    handler = AuthMiddleware(handler)              // 5. Check auth
-    handler = RateLimitMiddleware(handler)         // 4. Rate limiting
+    // Wrapping order: last applied = first to execute (outermost layer)
+    // Execution order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+    handler = LoggingMiddleware(handler)           // 9. Log requests
+    handler = AuthMiddleware(handler)              // 8. Check auth
+    handler = GeoIPMiddleware(handler)             // 7. Country blocking
+    handler = RateLimitMiddleware(handler)         // 6. Rate limiting
+    handler = BlocklistMiddleware(handler)         // 5. IP/domain blocklist check
+    handler = AllowlistMiddleware(handler)         // 4. Set allowlisted flag (bypasses blocklist/ratelimit/geoip, NOT auth)
     handler = SecurityHeadersMiddleware(handler)   // 3. Add security headers
     handler = PathSecurityMiddleware(handler)      // 2. Validate paths, block traversal
     handler = URLNormalizeMiddleware(handler)      // 1. FIRST - normalize URLs (trailing slash, etc.)
@@ -7459,14 +7459,14 @@ func (req *CreateUserRequest) Parse() (*User, error) {
 | `SMTP_USERNAME` | SMTP authentication username |
 | `SMTP_PASSWORD` | SMTP authentication password |
 | `SMTP_FROM_NAME` | Sender name (default: app title) |
-| `SMTP_FROM_EMAIL` | Sender email (default: `no-reply@{fqdn}`) |
+| `SMTP_FROM_EMAIL` | Sender email (default: `no-reply@wthr.top`) |
 | `SMTP_TLS` | TLS mode: `auto`, `starttls`, `tls`, `none` (default: `auto`) |
 
 **URL Variable Resolution (Reverse Proxy Preferred):**
-- `{fqdn}`: Reverse Proxy Headers → `DOMAIN` → `os.Hostname()` → `$HOSTNAME` → Global IP → `localhost`
+- `wthr.top`: Reverse Proxy Headers → `DOMAIN` → `os.Hostname()` → `$HOSTNAME` → Global IP → `localhost`
 - `{proto}`: `X-Forwarded-Proto` → `X-Forwarded-Ssl` → TLS detection → `http`
 - `{port}`: `X-Forwarded-Port` → Host header → Server port → Proto default
-- `{baseurl}`: `X-Forwarded-Prefix` → `X-Forwarded-Path` → `X-Script-Name` → `server.baseurl` → `/`
+- `/`: `X-Forwarded-Prefix` → `X-Forwarded-Path` → `X-Script-Name` → `server.baseurl` → `/`
 
 **Note:** Loopback addresses avoided; global IPs preferred. See PART 5 for full details.
 
@@ -7788,8 +7788,8 @@ weather --port 8080
        }
 
        // User CAN escalate - ask and re-exec with elevated privileges
-       fmt.Printf("%s requires elevated privileges.\n", action)
-       fmt.Print("Escalate? [Y/n]: ")
+       fmt.Printf("%s\n", i18n.Tf(lang, "cli.requires_privileges", action))
+       fmt.Print(i18n.T(lang, "cli.escalate_prompt"))
 
        var response string
        fmt.Scanln(&response)
@@ -8253,7 +8253,7 @@ server:
 
   # Admin Panel
   admin:
-    email: admin@{fqdn}
+    email: admin@wthr.top
     # Note: username, password, and token are stored in database (admins table)
     # NOT in this config file for security
 
@@ -8263,16 +8263,16 @@ server:
     # cert/key: Optional manual override paths (leave empty for auto-detection)
     # Auto-detection order:
     #   /etc/letsencrypt/live/domain/ → system manages (certbot)
-    #   /etc/letsencrypt/live/{fqdn}/ → system manages (certbot)
-    #   {config_dir}/ssl/letsencrypt/{fqdn}/ → app manages (auto-renew)
-    #   {config_dir}/ssl/local/{fqdn}/ → user manages (no auto-renew)
+    #   /etc/letsencrypt/live/wthr.top/ → system manages (certbot)
+    #   {config_dir}/ssl/letsencrypt/wthr.top/ → app manages (auto-renew)
+    #   {config_dir}/ssl/local/wthr.top/ → user manages (no auto-renew)
     cert: ""   # Manual cert path (optional)
     key: ""    # Manual key path (optional)
     min_version: "TLS1.2"  # TLS1.2, TLS1.3
 
     letsencrypt:
       enabled: false
-      email: admin@{fqdn}
+      email: admin@wthr.top
       challenge: http-01  # http-01, tls-alpn-01, dns-01
       staging: false      # Use staging server for testing
 
@@ -9021,14 +9021,14 @@ func FromEnv() {
 
 | Data Type | Location | Source | Update Frequency |
 |-----------|----------|--------|------------------|
-| GeoIP (ASN) | `{config_dir}/security/geoip/` | ip-location-db | Daily |
-| GeoIP (Country) | `{config_dir}/security/geoip/` | ip-location-db | Daily |
-| GeoIP (City) | `{config_dir}/security/geoip/` | ip-location-db | Daily |
-| GeoIP (WHOIS) | `{config_dir}/security/geoip/` | ip-location-db | Daily |
-| IP Blocklists | `{config_dir}/security/blocklists/` | Configurable sources | Daily |
-| Domain Blocklists | `{config_dir}/security/blocklists/` | Configurable sources | Daily |
-| CVE databases | `{config_dir}/security/cve/` | NVD/NIST feeds | Daily |
-| Trivy DB | `{config_dir}/security/trivy/` | Aqua Security | Daily |
+| GeoIP (ASN) | `{data_dir}/security/geoip/` | ip-location-db | Daily |
+| GeoIP (Country) | `{data_dir}/security/geoip/` | ip-location-db | Daily |
+| GeoIP (City) | `{data_dir}/security/geoip/` | ip-location-db | Daily |
+| GeoIP (WHOIS) | `{data_dir}/security/geoip/` | ip-location-db | Daily |
+| IP Blocklists | `{data_dir}/security/blocklists/` | Configurable sources | Daily |
+| Domain Blocklists | `{data_dir}/security/blocklists/` | Configurable sources | Daily |
+| CVE databases | `{data_dir}/security/cve/` | NVD/NIST feeds | Daily |
+| Trivy DB | `{data_dir}/security/trivy/` | Aqua Security | Daily |
 
 **Why NOT Embedded:**
 - Security data changes frequently (daily/weekly updates)
@@ -9037,7 +9037,7 @@ func FromEnv() {
 - Reduces binary size significantly
 
 **Download Behavior:**
-1. On first run, check if data exists in `{config_dir}/security/`
+1. On first run, check if data exists in `{data_dir}/security/`
 2. If missing, download from configured sources
 3. If download fails, log warning and continue (graceful degradation)
 4. Scheduler keeps data updated automatically
@@ -9048,7 +9048,7 @@ func FromEnv() {
 # Data source configuration (in server.yml)
 data:
   # Base directory for all security databases
-  security_dir: "{config_dir}/security"
+  security_dir: "{data_dir}/security"
 
   geoip:
     # ip-location-db (https://github.com/sapics/ip-location-db)
@@ -9072,22 +9072,8 @@ data:
         url: "https://cdn.jsdelivr.net/npm/@ip-location-db/geo-whois-asn-country-mmdb/geo-whois-asn-country.mmdb"
         file: "whois.mmdb"
 
-  blocklists:
-    # Default blocklist sources (configurable)
-    sources:
-      - name: "firehol_level1"
-        url: "https://iplists.firehol.org/files/firehol_level1.netset"
-        type: ip
-        enabled: true
-      - name: "spamhaus_drop"
-        url: "https://www.spamhaus.org/drop/drop.txt"
-        type: ip
-        enabled: true
-      - name: "abuse_ch_urlhaus"
-        url: "https://urlhaus.abuse.ch/downloads/text/"
-        type: domain
-        # Optional
-        enabled: false
+  # Blocklists: stored in {data_dir}/security/blocklists/
+  # Config is under server.security.blocklists (see Blocklists Section)
 
   cve:
     # NVD (NIST National Vulnerability Database)
@@ -9104,7 +9090,7 @@ data:
 ### Security Directory Structure
 
 ```
-{config_dir}/security/
+{data_dir}/security/
 ├── geoip/
 │   ├── asn.mmdb                 # ASN lookups (AS number, organization)
 │   ├── country.mmdb             # Country code lookups
@@ -9656,7 +9642,7 @@ func PrintStartupBanner(cfg BannerConfig) {
 | **Agent** | `weather-agent` | Reports to server | `--server`, `--token`, `--config` |
 | **Client** | `weather-cli` | User interface to server | `--server`, `--token`, `--output` |
 
-**Shared flags (ALL binaries):** `--help`, `--version`, `--shell`, `--debug`, `--color`
+**Shared flags (ALL binaries):** `--help`, `--version`, `--shell`, `--debug`, `--color`, `--lang`
 
 **Binary naming rules (ALL binaries: server, agent, client):**
 
@@ -9832,6 +9818,7 @@ NO_COLOR=1 weather --status | grep -E '✅|❌|⚠️|🚀'  # Should find nothi
 --daemon                     # Daemonize (detach from terminal)
 --debug                      # Enable debug mode (verbose logging, debug endpoints)
 --color {always|never|auto}  # Color output (default: auto, respects NO_COLOR)
+--lang {code}                # Language for output (default: auto, from LANG env)
 --maintenance {backup,restore,update,mode,setup,--help} [optional-file-or-setting]
 --update [check|yes|branch {stable|beta|daily}|--help]  # Check/perform updates
 --shell {completions,init,--help} [SHELL]  # Shell integration
@@ -9870,6 +9857,7 @@ Server Configuration:
       --daemon                      Run as daemon (detach from terminal)
       --debug                       Enable debug mode
       --color {always|never|auto}   Color output (default: auto)
+      --lang CODE                   Language for output (default: auto)
 
 Service Management:
       --service CMD                 Service management (--service --help for details)
@@ -10167,8 +10155,8 @@ PHASE 5: Server startup (actual server start)
       ├─ User weather exists → use it
       └─ User missing → create weather:weather (see PART 25)
    b. Create ALL directories (while still root):
-      ├─ {config_dir}/ and subdirs (security/, ssl/, tor/)
-      ├─ {data_dir}/ and subdirs (db/, tor/, tor/site/)
+      ├─ {config_dir}/ and subdirs (ssl/, tor/)
+      ├─ {data_dir}/ and subdirs (db/, security/, tor/, tor/site/)
       ├─ {cache_dir}/
       ├─ {log_dir}/
       └─ {backup_dir}/
@@ -10262,7 +10250,7 @@ PHASE 5: Server startup (actual server start)
     │   ├─ Set permissions: 0700 for dirs, 0600 for files
     │   ├─ Generate and write {config_dir}/tor/torrc
     │   ├─ Start dedicated tor process (TorrcFile + DataDir)
-    │   ├─ Control: Unix socket (Unix/macOS/BSD) or localhost TCP (Windows)
+    │   ├─ Control: localhost TCP via 127.0.0.1:auto
     │   ├─ Wait for bootstrap (up to 3 min)
     │   ├─ Create hidden service, log .onion address
     │   └─ Error → log WARN, continue without Tor (non-fatal)
@@ -10574,7 +10562,7 @@ func Daemonize() error {
     }
 
     // Parent exits, child continues
-    fmt.Printf("Daemon started with PID %d\n", cmd.Process.Pid)
+    fmt.Printf("%s\n", i18n.Tf(lang, "cli.daemon_started", cmd.Process.Pid))
     os.Exit(0)
     return nil
 }
@@ -12287,8 +12275,8 @@ volumes:
 |------|-------------|
 | **NEVER hardcode** | `localhost`, `127.0.0.1`, `0.0.0.0`, `[::1]`, any static host/IP |
 | **NEVER display** | `GET /api/`, `POST /api/` without full URL |
-| **ALWAYS use** | `{proto}://{fqdn}:{port}/path` format |
-| **ALWAYS detect** | `{proto}`, `{fqdn}`, `{port}` from request context |
+| **ALWAYS use** | `{proto}://wthr.top:{port}/path` format |
+| **ALWAYS detect** | `{proto}`, `wthr.top`, `{port}` from request context |
 | **ALWAYS strip** | `:80` for HTTP, `:443` for HTTPS |
 | **Default proto** | `http` if not detected |
 
@@ -12303,15 +12291,15 @@ volumes:
 
 ### URL Variables
 
-**Three variables for building URLs: `{proto}`, `{fqdn}`, `{port}`**
+**Three variables for building URLs: `{proto}`, `wthr.top`, `{port}`**
 
 All templates, Swagger/OpenAPI, GraphQL, email links, etc. MUST use these resolved variables.
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `{proto}` | Protocol (http/https) | `https` |
-| `{fqdn}` | Fully qualified domain name | `api.example.com` |
-| `{baseurl}` | URL path prefix (auto-detected) | `/` or `/myproject` |
+| `wthr.top` | Fully qualified domain name | `api.example.com` |
+| `/` | URL path prefix (auto-detected) | `/` or `/myproject` |
 | `{port}` | Port number (ALWAYS stripped if 80/443) | `8080` or empty |
 | `{address}` | Listen IP address | `203.0.113.50` |
 | `{app_mode}` | Application mode | `production` or `development` |
@@ -12322,7 +12310,7 @@ All templates, Swagger/OpenAPI, GraphQL, email links, etc. MUST use these resolv
 | `{startup_datetime}` | Server start timestamp | `Wed Jan 15, 2025 at 09:00:00 EST` |
 | `{setup_token}` | First-run setup token (shown ONCE) | `a1b2c3d4e5f67890abcdef1234567890` |
 
-**URL Format:** `{proto}://{fqdn}/path` or `{proto}://{fqdn}:{port}/path`
+**URL Format:** `{proto}://wthr.top/path` or `{proto}://wthr.top:{port}/path`
 
 **Port Stripping :**
 - `:80` and `:443` are NEVER included in URLs
@@ -12333,7 +12321,7 @@ All templates, Swagger/OpenAPI, GraphQL, email links, etc. MUST use these resolv
 
 **We prefer to run behind a reverse proxy. Reverse proxy headers take priority.**
 
-**`{fqdn}` Resolution:**
+**`wthr.top` Resolution:**
 
 | Priority | Source | Description |
 |----------|--------|-------------|
@@ -12362,7 +12350,7 @@ DOMAIN=myapp.com,www.myapp.com,api.myapp.com
 
 | Behavior | Description |
 |----------|-------------|
-| First domain is primary | Used as `{fqdn}` and `GetBaseDomain()` |
+| First domain is primary | Used as `wthr.top` and `GetBaseDomain()` |
 | Auto-infer wildcard | Same base domain → `*.myapp.com` |
 | Skip learning | If DOMAIN set, no need to learn from requests |
 | CORS auto-configured | All listed domains added to allowed origins |
@@ -12406,16 +12394,16 @@ DOMAIN=myapp.com
 
 | Header | Provides |
 |--------|----------|
-| `X-Forwarded-Host` | `{fqdn}` |
+| `X-Forwarded-Host` | `wthr.top` |
 | `X-Forwarded-Proto` | `{proto}` |
 | `X-Forwarded-Port` | `{port}` |
-| `X-Forwarded-Prefix` | `{baseurl}` |
+| `X-Forwarded-Prefix` | `/` |
 | `X-Forwarded-Ssl` | `{proto}` (on=https) |
-| `X-Real-Host` | `{fqdn}` (fallback) |
-| `X-Original-Host` | `{fqdn}` (fallback) |
+| `X-Real-Host` | `wthr.top` (fallback) |
+| `X-Original-Host` | `wthr.top` (fallback) |
 | `X-Url-Scheme` | `{proto}` (fallback) |
-| `X-Forwarded-Path` | `{baseurl}` (fallback) |
-| `X-Script-Name` | `{baseurl}` (fallback) |
+| `X-Forwarded-Path` | `/` (fallback) |
+| `X-Script-Name` | `/` (fallback) |
 | `X-Forwarded-For` | Request IP (for logging) |
 | `X-Real-IP` | Request IP (fallback) |
 
@@ -12447,7 +12435,7 @@ Inference:
 
 | Scenario | Detection | Result |
 |----------|-----------|--------|
-| Same domain repeated | Stable | Use as `{fqdn}` |
+| Same domain repeated | Stable | Use as `wthr.top` |
 | www + apex seen | Wildcard | Infer `*.domain.com`, use apex as primary |
 | Multiple subdomains | Wildcard | Infer `*.domain.com`, use most common |
 | Conflicting domains | Warning | Log warning, use most recent |
@@ -12706,7 +12694,7 @@ func IsValidSSLHost(host string) bool {
 - `X-Url-Scheme` - Alternative: "https" or "http"
 - `Front-End-Https` - Microsoft: "on" = https
 
-**FQDN Detection (`{fqdn}`):**
+**FQDN Detection (`wthr.top`):**
 - `X-Forwarded-Host` - Standard: "example.com" or "example.com:8080"
 - `X-Real-Host` - nginx: "example.com"
 - `X-Original-Host` - Alternative
@@ -12810,8 +12798,8 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 
 ### Implementation Requirements
 
-1. **Request Context Helper**: Create a helper function that extracts `{proto}`, `{fqdn}`, `{port}` from each request
-2. **URL Builder**: Create a helper that builds full URLs: `{proto}://{fqdn}:{port}/path` (strip :80/:443)
+1. **Request Context Helper**: Create a helper function that extracts `{proto}`, `wthr.top`, `{port}` from each request
+2. **URL Builder**: Create a helper that builds full URLs: `{proto}://wthr.top:{port}/path` (strip :80/:443)
 3. **Never Import** hardcoded URLs into templates - always pass detected values
 4. **API Response URLs**: All URLs in API responses must be absolute, using detected values
 5. **Swagger/OpenAPI**: Server URL must be detected, not hardcoded
@@ -13994,13 +13982,13 @@ func ContextMiddleware(next http.Handler) http.Handler {
         // Extract context from URL path
         ctx, err := extractContextFromPath(r.URL.Path)
         if err != nil {
-            http.Error(w, "Invalid route", http.StatusBadRequest)
+            http.Error(w, t(r, "errors.invalid_format"), http.StatusBadRequest)
             return
         }
 
         // Validate token has access to this context
         if err := validateTokenAccess(token, ctx); err != nil {
-            http.Error(w, err.Error(), http.StatusForbidden)
+            http.Error(w, t(r, "errors.forbidden"), http.StatusForbidden)
             return
         }
 
@@ -14223,7 +14211,7 @@ Expires: {expiry_date}
 ```yaml
 web:
   security:
-    contact: "security@{fqdn}"    # Security contact email
+    contact: "security@wthr.top"    # Security contact email
     expires: "{1year}"            # Auto-calculated 1 year from generation
 ```
 
@@ -14320,7 +14308,7 @@ When using `format: custom`, these variables are available:
 | `{user_agent}` | User agent string |
 | `{referer}` | Referer header |
 | `{request_id}` | Request ID |
-| `{fqdn}` | Request host |
+| `wthr.top` | Request host |
 | `{protocol}` | HTTP protocol version |
 | `{tls_version}` | TLS version (if HTTPS) |
 | `{country}` | GeoIP country code |
@@ -14609,8 +14597,8 @@ server:
 | Event | Description | Logged Data |
 |-------|-------------|-------------|
 | `security.rate_limit_exceeded` | Rate limit hit | IP, endpoint, limit |
-| `security.ip_blocked` | IP address blocked | IP, reason, duration |
-| `security.ip_unblocked` | IP address unblocked | IP, unblocked by |
+| `security.ip_blocked` | IP address blocked | IP, reason, duration, auto/manual |
+| `security.ip_unblocked` | IP address unblocked | IP, unblocked_by (system/admin), reason |
 | `security.country_blocked` | Request blocked by GeoIP | IP, country code |
 | `security.csrf_failure` | CSRF token validation failed | IP, endpoint |
 | `security.invalid_token` | Invalid API token used | Token type, IP |
@@ -15362,6 +15350,14 @@ server:
 **IP Block Data Model:**
 
 ```go
+type BlockType string
+
+const (
+    BlockTypeTemporary BlockType = "temporary"
+    BlockTypeExtended  BlockType = "extended"
+    BlockTypePermanent BlockType = "permanent"
+)
+
 type IPBlock struct {
     IP          string    `json:"ip"`
     // Optional range block
@@ -15389,9 +15385,10 @@ type IPBlock struct {
 | `/api/v1/admin/server/security/blocked-ips/{ip}` | GET | Get block details |
 | `/api/v1/admin/server/security/blocked-ips/{ip}` | DELETE | Unblock IP |
 | `/api/v1/admin/server/security/blocked-ips/expired` | DELETE | Purge expired blocks from log |
-| `/api/v1/admin/server/security/allowlist` | GET | List allowed IPs |
+| `/api/v1/admin/server/security/allowlist` | GET | List allowlisted IPs/CIDRs (see Allowlist section) |
 | `/api/v1/admin/server/security/allowlist` | POST | Add IP/CIDR to allowlist |
-| `/api/v1/admin/server/security/allowlist/{ip}` | DELETE | Remove from allowlist |
+| `/api/v1/admin/server/security/allowlist/{id}` | DELETE | Remove from allowlist |
+| `/api/v1/admin/server/security/allowlist/check/{ip}` | GET | Check if IP is allowlisted |
 
 **Account Lockout API:**
 
@@ -15467,22 +15464,157 @@ server:
       rotation_reminder: 90d
 ```
 
-**Allowlist:**
+**Allowlist (Trusted IPs):**
 
-IPs on the allowlist are **never auto-blocked**. Use for:
-- Office IPs
-- CI/CD servers
-- Monitoring services
-- Load balancers / reverse proxies
+Allowlisted IPs bypass security enforcement but **never bypass authentication**.
+Use for admin IPs, monitoring, CI/CD, load balancers, and reverse proxies.
+
+**What allowlist bypasses:**
+
+| Layer | Bypassed | Why |
+|-------|----------|-----|
+| IP blocklists | Yes | Trusted source, don't block |
+| Rate limiting | Yes | Monitoring/CI may send many requests |
+| GeoIP country blocking | Yes | Admin may be in a blocked country |
+| Auto IP blocking (brute force) | Yes | Never auto-block trusted IPs |
+| Account lockout | Yes | Prevent lockout from trusted IPs |
+
+**What allowlist does NOT bypass:**
+
+| Layer | Bypassed | Why |
+|-------|----------|-----|
+| Admin authentication | No | Auth is identity, not network trust |
+| API token validation | No | Tokens verify who, not where |
+| CSRF protection | No | Prevents cross-site attacks regardless of IP |
+| Path security (traversal) | No | Always enforced |
+| SSL/TLS | No | Always enforced when enabled |
+
+**Config:**
 
 ```yaml
 server:
   security:
     allowlist:
-      - 10.0.0.0/8        # Internal network
-      - 192.168.1.0/24    # Office
-      # Add trusted IPs/CIDRs
+      # IPv4
+      - cidr: 10.0.0.0/8
+        description: "Internal network"
+      - cidr: 192.168.1.0/24
+        description: "Office LAN"
+      - cidr: 203.0.113.50/32
+        description: "Admin home IP"
+
+      # IPv6
+      - cidr: "::1/128"
+        description: "Localhost"
+      - cidr: fd00::/8
+        description: "Unique local addresses"
+      - cidr: 2001:db8:1::/48
+        description: "Office IPv6 prefix"
+
+      # Single IPs (no CIDR suffix = /32 for IPv4, /128 for IPv6)
+      - cidr: 198.51.100.10
+        description: "CI/CD server"
+      - cidr: "2001:db8::1"
+        description: "Monitoring server"
 ```
+
+**Data Model:**
+
+```go
+type AllowlistEntry struct {
+    // IP or CIDR (e.g., "192.168.1.0/24", "2001:db8::1")
+    CIDR        string    `yaml:"cidr" json:"cidr"`
+    // Human-readable label (required for clarity)
+    Description string    `yaml:"description" json:"description"`
+    AddedAt     time.Time `json:"added_at"`
+    AddedBy     string    `json:"added_by"`  // admin username or "config" if from YAML
+}
+```
+
+**Allowlist API:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/security/allowlist` | GET | List all allowlisted IPs/CIDRs |
+| `/api/v1/admin/server/security/allowlist` | POST | Add IP/CIDR with optional description |
+| `/api/v1/admin/server/security/allowlist/{id}` | DELETE | Remove from allowlist |
+| `/api/v1/admin/server/security/allowlist/check/{ip}` | GET | Check if IP is allowlisted |
+
+**Middleware:**
+
+```go
+// AllowlistMiddleware sets a context flag if client IP is allowlisted.
+// Downstream middleware (blocklist, rate limit, geoip, auto-block) checks
+// this flag and skips enforcement. Auth middleware IGNORES this flag.
+func AllowlistMiddleware(allowlist *AllowlistLookup) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            ip := extractClientIP(r)
+            if allowlist.Contains(ip) {
+                ctx := context.WithValue(r.Context(), ctxKeyAllowlisted, true)
+                r = r.WithContext(ctx)
+            }
+            next.ServeHTTP(w, r)
+        })
+    }
+}
+
+// Used by downstream middleware:
+func IsAllowlisted(ctx context.Context) bool {
+    v, _ := ctx.Value(ctxKeyAllowlisted).(bool)
+    return v
+}
+```
+
+**Admin UI (`/admin/server/security/allowlist`):**
+
+**Note:** Wireframe shows English for documentation. Actual UI renders ALL text via `t()` translation keys (see `admin.allowlist.*` in translation files). User sees their selected language.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Allowlist (Trusted IPs)                                        [Save All] │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Allowlisted IPs bypass blocklists, rate limits, and country blocking.  │
+│  Authentication is ALWAYS required regardless of allowlist status.       │
+│                                                                         │
+│ ┌─ Current Entries ─────────────────────────────────────────────────┐   │
+│ │                                                                    │   │
+│ │ 10.0.0.0/8          Internal network           config    [Remove]  │   │
+│ │ 192.168.1.0/24      Office LAN                 config    [Remove]  │   │
+│ │ 203.0.113.50/32     Admin home IP              admin     [Remove]  │   │
+│ │ ::1/128             Localhost                   config    [Remove]  │   │
+│ │ 198.51.100.10/32    CI/CD server               admin     [Remove]  │   │
+│ │ 2001:db8::1/128     Monitoring server          admin     [Remove]  │   │
+│ │                                                                    │   │
+│ └────────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│ ┌─ Add Entry ───────────────────────────────────────────────────────┐   │
+│ │ IP/CIDR: [___________________]  Description: [________________]   │   │
+│ │                                                          [Add]    │   │
+│ └────────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│ ┌─ Check IP ────────────────────────────────────────────────────────┐   │
+│ │ IP: [_______________]  [Check]                                    │   │
+│ │ Result: 192.168.1.50 → Allowlisted (192.168.1.0/24 "Office LAN") │   │
+│ └────────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Audit Events:**
+
+| Event | Description | Logged Data |
+|-------|-------------|-------------|
+| `security.ip_allowlisted` | IP/CIDR added to allowlist | CIDR, description, added_by |
+| `security.ip_allowlist_removed` | IP/CIDR removed from allowlist | CIDR, removed_by |
+
+**Validation:**
+- Must be valid IPv4, IPv6, or CIDR notation
+- Single IPs auto-expand: `1.2.3.4` → `1.2.3.4/32`, `::1` → `::1/128`
+- Reject overly broad ranges with confirmation: `/0` through `/7` (IPv4) or `/0` through `/15` (IPv6)
+- Duplicates and overlapping ranges are allowed (no error, just redundant)
+- Entries from config file show source as `config`; entries added via API/UI show admin username
 
 **Admin UI: IP Blocks**
 
@@ -15516,8 +15648,8 @@ server:
 | `security.ip_blocked` | IP was blocked | IP, reason, duration, auto/manual |
 | `security.ip_unblocked` | IP was unblocked | IP, unblocked_by (system/admin), reason |
 | `security.ip_block_extended` | Block duration extended | IP, new_expiry, reason |
-| `security.ip_allowlisted` | IP added to allowlist | IP/CIDR, added_by |
-| `security.ip_allowlist_removed` | IP removed from allowlist | IP/CIDR, removed_by |
+| `security.ip_allowlisted` | IP/CIDR added to allowlist | CIDR, description, added_by |
+| `security.ip_allowlist_removed` | IP/CIDR removed from allowlist | CIDR, removed_by |
 | `security.account_soft_locked` | Account soft locked | User ID (masked), attempts, duration |
 | `security.account_hard_locked` | Account hard locked | User ID (masked), attempts, duration |
 | `security.account_locked` | Account permanently locked | User ID (masked), attempts |
@@ -15722,8 +15854,8 @@ labels:
 
 **Behavior:**
 - All routes prefixed with baseurl (e.g., `/myproject/healthz`, `/myproject/api/v1/...`)
-- Static assets served from `{baseurl}/static/`
-- Admin panel at `{baseurl}/admin/`
+- Static assets served from `//static/`
+- Admin panel at `//admin/`
 - Generated URLs (redirects, links) use detected baseurl
 - Trailing slash normalized (both `/myproject` and `/myproject/` work)
 - Empty string treated as `/`
@@ -17034,7 +17166,7 @@ type StatsInfo struct {
 
 ```html
 <!DOCTYPE html>
-<html lang="en" class="theme-dark">
+<html lang="{{.Lang}}" dir="{{.Dir}}" class="theme-dark">
 <head>
   <title>weather - Health Status</title>
   <!-- Standard meta, CSS, theme support -->
@@ -17852,7 +17984,7 @@ This is the response text.
 **Output:**
 ```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Lang}}" dir="{{.Dir}}">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17895,7 +18027,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// Tab indent
 	if err := validate(r); err != nil {
 		// Tab indent
-		http.Error(w, "Invalid", 400)
+		http.Error(w, t(r, "errors.bad_request"), http.StatusBadRequest)
 		return
 	}
 
@@ -19196,9 +19328,9 @@ Before proceeding, confirm you understand:
 
 ### FQDN Resolution 
 
-**See PART 8: SERVER BINARY CLI → "URL Variables" section for complete `{proto}`, `{fqdn}`, `{port}` resolution.**
+**See PART 8: SERVER BINARY CLI → "URL Variables" section for complete `{proto}`, `wthr.top`, `{port}` resolution.**
 
-**Summary - `{fqdn}` resolution order:**
+**Summary - `wthr.top` resolution order:**
 
 | Priority | Source |
 |----------|--------|
@@ -19549,10 +19681,10 @@ func PrintServerStartupBanner(appName, version, appMode string, urls []string, f
     }
 }
 
-func printServerBannerPlain(appName, version, appMode string, urls []string) {
+func printServerBannerPlain(appName, version, appMode string, urls []string, lang string) {
     // Plain text - no emojis, no ASCII art
     fmt.Printf("%s v%s\n", appName, version)
-    fmt.Printf("Mode: %s\n", appMode)
+    fmt.Printf("%s: %s\n", i18n.T(lang, "cli.running_in_mode_label"), appMode)
     for _, url := range urls {
         fmt.Printf("  %s\n", url)
     }
@@ -19599,15 +19731,15 @@ func printServerBannerMicro(appName string, urls []string) {
     }
 }
 
-func printServerBannerAppModeLine(appMode string, useIcons bool) {
+func printServerBannerAppModeLine(appMode string, useIcons bool, lang string) {
     if useIcons {
         icon := "🔒"
         if appMode == "development" {
             icon = "🔧"
         }
-        fmt.Printf("%s Running in mode: %s\n", icon, appMode)
+        fmt.Printf("%s %s: %s\n", icon, i18n.T(lang, "cli.running_in_mode_label"), appMode)
     } else {
-        fmt.Printf("Mode: %s\n", appMode)
+        fmt.Printf("%s: %s\n", i18n.T(lang, "cli.running_in_mode_label"), appMode)
     }
 }
 ```
@@ -19800,7 +19932,7 @@ formatURL(host, 8443, true)
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
 │  🧅 Tor:   http://{onion_address}                         │
-│  🔐 HTTPS: {proto}://{fqdn}                               │
+│  🔐 HTTPS: {proto}://wthr.top                               │
 ├───────────────────────────────────────────────────────────┤
 │  📡 Listening on {proto}://{address}                      │
 │  ✅ Server started on {startup_datetime}                  │
@@ -19820,7 +19952,7 @@ formatURL(host, 8443, true)
 ├───────────────────────────────────────────────────────────┤
 │  📡 Listening on {proto}://{address}                      │
 ├───────────────────────────────────────────────────────────┤
-│  🔐 Website: {proto}://{fqdn}                             │
+│  🔐 Website: {proto}://wthr.top                             │
 ├───────────────────────────────────────────────────────────┤
 │  ✅ Server started on {startup_datetime}                  │
 ╰───────────────────────────────────────────────────────────╯
@@ -19833,7 +19965,7 @@ formatURL(host, 8443, true)
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
-│  🌐 HTTP:  {proto}://{fqdn}:{port}                        │
+│  🌐 HTTP:  {proto}://wthr.top:{port}                        │
 ├───────────────────────────────────────────────────────────┤
 │  📡 Listening on {proto}://{address}:{port}               │
 │  ✅ Server started on {startup_datetime}                  │
@@ -19875,7 +20007,7 @@ formatURL(host, 8443, true)
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: production                           │
 ├───────────────────────────────────────────────────────────┤
-│  🌐 HTTP:  {proto}://{fqdn}                               │
+│  🌐 HTTP:  {proto}://wthr.top                               │
 ├───────────────────────────────────────────────────────────┤
 │  📡 Listening on {proto}://{address}                      │
 │  ✅ Server started on {startup_datetime}                  │
@@ -19889,7 +20021,7 @@ formatURL(host, 8443, true)
 ├───────────────────────────────────────────────────────────┤
 │  🔒 Running in mode: {app_mode} [debugging]               │
 ├───────────────────────────────────────────────────────────┤
-│  🌐 HTTP:  {proto}://{fqdn}                               │
+│  🌐 HTTP:  {proto}://wthr.top                               │
 ├───────────────────────────────────────────────────────────┤
 │  📡 Listening on {proto}://{address}                      │
 │  ✅ Server started on {startup_datetime}                  │
@@ -19914,7 +20046,7 @@ formatURL(host, 8443, true)
 ├───────────────────────────────────────────────────────────┤
 │  Setup Token: {setup_token}                               │
 │                                                           │
-│  Go to {proto}://{fqdn}/admin/server/setup         │
+│  Go to {proto}://wthr.top/admin/server/setup         │
 │  and enter this token to complete setup.                  │
 │                                                           │
 │  This token will only be shown ONCE.                      │
@@ -19933,7 +20065,7 @@ formatURL(host, 8443, true)
 ```
 🚀 WEATHER v1.0.0
 🔒 Mode: {app_mode}
-🌐 {proto}://{fqdn}
+🌐 {proto}://wthr.top
 📡 Listening: {proto}://{address}:{port}
 ✅ Started: {startup_datetime}
 ```
@@ -19948,7 +20080,7 @@ formatURL(host, 8443, true)
 
 🔑 SETUP REQUIRED
 Token: {setup_token}
-Go to: {proto}://{fqdn}/admin/server/setup
+Go to: {proto}://wthr.top/admin/server/setup
 (Token shown ONCE)
 ```
 
@@ -19956,7 +20088,7 @@ Go to: {proto}://{fqdn}/admin/server/setup
 ```
 WEATHER 1.0.0
 {app_mode}
-{fqdn}:{port}
+wthr.top:{port}
 ```
 
 **40-59 cols (Minimal - First Run):**
@@ -19981,7 +20113,7 @@ WEATHER :{port} [SETUP]
 ```
 WEATHER v1.0.0
 Mode: {app_mode}
-URL: {proto}://{fqdn}
+URL: {proto}://wthr.top
 Listening: {proto}://{address}:{port}
 Started: {startup_datetime}
 ```
@@ -19996,7 +20128,7 @@ Started: {startup_datetime}
 
 SETUP REQUIRED
 Token: {setup_token}
-Setup URL: {proto}://{fqdn}/admin/server/setup
+Setup URL: {proto}://wthr.top/admin/server/setup
 This token will only be shown ONCE.
 ```
 
@@ -20044,9 +20176,9 @@ weather --color=auto
 | Priority | Path | Description |
 |----------|------|-------------|
 | 1 | `/etc/letsencrypt/live/domain/` | Literal "domain" directory (common shared setup) |
-| 2 | `/etc/letsencrypt/live/{fqdn}/` | FQDN-named directory (e.g., `/etc/letsencrypt/live/api.example.com/`) |
-| 3 | `{config_dir}/ssl/letsencrypt/{fqdn}/` | App-managed Let's Encrypt certificates |
-| 4 | `{config_dir}/ssl/local/{fqdn}/` | Self-signed or user-provided certificates |
+| 2 | `/etc/letsencrypt/live/wthr.top/` | FQDN-named directory (e.g., `/etc/letsencrypt/live/api.example.com/`) |
+| 3 | `{config_dir}/ssl/letsencrypt/wthr.top/` | App-managed Let's Encrypt certificates |
+| 4 | `{config_dir}/ssl/local/wthr.top/` | Self-signed or user-provided certificates |
 
 **Certificate Validation:**
 - Certificate CN or SAN must match configured FQDN (`server.host`)
@@ -20058,24 +20190,24 @@ weather --color=auto
 ```
 {config_dir}/ssl/
 ├── letsencrypt/
-│   └── {fqdn}/                # e.g., api.example.com/
+│   └── wthr.top/                # e.g., api.example.com/
 │       ├── fullchain.pem
 │       └── privkey.pem
 └── local/
-    └── {fqdn}/                # e.g., api.example.com/
+    └── wthr.top/                # e.g., api.example.com/
         ├── cert.pem
         └── key.pem
 ```
 
-**Mirrors certbot structure** (`/etc/letsencrypt/live/{fqdn}/`) for consistency.
+**Mirrors certbot structure** (`/etc/letsencrypt/live/wthr.top/`) for consistency.
 
 ### Certificate Management Ownership
 
 | Location | Manager | Renewal |
 |----------|---------|---------|
 | `/etc/letsencrypt/live/**` | **System** (certbot) | App does NOT renew |
-| `{config_dir}/ssl/letsencrypt/{fqdn}/` | **App** | Auto-renew 7 days before expiry |
-| `{config_dir}/ssl/local/{fqdn}/` | **User** | No auto-renewal (manual) |
+| `{config_dir}/ssl/letsencrypt/wthr.top/` | **App** | Auto-renew 7 days before expiry |
+| `{config_dir}/ssl/local/wthr.top/` | **User** | No auto-renewal (manual) |
 
 **Rule: If cert is in `{config_dir}/ssl/**`, app manages. Subdirectory determines HOW.**
 
@@ -20083,8 +20215,8 @@ weather --color=auto
 
 | Directory | Check Frequency | Renewal Trigger |
 |-----------|-----------------|-----------------|
-| `{config_dir}/ssl/letsencrypt/{fqdn}/` | Daily (03:00) | 7 days before expiry |
-| `{config_dir}/ssl/local/{fqdn}/` | Never | Manual only |
+| `{config_dir}/ssl/letsencrypt/wthr.top/` | Daily (03:00) | 7 days before expiry |
+| `{config_dir}/ssl/local/wthr.top/` | Never | Manual only |
 | `/etc/letsencrypt/live/**` | Never | System (certbot) manages |
 
 **Logic Flow:**
@@ -20094,24 +20226,24 @@ Startup (for configured FQDN)
    ├─► Check /etc/letsencrypt/live/domain/
    │   └─► Found + cert matches FQDN? → Use it (system manages)
    │
-   ├─► Check /etc/letsencrypt/live/{fqdn}/
+   ├─► Check /etc/letsencrypt/live/wthr.top/
    │   └─► Found? → Use it (system manages)
    │
-   ├─► Check {config_dir}/ssl/letsencrypt/{fqdn}/
+   ├─► Check {config_dir}/ssl/letsencrypt/wthr.top/
    │   └─► Found? → Use it (app auto-renews)
    │
-   ├─► Check {config_dir}/ssl/local/{fqdn}/
+   ├─► Check {config_dir}/ssl/local/wthr.top/
    │   └─► Found? → Use it (no auto-renewal)
    │
    └─► Not found anywhere
        └─► Request new cert via Let's Encrypt
-           └─► Save to {config_dir}/ssl/letsencrypt/{fqdn}/ (app auto-renews)
+           └─► Save to {config_dir}/ssl/letsencrypt/wthr.top/ (app auto-renews)
 ```
 
 **Important:**
 - `/etc/letsencrypt/` → app uses but does NOT manage renewal
-- `{config_dir}/ssl/letsencrypt/{fqdn}/` → app manages, auto-renews 7 days before expiry
-- `{config_dir}/ssl/local/{fqdn}/` → app uses but does NOT auto-renew (user manages)
+- `{config_dir}/ssl/letsencrypt/wthr.top/` → app manages, auto-renews 7 days before expiry
+- `{config_dir}/ssl/local/wthr.top/` → app uses but does NOT auto-renew (user manages)
 
 ---
 
@@ -20356,15 +20488,19 @@ func URLNormalizeMiddleware(next http.Handler) http.Handler {
 - Consistency: One canonical URL per resource
 - Simplicity: Route matching is simpler without optional trailing slashes
 
-**Middleware Order (see PART 5 for full list):**
+**Middleware Execution Order (see PART 5 for full setupMiddleware):**
 
 ```go
-handler = URLNormalizeMiddleware(handler)      // 1. FIRST - normalize URLs (trailing slash, etc.)
-handler = PathSecurityMiddleware(handler)      // 2. Validate paths, block traversal
-handler = SecurityHeadersMiddleware(handler)   // 3. Add security headers
-handler = RateLimitMiddleware(handler)         // 4. Rate limiting
-handler = AuthMiddleware(handler)              // 5. Authentication
-handler = LoggingMiddleware(handler)           // 6. Log requests
+// Execution order (request flows top to bottom):
+// 1. URLNormalizeMiddleware    - normalize URLs (trailing slash, etc.)
+// 2. PathSecurityMiddleware    - validate paths, block traversal
+// 3. SecurityHeadersMiddleware - add security headers
+// 4. AllowlistMiddleware       - set allowlisted flag (bypasses blocklist/ratelimit/geoip, NOT auth)
+// 5. BlocklistMiddleware       - IP/domain blocklist check
+// 6. RateLimitMiddleware       - rate limiting
+// 7. GeoIPMiddleware           - country blocking
+// 8. AuthMiddleware            - authentication
+// 9. LoggingMiddleware         - log requests
 ```
 
 ### No JavaScript-Disabled Broken State
@@ -20469,7 +20605,7 @@ func detectClientType(r *http.Request) string {
    ```bash
    curl -q -LSsf -X POST /api/v1/auth/register -d '{"username":"test","email":"test@example.com"}'
    curl -q -LSsf -X PATCH /api/v1/users -d '{"email":"new@test.com"}'  # Current user
-   curl -q -LSsf -X PUT /api/v1/admin/users/123 -d '{"email":"new@test.com"}'  # Admin
+   curl -q -LSsf -X PATCH /api/v1/admin/users/123 -d '{"email":"new@test.com"}'  # Admin
    curl -q -LSsf -X DELETE /api/v1/admin/users/123  # Admin
    ```
 
@@ -22803,7 +22939,7 @@ async function requestPersistentStorage() {
 **Full HTML head for PWA compliance:**
 ```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Lang}}" dir="{{.Dir}}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23419,7 +23555,7 @@ src/server/template/
 | **App-focused** | Navigation reflects the application's features and purpose |
 | **NO admin links** | NEVER link to `/admin` from public pages |
 | **NO admin hints** | Do not advertise that an admin panel exists |
-| **Direct access only** | Admin panel accessed by navigating directly to `{fqdn}/admin` |
+| **Direct access only** | Admin panel accessed by navigating directly to `wthr.top/admin` |
 
 **Public nav contains (project-specific):**
 - Home (`/`)
@@ -23479,7 +23615,7 @@ src/server/template/
 **Both layouts start with:**
 ```html
 <!DOCTYPE html>
-<html lang="en" class="theme-dark">  <!-- or theme-light -->
+<html lang="{{.Lang}}" dir="{{.Dir}}" class="theme-dark">  <!-- or theme-light -->
 <head>
   {{ template "head" . }}
 </head>
@@ -24102,7 +24238,7 @@ var staticFS embed.FS
 ```go
 {{ define "base" }}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Lang}}" dir="{{.Dir}}">
 <head>{{ template "head" . }}</head>
 <body>
   {{ template "header" . }}
@@ -25098,7 +25234,7 @@ When admin edits `custom_html`, show:
 
   <!-- Application branding -->
   <p>
-    <a href="{PLATFORM_REPO_URL}" target="_blank">Made with</a> ❤️
+    <a href="https://github.com/apimgr/weather" target="_blank">Made with</a> ❤️
     <span>•</span>
     <span>1.0.0</span>
   </p>
@@ -26797,7 +26933,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 ├───────────────────────────────────────────────────────────┤
 │  🔧 Running in mode: {app_mode}                           │
 ├───────────────────────────────────────────────────────────┤
-│  🌐 HTTP:  {proto}://{fqdn}:{port}                        │
+│  🌐 HTTP:  {proto}://wthr.top:{port}                        │
 ├───────────────────────────────────────────────────────────┤
 │  📡 Listening on {proto}://{address}:{port}               │
 │  ✅ Server started on {startup_datetime}                  │
@@ -26808,7 +26944,7 @@ func RegisterAdminRoutes(r *mux.Router) {
 ├───────────────────────────────────────────────────────────┤
 │  Setup Token: {setup_token}                               │
 │                                                           │
-│  Go to {proto}://{fqdn}/admin/server/setup         │
+│  Go to {proto}://wthr.top/admin/server/setup         │
 │  and enter this token to complete setup.                  │
 │                                                           │
 │  This token will only be shown ONCE.                      │
@@ -27378,6 +27514,7 @@ Admin Panel Header:
 | `/admin/server/security/tokens` | API Tokens | Generate, revoke tokens |
 | `/admin/server/security/ratelimit` | Rate Limiting | Configure rate limits |
 | `/admin/server/security/firewall` | Firewall | IP allow/block lists |
+| `/admin/server/security/allowlist` | Allowlist | Trusted IPs (bypass blocklist/ratelimit/geoip) |
 | `/admin/server/network/tor` | Tor | View .onion address, status (auto-enabled if installed) |
 | `/admin/server/network/geoip` | GeoIP | Country blocking, database updates |
 | `/admin/server/network/blocklists` | Blocklists | IP/domain blocklists |
@@ -27485,7 +27622,7 @@ Admin Panel Header:
 | `daemonize` | Toggle | Off | ⚠️ Yes | Detach from terminal on start |
 | `pidfile` | Toggle | On | ⚠️ Yes | Create PID file |
 
-#### Branding Section
+#### Branding Section (`/admin/server/branding`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27539,10 +27676,10 @@ Admin Panel Header:
 | `ip_block.escalation` | Toggle | On | No | Escalating block durations |
 | `ip_block.first_duration` | Duration | `1 hour` | No | First block duration |
 | `ip_block.max_duration` | Duration | `7 days` | No | Maximum block duration |
-| `allowlist` | Tags | (empty) | No | IPs never blocked |
+| `allowlist` | Tags | (empty) | No | Trusted IPs — bypass blocklists, rate limits, GeoIP (not auth) |
 | `blocklist` | Tags | (empty) | No | IPs always blocked |
 
-#### SSL/TLS Section (`/admin/server/security/ssl`)
+#### SSL/TLS Section (`/admin/server/ssl`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
@@ -27592,7 +27729,7 @@ Admin Panel Header:
 | `smtp.password` | Password | (none) | No | SMTP password |
 | `smtp.tls` | Dropdown | `auto` | No | `auto`/`starttls`/`tls`/`none` |
 | `from.name` | Text | (app title) | No | Sender name |
-| `from.email` | Text | `no-reply@{fqdn}` | No | Sender email |
+| `from.email` | Text | `no-reply@wthr.top` | No | Sender email |
 | `[Test Connection]` | Button | - | - | Send test email |
 
 #### Notifications Section (`/admin/server/notifications`)
@@ -27640,16 +27777,389 @@ Admin Panel Header:
 | `tor.status` | Readonly | - | - | Running/Stopped |
 | `[Copy Address]` | Button | - | - | Copy onion to clipboard |
 
-#### GeoIP Section (`/admin/server/geoip`)
+#### GeoIP Section (`/admin/server/network/geoip`)
 
 | Setting | Control | Default | Restart | Description |
 |---------|---------|---------|---------|-------------|
 | `geoip.enabled` | Toggle | On | No | Enable GeoIP lookups |
 | `geoip.auto_update` | Toggle | On | No | Auto-update databases |
 | `geoip.update_schedule` | Text | `0 3 * * *` | No | Update cron schedule |
-| `geoip.country_block` | Tags | (empty) | No | Blocked country codes |
-| `geoip.country_allow` | Tags | (empty) | No | Allowed country codes |
+| `geoip.deny_countries` | Tags | (empty) | No | Block these countries (ISO 3166-1 alpha-2) |
+| `geoip.allow_countries` | Tags | (empty) | No | Allow ONLY these countries (overrides deny) |
 | Database status | Readonly | - | - | Last update, size |
+
+#### Blocklists Section (`/admin/server/network/blocklists`)
+
+**Transmission-style IP/domain blocklist management. Download, parse, and enforce external blocklists from configurable URLs.**
+
+**Supported Formats:**
+
+| Format | Extension | Example | Description |
+|--------|-----------|---------|-------------|
+| **P2P (PeerGuardian)** | `.p2p`, `.txt` | `Description:1.2.3.0-1.2.3.255` | Range-based, most common |
+| **CIDR** | `.txt`, `.netset` | `1.2.3.0/24` | Standard CIDR notation, one per line |
+| **DAT (eMule)** | `.dat` | `001.002.003.000 - 001.002.003.255 , 100 , Description` | Legacy eMule format |
+| **Plain IP** | `.txt` | `1.2.3.4` | One IP per line |
+| **Compressed** | `.gz` | Any of above, gzipped | Auto-decompressed on download |
+
+**Comment lines** (starting with `#`) and blank lines are ignored in all formats.
+
+**Config:**
+
+```yaml
+server:
+  security:
+    blocklists:
+      # Master enable/disable for all blocklist enforcement
+      enabled: true
+
+      # Auto-update all enabled blocklists on schedule
+      auto_update: true
+
+      # Sources - list of blocklist URLs (custom URLs can be added)
+      sources:
+        - name: "firehol_level1"
+          url: "https://iplists.firehol.org/files/firehol_level1.netset"
+          format: cidr
+          enabled: true
+
+        - name: "spamhaus_drop"
+          url: "https://www.spamhaus.org/drop/drop.txt"
+          format: cidr
+          enabled: true
+
+        - name: "level1"
+          url: "https://www.iblocklist.com/lists/level1.gz"
+          format: auto  # auto-detect from content/extension (P2P, gzipped)
+          enabled: false
+
+        - name: "abuse_ch_urlhaus"
+          url: "https://urlhaus.abuse.ch/downloads/text/"
+          format: plain
+          enabled: false
+
+        - name: "dshield"
+          url: "https://www.dshield.org/block.txt"
+          format: cidr
+          enabled: false
+
+      # Where parsed blocklist data is stored
+      # Uses {data_dir}/security/blocklists/ directory
+      # Each source saved as {name}.txt (raw) + {name}.parsed (binary)
+
+      # Action when a blocked IP connects
+      # reject = return 403 Forbidden
+      # drop = close connection silently (no response)
+      action: reject
+
+      # Reject uses translated "errors.forbidden" message by default.
+      # Set custom reject_message to override (applies to ALL languages):
+      # reject_message: "Custom block message"
+
+      # Log blocked requests
+      log_blocked: true
+```
+
+**Data Model:**
+
+```go
+// BlocklistSource represents a configured blocklist URL
+type BlocklistSource struct {
+    Name        string    `yaml:"name" json:"name"`
+    URL         string    `yaml:"url" json:"url"`
+    Format      string    `yaml:"format" json:"format"`       // auto, p2p, cidr, dat, plain
+    Enabled     bool      `yaml:"enabled" json:"enabled"`
+    RuleCount   int       `json:"rule_count"`                  // number of IP ranges/CIDRs parsed
+    LastUpdated *time.Time `json:"last_updated,omitempty"`
+    LastError   string    `json:"last_error,omitempty"`
+    FileSize    int64     `json:"file_size"`                   // raw download size in bytes
+}
+
+// BlocklistStats provides aggregate statistics
+type BlocklistStats struct {
+    Enabled       bool   `json:"enabled"`
+    TotalSources  int    `json:"total_sources"`
+    ActiveSources int    `json:"active_sources"`
+    TotalRules    int    `json:"total_rules"`                  // total IP ranges across all lists
+    LastUpdated   *time.Time `json:"last_updated,omitempty"`   // most recent update
+    BlockedToday  int    `json:"blocked_today"`                // requests blocked in last 24h
+}
+```
+
+**Blocklist Parsing:**
+
+```go
+// ParseBlocklist auto-detects format and returns IP ranges
+func ParseBlocklist(reader io.Reader, format string) ([]netip.Prefix, error) {
+    // If .gz, wrap reader in gzip.NewReader first
+    // If format == "auto", detect from first non-comment line:
+    //   - Contains ":" before IP → P2P format (Description:Start-End)
+    //   - Contains "/" → CIDR format
+    //   - Contains " - " with commas → DAT format
+    //   - Otherwise → plain IP (convert to /32)
+    // Parse all lines, skip comments (#) and blanks
+    // Convert all formats to []netip.Prefix for uniform lookup
+}
+
+// BlocklistLookup uses a radix tree for O(log n) IP matching
+type BlocklistLookup struct {
+    tree *critbitgo.Net  // or similar prefix tree
+    size int             // total number of prefixes loaded
+}
+
+func (bl *BlocklistLookup) Contains(ip netip.Addr) bool
+func (bl *BlocklistLookup) Load(prefixes []netip.Prefix) error
+func (bl *BlocklistLookup) Count() int
+func (bl *BlocklistLookup) MatchedList(ip netip.Addr) string  // returns source name that matched
+```
+
+**BlocklistConfig:**
+
+```go
+type BlocklistConfig struct {
+    Enabled       bool   `yaml:"enabled" json:"enabled"`
+    AutoUpdate    bool   `yaml:"auto_update" json:"auto_update"`
+    Action        string `yaml:"action" json:"action"`                // "reject" or "drop"
+    RejectMessage string `yaml:"reject_message,omitempty" json:"reject_message,omitempty"` // overrides translated default
+    LogBlocked    bool   `yaml:"log_blocked" json:"log_blocked"`
+}
+```
+
+**AllowlistLookup:**
+
+```go
+// AllowlistLookup provides O(log n) IP lookup against allowlisted CIDRs
+type AllowlistLookup struct {
+    tree *critbitgo.Net
+    size int
+}
+
+func (al *AllowlistLookup) Contains(ip netip.Addr) bool
+func (al *AllowlistLookup) Load(entries []AllowlistEntry) error
+func (al *AllowlistLookup) Count() int
+func (al *AllowlistLookup) Match(ip netip.Addr) *AllowlistEntry  // returns matched entry or nil
+```
+
+**Middleware Integration:**
+
+```go
+// BlocklistMiddleware checks incoming IPs against loaded blocklists
+// Applied AFTER allowlist check (allowlisted IPs bypass blocklist)
+func BlocklistMiddleware(lookup *BlocklistLookup, cfg BlocklistConfig) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            ip := extractClientIP(r) // respects X-Forwarded-For / X-Real-IP if trusted proxy
+
+            if lookup.Contains(ip) {
+                if cfg.LogBlocked {
+                    securityLog.Warn("blocked by blocklist",
+                        "ip", ip, "path", r.URL.Path, "list", lookup.MatchedList(ip))
+                }
+                if cfg.Action == "drop" {
+                    hj, ok := w.(http.Hijacker)
+                    if ok {
+                        conn, _, _ := hj.Hijack()
+                        conn.Close()
+                        return
+                    }
+                }
+                msg := cfg.RejectMessage
+                if msg == "" {
+                    msg = t(r, "errors.forbidden")
+                }
+                http.Error(w, msg, http.StatusForbidden)
+                return
+            }
+
+            next.ServeHTTP(w, r)
+        })
+    }
+}
+```
+
+**Middleware Order (see PART 5 for canonical chain):**
+1. URL normalization
+2. Path security (traversal blocking)
+3. Security headers
+4. Allowlist check (set flag — bypasses blocklist/ratelimit/geoip, NOT auth)
+5. **Blocklist check** (reject before any processing)
+6. Rate limiting
+7. GeoIP country blocking
+8. Authentication
+9. Logging
+
+**API Endpoints:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/admin/server/network/blocklists` | GET | List all blocklist sources with stats |
+| `/api/v1/admin/server/network/blocklists` | PATCH | Update blocklist settings (enabled, action, etc.) |
+| `/api/v1/admin/server/network/blocklists/sources` | POST | Add new blocklist source |
+| `/api/v1/admin/server/network/blocklists/sources/{name}` | PATCH | Update source (enable/disable, URL, format) |
+| `/api/v1/admin/server/network/blocklists/sources/{name}` | DELETE | Remove blocklist source |
+| `/api/v1/admin/server/network/blocklists/update` | POST | Trigger immediate update of all enabled sources |
+| `/api/v1/admin/server/network/blocklists/update/{name}` | POST | Trigger update of specific source |
+| `/api/v1/admin/server/network/blocklists/stats` | GET | Get aggregate blocklist statistics |
+| `/api/v1/admin/server/network/blocklists/check/{ip}` | GET | Check if an IP is in any blocklist |
+
+**API Response Examples:**
+
+```json
+// GET /api/v1/admin/server/network/blocklists
+{
+  "enabled": true,
+  "action": "reject",
+  "auto_update": true,
+  "total_rules": 482731,
+  "blocked_today": 147,
+  "sources": [
+    {
+      "name": "level1",
+      "url": "https://www.iblocklist.com/lists/level1.gz",
+      "format": "auto",
+      "enabled": true,
+      "rule_count": 398211,
+      "last_updated": "2026-04-17T04:00:12Z",
+      "last_error": "",
+      "file_size": 2847291
+    },
+    {
+      "name": "spamhaus_drop",
+      "url": "https://www.spamhaus.org/drop/drop.txt",
+      "format": "cidr",
+      "enabled": true,
+      "rule_count": 84520,
+      "last_updated": "2026-04-17T04:00:15Z",
+      "last_error": "",
+      "file_size": 12481
+    }
+  ]
+}
+
+// GET /api/v1/admin/server/network/blocklists/check/1.2.3.4
+{
+  "ip": "1.2.3.4",
+  "blocked": true,
+  "matched_lists": ["level1", "spamhaus_drop"],
+  "matched_range": "1.2.0.0/16"
+}
+```
+
+**Admin UI:**
+
+**Note:** Wireframe shows English for documentation. Actual UI renders ALL text via `t()` translation keys (see `admin.blocklists_page.*` in translation files). User sees their selected language.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Blocklists                                                     [Save All] │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│ ┌─ Status ──────────────────────────────────────────────────────────┐   │
+│ │ Blocklists:     [ON ▪ OFF]           Total rules: 482,731         │   │
+│ │ Auto-update:    [ON ▪ OFF]           Blocked today: 147           │   │
+│ │ Action:         [Reject ▼]           Last updated: 2 hours ago    │   │
+│ │                              [Update All Now]  [Check IP...]      │   │
+│ └───────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│ ┌─ Sources ─────────────────────────────────────────────────────────┐   │
+│ │                                                                    │   │
+│ │ ☑ level1                     398,211 rules    Updated 2h ago       │   │
+│ │   https://www.iblocklist.com/lists/level1.gz                       │   │
+│ │   Format: auto  Size: 2.7 MB                    [Update] [Remove]  │   │
+│ │                                                                    │   │
+│ │ ☑ spamhaus_drop               84,520 rules    Updated 2h ago       │   │
+│ │   https://www.spamhaus.org/drop/drop.txt                           │   │
+│ │   Format: cidr  Size: 12 KB                     [Update] [Remove]  │   │
+│ │                                                                    │   │
+│ │ ☐ dshield                          0 rules    Never updated        │   │
+│ │   https://www.dshield.org/block.txt                                │   │
+│ │   Format: cidr  (disabled)                      [Update] [Remove]  │   │
+│ │                                                                    │   │
+│ └───────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│ ┌─ Add Source ──────────────────────────────────────────────────────┐   │
+│ │ Name: [_______________]  URL: [________________________________]  │   │
+│ │ Format: [Auto ▼]                                       [Add]      │   │
+│ └───────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│ ┌─ IP Check ───────────────────────────────────────────────────────┐   │
+│ │ IP: [_______________]  [Check]                                    │   │
+│ │ Result: 1.2.3.4 → Blocked (level1, spamhaus_drop) 1.2.0.0/16     │   │
+│ └───────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Admin UI Settings:**
+
+| Setting | Control | Default | Restart | Description |
+|---------|---------|---------|---------|-------------|
+| `blocklists.enabled` | Toggle | On | No | Master enable/disable |
+| `blocklists.auto_update` | Toggle | On | No | Auto-update on schedule |
+| `blocklists.action` | Dropdown | `reject` | No | `reject` or `drop` |
+| `blocklists.reject_message` | Text | (uses translated `errors.forbidden`) | No | Custom 403 message (overrides translation) |
+| `blocklists.log_blocked` | Toggle | On | No | Log blocked requests |
+| Sources list | Dynamic list | (see config) | No | Add/remove/enable/disable sources |
+| Total rules | Readonly | - | - | Aggregate rule count |
+| Blocked today | Readonly | - | - | Requests blocked in 24h |
+| `[Update All Now]` | Button | - | - | Trigger immediate update |
+| `[Check IP]` | Button + Text | - | - | Test if IP is blocked |
+
+**Update Behavior:**
+
+1. Download from URL (follow redirects, timeout 60s)
+2. If `.gz` extension or `Content-Encoding: gzip`, decompress
+3. Auto-detect format if `format: auto` (examine first non-comment line)
+4. Parse all entries into `[]netip.Prefix`
+5. Save raw file to `{data_dir}/security/blocklists/{name}.txt`
+6. Build radix tree and swap atomically (no downtime during update)
+7. Update stats (rule_count, last_updated, file_size)
+8. Log result: `blocklist updated: {name} ({rule_count} rules, {duration})`
+
+**Error Handling:**
+
+| Error | Behavior |
+|-------|----------|
+| Download fails | Keep existing list, log error, retry per scheduler config |
+| Parse error (corrupt file) | Keep existing list, log error, set `last_error` |
+| Empty list after parse | Keep existing list, log warning (likely bad URL) |
+| Disk full | Log error, keep in-memory list |
+
+**Audit Events:**
+
+| Event | Description | Logged Data |
+|-------|-------------|-------------|
+| `blocklist.updated` | Blocklist source updated | name, rule_count, duration |
+| `blocklist.update_failed` | Update failed | name, error |
+| `blocklist.source_added` | New source added | name, url, added_by |
+| `blocklist.source_removed` | Source removed | name, removed_by |
+| `blocklist.enabled` | Blocklists enabled/disabled | enabled, changed_by |
+| `blocklist.ip_blocked` | Request blocked by blocklist | ip, path, matched_list, matched_range |
+
+**CLI Commands (via `weather-cli --admin`):**
+
+```bash
+# Update all blocklists now
+weather-cli --admin server blocklist update
+
+# Update specific source
+weather-cli --admin server blocklist update --source level1
+
+# List sources with stats
+weather-cli --admin server blocklist list
+
+# Check if an IP is blocked
+weather-cli --admin server blocklist check 1.2.3.4
+
+# Add a new source
+weather-cli --admin server blocklist add --name mylist --url https://example.com/list.gz
+
+# Remove a source
+weather-cli --admin server blocklist remove --name mylist
+
+# Show aggregate stats
+weather-cli --admin server blocklist stats
+```
 
 ### Control Type Guidelines
 
@@ -28359,10 +28869,10 @@ Email templates allow Server Admins to customize ALL notification messages, incl
 | 1 | `127.0.0.1` | Loopback (same machine) | 25, 465, 587 |
 | 2 | `172.17.0.1` | Docker bridge gateway | 25, 465, 587 |
 | 3 | `{gateway_ip}` | Default gateway IP | 25, 465, 587 |
-| 4 | `{fqdn}` | Detected FQDN (from GetFQDN) | 25, 465, 587 |
+| 4 | `wthr.top` | Detected FQDN (from GetFQDN) | 25, 465, 587 |
 | 5 | `{global_ipv4}` | Global IPv4 (if available) | 25, 465, 587 |
-| 6 | `mail.{fqdn}` | Common mail subdomain | 25, 465, 587 |
-| 7 | `smtp.{fqdn}` | Common SMTP subdomain | 25, 465, 587 |
+| 6 | `mail.wthr.top` | Common mail subdomain | 25, 465, 587 |
+| 7 | `smtp.wthr.top` | Common SMTP subdomain | 25, 465, 587 |
 
 **Auto-Detection Process:**
 1. Try each host/port combination in priority order
@@ -28397,7 +28907,7 @@ server:
       from:
         # Default: app title
         name: ""
-        # Default: no-reply@{fqdn}
+        # Default: no-reply@wthr.top
         email: ""
 ```
 
@@ -28413,7 +28923,7 @@ server:
 | `SMTP_PASSWORD` | `smtp.password` | (none) |
 | `SMTP_TLS` | `smtp.tls` | auto |
 | `SMTP_FROM_NAME` | `from.name` | (app title) |
-| `SMTP_FROM_EMAIL` | `from.email` | no-reply@{fqdn} |
+| `SMTP_FROM_EMAIL` | `from.email` | no-reply@wthr.top |
 
 ### SMTP Requirement
 
@@ -28508,7 +29018,7 @@ server:
 
 **Default Sender:**
 - From Name: `{app_name}` (defaults to binary name if not set)
-- From Address: `no-reply@{fqdn}` (defaults to `no-reply@localhost` if FQDN not set)
+- From Address: `no-reply@wthr.top` (defaults to `no-reply@localhost` if FQDN not set)
 - Reply-To: `{admin_email}` (if set, otherwise omitted)
 
 **Default Expiry Times:**
@@ -28573,7 +29083,7 @@ Time: {timestamp}
 |----------|-------------|
 | `{app_name}` | Application name/title |
 | `{app_url}` | Application URL (full FQDN, e.g., `https://api.example.com`) |
-| `{fqdn}` | Server FQDN only (e.g., `api.example.com`) |
+| `wthr.top` | Server FQDN only (e.g., `api.example.com`) |
 | `{onion_url}` | Tor .onion full URL (e.g., `http://abc...xyz.onion`) |
 | `{onion_address}` | Tor .onion address only (e.g., `abc...xyz.onion`) |
 | `{i2p_url}` | I2P full URL (e.g., `http://abc...xyz.b32.i2p`) |
@@ -28614,7 +29124,7 @@ Subject: Welcome to {app_name}
 WELCOME TO {APP_NAME}
 
 This email was sent to: {recipient_email}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 
 Hello {recipient_username},
 
@@ -28651,7 +29161,7 @@ Subject: Welcome to {app_name} - Admin Setup Complete
 ADMIN SETUP COMPLETE
 
 This email was sent to: {recipient_email}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 
 Congratulations! Your {app_name} instance is now configured.
 
@@ -28684,12 +29194,12 @@ Subject: Password Reset Request - {app_name}
 PASSWORD RESET REQUEST
 
 This email was sent to: {recipient_email}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 Requested at: {timestamp}
 Request IP: {ip}
 
 Someone requested a password reset for the account associated with this
-email address on {app_name} ({fqdn}).
+email address on {app_name} (wthr.top).
 
 To reset your password, visit the following link:
 
@@ -28719,11 +29229,11 @@ Subject: Verify Your Email - {app_name}
 EMAIL VERIFICATION
 
 This email was sent to: {recipient_email}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 Sent at: {timestamp}
 
 You (or someone) requested to add this email address to an account on
-{app_name} ({fqdn}).
+{app_name} (wthr.top).
 
 To verify this email address, visit the following link:
 
@@ -28754,7 +29264,7 @@ NEW LOGIN DETECTED
 
 This alert was sent to: {recipient_email}
 Account: {recipient_username}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 
 A new login was detected on your account:
 
@@ -28794,7 +29304,7 @@ SECURITY ALERT
 
 This alert was sent to: {recipient_email}
 Account: {recipient_username}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 Time: {timestamp}
 
 {event}
@@ -28832,7 +29342,7 @@ Subject: Two-Factor Authentication Disabled - {app_name}
 
 This alert was sent to: {recipient_email}
 Account: {recipient_username}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 Time: {timestamp}
 
 Two-factor authentication has been disabled on your account.
@@ -28869,7 +29379,7 @@ PASSWORD CHANGED
 
 This alert was sent to: {recipient_email}
 Account: {recipient_username}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 Time: {timestamp}
 
 The password for your account was successfully changed.
@@ -28908,7 +29418,7 @@ IMPORTANT SECURITY NOTICE
 
 This notice was sent to: {recipient_email}
 Account: {recipient_username}
-From: {app_name} ({fqdn})
+From: {app_name} (wthr.top)
 Date: {timestamp}
 Reference: {breach_id}
 
@@ -29011,7 +29521,7 @@ Subject: [{severity}] Security Breach Detected - {app_name}
 ---
 🚨 SECURITY BREACH DETECTED
 
-Server: {app_name} ({fqdn})
+Server: {app_name} (wthr.top)
 Time: {timestamp}
 Breach ID: {breach_id}
 
@@ -29072,7 +29582,7 @@ Do not reply to this email.
 
 ## Template-Specific Variables
 
-**Note:** Account-related templates (marked ✓ above) also have access to `{recipient_email}`, `{recipient_username}`, and `{fqdn}` from global variables.
+**Note:** Account-related templates (marked ✓ above) also have access to `{recipient_email}`, `{recipient_username}`, and `wthr.top` from global variables.
 
 ### welcome
 
@@ -29156,7 +29666,7 @@ Do not reply to this email.
 ### ssl_expiring / ssl_renewed
 | Variable | Description |
 |----------|-------------|
-| `{fqdn}` | Domain name on certificate |
+| `wthr.top` | Domain name on certificate |
 | `{expires_in}` | Days until expiration |
 | `{expiry_date}` | Expiration date |
 | `{valid_until}` | New validity date (renewed only) |
@@ -29236,11 +29746,11 @@ Do not reply to this email.
 |----------|--------------|
 | `{app_name}` | Current app name from config |
 | `{app_url}` | Current app URL |
-| `{fqdn}` | Current FQDN |
+| `wthr.top` | Current FQDN |
 | `{recipient_email}` | `user@example.com` |
 | `{recipient_username}` | `sampleuser` |
-| `{reset_link}` | `https://{fqdn}/auth/reset/sample123...` |
-| `{verify_link}` | `https://{fqdn}/auth/verify/sample123...` |
+| `{reset_link}` | `https://wthr.top/auth/reset/sample123...` |
+| `{verify_link}` | `https://wthr.top/auth/verify/sample123...` |
 | `{expires}` | `24 hours` |
 | `{ip}` | `192.168.1.100` |
 | `{timestamp}` | Current timestamp |
@@ -29260,7 +29770,7 @@ Do not reply to this email.
 
 | Check | Error Message |
 |-------|---------------|
-| Unknown variable | `Unknown variable: {foo}. Did you mean {fqdn}?` |
+| Unknown variable | `Unknown variable: {foo}. Did you mean wthr.top?` |
 | Missing required variable | `Account emails must include {recipient_email}` |
 | Empty subject | `Subject cannot be empty` |
 | Empty body | `Body cannot be empty` |
@@ -29622,7 +30132,7 @@ server:
       from:
         # Default: app title
         name: ""
-        # Default: no-reply@{fqdn}
+        # Default: no-reply@wthr.top
         email: ""
 
       # Per-event email settings (override defaults)
@@ -29726,18 +30236,18 @@ Every project MUST include these scheduled tasks:
 
 | Task | Default Schedule | Purpose | Skippable |
 |------|-----------------|---------|-----------|
-| `ssl.renewal` | Daily at 03:00 | Renew `{config_dir}/ssl/letsencrypt/{fqdn}/` certs 7 days before expiry | No |
-| `geoip.update` | Weekly (Sunday 03:00) | Download/update MaxMind GeoLite2 databases | Yes |
-| `blocklist.update` | Daily at 04:00 | Download/update IP/domain blocklists | Yes |
-| `cve.update` | Daily at 05:00 | Download/update CVE/security databases | Yes |
-| `session.cleanup` | Every 15 minutes | Remove expired sessions | No |
-| `token.cleanup` | Every 15 minutes | Remove expired tokens | No |
-| `log.rotation` | Daily at 00:00 | Rotate and compress old logs | No |
+| `ssl_renewal` | Daily at 03:00 | Renew `{config_dir}/ssl/letsencrypt/wthr.top/` certs 7 days before expiry | No |
+| `geoip_update` | Weekly (Sunday 03:00) | Download/update ip-location-db GeoIP databases | Yes |
+| `blocklist_update` | Daily at 04:00 | Download/update IP/domain blocklists | Yes |
+| `cve_update` | Daily at 05:00 | Download/update CVE/security databases | Yes |
+| `session_cleanup` | Every 15 minutes | Remove expired sessions | No |
+| `token_cleanup` | Every 15 minutes | Remove expired tokens | No |
+| `log_rotation` | Daily at 00:00 | Rotate and compress old logs | No |
 | `backup_daily` | Daily at 02:00 | Full backup + daily incremental (default: 2 files) | Yes |
 | `backup_hourly` | Hourly | Hourly incremental (disabled by default) | Yes |
-| `healthcheck.self` | Every 5 minutes | Self-health verification | No |
-| `tor.health` | Every 10 minutes | Check Tor connectivity, restart if needed | No (when Tor installed) |
-| `cluster.heartbeat` | Every 30 seconds | Cluster node heartbeat (cluster mode only) | No |
+| `healthcheck_self` | Every 5 minutes | Self-health verification | No |
+| `tor_health` | Every 10 minutes | Check Tor connectivity, restart if needed | No (when Tor installed) |
+| `cluster_heartbeat` | Every 30 seconds | Cluster node heartbeat (cluster mode only) | No |
 
 ### Task Configuration
 
@@ -29898,16 +30408,16 @@ In cluster mode, tasks are distributed to prevent duplicate execution:
 | **Local Tasks** | Run on EVERY node |
 
 **Global Tasks (run once per cluster):**
-- `ssl.renewal`
-- `geoip.update`
-- `blocklist.update`
-- `backup`
+- `ssl_renewal`
+- `geoip_update`
+- `blocklist_update`
+- `backup_daily`
 
 **Local Tasks (run on each node):**
-- `session.cleanup`
-- `token.cleanup`
-- `healthcheck.self`
-- `cluster.heartbeat`
+- `session_cleanup`
+- `token_cleanup`
+- `healthcheck_self`
+- `cluster_heartbeat`
 
 ### Task Locking (Cluster Mode)
 
@@ -30146,13 +30656,19 @@ server:
     enabled: true
 
     # Directory for downloaded MMDB files
-    dir: "{config_dir}/security/geoip"
+    dir: "{data_dir}/security/geoip"
 
     # Update schedule (handled by scheduler, see PART 19)
     # Default: weekly on Sunday 03:00
 
-    # Block countries by ISO 3166-1 alpha-2 code
+    # Country blocking - ISO 3166-1 alpha-2 codes (e.g., CN, RU, KP)
+    # Two modes (mutually exclusive - set ONE or NEITHER, not both):
+    #   deny_countries:  block listed countries, allow all others
+    #   allow_countries: allow ONLY listed countries, block all others
+    # If both are set, allow_countries takes precedence (allowlist mode)
+    # Allowlisted IPs (server.security.allowlist) always bypass country blocking
     deny_countries: []
+    allow_countries: []
 
     # Which databases to download and use
     # All use MMDB format, IPv4 and IPv6 support
@@ -30192,13 +30708,31 @@ All databases from [sapics/ip-location-db](https://github.com/sapics/ip-location
 | Element | Type | Description |
 |---------|------|-------------|
 | Enable GeoIP | Toggle | Turn GeoIP on/off |
-| Deny countries | Tag input | ISO 3166-1 alpha-2 codes to block |
+| Country mode | Dropdown | `none`, `deny` (blocklist), `allow` (allowlist-only) |
+| Deny countries | Tag input | ISO 3166-1 alpha-2 codes to block (when mode=deny) |
+| Allow countries | Tag input | ISO 3166-1 alpha-2 codes to allow exclusively (when mode=allow) |
 | ASN database | Toggle | Enable ASN lookups |
 | Country database | Toggle | Enable country lookups |
 | City database | Toggle | Enable city lookups |
 | WHOIS database | Toggle | Enable WHOIS lookups |
 | Last update | Read-only | When databases were last updated |
 | Update now | Button | Force immediate update |
+
+**Country Blocking Behavior:**
+
+| Configuration | Behavior |
+|---------------|----------|
+| Both empty (default) | No country blocking — all countries allowed |
+| `deny_countries: [CN, RU]` | Block CN and RU, allow all others |
+| `allow_countries: [US, CA, GB]` | Allow ONLY US, CA, GB — block all others |
+| Both set | `allow_countries` wins (allowlist mode) |
+
+**Notes:**
+- Uses ISO 3166-1 alpha-2 country codes (2 letters, uppercase)
+- Allowlisted IPs (`server.security.allowlist`) always bypass country blocking
+- Requires `country.mmdb` database — if missing, country blocking is skipped with a warning
+- Tor exit nodes: blocked/allowed based on exit node country, not user origin
+- Private/internal IPs (RFC 1918) are never country-blocked
 
 ---
 
@@ -31401,7 +31935,7 @@ func MetricsHandler(token string) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         auth := r.Header.Get("Authorization")
         if auth != "Bearer "+token {
-            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            http.Error(w, t(r, "errors.unauthorized"), http.StatusUnauthorized)
             return
         }
         handler.ServeHTTP(w, r)
@@ -32177,14 +32711,14 @@ weather --maintenance restore backup_2025-01-15.tar.gz
 
 ```bash
 # Encrypted backup - password required
-POST /api/v1/admin/server/restore
+POST /api/v1/admin/server/backup/restore
 {
   "backup_file": "backup_2025-01-15.tar.gz.enc",
   "password": "backup-encryption-password"
 }
 
 # Unencrypted backup - no password
-POST /api/v1/admin/server/restore
+POST /api/v1/admin/server/backup/restore
 {
   "backup_file": "backup_2025-01-15.tar.gz"
 }
@@ -32224,7 +32758,7 @@ POST /api/v1/admin/server/restore
 ├─────────────────────────────────────────────────────────────┤
 │  Setup Token: a1b2c3d4e5f67890abcdef1234567890              │
 │                                                             │
-│  Go to {proto}://{fqdn}/admin and enter this token   │
+│  Go to {proto}://wthr.top/admin and enter this token   │
 │  to verify you are the server administrator.                │
 │                                                             │
 │  Your existing password and settings will be preserved.     │
@@ -32313,7 +32847,7 @@ weather --maintenance setup
 # │  Setup Token: a1b2c3d4e5f67890abcdef1234567890              │
 # │                                                             │
 # │  1. Start the service: weather --service start        │
-# │  2. Go to: {proto}://{fqdn}/admin                    │
+# │  2. Go to: {proto}://wthr.top/admin                    │
 # │  3. Enter the setup token above                             │
 # │  4. Create new admin account via setup wizard               │
 # │                                                             │
@@ -33269,6 +33803,14 @@ Commands:
     storage             Storage usage
     performance         Performance metrics
 
+  blocklist             IP/domain blocklist management (--admin server blocklist --help)
+    list                List all blocklist sources with stats
+    update [--source NAME]  Update all or specific blocklist
+    check <IP>          Check if IP is in any blocklist
+    add                 Add new blocklist source
+    remove <NAME>       Remove blocklist source
+    stats               Show aggregate blocklist statistics
+
 Global Flags:
   --format {table|json|yaml}  Output format (default: table)
 
@@ -33278,6 +33820,9 @@ Examples:
   weather-cli --admin server config set registration.mode private
   weather-cli --admin server admin list
   weather-cli --admin server stats overview
+  weather-cli --admin server blocklist list
+  weather-cli --admin server blocklist update
+  weather-cli --admin server blocklist check 1.2.3.4
 ```
 
 ## CLI Admin Server Config Help Output
@@ -34773,14 +35318,15 @@ docker/
 /config/
 └── weather/                    # App config directory
     ├── server.yml                    # Main config file
-    ├── security/                     # Security databases
-    │   ├── geoip.mmdb               # GeoIP database
-    │   └── blocklists/              # IP/domain blocklists
+    ├── ssl/                          # TLS certs and keys
     └── tor/                          # Tor config (binary owns Tor)
         └── torrc                     # Tor configuration
 
 /data/
 ├── weather/                    # App data directory
+│   ├── security/                     # Security databases (downloaded)
+│   │   ├── geoip/                   # GeoIP MMDB files
+│   │   └── blocklists/              # IP/domain blocklists
 │   ├── uploads/                      # User uploads
 │   ├── cache/                        # App cache
 │   └── tor/                          # Tor data (binary owns Tor)
@@ -34805,7 +35351,7 @@ docker/
 
 | Path | Purpose |
 |------|---------|
-| `/config/weather/` | App config (server.yml, security/, tor/) |
+| `/config/weather/` | App config (server.yml, ssl/, tor/) |
 | `/data/weather/` | App data (uploads, cache, tor/) |
 | `/data/db/sqlite/` | SQLite databases (server.db, users.db) |
 | `/data/db/postgres/` | PostgreSQL data directory |
@@ -34869,9 +35415,9 @@ All Dockerfiles MUST include these labels:
 | `org.opencontainers.image.version` | `${VERSION}` (ARG) |
 | `org.opencontainers.image.schema-version` | `${VERSION}` (ARG) |
 | `org.opencontainers.image.revision` | `${COMMIT_ID}` (ARG) |
-| `org.opencontainers.image.url` | `{PLATFORM_REPO_URL}` |
-| `org.opencontainers.image.source` | `{PLATFORM_REPO_URL}` |
-| `org.opencontainers.image.documentation` | `{PLATFORM_REPO_URL}` |
+| `org.opencontainers.image.url` | `https://github.com/apimgr/weather` |
+| `org.opencontainers.image.source` | `https://github.com/apimgr/weather` |
+| `org.opencontainers.image.documentation` | `https://github.com/apimgr/weather` |
 | `org.opencontainers.image.vcs-type` | `Git` |
 | `com.github.containers.toolbox` | `false` |
 
@@ -34936,7 +35482,7 @@ RUN go mod download
 # Copy source and build
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build \
-    -ldflags "-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'" \
+    -ldflags "-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=$https://wthr.top'" \
     -o /build/binary/weather ./src
 
 # =============================================================================
@@ -34957,9 +35503,9 @@ LABEL maintainer="{maintainer_name} <{maintainer_email}>" \
       org.opencontainers.image.title="weather" \
       org.opencontainers.image.base.name="weather" \
       org.opencontainers.image.description="weather - standard image (alpine)" \
-      org.opencontainers.image.url="{PLATFORM_REPO_URL}" \
-      org.opencontainers.image.source="{PLATFORM_REPO_URL}" \
-      org.opencontainers.image.documentation="{PLATFORM_REPO_URL}" \
+      org.opencontainers.image.url="https://github.com/apimgr/weather" \
+      org.opencontainers.image.source="https://github.com/apimgr/weather" \
+      org.opencontainers.image.documentation="https://github.com/apimgr/weather" \
       org.opencontainers.image.vcs-type="Git" \
       com.github.containers.toolbox="false"
 
@@ -35489,7 +36035,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # =============================================================================
 FROM debian:latest
 
-LABEL org.opencontainers.image.source="{PLATFORM_REPO_URL}"
+LABEL org.opencontainers.image.source="https://github.com/apimgr/weather"
 LABEL org.opencontainers.image.description="weather - all-in-one (debian + postgresql + valkey + tor)"
 LABEL org.opencontainers.image.licenses="MIT"
 
@@ -35815,10 +36361,11 @@ $TEMP_DIR/
 | Container Path | Contents |
 |----------------|----------|
 | `/config/weather/` | Binary's {config_dir} - server.yml, etc. |
-| `/config/weather/security/` | TLS certs, keys, security DBs |
+| `/config/weather/ssl/` | TLS certs and keys |
 | `/config/weather/tor/` | Tor config (torrc) - binary owns Tor |
 | `/config/{servicename}/` | External service configs (valkey, nginx, etc.) |
 | `/data/weather/` | Binary's {data_dir} |
+| `/data/weather/security/` | Security DBs (geoip, blocklists, cve, trivy) |
 | `/data/weather/tor/` | Tor data (hidden service keys) - binary owns Tor |
 | `/data/db/{dbtype}/` | Database data (postgres, valkey, sqlite, etc.) |
 | `/data/log/weather/` | App logs (access.log, error.log, tor.log) |
@@ -36137,7 +36684,7 @@ networks:
 |---------|-------|
 | Internal port | **80** (always) |
 | Config dir | `/config/weather/` (binary's {config_dir}) |
-| Security dir | `/config/weather/security/` |
+| Security dir | `/data/weather/security/` |
 | Tor config dir | `/config/weather/tor/` (binary owns Tor) |
 | Data dir | `/data/weather/` (binary's {data_dir}) |
 | Tor data dir | `/data/weather/tor/` (binary owns Tor) |
@@ -37820,7 +38367,7 @@ stages:
       else
         export OFFICIALSITE="${OFFICIALSITE:-}"
       fi
-    - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'"
+    - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=$https://wthr.top'"
 
 # =============================================================================
 # RELEASE BUILDS (Tag Push: v* or semver)
@@ -38037,7 +38584,7 @@ build:beta:
     - export VERSION="$(date +%Y%m%d%H%M%S)-beta"
     - export COMMIT_ID="${CI_COMMIT_SHORT_SHA}"
     - export BUILD_DATE="$(date +"%a %b %d, %Y at %H:%M:%S %Z")"
-    - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'"
+    - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=$https://wthr.top'"
   script:
     # Build all 8 platforms
     - GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-amd64 ./src
@@ -38085,7 +38632,7 @@ build:daily:
     - export VERSION="$(date +%Y%m%d%H%M%S)"
     - export COMMIT_ID="${CI_COMMIT_SHORT_SHA}"
     - export BUILD_DATE="$(date +"%a %b %d, %Y at %H:%M:%S %Z")"
-    - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=${OFFICIALSITE}'"
+    - export LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.CommitID=${COMMIT_ID}' -X 'main.BuildDate=${BUILD_DATE}' -X 'main.OfficialSite=$https://wthr.top'"
   script:
     # Build all 8 platforms
     - GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $WEATHER-linux-amd64 ./src
@@ -41047,7 +41594,7 @@ site_description: "{Project description}"
 site_author: apimgr
 
 repo_name: apimgr/weather
-repo_url: {PLATFORM_REPO_URL}
+repo_url: https://github.com/apimgr/weather
 edit_uri: edit/main/docs/  # Adjust path format for GitLab/Gitea if needed
 
 theme:
@@ -41155,7 +41702,7 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/git-alt  # Or github/gitlab/gitea as appropriate
-      link: {PLATFORM_REPO_URL}
+      link: https://github.com/apimgr/weather
   generator: false
 ```
 
@@ -41501,14 +42048,14 @@ docker run -p 64580:80 {PLATFORM_CONTAINER_REGISTRY}/apimgr/weather:latest
 
 ## Links
 
-- [Repository]({PLATFORM_REPO_URL})
-- [Live Demo](https://weather.apimgr.us) (if applicable)
+- [Repository](https://github.com/apimgr/weather)
+- [Live Demo](https://wthr.top) (if applicable)
 - [API Documentation](/openapi) (Swagger UI)
 - [GraphQL Playground](/graphql)
 
 ## License
 
-MIT - See [LICENSE.md]({PLATFORM_REPO_URL}/blob/main/LICENSE.md)
+MIT - See [LICENSE.md](https://github.com/apimgr/weather/blob/main/LICENSE.md)
 ```
 
 ### docs/installation.md
@@ -41528,7 +42075,7 @@ docker run -d \
 
 ## Binary
 
-Download from [releases]({PLATFORM_REPO_URL}/releases):
+Download from [releases](https://github.com/apimgr/weather/releases):
 
 ```bash
 # Linux AMD64
@@ -41657,7 +42204,7 @@ Programmatic access via `/api/v1/admin/` with bearer token authentication.
 ## Build
 
 ```bash
-git clone {PLATFORM_REPO_URL}
+git clone https://github.com/apimgr/weather
 cd weather
 make build
 ```
@@ -41724,7 +42271,9 @@ make test
 | **Swagger/OpenAPI** | Endpoint descriptions, parameter descriptions, schema descriptions, error examples |
 | **GraphQL** | Type descriptions, field descriptions, query/mutation descriptions |
 | **Email Templates** | Subject lines, body text, headings, CTAs, regulatory/compliance notices |
-| **CLI Output** | Help text, status messages, error messages, console banners |
+| **Server CLI Output** | Help text, status messages, error messages, startup banners |
+| **Client CLI Output** | Help text, command descriptions, error messages, TUI labels, admin output |
+| **Agent Output** | Help text, status messages, error messages, startup banners, registration prompts |
 | **Health Page** | Status labels, section headings, field labels |
 | **Cookie Consent** | Banner text, category descriptions, button labels |
 | **Privacy/Terms** | Full legal page content |
@@ -41740,9 +42289,12 @@ make test
 | **Fallback chain** | `?lang= query param (sets cookie) → lang cookie → Accept-Language header → default (en)` |
 | **100% coverage** | Every user-facing string uses a translation key - no hardcoded text |
 | **Missing key fallback** | If a key is missing in the active language, fall back to English (`en`) |
+| **Unsupported language fallback** | If `--lang` or `Accept-Language` specifies an unsupported language, silently fall back to English (`en`) — never error or crash |
 | **Key validation** | Build-time check ensures all languages have the same keys as `en.json` |
 
 ### Supported Languages
+
+**All languages below are supported by ALL binaries (server, CLI, agent). No partial support.**
 
 | Code | Language | Direction | Plural Categories |
 |------|----------|-----------|-------------------|
@@ -41837,9 +42389,35 @@ func LanguageMiddleware(next http.Handler) http.Handler {
 
 ### Translation File Format
 
-**Location:** `locales/{lang}.json`
+**Location:** `src/common/i18n/locales/{lang}.json` (embedded in all binaries via `go:embed`)
 
 **Every key in `en.json` MUST exist in all other language files.** Build-time validation enforces this.
+
+### Translation File Location & Embedding
+
+**Location:** `src/common/i18n/locales/{lang}.json`
+
+**ALL binaries (server, CLI, agent) embed the SAME translation files.** Translations are a shared `src/common/i18n` package — not duplicated, not subsetted.
+
+```go
+// src/common/i18n/i18n.go
+package i18n
+
+import "embed"
+
+// Embeds src/common/i18n/locales/*.json (path is relative to this package)
+//go:embed locales/*.json
+var localeFS embed.FS
+```
+
+| Rule | Description |
+|------|-------------|
+| **Single source of truth** | `src/common/i18n/locales/` — one set of translation files |
+| **All binaries embed all locales** | Server, CLI, and agent all import `common/i18n` and get the same translations |
+| **Same supported languages** | If the server supports `es`, the CLI and agent also support `es` — no partial support |
+| **Same translation keys** | All binaries use the same key namespace — CLI help text, agent status, server errors, admin UI all in one file per language |
+| **No external locale files at runtime** | Translations are compiled into the binary via `go:embed` — no filesystem dependency |
+| **WebUI JavaScript** | Frontend fetches `/locales/{lang}.json` served by the server from the same embedded files |
 
 ```json
 {
@@ -42135,6 +42713,8 @@ func LanguageMiddleware(next http.Handler) http.Handler {
     "2fa_required": "Autenticación de dos factores requerida",
     "2fa_invalid": "Código 2FA inválido",
     "forbidden": "Permiso denegado",
+    "blocked_by_blocklist": "Acceso denegado",
+    "blocked_by_country": "Acceso no disponible en su región",
     "account_locked": "Cuenta bloqueada",
     "method_not_allowed": "Método no permitido",
     "conflict": "El recurso ya existe",
@@ -42194,6 +42774,7 @@ func LanguageMiddleware(next http.Handler) http.Handler {
       "api_tokens": "Tokens de API",
       "rate_limiting": "Límite de velocidad",
       "firewall": "Cortafuegos",
+      "allowlist": "Lista de permitidos",
       "network": "Red",
       "tor": "Tor",
       "geoip": "GeoIP",
@@ -42297,6 +42878,124 @@ func LanguageMiddleware(next http.Handler) http.Handler {
       "require_special": "Requerir carácter especial",
       "require_mfa": "Requerir MFA",
       "allowed_mfa_methods": "Métodos MFA permitidos"
+    },
+
+    "allowlist": {
+      "title": "Lista de permitidos (IPs de confianza)",
+      "description": "Las IPs en la lista de permitidos evitan las listas de bloqueo, los límites de velocidad y el bloqueo por país. La autenticación SIEMPRE es requerida.",
+      "current_entries": "Entradas actuales",
+      "add_entry": "Agregar entrada",
+      "cidr": "IP/CIDR",
+      "cidr_placeholder": "192.168.1.0/24 o 2001:db8::1",
+      "description_label": "Descripción",
+      "description_placeholder": "Ej: Red de oficina",
+      "source": "Origen",
+      "source_config": "config",
+      "source_admin": "admin",
+      "added_at": "Agregado el",
+      "remove": "Eliminar",
+      "add": "Agregar",
+      "check_ip": "Verificar IP",
+      "check": "Verificar",
+      "check_result_allowed": "{ip} → Permitido ({cidr} \"{description}\")",
+      "check_result_not_allowed": "{ip} → No está en la lista de permitidos",
+      "bypasses": "Qué evita la lista de permitidos",
+      "does_not_bypass": "Qué NO evita la lista de permitidos",
+      "bypass_blocklists": "Listas de bloqueo de IP",
+      "bypass_ratelimit": "Límites de velocidad",
+      "bypass_geoip": "Bloqueo por país (GeoIP)",
+      "bypass_autoblock": "Bloqueo automático de IP",
+      "bypass_lockout": "Bloqueo de cuenta",
+      "no_bypass_auth": "Autenticación de administrador",
+      "no_bypass_tokens": "Validación de tokens de API",
+      "no_bypass_csrf": "Protección CSRF",
+      "no_bypass_path": "Seguridad de rutas",
+      "no_bypass_ssl": "SSL/TLS",
+      "confirm_remove": "¿Está seguro de que desea eliminar {cidr} de la lista de permitidos?",
+      "entry_added": "Entrada agregada a la lista de permitidos",
+      "entry_removed": "Entrada eliminada de la lista de permitidos",
+      "invalid_cidr": "Dirección IP o CIDR no válida",
+      "broad_range_warning": "Este rango es muy amplio ({cidr}). ¿Continuar?"
+    },
+
+    "blocklists_page": {
+      "title": "Listas de bloqueo",
+      "description": "Gestión de listas de bloqueo de IP/dominio estilo Transmission. Descargue, analice y aplique listas de bloqueo externas.",
+      "enabled": "Listas de bloqueo habilitadas",
+      "auto_update": "Actualización automática",
+      "action": "Acción",
+      "action_reject": "Rechazar (403 Prohibido)",
+      "action_drop": "Descartar (cerrar conexión)",
+      "reject_message": "Mensaje de rechazo",
+      "log_blocked": "Registrar solicitudes bloqueadas",
+      "total_rules": "Total de reglas",
+      "blocked_today": "Bloqueados hoy",
+      "last_updated": "Última actualización",
+      "update_all_now": "Actualizar todo ahora",
+      "check_ip": "Verificar IP...",
+      "sources": "Fuentes",
+      "add_source": "Agregar fuente",
+      "source_name": "Nombre",
+      "source_url": "URL",
+      "source_format": "Formato",
+      "format_auto": "Automático",
+      "format_p2p": "P2P (PeerGuardian)",
+      "format_cidr": "CIDR",
+      "format_dat": "DAT (eMule)",
+      "format_plain": "IP simple",
+      "source_enabled": "Habilitada",
+      "source_rules": "{count} reglas",
+      "source_size": "Tamaño: {size}",
+      "source_updated": "Actualizado {time}",
+      "source_never_updated": "Nunca actualizado",
+      "source_error": "Error: {error}",
+      "update": "Actualizar",
+      "remove": "Eliminar",
+      "add": "Agregar",
+      "check": "Verificar",
+      "check_result_blocked": "{ip} → Bloqueado ({lists}) {range}",
+      "check_result_not_blocked": "{ip} → No bloqueado",
+      "confirm_remove_source": "¿Está seguro de que desea eliminar la fuente '{name}'?",
+      "source_added": "Fuente de lista de bloqueo agregada",
+      "source_removed": "Fuente de lista de bloqueo eliminada",
+      "update_started": "Actualización de lista de bloqueo iniciada",
+      "update_completed": "Lista de bloqueo actualizada: {name} ({count} reglas, {duration})",
+      "update_failed": "Error al actualizar la lista de bloqueo: {error}",
+      "supported_formats": "Formatos soportados: P2P, CIDR, DAT, IP simple, .gz comprimido"
+    },
+
+    "geoip_page": {
+      "title": "GeoIP",
+      "description": "Bloqueo por país y bases de datos de geolocalización IP.",
+      "enabled": "GeoIP habilitado",
+      "auto_update": "Actualización automática",
+      "update_schedule": "Horario de actualización",
+      "country_mode": "Modo de país",
+      "country_mode_none": "Ninguno (sin bloqueo por país)",
+      "country_mode_deny": "Denegar (bloquear países listados)",
+      "country_mode_allow": "Permitir (permitir solo países listados)",
+      "deny_countries": "Países a denegar",
+      "deny_countries_placeholder": "Ej: CN, RU, KP",
+      "allow_countries": "Países a permitir",
+      "allow_countries_placeholder": "Ej: US, CA, GB",
+      "country_code_help": "Códigos ISO 3166-1 alfa-2 (2 letras, mayúsculas)",
+      "deny_description": "Bloquear estos países, permitir todos los demás",
+      "allow_description": "Permitir SOLO estos países, bloquear todos los demás",
+      "both_set_warning": "Si ambos están configurados, la lista de permitidos tiene prioridad",
+      "allowlisted_bypass": "Las IPs en la lista de permitidos siempre evitan el bloqueo por país",
+      "databases": "Bases de datos",
+      "database_asn": "ASN (Número de Sistema Autónomo)",
+      "database_country": "País",
+      "database_city": "Ciudad",
+      "database_whois": "WHOIS",
+      "database_status": "Estado de la base de datos",
+      "database_last_updated": "Última actualización: {time}",
+      "database_size": "Tamaño: {size}",
+      "database_missing": "No descargada",
+      "update_now": "Actualizar ahora",
+      "update_started": "Actualización de GeoIP iniciada",
+      "update_completed": "Bases de datos GeoIP actualizadas",
+      "update_failed": "Error al actualizar GeoIP: {error}"
     },
 
     "ssl": {
@@ -42506,6 +43205,13 @@ func LanguageMiddleware(next http.Handler) http.Handler {
     "2fa_disabled": "2FA deshabilitado",
     "api_token_regenerated": "Token de API regenerado",
     "ssl_renewed": "Certificado SSL renovado",
+    "blocklist_updated": "Lista de bloqueo actualizada: {name} ({count} reglas)",
+    "blocklist_update_failed": "Error al actualizar lista de bloqueo: {name}",
+    "geoip_updated": "Bases de datos GeoIP actualizadas",
+    "geoip_update_failed": "Error al actualizar GeoIP",
+    "ip_blocked": "IP bloqueada: {ip} ({reason})",
+    "ip_allowlisted": "IP agregada a lista de permitidos: {cidr}",
+    "country_blocked": "Solicitud bloqueada por país: {ip} ({country})",
     "preferences": {
       "webui": "WebUI",
       "email": "Correo electrónico",
@@ -42560,7 +43266,7 @@ func LanguageMiddleware(next http.Handler) http.Handler {
       "what_you_should_do": "QUÉ DEBE HACER",
       "contact_information": "INFORMACIÓN DE CONTACTO",
       "sent_to": "Este correo fue enviado a: {recipient_email}",
-      "from": "De: {app_name} ({fqdn})",
+      "from": "De: {app_name} (wthr.top)",
       "ignore_if_not_requested": "Si no solicitó esto, ignore este mensaje.",
       "no_action_required": "No se requiere ninguna acción de su parte.",
       "password_not_changed": "Su contraseña no será cambiada a menos que haga clic en el enlace anterior.",
@@ -42719,7 +43425,7 @@ func LanguageMiddleware(next http.Handler) http.Handler {
     "daemon_started": "Demonio iniciado con PID {pid}",
     "already_running": "Ya en ejecución (pid {pid})",
     "running_in_mode": "Ejecutando en modo: {app_mode}",
-    "http_address": "HTTP: {proto}://{fqdn}:{port}",
+    "http_address": "HTTP: {proto}://wthr.top:{port}",
     "listening_on": "Escuchando en {proto}://{address}:{port}",
     "server_started_on": "Servidor iniciado en {startup_datetime}",
     "server_started_ok": "Servidor iniciado exitosamente",
@@ -42734,7 +43440,53 @@ func LanguageMiddleware(next http.Handler) http.Handler {
     "error_not_writable": "El directorio {path} no es escribible: {error}",
     "error_reserved_path": "'{path}' es una ruta reservada",
     "error_route_conflict": "'{path}' entra en conflicto con la ruta existente: {route}",
-    "error_corrupt_pid": "Archivo PID corrupto"
+    "error_corrupt_pid": "Archivo PID corrupto",
+    "error_unsupported_shell": "Shell no soportado: {shell}",
+    "requires_privileges": "{action} requiere privilegios elevados.",
+    "escalate_prompt": "¿Escalar? [S/n]: ",
+    "running_in_mode_label": "Modo"
+  },
+
+  "agent": {
+    "description": "weather-agent 1.0.0 - Agente para weather",
+    "usage": "Uso:",
+    "commands": "Comandos:",
+    "flags": "Opciones:",
+    "status": "Estado del agente",
+    "test_connection": "Probar conexión al servidor",
+    "register": "Registro interactivo",
+    "show_help": "Mostrar ayuda",
+    "show_version": "Mostrar versión",
+    "config_dir": "Directorio de configuración",
+    "data_dir": "Directorio de datos",
+    "log_dir": "Directorio de registros",
+    "server_url": "URL del servidor al que conectarse",
+    "auth_token": "Token de autenticación",
+    "app_mode": "Modo de aplicación",
+    "debug_mode": "Habilitar modo de depuración",
+    "color_output": "Salida de color (predeterminado: auto)",
+    "lang_output": "Idioma de salida (predeterminado: auto)",
+    "show_health": "Mostrar salud del agente",
+    "service_mgmt": "Gestión del servicio (install|uninstall|start|stop|restart)",
+    "self_update": "Verificar/realizar actualización",
+    "banner_mode": "Modo: {mode}",
+    "banner_server": "Servidor: {url}",
+    "banner_hostname": "Nombre de host: {hostname}",
+    "banner_tags": "Etiquetas: {tags}",
+    "banner_connected": "Conectado al servidor",
+    "banner_disconnected": "Desconectado del servidor",
+    "banner_reconnecting": "Reconectando...",
+    "register_prompt": "Ejecute este comando en la máquina de destino:",
+    "register_success": "Agente registrado exitosamente",
+    "register_failed": "Error al registrar agente: {error}",
+    "test_success": "Conexión al servidor exitosa",
+    "test_failed": "Error al conectar al servidor: {error}",
+    "token_expired": "Token de agente expirado, se requiere nuevo registro",
+    "collection_started": "Recolección de datos iniciada (intervalo: {interval})",
+    "collection_stopped": "Recolección de datos detenida",
+    "report_sent": "Informe enviado al servidor ({items} elementos)",
+    "report_failed": "Error al enviar informe: {error}, reintentando en {delay}",
+    "offline_buffering": "Servidor no disponible, almacenando en búfer ({count}/{max})"
   },
 
   "version": {
@@ -42772,6 +43524,10 @@ func LanguageMiddleware(next http.Handler) http.Handler {
 | Rule | Description |
 |------|-------------|
 | **No hardcoded strings** | Every user-facing string MUST use `t(key)` or `{{t .Lang key}}` |
+| **HTTP errors** | All `http.Error()` responses MUST use `t(r, "errors.*")` — never hardcoded English |
+| **API responses** | All error/status messages in JSON responses MUST use translation keys |
+| **Config defaults** | Config values shown to users (e.g., `reject_message`) MUST fall back to translated keys |
+| **Wireframes** | ASCII wireframes in this spec show English for documentation only — actual UI renders via `t()` |
 | **Key naming** | Use dot-separated lowercase: `admin.dashboard.title` |
 | **Interpolation** | Use `{variable}` syntax: `"Hello, {name}"` |
 | **Plurals** | Nested under key with `zero`, `one`, `two`, `few`, `many`, `other` |
@@ -42783,7 +43539,7 @@ func LanguageMiddleware(next http.Handler) http.Handler {
 **Go HTML templates:**
 
 ```go
-// Template function
+// Template functions (for HTML templates)
 funcMap := template.FuncMap{
     "t": func(lang, key string) string {
         return i18n.Translate(lang, key)
@@ -42794,6 +43550,64 @@ funcMap := template.FuncMap{
     "tp": func(lang, key string, count int) string {
         return i18n.TranslatePlural(lang, key, count)
     },
+}
+
+// Request-scoped translation (for Go handlers / middleware)
+// Extracts language from request context (set by language detection middleware)
+// If language is unsupported, silently falls back to "en"
+func t(r *http.Request, key string) string {
+    lang := i18n.LangFromRequest(r) // ?lang= → cookie → Accept-Language → "en"
+    return i18n.Translate(lang, key) // unsupported lang → falls back to "en"
+}
+
+func tf(r *http.Request, key string, args ...interface{}) string {
+    lang := i18n.LangFromRequest(r)
+    return i18n.TranslateFormat(lang, key, args...)
+}
+
+// LangFromRequest extracts language preference from request.
+// Falls back to "en" if unsupported. Never returns an invalid language.
+// Priority: ?lang= query param → lang cookie → Accept-Language header → "en"
+func LangFromRequest(r *http.Request) string {
+    // 1. Query param (also sets cookie for future requests)
+    if lang := r.URL.Query().Get("lang"); lang != "" {
+        if IsSupported(lang) {
+            return lang
+        }
+        return "en" // unsupported → English, don't error
+    }
+    // 2. Cookie
+    if cookie, err := r.Cookie("lang"); err == nil && cookie.Value != "" {
+        if IsSupported(cookie.Value) {
+            return cookie.Value
+        }
+        return "en"
+    }
+    // 3. Accept-Language header (parse best match)
+    if accept := r.Header.Get("Accept-Language"); accept != "" {
+        lang := parseBestMatch(accept) // returns best supported match or ""
+        if lang != "" {
+            return lang
+        }
+    }
+    // 4. Default
+    return "en"
+}
+
+// Translate returns the translated string for the given key.
+// If lang is unsupported, uses "en". If key is missing in lang, uses "en" value.
+func Translate(lang, key string) string {
+    if !IsSupported(lang) {
+        lang = "en"
+    }
+    if val, ok := translations[lang][key]; ok {
+        return val
+    }
+    // Fallback to English for missing keys
+    if val, ok := translations["en"][key]; ok {
+        return val
+    }
+    return key // last resort: return the key itself
 }
 ```
 
@@ -42908,41 +43722,129 @@ func sendWelcomeEmail(user User, lang string) {
 }
 ```
 
-### CLI Output Translation
+### CLI/Agent/Server Output Translation
 
-**CLI output respects the `LANG` / `LC_ALL` environment variable:**
+**ALL binaries support `--lang` flag for output language. Language detection priority:**
+
+| Priority | Source | Example |
+|----------|--------|---------|
+| 1 | `--lang` flag | `--lang es` |
+| 2 | Config file | `lang: es` (in `server.yml`, `cli.yml`, or `agent.yml`) |
+| 3 | `LANG` / `LC_ALL` env var | `LANG=es_ES.UTF-8` |
+| 4 | Auto-detect | System locale |
+| 5 | Default | `en` (English) |
 
 ```go
-func getCLILanguage() string {
+func getLanguage(flagLang string) string {
+    // 1. Explicit --lang flag
+    if flagLang != "" {
+        return validateLang(flagLang)
+    }
+    // 2. Config file
+    if cfg := GetConfig(); cfg != nil && cfg.Lang != "" && cfg.Lang != "auto" {
+        return validateLang(cfg.Lang)
+    }
+    // 3. LANG / LC_ALL env var
+    if lang := os.Getenv("LC_ALL"); lang != "" {
+        return validateLang(strings.Split(lang, "_")[0])
+    }
     if lang := os.Getenv("LANG"); lang != "" {
-        // Parse "es_ES.UTF-8" → "es"
-        return strings.Split(lang, "_")[0]
+        return validateLang(strings.Split(lang, "_")[0])
+    }
+    // 4. Default
+    return "en"
+}
+
+// validateLang returns the language if supported, otherwise falls back to "en".
+// Never errors or crashes on unsupported language — just silently uses English.
+func validateLang(lang string) string {
+    lang = strings.ToLower(strings.TrimSpace(lang))
+    if i18n.IsSupported(lang) {
+        return lang
     }
     return "en"
 }
 ```
 
+**How language flows through the system:**
+
+```
+CLI/Agent (--lang es)
+    │
+    ├─ Local output: help, status, errors → translated via embedded locales
+    │
+    └─ API requests to server:
+         Accept-Language: es
+              │
+              └─ Server reads Accept-Language header
+                   │
+                   ├─ API JSON responses: error messages translated
+                   ├─ WebUI: renders in requested language
+                   └─ Blocklist reject_message: uses t(r, "errors.forbidden")
+```
+
+**CLI/Agent sends `Accept-Language` header on all API requests:**
+
+```go
+func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request, error) {
+    req, err := http.NewRequest(method, c.baseURL+path, body)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("User-Agent", c.userAgent)
+    req.Header.Set("Accept-Language", c.lang)  // from --lang / config / env
+    if c.token != "" {
+        req.Header.Set("Authorization", "Bearer "+c.token)
+    }
+    return req, nil
+}
+```
+
+**Server language detection for API requests (priority):**
+
+| Priority | Source | Example |
+|----------|--------|---------|
+| 1 | `?lang=` query param | `/api/v1/endpoint?lang=es` |
+| 2 | `lang` cookie | Set by previous `?lang=` visit |
+| 3 | `Accept-Language` header | Sent by CLI/agent/browser |
+| 4 | Server default | `en` |
+
 ```bash
 # CLI output in Spanish
-LANG=es_ES.UTF-8 myapp --help
+weather-cli --lang es --help
 # Uso:
-#   myapp [opciones]
+#   weather-cli [comando] [opciones]
 # ...
 
-# CLI output in English (default)
-myapp --help
+# Agent output in Spanish
+weather-agent --lang es --server https://example.com --token adm_xxx
+
+# Server banner in Spanish
+LANG=es_ES.UTF-8 weather
+# or
+weather --lang es
+
+# CLI output via LANG env (default)
+LANG=es_ES.UTF-8 weather-cli --help
+# Uso:
+#   weather-cli [comando] [opciones]
+# ...
+
+# English (default when nothing set)
+weather-cli --help
 # Usage:
-#   myapp [options]
+#   weather-cli [command] [options]
 # ...
 ```
 
 ### Adding New Languages
 
-1. Copy `locales/en.json` to `locales/{lang}.json`
+1. Copy `src/common/i18n/locales/en.json` to `src/common/i18n/locales/{lang}.json`
 2. Translate ALL keys (no key may be omitted)
 3. Add language code to `config.server.i18n.available_languages`
-4. Language automatically appears in the language selector
+4. Language automatically appears in the language selector (WebUI) and `--lang` flag (CLI/agent)
 5. Run `make i18n-validate` to verify all keys are present
+6. Rebuild ALL binaries — server, CLI, and agent all get the new language via `go:embed`
 
 ### Build-Time Validation
 
@@ -42950,7 +43852,7 @@ myapp --help
 # Makefile target
 i18n-validate:
 	@echo "Validating translation files..."
-	@go run cmd/i18n-validate/main.go locales/
+	@go run cmd/i18n-validate/main.go src/common/i18n/locales/
 
 # Validates:
 # - All language files have identical key sets to en.json
@@ -43336,7 +44238,7 @@ Tor integration uses **external Tor binary** via `github.com/cretz/bine`. This m
 - **Hidden service maps to server port** - `.onion:80` → `localhost:{server_port}`
 - **Server enforces permissions** - creates all dirs/files with correct owner/group/perms
 - **HiddenServiceVersion 3** - v3 onion addresses (56 characters, ed25519) via ADD_ONION
-- **Unix socket for control** - No TCP exposure for Tor control on Unix/macOS/BSD
+- **Localhost auto control port** - Tor control uses `127.0.0.1:auto` on all OSes
 - **SafeLogging enabled** - Scrubs sensitive info from Tor logs
 
 ## Configuration
@@ -43398,8 +44300,8 @@ server:
 
 **CRITICAL: Port Requirements**
 - **NEVER use default Tor ports** (9050, 9051, etc.)
-- **Unix sockets preferred** for all Tor communication (Unix/macOS/BSD)
-- **If TCP required (Windows):** Use ports 62000-65535 ONLY
+- **Use `ControlPort 127.0.0.1:auto` on all OSes** for the current bine-based integration
+- **Never hardcode a control port** - let Tor choose a free localhost port at runtime
 - Server's Tor instance is completely isolated from any system Tor
 
 **Notes:**
@@ -43572,22 +44474,18 @@ When `use_network` or `allow_user_preference` is enabled, the torrc includes `So
 
 ## Platform-Specific Requirements
 
-### Unix/macOS/BSD (Preferred)
-- **Control connection**: Unix socket (`control.sock`) - no network exposure
+### All Platforms
+- **Control connection**: TCP `127.0.0.1:auto`
 - **Hidden service target**: Server's HTTP port via localhost (bine handles via ADD_ONION)
-- **No TCP ports required** for Tor control communication
+- **No fixed control ports** - Tor picks a free localhost port at startup
 
-### Windows Limitations
+| Feature | All OSes |
+|---------|----------|
+| Control connection | TCP `127.0.0.1:auto` |
+| Hidden service target | `localhost:{server_port}` |
+| Security | Control bound to localhost only |
 
-**Windows CANNOT use Unix sockets for control connection.** Control uses TCP on localhost.
-
-| Feature | Unix/macOS/BSD | Windows |
-|---------|---------------|---------|
-| Control connection | Unix socket (`control.sock`) | TCP `127.0.0.1:auto` |
-| Hidden service target | `localhost:{server_port}` | `localhost:{server_port}` |
-| Security | No network exposure for control | Control on localhost only |
-
-**Note:** The hidden service forwards to the server's HTTP port on ALL platforms. Only the Tor control connection differs (Unix socket vs TCP).
+**Note:** The hidden service forwards to the server's HTTP port on ALL platforms, and the control connection uses the same localhost auto-port model on all platforms.
 
 ## Tor Process Management 
 
@@ -43618,7 +44516,7 @@ This prevents conflicts with any existing Tor installation on the system.
 4. Start DEDICATED Tor process:
    ├─ TorrcFile: `{config_dir}/tor/torrc`
    ├─ DataDir: `{data_dir}/tor/`
-   ├─ Control connection: Unix socket (Unix/macOS/BSD) or localhost TCP (Windows)
+   ├─ Control connection: localhost TCP via `127.0.0.1:auto`
    ├─ SocksPort: auto (if outbound enabled) or 0 (hidden service only)
    ├─ Completely isolated from system Tor
    ├─ Wait for bootstrap completion
@@ -43633,12 +44531,12 @@ This prevents conflicts with any existing Tor installation on the system.
 
 | Reason | Description |
 |--------|-------------|
-| **No conflicts** | System Tor uses 9050/9051, we use Unix socket (or localhost TCP on Windows) |
+| **No conflicts** | System Tor uses 9050/9051, we use a runtime-selected localhost control port |
 | **Isolation** | Our DataDir is separate from system Tor |
 | **Clean shutdown** | We control the process lifecycle |
 | **No permissions issues** | Don't need access to system Tor control |
 | **Predictable behavior** | Always same configuration |
-| **Security** | Unix socket is local-only; Windows uses 127.0.0.1 only |
+| **Security** | Control port binds to `127.0.0.1` only |
 
 ### Tor Logging Levels 
 
@@ -43709,7 +44607,7 @@ This prevents conflicts with any existing Tor installation on the system.
 
 **Why same user?**
 - Tor needs read/write access to `{data_dir}/tor/` (owned by server user)
-- Tor control socket must be accessible by server
+- Tor control connection must be reachable by server over localhost
 - Simplifies permissions - no cross-user access needed
 - Clean process tree - server owns Tor lifecycle
 
@@ -43728,7 +44626,6 @@ import (
     "net/http"
     "os"
     "path/filepath"
-    "runtime"
     "sync"
     "time"
 
@@ -43817,11 +44714,10 @@ func startDedicatedTor(ctx context.Context, serverPort int, cfg *TorConfig) (*To
     // Paths
     torrcPath := filepath.Join(configDir, "tor", "torrc")
     torDataDir := filepath.Join(dataDir, "tor")
-    controlSocket := filepath.Join(torDataDir, "control.sock")
     keyPath := filepath.Join(dataDir, "tor", "site", "hs_ed25519_secret_key")
 
     // Generate torrc content from config
-    torrcContent := getTorConfig(controlSocket, cfg)
+    torrcContent := getTorConfig(cfg)
 
     // Create torrc only if it doesn't exist (persistent)
     // torrc is preserved across restarts - only admin panel can update it
@@ -43853,15 +44749,6 @@ func startDedicatedTor(ctx context.Context, serverPort int, cfg *TorConfig) (*To
     // Use custom Tor binary path if specified in config
     if cfg.Binary != "" {
         conf.ExePath = cfg.Binary
-    }
-
-    // Platform-specific control connection
-    if runtime.GOOS == "windows" {
-        // Windows: Unix sockets NOT SUPPORTED, use localhost TCP
-        // bine auto-selects available port for ControlPort
-    } else {
-        // Unix/macOS/BSD: Use Unix socket (more secure, no network exposure)
-        conf.ControlSocket = controlSocket
     }
 
     // Start OUR OWN Tor process - completely separate from system Tor
@@ -43994,14 +44881,13 @@ func saveOnionKey(path string, key control.Key) error {
 }
 ```
 
-### Port/Socket Allocation
+### Port Allocation
 
-| Resource | System Tor | Our Tor (Unix) | Our Tor (Windows) |
-|----------|------------|----------------|-------------------|
-| SocksPort | 9050 | 0 (disabled) | 0 (disabled) |
-| ControlPort | 9051 | 0 (disabled) | 127.0.0.1:auto |
-| ControlSocket | N/A | `{data_dir}/tor/control.sock` | N/A (not supported) |
-| DataDir | `/var/lib/tor` | `{data_dir}/tor/` | `{data_dir}\tor\` |
+| Resource | System Tor | Our Tor |
+|----------|------------|---------|
+| SocksPort | 9050 | 0 (disabled) or `auto` |
+| ControlPort | 9051 | `127.0.0.1:auto` |
+| DataDir | `/var/lib/tor` | `{data_dir}/tor/` |
 
 **How Hidden Service Forwarding Works:**
 
@@ -44020,7 +44906,7 @@ func saveOnionKey(path string, key control.Key) error {
               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Server's Tor Process (owned by server binary)                      │
-│ Control: Unix socket (Unix) or 127.0.0.1:auto (Windows)            │
+│ Control: 127.0.0.1:auto                                             │
 └─────────────┬───────────────────────────────────────────────────────┘
               │ connects to
               ▼
@@ -44032,12 +44918,11 @@ func saveOnionKey(path string, key control.Key) error {
 
 - **bine uses `control.AddOnion()`** with port mapping: `80 → 127.0.0.1:{server_port}`
 - **Tor forwards to server's existing HTTP port** - no new listener created
-- **Same on ALL platforms** - only control connection differs (Unix socket vs TCP)
+- **Same on ALL platforms** - control uses the same localhost auto-port model
 - **Server port is NOT a Tor port** - it's the server's normal HTTP listener
 
-**Platform-specific control connection:**
-- **Unix/macOS/BSD**: Unix socket (`control.sock`) - no network exposure
-- **Windows**: TCP on `127.0.0.1:auto` - localhost only (Unix sockets not supported)
+**Control connection:**
+- **All OSes**: TCP on `127.0.0.1:auto` - localhost only
 
 **SocksPort configuration:**
 - `SocksPort 0` - hidden service only (no outbound)
@@ -44059,22 +44944,14 @@ func saveOnionKey(path string, key control.Key) error {
 //
 // PORT DETECTION: All ports use runtime detection via "auto" - never saved/hardcoded
 // - SocksPort auto: Tor picks available high port at startup
-// - ControlPort 127.0.0.1:auto: Tor picks available high port (Windows only)
+// - ControlPort 127.0.0.1:auto: Tor picks available high port on all OSes
 // - bine reads actual port from control connection after Tor starts
 //
-// NEVER uses default Tor ports (9050, 9051) - uses Unix sockets or auto high ports
-func getTorConfig(controlSocket string, cfg *TorConfig) string {
-    // Platform-specific control connection
-    // NEVER use default ports 9050/9051 - use runtime detection
-    var controlConfig string
-    if runtime.GOOS == "windows" {
-        // Windows: Unix sockets NOT SUPPORTED, use localhost TCP
-        // "auto" = Tor picks available high port at runtime (never saved)
-        controlConfig = "ControlPort 127.0.0.1:auto"
-    } else {
-        // Unix/macOS/BSD: Use Unix socket (no TCP port at all)
-        controlConfig = fmt.Sprintf("ControlPort 0\nControlSocket %s", controlSocket)
-    }
+// NEVER uses default Tor ports (9050, 9051) - uses localhost auto ports
+func getTorConfig(cfg *TorConfig) string {
+    // All OSes use the same localhost auto-port control connection.
+    // "auto" = Tor picks an available high port at runtime (never saved)
+    controlConfig := "ControlPort 127.0.0.1:auto"
 
     // SocksPort: enabled for outbound connections, disabled for hidden service only
     // "auto" = Tor picks available high port at runtime (never saved)
@@ -44114,8 +44991,8 @@ AccountingMax %s`, cfg.MaxMonthlyBandwidth)
 # NEVER uses default port 9050 - runtime detection only
 %s
 
-# Platform-specific control connection
-# NEVER uses default port 9051 - uses socket (Unix) or runtime port (Windows)
+# Control connection
+# NEVER uses default port 9051 - uses runtime localhost port on all OSes
 %s
 
 # Security Hardening
@@ -44151,8 +45028,7 @@ DisableDebuggerAttachment 1
 | Setting | Value | Reason |
 |---------|-------|--------|
 | `SocksPort` | `0` / `auto` | `0` = hidden service only; `auto` = runtime port for outbound |
-| `ControlPort` | `0` (Unix) / `auto` (Windows) | Unix uses socket; Windows uses runtime localhost TCP |
-| `ControlSocket` | `{data_dir}/tor/control.sock` | Unix only - secure, no network exposure |
+| `ControlPort` | `127.0.0.1:auto` | Runtime localhost TCP control port on all OSes |
 | `SafeLogging 1` | Enabled | Scrubs sensitive info from Tor logs |
 | `AccountingStart` | `month 1 00:00` | Reset bandwidth counter on 1st of each month |
 | `AccountingMax` | e.g., `100 GB` | Monthly bandwidth limit (from config) |
@@ -44165,8 +45041,7 @@ DisableDebuggerAttachment 1
 **Runtime Port Detection:**
 - Ports are NEVER hardcoded or saved - always detected at runtime
 - `SocksPort auto` → Tor picks available high port, bine reads it after startup
-- `ControlPort 127.0.0.1:auto` (Windows) → Tor picks available high port
-- Unix/macOS/BSD use Unix socket instead of TCP - no port needed
+- `ControlPort 127.0.0.1:auto` → Tor picks available high port on localhost
 
 **Hidden Service Settings (via `control.AddOnion()`, not torrc):**
 
@@ -47231,7 +48106,7 @@ Flags:
 - CLI/Agent: Default `--server` URL (so users don't need to specify)
 
 **What official site does NOT affect:**
-- Docker labels (use `apimgr`, `weather`, `{fqdn}`)
+- Docker labels (use `apimgr`, `weather`, `wthr.top`)
 - Documentation structure or content
 - Build artifacts or binary metadata
 - Any runtime behavior (just a compiled default)
@@ -47264,6 +48139,7 @@ Enter choice [1-4]:
 | `--help` | `-h` | Show help |
 | `--version` | `-v` | Show version |
 | `--color {always\|never\|auto}` | — | Color output (default: auto, respects `NO_COLOR`) |
+| `--lang CODE` | — | Language for output (default: auto-detect from `LANG` env) |
 
 **Only `-h` and `-v` have short forms. Everything else is long-form only.**
 
@@ -47360,6 +48236,7 @@ weather-cli delete abc123 --force              # Dangerous ops need confirm
 ```yaml
 # cli.yml - defaults for flags
 defaults:
+  lang: auto            # --lang default (auto = detect from env, or "en", "es", etc.)
   public: unlisted      # --public default (yes, no, unlisted)
   expire: 24h           # --expire default
   syntax: auto          # --syntax default
@@ -47506,7 +48383,7 @@ func printCompletions(shell, binaryName string) {
     case "powershell", "pwsh":
         fmt.Print(generatePowershellCompletions(binaryName))
     default:
-        fmt.Fprintf(os.Stderr, "Unsupported shell: %s\n", shell)
+        fmt.Fprintf(os.Stderr, "%s\n", i18n.Tf(lang, "cli.error_unsupported_shell", shell))
         os.Exit(1)
     }
 }
@@ -47524,7 +48401,7 @@ func printInit(shell, binaryName string) {
     case "powershell", "pwsh":
         fmt.Printf("Invoke-Expression (& %s --shell completions powershell)\n", binaryName)
     default:
-        fmt.Fprintf(os.Stderr, "Unsupported shell: %s\n", shell)
+        fmt.Fprintf(os.Stderr, "%s\n", i18n.Tf(lang, "cli.error_unsupported_shell", shell))
         os.Exit(1)
     }
 }
@@ -47554,6 +48431,7 @@ Flags:
       --config NAME                 Config profile name (default: cli.yml)
       --debug                       Debug output
       --color {always|never|auto}   Color output (default: auto)
+      --lang CODE                   Language for output (default: auto)
 
 Administration (requires admin token):
       --admin CMD                   Admin operations (--admin --help for details)
@@ -48867,6 +49745,7 @@ Tags: production, web-tier
 --mode {production|development}  # Force mode (auto-detected by default)
 --debug                       # Enable debug logging (implies development features)
 --color {always|never|auto}   # Color output (default: auto, respects NO_COLOR)
+--lang {code}                 # Language for output (default: auto, from LANG env)
 
 # Commands (subcommands like server)
 status                        # Show agent status
@@ -48911,6 +49790,7 @@ Flags:
       --mode {production|development}  Application mode
       --debug                       Enable debug mode
       --color {always|never|auto}   Color output (default: auto)
+      --lang CODE                   Language for output (default: auto)
       --status                      Show agent health
 
       --service CMD                 Service management (install|uninstall|start|stop|restart)
@@ -49079,6 +49959,9 @@ func GenerateAgentToken(scope AgentScope) string {
 # /etc/apimgr/weather/agent.yml (root)
 # ~/.config/apimgr/weather/agent.yml (user)
 # Agent configuration - ALL options with defaults
+
+# Language for agent output and API requests
+lang: auto                           # auto = detect from env, or "en", "es", etc.
 
 # Server connection
 server:
@@ -52576,7 +53459,7 @@ Local MariaDB INSERT                     Local PostgreSQL INSERT
 2. Click "Generate Token" button
 3. Server generates:
    - Token: `node_{random_32_chars}`
-   - URL: `{proto}://{fqdn}` (of this node)
+   - URL: `{proto}://wthr.top` (of this node)
 4. Display token and URL to admin (copy buttons)
 
 **On new server:**
@@ -54140,11 +55023,11 @@ func CustomDomainMiddleware(resolver *DomainResolver) func(http.Handler) http.Ha
             // Resolve custom domain
             domain, err := resolver.Resolve(host)
             if err == ErrDomainNotFound {
-                http.Error(w, "Domain not found", http.StatusNotFound)
+                http.Error(w, t(r, "errors.not_found"), http.StatusNotFound)
                 return
             }
             if err != nil {
-                http.Error(w, "Internal error", http.StatusInternalServerError)
+                http.Error(w, t(r, "errors.server_error"), http.StatusInternalServerError)
                 return
             }
 
@@ -54659,7 +55542,7 @@ server:
 
 **Public IP in /healthz:**
 
-The discovered public IPs are safe to include in `/healthz` - same info anyone can get with `dig {fqdn}`.
+The discovered public IPs are safe to include in `/healthz` - same info anyone can get with `dig wthr.top`.
 - IPv4: From external lookup (needed for containers/NAT)
 - IPv6: From local interface if global unicast address exists
 
@@ -55472,7 +56355,7 @@ make docker # Build Docker image
 - [ ] Manual task trigger option
 
 **PART 20: GeoIP**
-- [ ] MaxMind GeoLite2 database support
+- [ ] ip-location-db GeoIP database support
 - [ ] Auto-download and update
 - [ ] Country blocking capability
 - [ ] IP lookup API endpoint
@@ -56134,7 +57017,7 @@ make docker # Build Docker image
 - [ ] Stored as SHA-256 hash in `{config_dir}/setup_token.txt`
 - [ ] Plaintext token shown ONCE in console banner
 - [ ] File deleted after successful setup completion
-- [ ] Setup URL displayed: `{proto}://{fqdn}/admin/server/setup`
+- [ ] Setup URL displayed: `{proto}://wthr.top/admin/server/setup`
 - [ ] Token section only appears on first run (never again after setup)
 
 ### CLI Flag Syntax (ALL Binaries)
@@ -56143,6 +57026,7 @@ make docker # Build Docker image
 - [ ] `-h` (help) and `-v` (version) are the ONLY short flags
 - [ ] All other flags are long-form only (`--config`, `--port`, etc.)
 - [ ] `--color {always|never|auto}` available on all binaries
+- [ ] `--lang CODE` available on all binaries
 - [ ] `--debug` available on all binaries
 - [ ] Flag parsing consistent across server, client, agent
 
@@ -56164,8 +57048,8 @@ make docker # Build Docker image
 ### Banner Placeholders (Must Be Defined)
 
 - [ ] `{proto}` - Protocol (http/https)
-- [ ] `{fqdn}` - Fully qualified domain name
-- [ ] `{baseurl}` - URL path prefix (auto-detected from reverse proxy)
+- [ ] `wthr.top` - Fully qualified domain name
+- [ ] `/` - URL path prefix (auto-detected from reverse proxy)
 - [ ] `{port}` - Port number (stripped if 80/443)
 - [ ] `{address}` - Listen IP address
 - [ ] `{app_mode}` - Application mode (production/development)
@@ -56194,6 +57078,91 @@ make docker # Build Docker image
 - [ ] `--status` output: Pretty to console, exit code for scripts (0=healthy, 1=unhealthy)
 - [ ] `--help` output: Plain text, no colors (works in all terminals)
 - [ ] `--version` output: Plain text, single line
+
+---
+
+## I18N / TRANSLATION CHECKLIST
+
+### Translation File Integrity
+
+- [ ] All locale files exist in `src/common/i18n/locales/` (en, es, fr, de, zh, ar, ja)
+- [ ] `en.json` is complete — every user-facing string has a key
+- [ ] All locale files have identical key sets to `en.json` (no missing, no extra)
+- [ ] All interpolation variables (`{var}`) match across all locale files
+- [ ] No empty string values in any locale file
+- [ ] `make i18n-validate` passes with zero errors
+- [ ] `meta.language`, `meta.name`, `meta.native_name`, `meta.direction` correct in each file
+
+### Binary Parity
+
+- [ ] `src/common/i18n/` package is imported by server, CLI, and agent
+- [ ] `//go:embed locales/*.json` embeds all locale files into every binary
+- [ ] Server, CLI, and agent all support the SAME set of languages
+- [ ] `--lang` flag works on all binaries (server, CLI, agent)
+- [ ] `LANG` / `LC_ALL` env var detection works on all binaries
+- [ ] Config file `lang:` setting works (server.yml, cli.yml, agent.yml)
+- [ ] Unsupported language silently falls back to `en` on all binaries — never errors
+
+### Server HTTP Translation
+
+- [ ] `?lang=` query param sets language and cookie
+- [ ] `Accept-Language` header respected
+- [ ] `lang` cookie persists language preference
+- [ ] Priority: `?lang=` → cookie → `Accept-Language` → `en`
+- [ ] All `http.Error()` calls use `t(r, "errors.*")` — no hardcoded English
+- [ ] All API error/status responses use translation keys
+- [ ] `<html lang="{{.Lang}}" dir="{{.Dir}}">` on all pages — never hardcoded `lang="en"`
+- [ ] WebUI serves `/locales/{lang}.json` from embedded files for JavaScript
+- [ ] Language selector present in WebUI header/footer
+
+### CLI Translation
+
+- [ ] `--help` output fully translated (all flag descriptions, section headers)
+- [ ] Error messages use `i18n.T(lang, "cli.*")` — no hardcoded English
+- [ ] Status output (`--status`) translated
+- [ ] Admin command output translated
+- [ ] `Accept-Language` header sent on all API requests to server
+
+### Agent Translation
+
+- [ ] `--help` output fully translated
+- [ ] Startup banner text translated (Mode, Server, Hostname, Tags, Connected/Disconnected)
+- [ ] Error messages use `i18n.T(lang, "agent.*")` — no hardcoded English
+- [ ] Status/health output translated
+- [ ] Registration prompts translated
+- [ ] `Accept-Language` header sent on all API requests to server
+
+### No Hardcoded English
+
+- [ ] Zero `http.Error(w, "string literal"` in codebase
+- [ ] Zero `fmt.Printf("User-visible text"` without `i18n.T()` wrapper
+- [ ] Zero `<html lang="en">` in templates
+- [ ] Config defaults that are user-visible fall back to translation keys (e.g., `reject_message`)
+- [ ] Confirmation prompts use translation keys
+- [ ] Privilege escalation prompts use translation keys
+- [ ] All notification messages use translation keys
+
+### Fallback Behavior
+
+- [ ] Unsupported `--lang` value → silently use `en` (no error, no crash)
+- [ ] Unsupported `Accept-Language` → silently use `en`
+- [ ] Missing key in active language → fall back to `en` value
+- [ ] Missing key in `en` → return key itself as last resort (never empty/null)
+- [ ] Invalid `?lang=` param → silently use `en` (no error page)
+- [ ] Corrupted/missing locale file → fall back to `en` (never crash on startup)
+
+### Content Coverage
+
+- [ ] Admin panel: all pages have translation keys (dashboard, settings, security, allowlist, blocklists, GeoIP, backup, logs, etc.)
+- [ ] Public frontend: all pages translated
+- [ ] Email templates: subject lines and body text translated
+- [ ] Error pages (400, 401, 403, 404, 500, 502, 503): error messages translated
+- [ ] Cookie consent banner: all text translated
+- [ ] Privacy/Terms pages: full content translated
+- [ ] Swagger/OpenAPI: endpoint descriptions translated
+- [ ] GraphQL: type/field descriptions translated
+- [ ] Startup banners: all label text translated (Mode, Server, Listening, etc.)
+- [ ] Setup wizard: all steps, labels, prompts translated
 
 ---
 

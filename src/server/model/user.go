@@ -200,23 +200,52 @@ func (m *UserModel) Create(username, email, password string, role ...string) (*U
 func (m *UserModel) GetByID(id int64) (*User, error) {
 	var user User
 	var lastLoginAt sql.NullTime
-	var lastLoginIP, banReason, twoFactorSecret sql.NullString
+	var displayName sql.NullString
+	var notificationEmail sql.NullString
+	var phone sql.NullString
+	var banReason sql.NullString
+	var visibility sql.NullString
+	var twoFactorSecret sql.NullString
+	var avatarType sql.NullString
+	var avatarURL sql.NullString
+	var bio sql.NullString
+	var location sql.NullString
+	var website sql.NullString
+	var timezone sql.NullString
+	var language sql.NullString
+	var lastLoginIP sql.NullString
 
 	err := database.GetUsersDB().QueryRow(`
-		SELECT id, username, email, password_hash, email_verified, is_active, is_banned, ban_reason, two_factor_enabled, two_factor_secret, created_at, updated_at, last_login_at, last_login_ip
+		SELECT id, username, display_name, notification_email, email, phone, password_hash,
+		       email_verified, is_active, is_banned, ban_reason, role, visibility,
+		       two_factor_enabled, two_factor_secret, avatar_type, avatar_url, bio,
+		       location, website, timezone, language, created_at, updated_at,
+		       last_login_at, last_login_ip
 		FROM user_accounts
 		WHERE id = ?
 	`, id).Scan(
 		&user.ID,
 		&user.Username,
+		&displayName,
+		&notificationEmail,
 		&user.Email,
+		&phone,
 		&user.PasswordHash,
 		&user.EmailVerified,
 		&user.IsActive,
 		&user.IsBanned,
 		&banReason,
+		&user.Role,
+		&visibility,
 		&user.TwoFactorEnabled,
 		&twoFactorSecret,
+		&avatarType,
+		&avatarURL,
+		&bio,
+		&location,
+		&website,
+		&timezone,
+		&language,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&lastLoginAt,
@@ -239,8 +268,41 @@ func (m *UserModel) GetByID(id int64) (*User, error) {
 	if banReason.Valid {
 		user.BanReason = banReason.String
 	}
+	if displayName.Valid {
+		user.DisplayName = displayName.String
+	}
+	if notificationEmail.Valid {
+		user.NotificationEmail = notificationEmail.String
+	}
+	if phone.Valid {
+		user.Phone = phone.String
+	}
+	if visibility.Valid {
+		user.Visibility = visibility.String
+	}
 	if twoFactorSecret.Valid {
 		user.TwoFactorSecret = twoFactorSecret.String
+	}
+	if avatarType.Valid {
+		user.AvatarType = avatarType.String
+	}
+	if avatarURL.Valid {
+		user.AvatarURL = avatarURL.String
+	}
+	if bio.Valid {
+		user.Bio = bio.String
+	}
+	if location.Valid {
+		user.Location = location.String
+	}
+	if website.Valid {
+		user.Website = website.String
+	}
+	if timezone.Valid {
+		user.Timezone = timezone.String
+	}
+	if language.Valid {
+		user.Language = language.String
 	}
 
 	return &user, nil
@@ -623,7 +685,7 @@ func (m *UserModel) Count() (int, error) {
 
 // CountByRole returns count of users by role
 func (m *UserModel) CountByRole(role string) (int, error) {
-	query := `SELECT COUNT(*) FROM users WHERE role = ?`
+	query := `SELECT COUNT(*) FROM user_accounts WHERE role = ?`
 	var count int
 	err := m.DB.QueryRow(query, role).Scan(&count)
 	return count, err
@@ -647,13 +709,13 @@ func (m *UserModel) CheckPassword(user *User, password string) bool {
 	return err == nil && valid
 }
 
-// UpdateProfile updates user profile information
-func (m *UserModel) UpdateProfile(id int64, username, email, phone string) error {
+// UpdateProfile updates current-user profile information.
+func (m *UserModel) UpdateProfile(id int64, displayName, phone string) error {
 	_, err := database.GetUsersDB().Exec(`
 		UPDATE user_accounts
-		SET username = ?, email = ?, phone = ?, updated_at = CURRENT_TIMESTAMP
+		SET display_name = ?, phone = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
-	`, username, email, phone, id)
+	`, displayName, phone, id)
 
 	if err != nil {
 		return fmt.Errorf("failed to update profile: %w", err)
@@ -1115,9 +1177,13 @@ type UserInvite struct {
 	ID        int64      `json:"id"`
 	Token     string     `json:"token"`
 	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Role      string     `json:"role"`
 	CreatedBy int64      `json:"created_by"`
 	CreatedAt time.Time  `json:"created_at"`
 	ExpiresAt time.Time  `json:"expires_at"`
+	MaxUses   int        `json:"max_uses"`
+	UseCount  int        `json:"use_count"`
 	UsedAt    *time.Time `json:"used_at,omitempty"`
 }
 
@@ -1126,20 +1192,84 @@ type UserInviteModel struct {
 	DB *sql.DB
 }
 
+func (m *UserInviteModel) getDB() *sql.DB {
+	if m.DB != nil {
+		return m.DB
+	}
+
+	return database.GetUsersDB()
+}
+
+func (m *UserInviteModel) ensureInviteSchema() error {
+	rows, err := m.getDB().Query(`PRAGMA table_info(user_invites)`)
+	if err != nil {
+		return fmt.Errorf("failed to inspect user_invites schema: %w", err)
+	}
+	defer rows.Close()
+
+	hasUsername := false
+	hasRole := false
+
+	for rows.Next() {
+		var cid int
+		var name string
+		var columnType string
+		var notNull int
+		var defaultValue sql.NullString
+		var pk int
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			return fmt.Errorf("failed to scan user_invites schema: %w", err)
+		}
+
+		switch name {
+		case "username":
+			hasUsername = true
+		case "role":
+			hasRole = true
+		}
+	}
+
+	if !hasUsername {
+		if _, err := m.getDB().Exec(`ALTER TABLE user_invites ADD COLUMN username TEXT`); err != nil {
+			return fmt.Errorf("failed to add user_invites.username: %w", err)
+		}
+	}
+
+	if !hasRole {
+		if _, err := m.getDB().Exec(`ALTER TABLE user_invites ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`); err != nil {
+			return fmt.Errorf("failed to add user_invites.role: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // CreateInvite creates a new user invite
-func (m *UserInviteModel) CreateInvite(username string, createdBy int64, expiresInHours int) (*UserInvite, error) {
+func (m *UserInviteModel) CreateInvite(username, email, role string, expiresInDays int) (*UserInvite, error) {
+	if err := m.ensureInviteSchema(); err != nil {
+		return nil, err
+	}
+
 	// Generate random token
 	token, err := GenerateSecureToken(32)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	expiresAt := time.Now().Add(time.Duration(expiresInHours) * time.Hour)
+	if expiresInDays <= 0 {
+		return nil, fmt.Errorf("invite expiration must be greater than zero")
+	}
 
-	result, err := database.GetUsersDB().Exec(`
-		INSERT INTO user_invites (token, username, created_by, created_at, expires_at)
-		VALUES (?, ?, ?, datetime('now'), ?)
-	`, token, username, createdBy, expiresAt)
+	if role == "" {
+		role = "user"
+	}
+
+	expiresAt := time.Now().Add(time.Duration(expiresInDays) * 24 * time.Hour)
+
+	result, err := m.getDB().Exec(`
+		INSERT INTO user_invites (code, email, invited_by, created_at, expires_at, used_by, used_at, max_uses, use_count, username, role)
+		VALUES (?, ?, NULL, CURRENT_TIMESTAMP, ?, NULL, NULL, 1, 0, ?, ?)
+	`, token, email, expiresAt, username, role)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create invite: %w", err)
@@ -1154,28 +1284,41 @@ func (m *UserInviteModel) CreateInvite(username string, createdBy int64, expires
 		ID:        id,
 		Token:     token,
 		Username:  username,
-		CreatedBy: createdBy,
+		Email:     email,
+		Role:      role,
+		CreatedBy: 0,
 		CreatedAt: time.Now(),
 		ExpiresAt: expiresAt,
+		MaxUses:   1,
+		UseCount:  0,
 	}, nil
 }
 
 // GetByToken retrieves invite by token
 func (m *UserInviteModel) GetByToken(token string) (*UserInvite, error) {
+	if err := m.ensureInviteSchema(); err != nil {
+		return nil, err
+	}
+
 	var invite UserInvite
+	var createdBy sql.NullInt64
 	var usedAt sql.NullTime
 
-	err := database.GetUsersDB().QueryRow(`
-		SELECT id, token, username, created_by, created_at, expires_at, used_at
+	err := m.getDB().QueryRow(`
+		SELECT id, code, COALESCE(username, ''), COALESCE(email, ''), COALESCE(role, 'user'), invited_by, created_at, expires_at, max_uses, use_count, used_at
 		FROM user_invites
-		WHERE token = ?
+		WHERE code = ?
 	`, token).Scan(
 		&invite.ID,
 		&invite.Token,
 		&invite.Username,
-		&invite.CreatedBy,
+		&invite.Email,
+		&invite.Role,
+		&createdBy,
 		&invite.CreatedAt,
 		&invite.ExpiresAt,
+		&invite.MaxUses,
+		&invite.UseCount,
 		&usedAt,
 	)
 
@@ -1189,17 +1332,91 @@ func (m *UserInviteModel) GetByToken(token string) (*UserInvite, error) {
 	if usedAt.Valid {
 		invite.UsedAt = &usedAt.Time
 	}
+	if createdBy.Valid {
+		invite.CreatedBy = createdBy.Int64
+	}
 
 	return &invite, nil
 }
 
-// MarkUsed marks invite as used
-func (m *UserInviteModel) MarkUsed(token string) error {
-	_, err := database.GetUsersDB().Exec(`
+// GetByID retrieves invite by numeric identifier.
+func (m *UserInviteModel) GetByID(id int64) (*UserInvite, error) {
+	if err := m.ensureInviteSchema(); err != nil {
+		return nil, err
+	}
+
+	var invite UserInvite
+	var createdBy sql.NullInt64
+	var usedAt sql.NullTime
+
+	err := m.getDB().QueryRow(`
+		SELECT id, code, COALESCE(username, ''), COALESCE(email, ''), COALESCE(role, 'user'), invited_by, created_at, expires_at, max_uses, use_count, used_at
+		FROM user_invites
+		WHERE id = ?
+	`, id).Scan(
+		&invite.ID,
+		&invite.Token,
+		&invite.Username,
+		&invite.Email,
+		&invite.Role,
+		&createdBy,
+		&invite.CreatedAt,
+		&invite.ExpiresAt,
+		&invite.MaxUses,
+		&invite.UseCount,
+		&usedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get invite: %w", err)
+	}
+
+	if usedAt.Valid {
+		invite.UsedAt = &usedAt.Time
+	}
+	if createdBy.Valid {
+		invite.CreatedBy = createdBy.Int64
+	}
+
+	return &invite, nil
+}
+
+// VerifyInvite checks whether an invite token is still usable.
+func (m *UserInviteModel) VerifyInvite(token string) (*UserInvite, error) {
+	invite, err := m.GetByToken(token)
+	if err != nil {
+		return nil, err
+	}
+	if invite == nil {
+		return nil, fmt.Errorf("invalid invite token")
+	}
+	if time.Now().After(invite.ExpiresAt) {
+		return nil, fmt.Errorf("invite token has expired")
+	}
+	if invite.UsedAt != nil {
+		return nil, fmt.Errorf("invite token has already been used")
+	}
+	if invite.MaxUses > 0 && invite.UseCount >= invite.MaxUses {
+		return nil, fmt.Errorf("invite token has already been used")
+	}
+
+	return invite, nil
+}
+
+// MarkUsed marks invite as used.
+func (m *UserInviteModel) MarkUsed(token string, usedBy int64) error {
+	if err := m.ensureInviteSchema(); err != nil {
+		return err
+	}
+
+	_, err := m.getDB().Exec(`
 		UPDATE user_invites
-		SET used_at = datetime('now')
-		WHERE token = ?
-	`, token)
+		SET used_by = ?, used_at = datetime('now'), use_count = use_count + 1
+		WHERE code = ?
+	`, usedBy, token)
 
 	if err != nil {
 		return fmt.Errorf("failed to mark invite used: %w", err)
@@ -1210,9 +1427,13 @@ func (m *UserInviteModel) MarkUsed(token string) error {
 
 // DeleteExpiredInvites removes expired invites
 func (m *UserInviteModel) DeleteExpiredInvites() error {
-	_, err := database.GetUsersDB().Exec(`
+	if err := m.ensureInviteSchema(); err != nil {
+		return err
+	}
+
+	_, err := m.getDB().Exec(`
 		DELETE FROM user_invites
-		WHERE expires_at < datetime('now') AND used_at IS NULL
+		WHERE expires_at < datetime('now') OR used_at IS NOT NULL
 	`)
 
 	if err != nil {
@@ -1222,12 +1443,15 @@ func (m *UserInviteModel) DeleteExpiredInvites() error {
 	return nil
 }
 
-// GetPendingInvites returns all pending (unused, non-expired) invites
-func (m *UserInviteModel) GetPendingInvites() ([]UserInvite, error) {
-	rows, err := database.GetUsersDB().Query(`
-		SELECT id, token, username, created_by, created_at, expires_at, used_at
+// ListInvites returns all invites ordered by creation time.
+func (m *UserInviteModel) ListInvites() ([]UserInvite, error) {
+	if err := m.ensureInviteSchema(); err != nil {
+		return nil, err
+	}
+
+	rows, err := m.getDB().Query(`
+		SELECT id, code, COALESCE(username, ''), COALESCE(email, ''), COALESCE(role, 'user'), invited_by, created_at, expires_at, max_uses, use_count, used_at
 		FROM user_invites
-		WHERE used_at IS NULL AND expires_at > datetime('now')
 		ORDER BY created_at DESC
 	`)
 
@@ -1239,21 +1463,29 @@ func (m *UserInviteModel) GetPendingInvites() ([]UserInvite, error) {
 	var invites []UserInvite
 	for rows.Next() {
 		var invite UserInvite
+		var createdBy sql.NullInt64
 		var usedAt sql.NullTime
 
 		err := rows.Scan(
 			&invite.ID,
 			&invite.Token,
 			&invite.Username,
-			&invite.CreatedBy,
+			&invite.Email,
+			&invite.Role,
+			&createdBy,
 			&invite.CreatedAt,
 			&invite.ExpiresAt,
+			&invite.MaxUses,
+			&invite.UseCount,
 			&usedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan invite: %w", err)
 		}
 
+		if createdBy.Valid {
+			invite.CreatedBy = createdBy.Int64
+		}
 		if usedAt.Valid {
 			invite.UsedAt = &usedAt.Time
 		}
@@ -1262,4 +1494,36 @@ func (m *UserInviteModel) GetPendingInvites() ([]UserInvite, error) {
 	}
 
 	return invites, nil
+}
+
+// GetPendingInvites returns all pending (unused, non-expired) invites.
+func (m *UserInviteModel) GetPendingInvites() ([]UserInvite, error) {
+	invites, err := m.ListInvites()
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	pending := make([]UserInvite, 0, len(invites))
+	for _, invite := range invites {
+		if invite.UsedAt == nil && invite.ExpiresAt.After(now) && (invite.MaxUses == 0 || invite.UseCount < invite.MaxUses) {
+			pending = append(pending, invite)
+		}
+	}
+
+	return pending, nil
+}
+
+// DeleteInvite removes an invite by identifier.
+func (m *UserInviteModel) DeleteInvite(id int64) error {
+	if err := m.ensureInviteSchema(); err != nil {
+		return err
+	}
+
+	_, err := m.getDB().Exec(`DELETE FROM user_invites WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete invite: %w", err)
+	}
+
+	return nil
 }

@@ -134,7 +134,7 @@ func (h *WebHandler) ServeWebInterface(c *gin.Context) {
 	// Format location for URLs (replace spaces with +, keep commas)
 	locationFormatted := strings.ReplaceAll(location, " ", "+")
 
-	c.HTML(http.StatusOK, "page/weather.tmpl", gin.H{
+	NegotiateResponse(c, "page/weather.tmpl", gin.H{
 		"Title":             "Weather",
 		"WeatherData":       weatherData,
 		"HostInfo":          hostInfo,
@@ -198,7 +198,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 
 	// If still no location, show empty moon page
 	if location == "" {
-		c.HTML(http.StatusOK, "page/moon.tmpl", gin.H{
+		NegotiateResponse(c, "page/moon.tmpl", gin.H{
 			"Title":      "Moon Phase - Weather",
 			"HostInfo":   utils.GetHostInfo(c),
 			"Location":   "",
@@ -214,7 +214,7 @@ func (h *WebHandler) ServeMoonInterface(c *gin.Context) {
 	coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
 
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "page/moon.tmpl", gin.H{
+		NegotiateErrorResponse(c, http.StatusInternalServerError, "page/moon.tmpl", ErrInternal, err.Error(), gin.H{
 			"Title":      "Moon Phase - Weather",
 			"Error":      err.Error(),
 			"HostInfo":   utils.GetHostInfo(c),

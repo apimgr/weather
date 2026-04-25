@@ -29,6 +29,29 @@ func NewSevereWeatherHandler(severeWeatherService *service.SevereWeatherService,
 	}
 }
 
+// GetSevereWeatherData returns severe weather data for non-HTTP callers such as GraphQL.
+func (h *SevereWeatherHandler) GetSevereWeatherData(location string) (*service.SevereWeatherData, error) {
+	if h == nil || h.severeWeatherService == nil {
+		return nil, fmt.Errorf("severe weather service not initialized")
+	}
+
+	location = strings.TrimSpace(location)
+	if location == "" {
+		return h.severeWeatherService.GetSevereWeather(0, 0)
+	}
+
+	if h.weatherService == nil {
+		return nil, fmt.Errorf("weather service not initialized")
+	}
+
+	coords, err := h.weatherService.ParseAndResolveLocation(location, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return h.severeWeatherService.GetSevereWeather(coords.Latitude, coords.Longitude)
+}
+
 // HandleSevereWeatherRequest handles severe weather page requests
 func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 	// Get location from path parameter or query
@@ -121,7 +144,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 		wantsJSON := strings.Contains(accept, "application/json")
 
 		if wantsJSON {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch severe weather data"})
+			RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch severe weather data")
 		} else {
 			c.String(http.StatusInternalServerError, "Failed to fetch severe weather data: %v", err)
 		}
@@ -142,7 +165,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherRequest(c *gin.Context) {
 	wantsJSON := strings.Contains(accept, "application/json")
 
 	if wantsJSON {
-		c.JSON(http.StatusOK, data)
+		RespondNegotiatedData(c, http.StatusOK, data)
 		return
 	}
 
@@ -311,7 +334,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 		accept := c.GetHeader("Accept")
 		wantsJSON := strings.Contains(accept, "application/json")
 		if wantsJSON {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch severe weather data"})
+			RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch severe weather data")
 		} else {
 			c.String(http.StatusInternalServerError, "Failed to fetch severe weather data: %v", err)
 		}
@@ -354,7 +377,7 @@ func (h *SevereWeatherHandler) HandleSevereWeatherByType(c *gin.Context) {
 	wantsJSON := strings.Contains(accept, "application/json")
 
 	if wantsJSON {
-		c.JSON(http.StatusOK, filteredData)
+		RespondNegotiatedData(c, http.StatusOK, filteredData)
 		return
 	}
 
@@ -468,11 +491,11 @@ func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 
 	data, err := h.severeWeatherService.GetSevereWeather(latitude, longitude)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch severe weather data"})
+		RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch severe weather data")
 		return
 	}
 
-	c.JSON(http.StatusOK, data)
+	RespondNegotiatedData(c, http.StatusOK, data)
 }
 
 // HandleAlertByIDAPI handles JSON API requests for a specific alert by ID
@@ -490,20 +513,14 @@ func (h *SevereWeatherHandler) HandleSevereWeatherAPI(c *gin.Context) {
 func (h *SevereWeatherHandler) HandleAlertByIDAPI(c *gin.Context) {
 	alertID := c.Param("id")
 	if alertID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ok":    false,
-			"error": "Alert ID required",
-		})
+		RespondError(c, http.StatusBadRequest, ErrInvalidInput, "Alert ID required")
 		return
 	}
 
 	// Get all severe weather data
 	data, err := h.severeWeatherService.GetSevereWeather(0, 0)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"ok":    false,
-			"error": "Failed to fetch severe weather data",
-		})
+		RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch severe weather data")
 		return
 	}
 
@@ -559,14 +576,11 @@ func (h *SevereWeatherHandler) HandleAlertByIDAPI(c *gin.Context) {
 	}
 
 	if foundAlert == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"ok":    false,
-			"error": "Alert not found",
-		})
+		NotFound(c, "Alert not found")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ok":    true,
 		"alert": foundAlert,
 	})

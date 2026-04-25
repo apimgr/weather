@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -34,8 +36,12 @@ type RegistrationConfig struct {
 	// Mode: public, private, disabled
 	// public = anyone can register
 	// private = invite only (admin creates invite links)
-	// disabled = no new users (admin creates accounts directly)
+	// disabled = invite only with registration hidden
 	Mode string `yaml:"mode"`
+	// Require users to verify email before login
+	RequireEmailVerification bool `yaml:"require_email_verification"`
+	// Invite links remain valid for this many days
+	InviteExpirationDays int `yaml:"invite_expiration_days"`
 }
 
 // AppConfig represents the application configuration from server.yml per AI.md PART 4
@@ -298,6 +304,28 @@ func getDefaultFQDN() string {
 	return hostname
 }
 
+func defaultEmailAddressForHost(localPart, host string) string {
+	host = strings.TrimSpace(strings.ToLower(host))
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		host = parsedHost
+	}
+	if host == "" || host == "localhost" || net.ParseIP(host) != nil || !strings.Contains(host, ".") {
+		host = "wthr.top"
+	}
+	if localPart == "" {
+		localPart = "admin"
+	}
+	return fmt.Sprintf("%s@%s", localPart, host)
+}
+
+// DefaultEmailAddress returns a valid default email address for the current config.
+func DefaultEmailAddress(localPart string, cfg *AppConfig) string {
+	if cfg == nil {
+		return defaultEmailAddressForHost(localPart, "")
+	}
+	return defaultEmailAddressForHost(localPart, cfg.Server.FQDN)
+}
+
 // GetAdminPath returns the admin panel URL path with default fallback
 // AI.md: {admin_path} is configurable, default: "admin"
 func (c *AppConfig) GetAdminPath() string {
@@ -332,7 +360,7 @@ func (c *AppConfig) GetAdminAPIPath() string {
 func LoadConfig() (*AppConfig, error) {
 	// Get hostname for defaults
 	hostname := getDefaultFQDN()
-	adminEmail := fmt.Sprintf("admin@%s", hostname)
+	adminEmail := defaultEmailAddressForHost("admin", hostname)
 
 	// Default config with sane defaults per AI.md PART 4
 	cfg := &AppConfig{
@@ -341,7 +369,9 @@ func LoadConfig() (*AppConfig, error) {
 			Enabled: true,
 			Registration: RegistrationConfig{
 				// public = anyone can register (default)
-				Mode: "public",
+				Mode:                     "public",
+				RequireEmailVerification: true,
+				InviteExpirationDays:     7,
 			},
 		},
 		// Weather-specific defaults per AI.md PART 37
@@ -688,7 +718,7 @@ func UpdateWebSecurityTxt(content string) error {
 func IsMultiUserEnabled() bool {
 	cfg := GetGlobalConfig()
 	if cfg == nil {
-		return false
+		return true
 	}
 	return cfg.Users.Enabled
 }
@@ -698,13 +728,23 @@ func IsMultiUserEnabled() bool {
 func GetRegistrationMode() string {
 	cfg := GetGlobalConfig()
 	if cfg == nil {
-		return "disabled"
+		return "public"
 	}
 	mode := cfg.Users.Registration.Mode
 	if mode == "" {
 		return "public" // default
 	}
 	return mode
+}
+
+// GetUserInviteExpirationDays returns the configured invite expiration in days.
+func GetUserInviteExpirationDays() int {
+	cfg := GetGlobalConfig()
+	if cfg == nil || cfg.Users.Registration.InviteExpirationDays <= 0 {
+		return 7
+	}
+
+	return cfg.Users.Registration.InviteExpirationDays
 }
 
 // IsRegistrationPublic returns true if public registration is enabled

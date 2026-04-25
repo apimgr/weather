@@ -14,7 +14,6 @@
 - Never output "Found X issues" — fix them instead
 - Never skip optional PARTs that are marked as implemented for this project
 - Never modify PARTS 0-36 implementation patterns — they are fixed
-- Never truncate files with `head -N > file` — always use the edit tool for precise changes (truncation risks silent data loss if line count is wrong)
 
 ## CRITICAL - ALWAYS DO
 
@@ -77,4 +76,4 @@ git status --porcelain → empty?       → Do nothing
 
 ## Reference
 
-For complete details, see AI.md PART 0 (lines 1939-3722) and PART 1 (lines 3723-4973)
+For complete details, see AI.md PART 0 (lines 1957-3774) and PART 1 (lines 3775-5025)

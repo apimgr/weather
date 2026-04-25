@@ -6,16 +6,16 @@ Comprehensive test suite for the Weather Service including unit tests, integrati
 
 ```bash
 # Run all tests
-./tests/run-tests.sh
+./tests/run_tests.sh
 
 # Run with coverage report
-./tests/run-tests.sh --coverage
+./tests/run_tests.sh --coverage
 
 # Run with verbose output
-./tests/run-tests.sh --verbose
+./tests/run_tests.sh --verbose
 
 # Run benchmarks
-./tests/run-tests.sh --bench
+./tests/run_tests.sh --bench
 
 # Start test server for manual testing
 ./tests/test-server.sh
@@ -26,7 +26,7 @@ Comprehensive test suite for the Weather Service including unit tests, integrati
 ```
 tests/
 ├── README.md                           # This file
-├── run-tests.sh                        # Main test runner
+├── run_tests.sh                        # Main test runner
 ├── test-server.sh                      # Isolated test server
 ├── unit/                               # Unit tests
 │   ├── services/
@@ -43,26 +43,26 @@ tests/
 
 ## Test Scripts
 
-### `run-tests.sh` - Main Test Runner
+### `run_tests.sh` - Main Test Runner
 
 Runs the complete test suite with options for coverage and verbosity.
 
 **Usage:**
 ```bash
 # Run all tests
-./tests/run-tests.sh
+./tests/run_tests.sh
 
 # With coverage report (generates coverage.html)
-./tests/run-tests.sh --coverage
+./tests/run_tests.sh --coverage
 
 # With verbose output
-./tests/run-tests.sh -v
+./tests/run_tests.sh -v
 
 # Run benchmarks
-./tests/run-tests.sh --bench
+./tests/run_tests.sh --bench
 
 # Combine options
-./tests/run-tests.sh -c -v
+./tests/run_tests.sh -c -v
 ```
 
 **Options:**
@@ -75,7 +75,7 @@ Runs the complete test suite with options for coverage and verbosity.
 Runs the weather service in an isolated temporary directory.
 
 **Features:**
-- Isolated temp directory per run (`/tmp/weather-test-<pid>`)
+- Isolated temp directory per run (`/tmp/apimgr/weather-XXXXXX/`)
 - Auto-cleanup on exit (Ctrl+C)
 - No repo pollution
 - Real-time log following
@@ -102,45 +102,39 @@ KEEP_TEMP=1 PORT=3053 ./tests/test-server.sh
 
 ```bash
 # All unit tests
-go test ./tests/unit/...
+make test
 
-# Service tests only
-go test ./tests/unit/services/
-
-# Handler tests only
-go test ./tests/unit/handlers/
-
-# Specific test
-go test ./tests/unit/services/ -run TestLocationEnhancer_FindCityByID
+# Quick containerized unit test pass
+make test
 
 # With coverage
-go test -cover ./tests/unit/...
+make test
 ```
 
 ### Integration Tests
 
 ```bash
 # All integration tests
-go test ./tests/integration/...
+./tests/run_tests.sh
 
-# Specific integration test
-go test ./tests/integration/ -run TestAPI_Weather_Coordinates
+# Docker integration matrix
+./tests/docker.sh
 
-# With verbose output
-go test -v ./tests/integration/...
+# Incus integration matrix
+./tests/incus.sh
 ```
 
 ### End-to-End Tests
 
 ```bash
 # All e2e tests
-go test ./tests/e2e/...
+./tests/run_tests.sh
 
-# Setup flow test
-go test ./tests/e2e/ -run TestCompleteSetupFlow
+# Full Incus-backed end-to-end matrix
+./tests/incus.sh
 
-# With timeout
-go test -timeout 30s ./tests/e2e/...
+# Docker-backed end-to-end matrix
+./tests/docker.sh
 ```
 
 ## Manual Testing
@@ -152,10 +146,10 @@ go test -timeout 30s ./tests/e2e/...
 ./tests/test-server.sh
 
 # In another terminal, test endpoints:
-curl http://localhost:3053/healthz
-curl http://localhost:3053/api/v1/weather?lat=40.7128&lon=-74.0060
-curl http://localhost:3053/api/v1/weather?city_id=5128581
-curl "http://localhost:3053/api/v1/weather?lat=40.7128&lon=-74.0060&nearest=true"
+curl -q -LSsf http://localhost:3053/healthz
+curl -q -LSsf "http://localhost:3053/api/v1/weather?lat=40.7128&lon=-74.0060"
+curl -q -LSsf "http://localhost:3053/api/v1/weather?city_id=5128581"
+curl -q -LSsf "http://localhost:3053/api/v1/weather?lat=40.7128&lon=-74.0060&nearest=true"
 
 # Stop server (Ctrl+C in first terminal)
 ```
@@ -164,7 +158,7 @@ curl "http://localhost:3053/api/v1/weather?lat=40.7128&lon=-74.0060&nearest=true
 
 ```bash
 # Generate coverage report
-./tests/run-tests.sh --coverage
+./tests/run_tests.sh --coverage
 
 # View in browser
 open coverage.html  # macOS
@@ -176,13 +170,10 @@ start coverage.html  # Windows
 
 ```bash
 # Run benchmarks
-./tests/run-tests.sh --bench
+./tests/run_tests.sh --bench
 
-# Or directly with Go
-go test -bench=. -benchmem ./tests/...
-
-# Specific benchmark
-go test -bench=BenchmarkWeatherAPI ./tests/integration/
+# Use the scripted test entrypoint
+./tests/run_tests.sh --bench
 ```
 
 ## Continuous Integration
@@ -192,7 +183,7 @@ The test suite is designed to work with CI/CD pipelines:
 ```yaml
 # Example: GitHub Actions
 - name: Run tests
-  run: ./tests/run-tests.sh --coverage
+  run: ./tests/run_tests.sh --coverage
 
 - name: Upload coverage
   uses: codecov/codecov-action@v3
@@ -250,7 +241,7 @@ func TestMyFunction(t *testing.T) {
 
 ## Test Data
 
-- All test data stored in `/tmp/weather-test-<pid>`
+- All test data stored in `/tmp/apimgr/weather-XXXXXX/`
 - Automatically cleaned up on exit
 - Use `KEEP_TEMP=1` to inspect after test run
 - Never commit test databases or temp files
@@ -259,8 +250,8 @@ func TestMyFunction(t *testing.T) {
 
 ### Tests failing with database errors
 ```bash
-# Ensure database schema is up to date
-go test ./tests/... -v
+# Re-run the containerized test suite
+./tests/run_tests.sh
 ```
 
 ### Port already in use
@@ -272,7 +263,7 @@ PORT=3054 ./tests/test-server.sh
 ### Coverage report not generating
 ```bash
 # Ensure you have write permissions
-./tests/run-tests.sh --coverage
+./tests/run_tests.sh --coverage
 ls -la coverage.out coverage.html
 ```
 

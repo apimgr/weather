@@ -22,12 +22,18 @@
                 <input type="hidden" name="code" value="{{.code}}">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Choose a username">
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Choose a username" value="{{.username}}">
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
+                    <label for="email">Invited Email</label>
+                    <input type="email" id="email" value="{{.email}}" readonly disabled>
                 </div>
+                {{if .role}}
+                <p class="auth-subtitle">Account role: {{.role}}</p>
+                {{end}}
+                {{if .expires_at}}
+                <p class="auth-subtitle">This invitation expires at {{.expires_at}}.</p>
+                {{end}}
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="new-password" placeholder="Enter password">

@@ -88,8 +88,10 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires ON user_sessions(expires_at);
 CREATE TABLE IF NOT EXISTS user_invites (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	code TEXT UNIQUE NOT NULL,
+	username TEXT,
 	email TEXT,
 	invited_by INTEGER,
+	role TEXT NOT NULL DEFAULT 'user',
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	expires_at DATETIME,
 	used_by INTEGER,
@@ -211,6 +213,10 @@ CREATE TABLE IF NOT EXISTS user_passkeys (
 	aaguid TEXT,
 	sign_count INTEGER DEFAULT 0,
 	name TEXT NOT NULL,
+	transport TEXT NOT NULL DEFAULT '[]',
+	attestation_type TEXT NOT NULL DEFAULT '',
+	backup_eligible BOOLEAN NOT NULL DEFAULT 0,
+	backup_state BOOLEAN NOT NULL DEFAULT 0,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	last_used_at DATETIME,
 	FOREIGN KEY (user_id) REFERENCES user_accounts(id) ON DELETE CASCADE

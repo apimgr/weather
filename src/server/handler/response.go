@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -147,6 +149,21 @@ func RespondData(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, data)
 }
 
+// RespondNegotiatedData sends JSON normally and text/plain as pretty-printed JSON.
+func RespondNegotiatedData(c *gin.Context, status int, data interface{}) {
+	if shouldRespondText(c) {
+		payload, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			c.String(status, "%s\n", fmt.Sprintf("%v", data))
+			return
+		}
+		c.Data(status, "text/plain; charset=utf-8", append(payload, '\n'))
+		return
+	}
+
+	c.JSON(status, data)
+}
+
 // RespondPaginated sends a paginated response per AI.md PART 20 line 17640
 // Format: {"data": [...], "pagination": {"page": 1, "limit": 250, "total": 1000, "pages": 4}}
 func RespondPaginated(c *gin.Context, data interface{}, page, limit, total int) {
@@ -231,6 +248,10 @@ func WantsJSON(c *gin.Context) bool {
 // NegotiateResponse returns JSON or HTML based on Accept header
 // AI.md PART 14: Content negotiation for all routes
 func NegotiateResponse(c *gin.Context, htmlTemplate string, data gin.H) {
+	if shouldRespondText(c) {
+		RespondNegotiatedData(c, http.StatusOK, data)
+		return
+	}
 	if WantsJSON(c) {
 		RespondData(c, data)
 		return
@@ -240,6 +261,10 @@ func NegotiateResponse(c *gin.Context, htmlTemplate string, data gin.H) {
 
 // NegotiateErrorResponse returns JSON or HTML error based on Accept header
 func NegotiateErrorResponse(c *gin.Context, status int, htmlTemplate string, errCode string, message string, data gin.H) {
+	if shouldRespondText(c) {
+		RespondError(c, status, errCode, message)
+		return
+	}
 	if WantsJSON(c) {
 		RespondError(c, status, errCode, message)
 		return

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
+
 	"github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/server/service"
 	"github.com/apimgr/weather/src/utils"
@@ -66,7 +67,8 @@ func (h *AdminsHandler) GetAdminCount(c *gin.Context) {
 // TEMPLATE.md Part 31: 15-minute invite tokens
 func (h *AdminsHandler) CreateInvite(c *gin.Context) {
 	var request struct {
-		Email string `json:"email" binding:"required,email"`
+		Email     string `json:"email" binding:"required,email"`
+		ExpiresIn string `json:"expires_in"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -82,22 +84,19 @@ func (h *AdminsHandler) CreateInvite(c *gin.Context) {
 	}
 	currentAdminID := adminIDInterface.(int)
 
-	invite, err := h.InviteService.CreateInvite(request.Email, currentAdminID)
+	invite, expiresIn, err := h.InviteService.CreateInvite(request.Email, currentAdminID, request.ExpiresIn)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to create invite",
-			"details": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"ok":    true,
+		"ok":         true,
 		"message":    "Invitation created successfully",
 		"token":      invite.Token,
 		"email":      invite.InvitedEmail,
 		"expires_at": invite.ExpiresAt,
-		"expires_in": "15 minutes",
+		"expires_in": expiresIn,
 	})
 }
 
@@ -114,14 +113,7 @@ func (h *AdminsHandler) AcceptInvite(c *gin.Context) {
 		return
 	}
 
-	// Hash password with Argon2id (TEMPLATE.md Part 0)
-	passwordHash, err := utils.HashPassword(request.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
-
-	admin, err := h.InviteService.AcceptInvite(request.Token, request.Username, passwordHash)
+	admin, err := h.InviteService.AcceptInvite(request.Token, request.Username, request.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Failed to accept invite",

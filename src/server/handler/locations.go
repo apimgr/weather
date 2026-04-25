@@ -367,28 +367,28 @@ func (h *LocationHandler) ShowEditLocationPage(c *gin.Context) {
 func (h *LocationHandler) SearchLocations(c *gin.Context) {
 	query := strings.TrimSpace(c.Query("q"))
 	if len(query) < 2 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Query must be at least 2 characters"})
+		InvalidInput(c, "Query must be at least 2 characters")
 		return
 	}
 
 	// Search in cities database
 	results := h.searchCities(query, 10)
 
-	c.JSON(http.StatusOK, results)
+	RespondNegotiatedData(c, http.StatusOK, results)
 }
 
 // LookupZipCode looks up a location by ZIP/postal code
 func (h *LocationHandler) LookupZipCode(c *gin.Context) {
 	zipCode := strings.TrimSpace(c.Param("code"))
 	if zipCode == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ZIP code is required"})
+		InvalidInput(c, "ZIP code is required")
 		return
 	}
 
 	// Use weather service to geocode the ZIP code
 	coords, err := h.WeatherService.ParseAndResolveLocation(zipCode, "")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ZIP code not found"})
+		NotFound(c, "ZIP code not found")
 		return
 	}
 
@@ -405,7 +405,7 @@ func (h *LocationHandler) LookupZipCode(c *gin.Context) {
 		"admin1":    enhanced.Admin1,
 	}
 
-	c.JSON(http.StatusOK, result)
+	RespondNegotiatedData(c, http.StatusOK, result)
 }
 
 // LookupCoordinates reverse geocodes coordinates to get location info
@@ -415,30 +415,30 @@ func (h *LocationHandler) LookupCoordinates(c *gin.Context) {
 
 	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid latitude"})
+		InvalidInput(c, "Invalid latitude")
 		return
 	}
 
 	lon, err := strconv.ParseFloat(lonStr, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid longitude"})
+		InvalidInput(c, "Invalid longitude")
 		return
 	}
 
 	// Validate coordinate ranges
 	if lat < -90 || lat > 90 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Latitude must be between -90 and 90"})
+		InvalidInput(c, "Latitude must be between -90 and 90")
 		return
 	}
 	if lon < -180 || lon > 180 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Longitude must be between -180 and 180"})
+		InvalidInput(c, "Longitude must be between -180 and 180")
 		return
 	}
 
 	// Use weather service to reverse geocode
 	coords, err := h.WeatherService.ReverseGeocode(lat, lon)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Location not found"})
+		NotFound(c, "Location not found")
 		return
 	}
 
@@ -455,7 +455,7 @@ func (h *LocationHandler) LookupCoordinates(c *gin.Context) {
 		"admin1":    enhanced.Admin1,
 	}
 
-	c.JSON(http.StatusOK, result)
+	RespondNegotiatedData(c, http.StatusOK, result)
 }
 
 // searchCities searches the cities database for matching names

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,6 +23,20 @@ func NewHurricaneHandler(hurricaneService *service.HurricaneService) *HurricaneH
 	}
 }
 
+// ListActiveStorms returns active storm data for non-HTTP callers such as GraphQL.
+func (h *HurricaneHandler) ListActiveStorms() ([]service.Storm, error) {
+	if h == nil || h.hurricaneService == nil {
+		return nil, fmt.Errorf("hurricane service not initialized")
+	}
+
+	data, err := h.hurricaneService.GetActiveStorms()
+	if err != nil {
+		return nil, err
+	}
+
+	return data.ActiveStorms, nil
+}
+
 // HandleHurricaneRequest handles hurricane tracking page requests
 func (h *HurricaneHandler) HandleHurricaneRequest(c *gin.Context) {
 	// Check if user wants JSON
@@ -32,7 +47,7 @@ func (h *HurricaneHandler) HandleHurricaneRequest(c *gin.Context) {
 	data, err := h.hurricaneService.GetActiveStorms()
 	if err != nil {
 		if wantsJSON {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch hurricane data"})
+			RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch hurricane data")
 		} else {
 			c.String(http.StatusInternalServerError, "Failed to fetch hurricane data: %v", err)
 		}
@@ -41,7 +56,7 @@ func (h *HurricaneHandler) HandleHurricaneRequest(c *gin.Context) {
 
 	// Return JSON if requested
 	if wantsJSON {
-		c.JSON(http.StatusOK, data)
+		RespondNegotiatedData(c, http.StatusOK, data)
 		return
 	}
 
@@ -77,11 +92,11 @@ func (h *HurricaneHandler) HandleHurricaneRequest(c *gin.Context) {
 func (h *HurricaneHandler) HandleHurricaneAPI(c *gin.Context) {
 	data, err := h.hurricaneService.GetActiveStorms()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch hurricane data"})
+		RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch hurricane data")
 		return
 	}
 
-	c.JSON(http.StatusOK, data)
+	RespondNegotiatedData(c, http.StatusOK, data)
 }
 
 // HandleHurricaneByIDAPI handles JSON API requests for a specific hurricane by ID
@@ -100,19 +115,13 @@ func (h *HurricaneHandler) HandleHurricaneAPI(c *gin.Context) {
 func (h *HurricaneHandler) HandleHurricaneByIDAPI(c *gin.Context) {
 	hurricaneID := c.Param("id")
 	if hurricaneID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ok":    false,
-			"error": "Hurricane ID required",
-		})
+		RespondError(c, http.StatusBadRequest, ErrInvalidInput, "Hurricane ID required")
 		return
 	}
 
 	data, err := h.hurricaneService.GetActiveStorms()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"ok":    false,
-			"error": "Failed to fetch hurricane data",
-		})
+		RespondError(c, http.StatusInternalServerError, ErrInternal, "Failed to fetch hurricane data")
 		return
 	}
 
@@ -127,14 +136,11 @@ func (h *HurricaneHandler) HandleHurricaneByIDAPI(c *gin.Context) {
 	}
 
 	if hurricane == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"ok":    false,
-			"error": "Hurricane not found",
-		})
+		NotFound(c, "Hurricane not found")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ok":        true,
 		"hurricane": hurricane,
 	})

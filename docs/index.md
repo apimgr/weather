@@ -13,7 +13,6 @@ Weather Service is a production-grade weather API providing global weather forec
 - **Moon Phases** - Detailed lunar information including phases, illumination, rise/set times
 - **GeoIP Location** - Automatic location detection via IP address
 - **Real-Time Notifications** - WebSocket-powered notification system
-- **Custom Domains** - Multi-domain hosting with DNS verification
 - **Mobile Responsive** - Optimized for desktop, tablet, and mobile
 - **Single Static Binary** - No external dependencies, all assets embedded
 
@@ -24,8 +23,9 @@ Weather Service is a production-grade weather API providing global weather forec
     ```bash
     docker run -d \
       --name weather \
-      -p 80:80 \
-      -v weather-data:/var/lib/weather \
+      -p 64580:80 \
+      -v ./rootfs/config:/config:z \
+      -v ./rootfs/data:/data:z \
       ghcr.io/apimgr/weather:latest
     ```
 
@@ -33,7 +33,7 @@ Weather Service is a production-grade weather API providing global weather forec
 
     ```bash
     # Download latest release
-    wget https://github.com/apimgr/weather/releases/latest/download/weather-linux-amd64
+    curl -q -LSsf -O https://github.com/apimgr/weather/releases/latest/download/weather-linux-amd64
     chmod +x weather-linux-amd64
     sudo mv weather-linux-amd64 /usr/local/bin/weather
 
@@ -48,9 +48,10 @@ Weather Service is a production-grade weather API providing global weather forec
       weather:
         image: ghcr.io/apimgr/weather:latest
         ports:
-          - "80:80"
+          - "64580:80"
         volumes:
-          - ./data:/var/lib/weather
+          - ./rootfs/config:/config:z
+          - ./rootfs/data:/data:z
         restart: unless-stopped
     ```
 

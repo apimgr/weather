@@ -275,8 +275,8 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 
 	// Create administrator account in server_admin_credentials (NOT user_accounts)
 	result, err := database.GetServerDB().Exec(`
-		INSERT INTO server_admin_credentials (username, email, password_hash, created_at, updated_at)
-		VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+		INSERT INTO server_admin_credentials (username, email, password_hash, is_super_admin, is_active, created_at, updated_at)
+		VALUES (?, ?, ?, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 	`, username, email, hashedPassword)
 
 	if err != nil {
@@ -345,9 +345,10 @@ func (h *SetupHandler) CreateAdmin(c *gin.Context) {
 	// Hash and store the API token
 	tokenHash := utils.HashAPIToken(apiToken)
 	_, err = database.GetServerDB().Exec(`
-		INSERT INTO server_admin_tokens (admin_id, token_hash, name, created_at, expires_at)
-		VALUES (?, ?, 'Setup Token', CURRENT_TIMESTAMP, datetime('now', '+1 year'))
-	`, adminID, tokenHash)
+		UPDATE server_admin_credentials
+		SET api_token_hash = ?, api_token_prefix = 'adm_', updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`, tokenHash, adminID)
 	if err != nil {
 		// Log but don't fail - admin was created successfully
 		fmt.Printf("Warning: failed to store admin API token: %v\n", err)
@@ -717,128 +718,17 @@ func (h *SetupHandler) CompleteSetup(c *gin.Context) {
 	})
 }
 
-// =============================================================================
-// Server Setup Wizard (Admin Only)
-// =============================================================================
-
-// ShowServerSetupWelcome shows the server setup welcome page
-func (h *SetupHandler) ShowServerSetupWelcome(c *gin.Context) {
-	c.HTML(http.StatusOK, "page/server_setup_welcome.tmpl", gin.H{
-		"Title": "Server Setup - Weather",
-	})
-}
-
-// ShowServerSetupSettings shows the server settings configuration page
-func (h *SetupHandler) ShowServerSetupSettings(c *gin.Context) {
-	c.HTML(http.StatusOK, "page/server_setup_settings.tmpl", gin.H{
-		"Title": "Server Settings - Weather",
-	})
-}
-
-// SaveServerSettings saves server configuration settings
-func (h *SetupHandler) SaveServerSettings(c *gin.Context) {
-	var input struct {
-		ServerName          string `json:"serverName"`
-		ServerDescription   string `json:"serverDescription"`
-		TemperatureUnit     string `json:"temperatureUnit"`
-		WindSpeedUnit       string `json:"windSpeedUnit"`
-		PrecipitationUnit   string `json:"precipitationUnit"`
-		RateLimitAnon       int    `json:"rateLimitAnon"`
-		RateLimitAuth       int    `json:"rateLimitAuth"`
-		EnableRegistration  bool   `json:"enableRegistration"`
-		EnableAlerts        bool   `json:"enableAlerts"`
-		EnableNotifications bool   `json:"enableNotifications"`
-		EnableAuditLog      bool   `json:"enableAuditLog"`
-	}
-
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Save all settings to database
-	settings := map[string]string{
-		"server.name":              input.ServerName,
-		"server.description":       input.ServerDescription,
-		"units.temperature":        input.TemperatureUnit,
-		"units.wind_speed":         input.WindSpeedUnit,
-		"units.precipitation":      input.PrecipitationUnit,
-		"rate_limit.anonymous":     fmt.Sprintf("%d", input.RateLimitAnon),
-		"rate_limit.authenticated": fmt.Sprintf("%d", input.RateLimitAuth),
-		"features.registration":    boolToString(input.EnableRegistration),
-		"features.alerts":          boolToString(input.EnableAlerts),
-		"features.notifications":   boolToString(input.EnableNotifications),
-		"features.audit_log":       boolToString(input.EnableAuditLog),
-	}
-
-	for key, value := range settings {
-		_, err := database.GetServerDB().Exec(`
-			INSERT INTO server_config (key, value, updated_at)
-			VALUES (?, ?, datetime('now'))
-			ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = datetime('now')
-		`, key, value, value)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save setting: " + key})
-			return
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"ok":  true,
-		"redirect": "/setup/complete",
-	})
-}
-
-// ShowServerSetupComplete shows the completion page and marks setup as done
-func (h *SetupHandler) ShowServerSetupComplete(c *gin.Context) {
-	// Mark server setup as complete
-	_, err := database.GetServerDB().Exec(`
-		INSERT INTO server_config (key, value, updated_at)
-		VALUES ('setup.completed', 'true', datetime('now'))
-		ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')
-	`)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark setup as complete"})
-		return
-	}
-
-	c.HTML(http.StatusOK, "page/server_setup_complete.tmpl", gin.H{
-		"Title": "Setup Complete - Weather",
-	})
-}
-
 // GetSetupStatus returns the current setup status as a healthz endpoint
 func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
-	// Check if any users exist
-	var userCount int
-	err := database.GetUsersDB().QueryRow("SELECT COUNT(*) FROM user_accounts").Scan(&userCount)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Failed to check setup status",
-		})
-		return
+	cfg, _ := config.LoadConfig()
+	adminPath := "/admin"
+	if cfg != nil {
+		adminPath = "/" + cfg.GetAdminPath()
 	}
 
-	// No users = setup not started
-	if userCount == 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"status":      "not_started",
-			"step":        0,
-			"total_steps": 3,
-			"message":     "Setup not started",
-			"next_action": "Create first user account",
-			"next_route":  "/auth/register",
-			"is_complete": false,
-		})
-		return
-	}
-
-	// Check if admin exists in server_admin_credentials
+	// Check if a primary admin exists
 	var adminCount int
-	err = database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&adminCount)
+	err := database.GetServerDB().QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&adminCount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -847,15 +737,15 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 		return
 	}
 
-	// First user created but no admin = step 1 complete
+	// No admin = setup not started
 	if adminCount == 0 {
 		c.JSON(http.StatusOK, gin.H{
-			"status":      "user_created",
-			"step":        1,
-			"total_steps": 3,
-			"message":     "First user created, admin account needed",
-			"next_action": "Create admin account",
-			"next_route":  "/setup/admin/welcome",
+			"status":      "not_started",
+			"step":        0,
+			"total_steps": 2,
+			"message":     "Setup not started",
+			"next_action": "Create primary admin account",
+			"next_route":  adminPath,
 			"is_complete": false,
 		})
 		return
@@ -865,32 +755,25 @@ func (h *SetupHandler) GetSetupStatus(c *gin.Context) {
 	var setupComplete string
 	err = database.GetServerDB().QueryRow("SELECT value FROM server_config WHERE key = 'setup.completed'").Scan(&setupComplete)
 
-	// If setup.completed doesn't exist or is not "true", server settings needed
+	// If setup.completed doesn't exist or is not "true", continue the setup wizard
 	if err != nil || setupComplete != "true" {
 		c.JSON(http.StatusOK, gin.H{
 			"status":      "admin_created",
-			"step":        2,
-			"total_steps": 3,
-			"message":     "Admin account created, server configuration needed",
-			"next_action": "Configure server settings",
-			"next_route":  "/setup/server/welcome",
+			"step":        1,
+			"total_steps": 2,
+			"message":     "Primary admin created, setup wizard still in progress",
+			"next_action": "Continue server setup",
+			"next_route":  adminPath + "/server/setup/api-token",
 			"is_complete": false,
 		})
 		return
 	}
 
 	// Setup is complete
-	// Get admin path from config (AI.md: use configurable admin_path)
-	cfg, _ := config.LoadConfig()
-	adminPath := "/admin"
-	if cfg != nil {
-		adminPath = "/" + cfg.GetAdminPath()
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"status":      "completed",
-		"step":        3,
-		"total_steps": 3,
+		"step":        2,
+		"total_steps": 2,
 		"message":     "Setup completed successfully",
 		"next_action": "Access admin dashboard",
 		"next_route":  adminPath,

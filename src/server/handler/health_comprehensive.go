@@ -13,6 +13,14 @@ import (
 	"github.com/apimgr/weather/src/utils"
 )
 
+// AdminServerStatus handles admin API server status/health requests with JSON-only output.
+func AdminServerStatus(db *database.DB, httpPort string, httpsPort int, sslManager interface{}) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		httpStatus, response := buildAdminServerStatusResponse(db, c, httpPort, httpsPort, sslManager)
+		c.JSON(httpStatus, response)
+	}
+}
+
 // ComprehensiveHealthCheck handles GET /healthz with full system health data
 func ComprehensiveHealthCheck(db *database.DB, httpPort string, httpsPort int, sslManager interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -180,10 +188,128 @@ func ComprehensiveHealthCheck(db *database.DB, httpPort string, httpsPort int, s
 			"features": features,
 		}
 
-		// TEMPLATE.md: /healthz must return HTML (line 4670)
-		// /api/v1/healthz returns JSON (handled by different handler)
+		if shouldRespondText(c) {
+			RespondNegotiatedData(c, httpStatus, response)
+			return
+		}
+
+		// TEMPLATE.md: /healthz must return HTML for browser requests.
+		// /api/v1/healthz returns JSON or text/plain via a different handler.
 		c.HTML(httpStatus, "page/healthz.tmpl", response)
 	}
+}
+
+func buildAdminServerStatusResponse(db *database.DB, c *gin.Context, httpPort string, httpsPort int, sslManager interface{}) (int, gin.H) {
+	status := GetInitStatus()
+	startTime := status.Started
+	version := readVersion()
+
+	overallStatus := "healthy"
+	httpStatus := http.StatusOK
+
+	dbStatus, dbLatency, dbErr := db.HealthCheck()
+	if dbErr != nil || dbStatus != "connected" {
+		overallStatus = "unhealthy"
+		httpStatus = http.StatusServiceUnavailable
+	}
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	memUsedBytes := int64(m.Alloc)
+	memTotalBytes := int64(m.Sys)
+	memUsedPercent := 0
+	if memTotalBytes > 0 {
+		memUsedPercent = int(float64(memUsedBytes) / float64(memTotalBytes) * 100)
+	}
+
+	memStatus := "ok"
+	if memUsedPercent > 95 {
+		memStatus = "critical"
+		overallStatus = "unhealthy"
+		httpStatus = http.StatusServiceUnavailable
+	} else if memUsedPercent > 80 {
+		memStatus = "warning"
+		if overallStatus == "healthy" {
+			overallStatus = "degraded"
+		}
+	}
+
+	dataDir := getDataDir()
+	logDir := getLogDir()
+	dataDiskUsage := getDiskUsage(dataDir)
+	logDiskUsage := getDiskUsage(logDir)
+
+	diskStatus := "ok"
+	if dataDiskUsage.UsedPercent > 95 || logDiskUsage.UsedPercent > 95 {
+		diskStatus = "critical"
+		overallStatus = "unhealthy"
+		httpStatus = http.StatusServiceUnavailable
+	} else if dataDiskUsage.UsedPercent > 80 || logDiskUsage.UsedPercent > 80 {
+		diskStatus = "warning"
+		if overallStatus == "healthy" {
+			overallStatus = "degraded"
+		}
+	}
+
+	sessionCount, _ := db.GetSessionCount()
+	sslStatus := getSSLStatus(sslManager)
+	schedulerStatus := getSchedulerStatus()
+	requestStats := getRequestStats()
+	serverInfo := getServerInfo(c, httpPort, httpsPort, sslManager)
+
+	response := gin.H{
+		"status":         overallStatus,
+		"timestamp":      time.Now().Format(time.RFC3339),
+		"version":        version,
+		"uptime_seconds": int64(time.Since(startTime).Seconds()),
+		"checks": gin.H{
+			"database": gin.H{
+				"status":     dbStatus,
+				"type":       "sqlite",
+				"latency_ms": dbLatency,
+			},
+			"initialization": gin.H{
+				"countries": status.Countries,
+				"cities":    status.Cities,
+				"weather":   status.Weather,
+				"ready":     IsInitialized(),
+			},
+			"disk": gin.H{
+				"status": diskStatus,
+				"data_dir": gin.H{
+					"path":         dataDir,
+					"used_bytes":   dataDiskUsage.UsedBytes,
+					"free_bytes":   dataDiskUsage.FreeBytes,
+					"total_bytes":  dataDiskUsage.TotalBytes,
+					"used_percent": dataDiskUsage.UsedPercent,
+				},
+				"log_dir": gin.H{
+					"path":         logDir,
+					"used_bytes":   logDiskUsage.UsedBytes,
+					"free_bytes":   logDiskUsage.FreeBytes,
+					"total_bytes":  logDiskUsage.TotalBytes,
+					"used_percent": logDiskUsage.UsedPercent,
+				},
+			},
+			"memory": gin.H{
+				"status":       memStatus,
+				"used_bytes":   memUsedBytes,
+				"total_bytes":  memTotalBytes,
+				"used_percent": memUsedPercent,
+				"heap_bytes":   int64(m.HeapAlloc),
+				"gc_runs":      m.NumGC,
+			},
+			"ssl":       sslStatus,
+			"scheduler": schedulerStatus,
+			"sessions": gin.H{
+				"active": sessionCount,
+			},
+			"requests": requestStats,
+		},
+		"server": serverInfo,
+	}
+
+	return httpStatus, response
 }
 
 // Helper functions
@@ -229,6 +355,10 @@ func getLogDir() string {
 		dir = "./logs"
 	}
 	return dir
+}
+
+func GetLogDir() string {
+	return getLogDir()
 }
 
 type DiskUsage struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
+	models "github.com/apimgr/weather/src/server/model"
 )
 
 // AdminWebHandler handles web settings administration
@@ -26,6 +27,24 @@ func NewAdminWebHandler(db *database.DB) *AdminWebHandler {
 // GET /admin/server/web
 func (h *AdminWebHandler) ShowWebSettings(c *gin.Context) {
 	cfg := config.GetGlobalConfig()
+	adminIDValue, exists := c.Get("admin_id")
+	if !exists {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+
+	adminID, ok := adminIDValue.(int)
+	if !ok {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+
+	adminModel := &models.AdminModel{DB: database.GetServerDB()}
+	admin, err := adminModel.GetByID(int64(adminID))
+	if err != nil {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
 
 	robotsTxt := ""
 	securityTxt := ""
@@ -46,7 +65,7 @@ func (h *AdminWebHandler) ShowWebSettings(c *gin.Context) {
 		"RobotsTxt":   robotsTxt,
 		"SecurityTxt": securityTxt,
 		"AppURL":      appURL,
-		"User":        c.MustGet("user"),
+		"User":        admin,
 	})
 }
 
@@ -188,9 +207,13 @@ func (h *AdminWebHandler) ServeSecurityTxt(c *gin.Context) {
 
 	if securityTxt == "" {
 		// Generate default security.txt if not configured
-		securityTxt = `Contact: mailto:security@example.com
-Expires: 2026-12-31T23:59:59.000Z
-Preferred-Languages: en`
+		securityTxt = fmt.Sprintf(
+			`Contact: mailto:%s
+Expires: %s
+Preferred-Languages: en`,
+			config.DefaultEmailAddress("security", cfg),
+			time.Now().AddDate(1, 0, 0).UTC().Format(time.RFC3339),
+		)
 	}
 
 	// Replace template variables
@@ -219,8 +242,6 @@ func (h *AdminWebHandler) ServeSitemap(c *gin.Context) {
 	}
 	appURL := scheme + "://" + c.Request.Host
 	lastmod := time.Now().Format("2006-01-02")
-
-	cfg := config.GetGlobalConfig()
 
 	// Build sitemap XML
 	var sb strings.Builder
@@ -251,11 +272,7 @@ func (h *AdminWebHandler) ServeSitemap(c *gin.Context) {
 	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/openapi</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n", appURL, lastmod))
 
 	// GraphQL endpoint - priority 0.7, weekly
-	apiPath := "/api/v1"
-	if cfg != nil {
-		apiPath = cfg.GetAPIPath()
-	}
-	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s%s/graphql</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n", appURL, apiPath, lastmod))
+	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/graphql</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n", appURL, lastmod))
 
 	// Health check - priority 0.5, weekly
 	sb.WriteString(fmt.Sprintf("  <url>\n    <loc>%s/healthz</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.5</priority>\n  </url>\n", appURL, lastmod))

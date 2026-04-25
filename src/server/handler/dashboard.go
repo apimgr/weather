@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/apimgr/weather/src/database"
 	"github.com/apimgr/weather/src/server/middleware"
 	"github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/utils"
@@ -38,7 +39,7 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 		unreadCount = 0
 	}
 
-	c.HTML(http.StatusOK, "page/dashboard.tmpl", utils.TemplateData(c, gin.H{
+	NegotiateResponse(c, "page/dashboard.tmpl", utils.TemplateData(c, gin.H{
 		"title":         "Dashboard - Weather Service",
 		"user":          user,
 		"locations":     locations,
@@ -50,9 +51,22 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 
 // ShowAdminPanel renders the admin panel
 func (h *DashboardHandler) ShowAdminPanel(c *gin.Context) {
-	user, ok := middleware.GetCurrentUser(c)
-	if !ok || user.Role != "admin" {
-		c.Redirect(http.StatusFound, "/users/dashboard")
+	adminIDValue, exists := c.Get("admin_id")
+	if !exists {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+
+	adminID, ok := adminIDValue.(int)
+	if !ok {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+
+	adminModel := &models.AdminModel{DB: database.GetServerDB()}
+	admin, err := adminModel.GetByID(int64(adminID))
+	if err != nil {
+		c.Redirect(http.StatusFound, "/admin")
 		return
 	}
 
@@ -64,11 +78,11 @@ func (h *DashboardHandler) ShowAdminPanel(c *gin.Context) {
 
 	// Count total locations across all users
 	var totalLocations int
-	h.DB.QueryRow("SELECT COUNT(*) FROM saved_locations").Scan(&totalLocations)
+	h.DB.QueryRow("SELECT COUNT(*) FROM user_saved_locations").Scan(&totalLocations)
 
 	c.HTML(http.StatusOK, "admin/admin.tmpl", utils.TemplateData(c, gin.H{
 		"title":          "Admin Panel - Weather Service",
-		"user":           user,
+		"user":           admin,
 		"totalUsers":     totalUsers,
 		"adminCount":     adminCount,
 		"totalLocations": totalLocations,

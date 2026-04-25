@@ -362,6 +362,151 @@ type UnreadCount struct {
 	Count int `json:"count"`
 }
 
+type UserSettings struct {
+	Account       AccountSettings      `json:"account"`
+	Privacy       PrivacySettings      `json:"privacy"`
+	Notifications NotificationSettings `json:"notifications"`
+	Appearance    AppearanceSettings   `json:"appearance"`
+}
+
+type AccountSettings struct {
+	DisplayName string `json:"displayName"`
+	Bio         string `json:"bio"`
+	Location    string `json:"location"`
+	Website     string `json:"website"`
+	Timezone    string `json:"timezone"`
+	Language    string `json:"language"`
+	DateFormat  string `json:"dateFormat"`
+	TimeFormat  string `json:"timeFormat"`
+}
+
+type PrivacySettings struct {
+	Visibility    string `json:"visibility"`
+	ShowEmail     bool   `json:"showEmail"`
+	ShowActivity  bool   `json:"showActivity"`
+	ShowOrgs      bool   `json:"showOrgs"`
+	Searchable    bool   `json:"searchable"`
+	OrgVisibility bool   `json:"orgVisibility"`
+}
+
+type PublicAvatar struct {
+	Type string `json:"type"`
+	Urls any    `json:"urls"`
+}
+
+type PublicUserProfile struct {
+	Username    string       `json:"username"`
+	DisplayName *string      `json:"displayName,omitempty"`
+	Avatar      PublicAvatar `json:"avatar"`
+	Bio         *string      `json:"bio,omitempty"`
+	Location    *string      `json:"location,omitempty"`
+	Website     *string      `json:"website,omitempty"`
+	Verified    bool         `json:"verified"`
+	CreatedAt   time.Time    `json:"createdAt"`
+}
+
+type NotificationSettings struct {
+	EmailSecurity bool   `json:"emailSecurity"`
+	EmailMentions bool   `json:"emailMentions"`
+	EmailUpdates  bool   `json:"emailUpdates"`
+	EmailDigest   string `json:"emailDigest"`
+	PushEnabled   bool   `json:"pushEnabled"`
+	PushMentions  bool   `json:"pushMentions"`
+}
+
+type AppearanceSettings struct {
+	Theme        string `json:"theme"`
+	FontSize     string `json:"fontSize"`
+	ReduceMotion bool   `json:"reduceMotion"`
+}
+
+type UserToken struct {
+	ID          string     `json:"id"`
+	Name        *string    `json:"name,omitempty"`
+	TokenPrefix string     `json:"tokenPrefix"`
+	Scopes      *string    `json:"scopes,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	ExpiresAt   *time.Time `json:"expiresAt,omitempty"`
+	LastUsedAt  *time.Time `json:"lastUsedAt,omitempty"`
+	Token       *string    `json:"token,omitempty"`
+}
+
+type AccountSettingsInput struct {
+	DisplayName string `json:"displayName"`
+	Bio         string `json:"bio"`
+	Location    string `json:"location"`
+	Website     string `json:"website"`
+	Timezone    string `json:"timezone"`
+	Language    string `json:"language"`
+	DateFormat  string `json:"dateFormat"`
+	TimeFormat  string `json:"timeFormat"`
+}
+
+type PrivacySettingsInput struct {
+	Visibility    string `json:"visibility"`
+	ShowEmail     bool   `json:"showEmail"`
+	ShowActivity  bool   `json:"showActivity"`
+	ShowOrgs      bool   `json:"showOrgs"`
+	Searchable    bool   `json:"searchable"`
+	OrgVisibility bool   `json:"orgVisibility"`
+}
+
+type NotificationSettingsInput struct {
+	EmailSecurity bool   `json:"emailSecurity"`
+	EmailMentions bool   `json:"emailMentions"`
+	EmailUpdates  bool   `json:"emailUpdates"`
+	EmailDigest   string `json:"emailDigest"`
+	PushEnabled   bool   `json:"pushEnabled"`
+	PushMentions  bool   `json:"pushMentions"`
+}
+
+type AppearanceSettingsInput struct {
+	Theme        string `json:"theme"`
+	FontSize     string `json:"fontSize"`
+	ReduceMotion bool   `json:"reduceMotion"`
+}
+
+type ServerAdmin struct {
+	ID           string     `json:"id"`
+	Username     string     `json:"username"`
+	Email        string     `json:"email"`
+	IsSuperAdmin bool       `json:"isSuperAdmin"`
+	IsActive     bool       `json:"isActive"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	LastLoginAt  *time.Time `json:"lastLoginAt,omitempty"`
+}
+
+type ServerAdminInvite struct {
+	Token     string    `json:"token"`
+	Email     string    `json:"email"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	ExpiresIn string    `json:"expiresIn"`
+	InviteURL string    `json:"inviteUrl"`
+}
+
+type ServerAdminOverview struct {
+	Count         int          `json:"count"`
+	CurrentAdmin  *ServerAdmin `json:"currentAdmin"`
+	OnlineAdmins  []string     `json:"onlineAdmins"`
+	PrivacyNotice string       `json:"privacyNotice"`
+}
+
+type UserInvite struct {
+	ID        string     `json:"id"`
+	Token     string     `json:"token"`
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Role      string     `json:"role"`
+	CreatedAt time.Time  `json:"createdAt"`
+	ExpiresAt time.Time  `json:"expiresAt"`
+	MaxUses   int        `json:"maxUses"`
+	UseCount  int        `json:"useCount"`
+	UsedAt    *time.Time `json:"usedAt,omitempty"`
+	Status    string     `json:"status"`
+	InviteURL string     `json:"inviteUrl"`
+}
+
 type UserProfile struct {
 	ID          string  `json:"id"`
 	Username    string  `json:"username"`

@@ -141,4 +141,18 @@ NEVER use URL path prefixes (/es/dashboard) -- use ?lang=es + cookie only.
 
 ## Reference
 
-For complete details, see AI.md PART 29 (39157-40977), PART 30 (40978-41709), PART 31 (41710-43316)
+## Translation Layout
+
+- Locale files live in `src/common/i18n/locales/`
+- The shared i18n package embeds `locales/*.json`
+- `make i18n-validate` MUST validate `src/common/i18n/locales`
+
+## Test Entry Points
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `run_tests.sh` | `tests/` | Auto-detect and run tests |
+| `docker.sh` | `tests/` | Docker integration testing |
+| `incus.sh` | `tests/` | Incus integration testing |
+
+For complete details, see AI.md PART 29, PART 30, PART 31

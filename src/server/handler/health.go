@@ -1,17 +1,22 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
+	models "github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/utils"
 )
 
@@ -83,56 +88,97 @@ func GetInitStatus() *utils.InitializationStatus {
 	}
 }
 
-// HealthCheck handles GET /healthz
-func HealthCheck(c *gin.Context) {
-	status := GetInitStatus()
-	uptime := time.Since(status.Started)
-
-	health := gin.H{
-		"status":    "ok",
-		"timestamp": utils.Now(),
-		"service":   "Weather",
-		"version":   "2.0.0-go",
-		"uptime":    uptime.String(),
-		"ready":     IsInitialized(),
-		"initialization": gin.H{
-			"countries": status.Countries,
-			"cities":    status.Cities,
-			"weather":   status.Weather,
-		},
-	}
-
-	if !IsInitialized() {
-		health["status"] = "initializing"
-		c.JSON(http.StatusServiceUnavailable, health)
-		return
-	}
-
-	c.JSON(http.StatusOK, health)
+type publicHealthProject struct {
+	Name        string `json:"name"`
+	Tagline     string `json:"tagline,omitempty"`
+	Description string `json:"description"`
 }
 
-// ReadinessCheck handles GET /readyz (Kubernetes readiness probe)
-func ReadinessCheck(c *gin.Context) {
-	if IsInitialized() {
-		c.JSON(http.StatusOK, gin.H{
-			"ready":     true,
-			"timestamp": utils.Now(),
-		})
-	} else {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"ready":     false,
-			"timestamp": utils.Now(),
-			"message":   "Services still initializing",
-		})
-	}
+type publicHealthBuild struct {
+	Commit string `json:"commit"`
+	Date   string `json:"date"`
 }
 
-// LivenessCheck handles GET /livez (Kubernetes liveness probe)
-func LivenessCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"alive":     true,
-		"timestamp": utils.Now(),
-	})
+type publicHealthCluster struct {
+	Enabled   bool     `json:"enabled"`
+	Status    string   `json:"status,omitempty"`
+	Primary   string   `json:"primary"`
+	Nodes     []string `json:"nodes"`
+	NodeCount int      `json:"node_count,omitempty"`
+	Role      string   `json:"role,omitempty"`
+}
+
+type publicHealthTor struct {
+	Enabled  bool   `json:"enabled"`
+	Running  bool   `json:"running"`
+	Status   string `json:"status,omitempty"`
+	Hostname string `json:"hostname,omitempty"`
+}
+
+type publicHealthFeatures struct {
+	MultiUser bool            `json:"multi_user"`
+	Tor       publicHealthTor `json:"tor"`
+	GeoIP     bool            `json:"geoip"`
+}
+
+type publicHealthChecks struct {
+	Database  string `json:"database"`
+	Cache     string `json:"cache"`
+	Disk      string `json:"disk"`
+	Scheduler string `json:"scheduler"`
+	Cluster   string `json:"cluster,omitempty"`
+	Tor       string `json:"tor,omitempty"`
+}
+
+type publicHealthStats struct {
+	RequestsTotal     int `json:"requests_total"`
+	Requests24H       int `json:"requests_24h"`
+	ActiveConnections int `json:"active_connections"`
+}
+
+type publicHealthMaintenance struct {
+	Reason  string `json:"reason"`
+	Message string `json:"message"`
+}
+
+type publicHealthResponse struct {
+	Project     publicHealthProject      `json:"project"`
+	Status      string                   `json:"status"`
+	Version     string                   `json:"version"`
+	GoVersion   string                   `json:"go_version"`
+	Build       publicHealthBuild        `json:"build"`
+	Uptime      string                   `json:"uptime"`
+	Mode        string                   `json:"mode"`
+	Timestamp   string                   `json:"timestamp"`
+	Cluster     publicHealthCluster      `json:"cluster"`
+	Features    publicHealthFeatures     `json:"features"`
+	Checks      publicHealthChecks       `json:"checks"`
+	Stats       publicHealthStats        `json:"stats"`
+	Maintenance *publicHealthMaintenance `json:"maintenance,omitempty"`
+}
+
+// HealthCheck handles GET /healthz with browser/html, CLI/text, and API/json negotiation.
+func HealthCheck(db *database.DB, startTime time.Time) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		statusCode, response := buildPublicHealthResponse(db, startTime, c)
+
+		switch {
+		case shouldRespondText(c):
+			c.Data(statusCode, "text/plain; charset=utf-8", []byte(formatPublicHealthText(response)))
+		case wantsExplicitJSON(c):
+			renderIndentedJSON(c, statusCode, response)
+		case utils.IsBrowser(c):
+			c.HTML(statusCode, "healthz.tmpl", utils.TemplateData(c, gin.H{
+				"title":              "Health Status",
+				"page":               "healthz",
+				"health":             response,
+				"health_status_class": publicHealthStatusClass(response.Status),
+				"health_status_text":  publicHealthStatusText(response.Status),
+			}))
+		default:
+			c.Data(statusCode, "text/plain; charset=utf-8", []byte(formatPublicHealthText(response)))
+		}
+	}
 }
 
 // DebugInfo handles GET /debug/info
@@ -179,8 +225,8 @@ func ServeLoadingPage(c *gin.Context) {
 	uptime := time.Since(status.Started)
 
 	// Check if it's an API request (wants JSON)
-	if c.GetHeader("Accept") == "application/json" || c.Query("format") == "json" {
-		c.JSON(http.StatusServiceUnavailable, gin.H{
+	if WantsJSON(c) {
+		RespondNegotiatedData(c, http.StatusServiceUnavailable, gin.H{
 			"status":  "Initializing",
 			"message": "Services are starting up. Please wait a moment.",
 			"initialization": gin.H{
@@ -259,169 +305,11 @@ func findSubstring(s, substr string) bool {
 	return false
 }
 
-// APIHealthCheck handles GET /api/v1/healthz - AI.md PART 13 compliant format
+// APIHealthCheck handles GET /api/v1/healthz - same JSON as /healthz, always JSON.
 func APIHealthCheck(db *database.DB, startTime time.Time) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Calculate uptime in human-readable format
-		uptime := time.Since(startTime)
-		uptimeStr := formatUptime(uptime)
-
-		// Get mode (production/development)
-		mode := os.Getenv("MODE")
-		if mode == "" {
-			mode = "production"
-		}
-
-		// Database health check
-		dbStatus, _, dbErr := db.HealthCheck()
-		dbCheck := "ok"
-		if dbErr != nil || dbStatus != "connected" {
-			dbCheck = "error"
-		}
-
-		// Cache check (currently none/memory)
-		cacheCheck := "ok"
-
-		// Disk check (simplified)
-		diskCheck := "ok"
-
-		// Scheduler check (assume ok if no errors)
-		schedulerCheck := "ok"
-
-		// Overall status per AI.md PART 13: healthy | degraded | unhealthy
-		status := "healthy"
-		httpStatus := http.StatusOK
-
-		// Count issues for degraded vs unhealthy determination
-		criticalIssues := 0
-		warningIssues := 0
-
-		if dbCheck == "error" {
-			criticalIssues++
-		}
-		if cacheCheck == "error" {
-			warningIssues++
-		}
-		if diskCheck == "error" {
-			warningIssues++
-		}
-		if schedulerCheck == "error" {
-			warningIssues++
-		}
-
-		// Determine status: unhealthy (critical), degraded (warnings), healthy (none)
-		if criticalIssues > 0 {
-			status = "unhealthy"
-			httpStatus = http.StatusServiceUnavailable
-		} else if warningIssues > 0 {
-			status = "degraded"
-			// 200 OK but degraded - still functional
-		}
-
-		// Get version info
-		version := getVersionFromEnv()
-		goVersion := runtime.Version()
-
-		// Build info from ldflags (set during build)
-		buildCommit := os.Getenv("BUILD_COMMIT")
-		if buildCommit == "" {
-			buildCommit = "unknown"
-		}
-		buildDate := os.Getenv("BUILD_DATE")
-		if buildDate == "" {
-			buildDate = time.Now().Format(time.RFC3339)
-		}
-
-		// Check for Tor service status
-		// Get actual status from TorService via global provider (set in main.go)
-		torRunning, torHostname := GetTorStatus()
-		torEnabled := torHostname != "" || torRunning
-		torStatus := ""
-
-		// Also check if tor binary exists as fallback
-		if !torEnabled {
-			if _, err := exec.LookPath("tor"); err == nil {
-				torEnabled = true
-			}
-		}
-
-		// Check tor status for checks object
-		torCheck := ""
-		if torEnabled {
-			if torRunning {
-				torCheck = "ok"
-			} else {
-				torCheck = "error"
-				warningIssues++
-			}
-		}
-
-		// Build checks object - only include enabled services per AI.md PART 13
-		checks := gin.H{
-			"database":  dbCheck,
-			"cache":     cacheCheck,
-			"disk":      diskCheck,
-			"scheduler": schedulerCheck,
-		}
-		// Add tor check only if tor is enabled
-		if torEnabled {
-			checks["tor"] = torCheck
-		}
-
-		// Get hostname for node info per AI.md PART 13
-		hostname, _ := os.Hostname()
-		if hostname == "" {
-			hostname = "unknown"
-		}
-
-		// Build AI.md PART 13 compliant response
-		response := gin.H{
-			"project": gin.H{
-				"name":        "Weather Service",
-				"tagline":     "Real-time weather data API",
-				"description": "Unified weather information platform aggregating global meteorological data",
-			},
-			"status":     status,
-			"version":    version,
-			"mode":       mode,
-			"uptime":     uptimeStr,
-			"timestamp":  time.Now().Format(time.RFC3339),
-			"go_version": goVersion,
-			"build": gin.H{
-				"commit": buildCommit,
-				"date":   buildDate,
-			},
-			// Node info per AI.md PART 13 line 13717
-			"node": gin.H{
-				"id":       "standalone",
-				"hostname": hostname,
-			},
-			"cluster": gin.H{
-				"enabled":    false,
-				"status":     "",
-				"primary":    "",
-				"nodes":      []string{},
-				"node_count": 0,
-				"role":       "",
-			},
-			"features": gin.H{
-				"tor": gin.H{
-					"enabled":  torEnabled,
-					"running":  torRunning,
-					"status":   torStatus,
-					"hostname": torHostname,
-				},
-				"geoip": false,
-			},
-			"checks": checks,
-			"stats": gin.H{
-				"requests_total":     0,
-				"requests_24h":       0,
-				"active_connections": 0,
-			},
-		}
-
-		c.JSON(httpStatus, response)
+		statusCode, response := buildPublicHealthResponse(db, startTime, c)
+		renderIndentedJSON(c, statusCode, response)
 	}
 }
 
@@ -440,12 +328,364 @@ func formatUptime(d time.Duration) string {
 	return fmt.Sprintf("%dm", minutes)
 }
 
-// getVersionFromEnv gets version from environment or returns "dev"
-func getVersionFromEnv() string {
-	// Try to read from release.txt
-	data, err := os.ReadFile("release.txt")
-	if err == nil {
-		return string(data)
+func buildPublicHealthResponse(db *database.DB, startTime time.Time, c *gin.Context) (int, publicHealthResponse) {
+	cfg := config.GetGlobalConfig()
+	brandingTitle := "weather"
+	brandingTagline := ""
+	brandingDescription := "Weather information service"
+	modeName := "production"
+	if cfg != nil {
+		if strings.TrimSpace(cfg.Server.Branding.Title) != "" {
+			brandingTitle = strings.TrimSpace(cfg.Server.Branding.Title)
+		}
+		brandingTagline = strings.TrimSpace(cfg.Server.Branding.Tagline)
+		if strings.TrimSpace(cfg.Server.Branding.Description) != "" {
+			brandingDescription = strings.TrimSpace(cfg.Server.Branding.Description)
+		}
+		if strings.TrimSpace(cfg.Server.Mode) != "" {
+			modeName = strings.TrimSpace(cfg.Server.Mode)
+		}
+	} else if envMode := strings.TrimSpace(os.Getenv("MODE")); envMode != "" {
+		modeName = envMode
 	}
-	return "dev"
+
+	version := strings.TrimSpace(Version)
+	if version == "" {
+		version = readVersion()
+	}
+	buildDate := strings.TrimSpace(BuildDate)
+	if buildDate == "" {
+		buildDate = "unknown"
+	}
+	buildCommit := strings.TrimSpace(CommitID)
+	if buildCommit == "" {
+		buildCommit = "unknown"
+	}
+
+	dbStatus, _, dbErr := db.HealthCheck()
+	dbCheck := "ok"
+	if dbErr != nil || dbStatus != "connected" {
+		dbCheck = "error"
+	}
+
+	diskCheck := getPublicDiskCheck()
+	schedulerCheck := getPublicSchedulerCheck()
+	cluster := getPublicClusterInfo(db, c)
+	geoIPEnabled := getPublicGeoIPStatus(db)
+	torFeature, torCheck := getPublicTorStatus(cfg)
+	stats := getPublicStats(db)
+	maintenanceMode := getMaintenanceMode(db)
+
+	response := publicHealthResponse{
+		Project: publicHealthProject{
+			Name:        brandingTitle,
+			Tagline:     brandingTagline,
+			Description: brandingDescription,
+		},
+		Status:    "healthy",
+		Version:   version,
+		GoVersion: runtime.Version(),
+		Build: publicHealthBuild{
+			Commit: buildCommit,
+			Date:   buildDate,
+		},
+		Uptime:    formatUptime(time.Since(startTime)),
+		Mode:      modeName,
+		Timestamp: utils.Now(),
+		Cluster:   cluster,
+		Features: publicHealthFeatures{
+			MultiUser: config.IsMultiUserEnabled(),
+			Tor:       torFeature,
+			GeoIP:     geoIPEnabled,
+		},
+		Checks: publicHealthChecks{
+			Database:  dbCheck,
+			Cache:     "ok",
+			Disk:      diskCheck,
+			Scheduler: schedulerCheck,
+			Cluster:   "",
+			Tor:       torCheck,
+		},
+		Stats: stats,
+	}
+
+	if !cluster.Enabled {
+		response.Checks.Cluster = ""
+	} else {
+		response.Checks.Cluster = clusterCheckFromStatus(cluster.Status)
+	}
+
+	if !torFeature.Enabled {
+		response.Checks.Tor = ""
+	}
+
+	statusCode := http.StatusOK
+	switch {
+	case maintenanceMode:
+		response.Status = "maintenance"
+		response.Mode = "maintenance"
+		response.Maintenance = &publicHealthMaintenance{
+			Reason:  "maintenance_mode",
+			Message: "Server is in maintenance mode",
+		}
+		statusCode = http.StatusServiceUnavailable
+	case !IsInitialized() || dbCheck == "error":
+		response.Status = "unhealthy"
+		statusCode = http.StatusServiceUnavailable
+	case response.Checks.Disk == "degraded" ||
+		response.Checks.Disk == "error" ||
+		response.Checks.Scheduler == "degraded" ||
+		response.Checks.Scheduler == "error" ||
+		response.Checks.Cluster == "degraded" ||
+		response.Checks.Cluster == "error" ||
+		response.Checks.Tor == "error":
+		response.Status = "degraded"
+	}
+
+	return statusCode, response
+}
+
+func getPublicDiskCheck() string {
+	dataUsage := getDiskUsage(getDataDir())
+	logUsage := getDiskUsage(getLogDir())
+	if dataUsage.TotalBytes == 0 || logUsage.TotalBytes == 0 {
+		return "degraded"
+	}
+
+	maxUsed := dataUsage.UsedPercent
+	if logUsage.UsedPercent > maxUsed {
+		maxUsed = logUsage.UsedPercent
+	}
+
+	switch {
+	case maxUsed > 95:
+		return "error"
+	case maxUsed > 80:
+		return "degraded"
+	default:
+		return "ok"
+	}
+}
+
+func getPublicSchedulerCheck() string {
+	schedulerStatus := getSchedulerStatus()
+	status, _ := schedulerStatus["status"].(string)
+	switch status {
+	case "running":
+		return "ok"
+	case "unknown":
+		return "error"
+	default:
+		return "degraded"
+	}
+}
+
+func getPublicClusterInfo(db *database.DB, c *gin.Context) publicHealthCluster {
+	cluster := publicHealthCluster{
+		Enabled: false,
+		Primary: "",
+		Nodes:   []string{},
+	}
+
+	var clusterEnabled string
+	if err := db.DB.QueryRow("SELECT value FROM server_config WHERE key = 'cluster.enabled'").Scan(&clusterEnabled); err != nil || clusterEnabled != "true" {
+		return cluster
+	}
+
+	hostInfo := utils.GetHostInfo(c)
+	cluster.Enabled = true
+	cluster.Primary = hostInfo.FullHost
+	cluster.Nodes = []string{hostInfo.FullHost}
+	cluster.Role = "member"
+
+	var nodeCount int
+	if err := db.DB.QueryRow("SELECT COUNT(*) FROM server_nodes WHERE status IN ('online', 'active')").Scan(&nodeCount); err != nil || nodeCount < 1 {
+		nodeCount = 1
+	}
+	cluster.NodeCount = nodeCount
+	if nodeCount > 0 {
+		cluster.Status = "connected"
+	} else {
+		cluster.Status = "degraded"
+	}
+
+	return cluster
+}
+
+func getPublicGeoIPStatus(db *database.DB) bool {
+	settingsModel := &models.SettingsModel{DB: db.DB}
+	return settingsModel.GetBool("geoip.enabled", true)
+}
+
+func getPublicTorStatus(cfg *config.AppConfig) (publicHealthTor, string) {
+	torRunning, torHostname := GetTorStatus()
+	torEnabled := torHostname != "" || torRunning
+	if !torEnabled && cfg != nil {
+		torEnabled = cfg.Server.Tor.Enabled
+	}
+	if !torEnabled {
+		if _, err := exec.LookPath("tor"); err == nil {
+			torEnabled = true
+		}
+	}
+
+	torStatus := ""
+	torCheck := ""
+	if torEnabled {
+		if torRunning {
+			torStatus = "healthy"
+			torCheck = "ok"
+		} else {
+			torStatus = "error"
+			torCheck = "error"
+		}
+	}
+
+	return publicHealthTor{
+		Enabled:  torEnabled,
+		Running:  torRunning,
+		Status:   torStatus,
+		Hostname: torHostname,
+	}, torCheck
+}
+
+func getPublicStats(db *database.DB) publicHealthStats {
+	stats := publicHealthStats{}
+
+	_ = db.DB.QueryRow("SELECT COUNT(*) FROM server_audit_log").Scan(&stats.RequestsTotal)
+	_ = db.DB.QueryRow("SELECT COUNT(*) FROM server_audit_log WHERE timestamp >= datetime('now', '-24 hours')").Scan(&stats.Requests24H)
+
+	sessionCount, err := db.GetSessionCount()
+	if err == nil {
+		stats.ActiveConnections = sessionCount
+	}
+
+	return stats
+}
+
+func getMaintenanceMode(db *database.DB) bool {
+	settingsModel := &models.SettingsModel{DB: db.DB}
+	return settingsModel.GetBool("maintenance.mode", false)
+}
+
+func clusterCheckFromStatus(status string) string {
+	switch status {
+	case "connected":
+		return "ok"
+	case "degraded":
+		return "degraded"
+	default:
+		return "error"
+	}
+}
+
+func renderIndentedJSON(c *gin.Context, status int, data interface{}) {
+	payload, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		c.String(http.StatusInternalServerError, "INTERNAL_ERROR: failed to render response\n")
+		return
+	}
+	c.Data(status, "application/json; charset=utf-8", append(payload, '\n'))
+}
+
+func wantsExplicitJSON(c *gin.Context) bool {
+	accept := c.GetHeader("Accept")
+	return strings.Contains(accept, "application/json") || c.Query("format") == "json"
+}
+
+func formatPublicHealthText(health publicHealthResponse) string {
+	var out bytes.Buffer
+
+	fmt.Fprintf(&out, "# 1. Project\n")
+	fmt.Fprintf(&out, "project.name: %s\n", health.Project.Name)
+	if health.Project.Tagline != "" {
+		fmt.Fprintf(&out, "project.tagline: %s\n", health.Project.Tagline)
+	}
+	fmt.Fprintf(&out, "project.description: %s\n\n", health.Project.Description)
+
+	fmt.Fprintf(&out, "# 2. Status\n")
+	fmt.Fprintf(&out, "status: %s\n\n", health.Status)
+
+	fmt.Fprintf(&out, "# 3. Version & Build\n")
+	fmt.Fprintf(&out, "version: %s\n", health.Version)
+	fmt.Fprintf(&out, "go_version: %s\n", health.GoVersion)
+	fmt.Fprintf(&out, "build.commit: %s\n", health.Build.Commit)
+	fmt.Fprintf(&out, "build.date: %s\n\n", health.Build.Date)
+
+	fmt.Fprintf(&out, "# 4. Runtime\n")
+	fmt.Fprintf(&out, "uptime: %s\n", health.Uptime)
+	fmt.Fprintf(&out, "mode: %s\n", health.Mode)
+	fmt.Fprintf(&out, "timestamp: %s\n", health.Timestamp)
+	if health.Maintenance != nil {
+		fmt.Fprintf(&out, "maintenance.reason: %s\n", health.Maintenance.Reason)
+		fmt.Fprintf(&out, "maintenance.message: %s\n", health.Maintenance.Message)
+	}
+	fmt.Fprintf(&out, "\n")
+
+	fmt.Fprintf(&out, "# 5. Cluster\n")
+	fmt.Fprintf(&out, "cluster.enabled: %t\n", health.Cluster.Enabled)
+	if health.Cluster.Status != "" {
+		fmt.Fprintf(&out, "cluster.status: %s\n", health.Cluster.Status)
+	}
+	fmt.Fprintf(&out, "cluster.primary: %s\n", health.Cluster.Primary)
+	fmt.Fprintf(&out, "cluster.nodes: %s\n", strings.Join(health.Cluster.Nodes, ", "))
+	if health.Cluster.NodeCount > 0 {
+		fmt.Fprintf(&out, "cluster.node_count: %d\n", health.Cluster.NodeCount)
+	}
+	if health.Cluster.Role != "" {
+		fmt.Fprintf(&out, "cluster.role: %s\n", health.Cluster.Role)
+	}
+	fmt.Fprintf(&out, "\n")
+
+	fmt.Fprintf(&out, "# 6. Features\n")
+	fmt.Fprintf(&out, "features.multi_user: %t\n", health.Features.MultiUser)
+	fmt.Fprintf(&out, "features.tor.enabled: %t\n", health.Features.Tor.Enabled)
+	fmt.Fprintf(&out, "features.tor.running: %t\n", health.Features.Tor.Running)
+	fmt.Fprintf(&out, "features.tor.status: %s\n", health.Features.Tor.Status)
+	fmt.Fprintf(&out, "features.tor.hostname: %s\n", health.Features.Tor.Hostname)
+	fmt.Fprintf(&out, "features.geoip: %t\n\n", health.Features.GeoIP)
+
+	fmt.Fprintf(&out, "# 7. Checks\n")
+	fmt.Fprintf(&out, "checks.database: %s\n", health.Checks.Database)
+	fmt.Fprintf(&out, "checks.cache: %s\n", health.Checks.Cache)
+	fmt.Fprintf(&out, "checks.disk: %s\n", health.Checks.Disk)
+	fmt.Fprintf(&out, "checks.scheduler: %s\n", health.Checks.Scheduler)
+	if health.Checks.Cluster != "" {
+		fmt.Fprintf(&out, "checks.cluster: %s\n", health.Checks.Cluster)
+	}
+	if health.Checks.Tor != "" {
+		fmt.Fprintf(&out, "checks.tor: %s\n", health.Checks.Tor)
+	}
+	fmt.Fprintf(&out, "\n")
+
+	fmt.Fprintf(&out, "# 8. Stats\n")
+	fmt.Fprintf(&out, "stats.requests_total: %d\n", health.Stats.RequestsTotal)
+	fmt.Fprintf(&out, "stats.requests_24h: %d\n", health.Stats.Requests24H)
+	fmt.Fprintf(&out, "stats.active_connections: %d\n", health.Stats.ActiveConnections)
+
+	return out.String() + "\n"
+}
+
+func publicHealthStatusClass(status string) string {
+	switch status {
+	case "healthy":
+		return "status-ok"
+	case "degraded":
+		return "status-warning"
+	default:
+		return "status-error"
+	}
+}
+
+func publicHealthStatusText(status string) string {
+	switch status {
+	case "healthy":
+		return "All Systems Operational"
+	case "degraded":
+		return "Service Degraded"
+	case "maintenance":
+		return "Maintenance Mode"
+	default:
+		return "Service Unavailable"
+	}
 }

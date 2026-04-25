@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS server_admin_credentials (
 	password_hash TEXT NOT NULL,
 	api_token_hash TEXT UNIQUE,
 	api_token_prefix TEXT,
+	is_super_admin BOOLEAN DEFAULT 0,
+	is_active BOOLEAN DEFAULT 1,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	last_login_at DATETIME
@@ -339,7 +341,7 @@ CREATE INDEX IF NOT EXISTS idx_metrics_name ON server_metrics(metric_name);
 CREATE INDEX IF NOT EXISTS idx_metrics_recorded ON server_metrics(recorded_at);
 CREATE INDEX IF NOT EXISTS idx_metrics_node ON server_metrics(node_id);
 
--- Custom Domains table (TEMPLATE.md PART 34: Multi-domain hosting)
+-- Reserved domain mapping table (currently unused; PART 36 is not implemented)
 CREATE TABLE IF NOT EXISTS custom_domains (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	domain TEXT UNIQUE NOT NULL,

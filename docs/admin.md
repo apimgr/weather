@@ -4,13 +4,13 @@ The Weather Service admin panel provides a web interface for managing the server
 
 ## Accessing the Admin Panel
 
-Default URL: `http://localhost/admin`
+Default URL: `https://wthr.top/admin`
 
 ### First-Time Setup
 
 On first run, Weather Service launches the setup wizard:
 
-1. Navigate to `http://localhost` in your browser
+1. Navigate to `https://wthr.top/admin/server/setup` in your browser
 2. The setup wizard automatically opens
 3. Create the primary admin account:
    - Username (email address)
@@ -25,7 +25,7 @@ The setup wizard is a one-time process. After completion, access the admin panel
 
 ### Login
 
-1. Go to `http://localhost/admin`
+1. Go to `https://wthr.top/admin`
 2. Enter admin username and password
 3. If 2FA is enabled, enter the TOTP code
 4. Click **Login**
@@ -173,37 +173,6 @@ Configure server-wide settings through the web UI.
   - Email address
   - Domain names
   - Auto-renewal
-
-### Custom Domains
-
-Manage custom domains for multi-domain hosting.
-
-**Features:**
-- Add custom domains
-- DNS verification
-- SSL certificate management
-- Domain activation/deactivation
-- Domain deletion
-
-**Adding a Custom Domain:**
-
-1. Go to **Admin Panel** → **Domains**
-2. Click **Add Domain**
-3. Enter domain name (e.g., `weather.example.com`)
-4. Click **Create**
-5. Add DNS TXT record for verification:
-   ```
-   _weather-verify.weather.example.com TXT "weather-verify-123"
-   ```
-6. Click **Verify Domain**
-7. Once verified, click **Activate**
-8. Optionally configure SSL certificate
-
-**Domain Status:**
-- **Unverified** - Waiting for DNS verification
-- **Verified** - DNS verified, not active
-- **Active** - Domain is live and serving traffic
-- **Inactive** - Domain exists but not serving traffic
 
 ### Logs
 

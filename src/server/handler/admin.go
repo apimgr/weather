@@ -598,9 +598,22 @@ func (h *AdminHandler) seedScheduledTasks() {
 
 // ShowSettingsPage renders the admin settings page
 func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
-	user, ok := middleware.GetCurrentUser(c)
+	adminIDValue, exists := c.Get("admin_id")
+	if !exists {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+
+	adminID, ok := adminIDValue.(int)
 	if !ok {
-		c.Redirect(http.StatusFound, "/auth/login")
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+
+	adminModel := &models.AdminModel{DB: database.GetServerDB()}
+	admin, err := adminModel.GetByID(int64(adminID))
+	if err != nil {
+		c.Redirect(http.StatusFound, "/admin")
 		return
 	}
 
@@ -727,7 +740,7 @@ func (h *AdminHandler) ShowSettingsPage(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "admin/admin_settings.tmpl", gin.H{
 		"title":    "Server Settings",
-		"user":     user,
+		"user":     admin,
 		"settings": settings,
 		"Settings": historySettings,
 	})

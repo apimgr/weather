@@ -9,14 +9,67 @@ import (
 // =============================================================================
 
 type TOTPStatus struct {
-	Enabled  bool `json:"enabled"`
-	Verified bool `json:"verified"`
+	Enabled           bool `json:"enabled"`
+	RecoveryKeysCount int  `json:"recoveryKeysCount"`
 }
 
 type TOTPSetup struct {
-	Secret        string   `json:"secret"`
-	QrCode        string   `json:"qrCode"`
-	RecoveryCodes []string `json:"recoveryCodes"`
+	Secret    string `json:"secret"`
+	QrCode    string `json:"qrCode"`
+	ManualURL string `json:"manualUrl"`
+	Account   string `json:"account"`
+	Issuer    string `json:"issuer"`
+}
+
+type TOTPRecoveryKeys struct {
+	Message      string   `json:"message"`
+	RecoveryKeys []string `json:"recoveryKeys"`
+}
+
+type AuthUser struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
+type AuthResult struct {
+	RequiresTwoFactor    bool       `json:"requiresTwoFactor"`
+	VerificationRequired bool       `json:"verificationRequired"`
+	SessionToken         *string    `json:"sessionToken,omitempty"`
+	Token                *string    `json:"token,omitempty"`
+	User                 *AuthUser  `json:"user,omitempty"`
+	ExpiresAt            *time.Time `json:"expiresAt,omitempty"`
+	RemainingKeys        *int       `json:"remainingKeys,omitempty"`
+}
+
+type UserInviteValidation struct {
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type ServerInviteValidation struct {
+	Email     string    `json:"email"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type UserInviteCompletion struct {
+	Message *string   `json:"message,omitempty"`
+	Token   *string   `json:"token,omitempty"`
+	User    *AuthUser `json:"user,omitempty"`
+}
+
+type InvitedServerAdmin struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+type ServerInviteCompletion struct {
+	Message string             `json:"message"`
+	Admin   *InvitedServerAdmin `json:"admin"`
 }
 
 // =============================================================================
@@ -276,4 +329,3 @@ type GenericResponse struct {
 	Message string `json:"message"`
 }
 */
-

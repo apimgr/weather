@@ -28,6 +28,92 @@ func NewTorAdminHandler(torService *service.TorService, settingsModel *models.Se
 	}
 }
 
+func (h *TorAdminHandler) GetServiceStatus() map[string]interface{} {
+	return h.torService.GetStatus()
+}
+
+func (h *TorAdminHandler) GetServiceHealth() map[string]interface{} {
+	return h.torService.GetHealthStatus()
+}
+
+func (h *TorAdminHandler) EnableService(httpPort int) (map[string]interface{}, error) {
+	if err := h.settingsModel.SetBool("tor.enabled", true); err != nil {
+		return nil, fmt.Errorf("failed to update settings: %w", err)
+	}
+	if err := h.torService.Start(httpPort); err != nil {
+		return nil, fmt.Errorf("failed to start Tor: %w", err)
+	}
+	return h.torService.GetStatus(), nil
+}
+
+func (h *TorAdminHandler) DisableService() error {
+	if err := h.settingsModel.SetBool("tor.enabled", false); err != nil {
+		return fmt.Errorf("failed to update settings: %w", err)
+	}
+	if err := h.torService.Stop(); err != nil {
+		return fmt.Errorf("failed to stop Tor: %w", err)
+	}
+	return nil
+}
+
+func (h *TorAdminHandler) RegenerateService(httpPort int) (string, error) {
+	if err := h.torService.RegenerateAddress(httpPort); err != nil {
+		return "", fmt.Errorf("failed to regenerate address: %w", err)
+	}
+	return h.torService.GetOnionAddress(), nil
+}
+
+func (h *TorAdminHandler) GetVanityGenerationStatus() *service.VanityGenerationStatus {
+	return h.vanityGenerator.GetStatus()
+}
+
+func (h *TorAdminHandler) StartVanityGeneration(prefix string) error {
+	if err := h.vanityGenerator.Start(prefix); err != nil {
+		return fmt.Errorf("failed to start generation: %w", err)
+	}
+	go h.monitorVanityGeneration()
+	return nil
+}
+
+func (h *TorAdminHandler) CancelVanityGeneration() error {
+	if err := h.vanityGenerator.Cancel(); err != nil {
+		return fmt.Errorf("failed to cancel: %w", err)
+	}
+	return nil
+}
+
+func (h *TorAdminHandler) ApplyVanityKeys(httpPort int) (string, error) {
+	publicKey, privateKey, err := h.vanityGenerator.GetKeys()
+	if err != nil {
+		return "", fmt.Errorf("no keys available: %w", err)
+	}
+	if err := h.keyManager.ImportKeys(publicKey, privateKey); err != nil {
+		return "", fmt.Errorf("failed to import keys: %w", err)
+	}
+	if err := h.torService.RegenerateAddress(httpPort); err != nil {
+		return "", fmt.Errorf("failed to restart Tor: %w", err)
+	}
+	return h.torService.GetOnionAddress(), nil
+}
+
+func (h *TorAdminHandler) ImportTorKeys(publicKey, privateKey []byte, httpPort int) (string, error) {
+	if err := h.keyManager.ImportKeys(publicKey, privateKey); err != nil {
+		return "", fmt.Errorf("failed to import keys: %w", err)
+	}
+	if err := h.torService.RegenerateAddress(httpPort); err != nil {
+		return "", fmt.Errorf("failed to restart Tor: %w", err)
+	}
+	return h.torService.GetOnionAddress(), nil
+}
+
+func (h *TorAdminHandler) ExportTorKeys() ([]byte, []byte, error) {
+	publicKey, privateKey, err := h.keyManager.ExportKeys()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to export keys: %w", err)
+	}
+	return publicKey, privateKey, nil
+}
+
 // GetStatus returns Tor service status
 // GET /{api_version}/admin/server/tor/status
 func (h *TorAdminHandler) GetStatus(c *gin.Context) {

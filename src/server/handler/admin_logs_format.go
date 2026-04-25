@@ -27,7 +27,7 @@ func (h *LogFormatHandler) GetLogFormat(c *gin.Context) {
 	// Get log format from server config
 	var logFormat string
 	err := database.GetServerDB().QueryRow(`
-		SELECT value FROM server_config WHERE key = 'logs.format'
+		SELECT value FROM server_config WHERE key = 'logging.format'
 	`).Scan(&logFormat)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -82,7 +82,7 @@ func (h *LogFormatHandler) SetLogFormat(c *gin.Context) {
 	// Update or insert setting
 	_, err := database.GetServerDB().Exec(`
 		INSERT INTO server_config (key, value, type, description, updated_at)
-		VALUES ('logs.format', ?, 'string', 'Access log format', ?)
+		VALUES ('logging.format', ?, 'string', 'Log format', ?)
 		ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
 	`, request.Format, time.Now(), request.Format, time.Now())
 
@@ -164,7 +164,7 @@ func (h *LogFormatHandler) ShowLogFormatPage(c *gin.Context) {
 	// Get current format
 	var logFormat string
 	database.GetServerDB().QueryRow(`
-		SELECT value FROM server_config WHERE key = 'logs.format'
+		SELECT value FROM server_config WHERE key = 'logging.format'
 	`).Scan(&logFormat)
 
 	if logFormat == "" {

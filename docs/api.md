@@ -5,7 +5,7 @@ Weather Service provides a RESTful JSON API for accessing weather data, managing
 ## Base URL
 
 ```
-http://localhost/api/v1
+https://wthr.top/api/v1
 ```
 
 ## Authentication
@@ -114,7 +114,7 @@ GET /api/v1/history
 **Example:**
 
 ```bash
-curl "http://localhost/api/v1/history?lat=40.7128&lon=-74.0060&start_date=2025-01-01&end_date=2025-01-07"
+curl -q -LSsf "https://wthr.top/api/v1/history?lat=40.7128&lon=-74.0060&start_date=2025-01-01&end_date=2025-01-07"
 ```
 
 ### Natural Events
@@ -293,7 +293,7 @@ GET /api/v1/locations/lookup/zip/:code
 **Example:**
 
 ```bash
-curl http://localhost/api/v1/locations/lookup/zip/10001
+curl -q -LSsf https://wthr.top/api/v1/locations/lookup/zip/10001
 ```
 
 #### Lookup by Coordinates
@@ -378,7 +378,7 @@ POST /api/v1/auth/login
 ```json
 {
   "username": "user@example.com",
-  "password": "your-password"
+  "password": "REDACTED_EXAMPLE"
 }
 ```
 
@@ -520,25 +520,25 @@ HTTP status codes:
 
 ```bash
 # Get current weather
-curl http://localhost/api/v1/weather
+curl -q -LSsf https://wthr.top/api/v1/weather
 
 # Get weather for New York
-curl http://localhost/api/v1/weather/New%20York
+curl -q -LSsf https://wthr.top/api/v1/weather/New%20York
 
 # Get forecast
-curl http://localhost/api/v1/forecast?lat=40.7128&lon=-74.0060
+curl -q -LSsf "https://wthr.top/api/v1/forecast?lat=40.7128&lon=-74.0060"
 
 # Get earthquakes
-curl http://localhost/api/v1/earthquakes?min_magnitude=4.0
+curl -q -LSsf "https://wthr.top/api/v1/earthquakes?min_magnitude=4.0"
 
 # Login
-curl -X POST http://localhost/api/v1/auth/login \
+curl -q -LSsf -X POST https://wthr.top/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"user","password":"pass"}' \
   -c cookies.txt
 
 # Use authenticated endpoint
-curl http://localhost/api/v1/locations \
+curl -q -LSsf https://wthr.top/api/v1/locations \
   -b cookies.txt
 ```
 
@@ -546,17 +546,17 @@ curl http://localhost/api/v1/locations \
 
 ```javascript
 // Get current weather
-fetch('/api/v1/weather')
+fetch('https://wthr.top/api/v1/weather')
   .then(res => res.json())
   .then(data => console.log(data));
 
 // Get forecast
-fetch('/api/v1/forecast/New York')
+fetch('https://wthr.top/api/v1/forecast/New%20York')
   .then(res => res.json())
   .then(data => console.log(data.forecast));
 
 // Login
-fetch('/api/v1/auth/login', {
+fetch('https://wthr.top/api/v1/auth/login', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({username: 'user', password: 'pass'})
@@ -571,24 +571,24 @@ fetch('/api/v1/auth/login', {
 import requests
 
 # Get current weather
-response = requests.get('http://localhost/api/v1/weather')
+response = requests.get('https://wthr.top/api/v1/weather')
 weather = response.json()
 print(weather)
 
 # Get forecast
-response = requests.get('http://localhost/api/v1/forecast',
+response = requests.get('https://wthr.top/api/v1/forecast',
                        params={'lat': 40.7128, 'lon': -74.0060})
 forecast = response.json()
 print(forecast)
 
 # Login
 session = requests.Session()
-response = session.post('http://localhost/api/v1/auth/login',
+response = session.post('https://wthr.top/api/v1/auth/login',
                        json={'username': 'user', 'password': 'pass'})
 print(response.json())
 
 # Use authenticated endpoint
-response = session.get('http://localhost/api/v1/locations')
+response = session.get('https://wthr.top/api/v1/locations')
 locations = response.json()
 print(locations)
 ```

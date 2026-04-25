@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/apimgr/weather/src/config"
+	"github.com/apimgr/weather/src/database"
 	"github.com/apimgr/weather/src/server/model"
 )
 
@@ -62,12 +63,11 @@ func RequireAdminAuth() gin.HandlerFunc {
 
 		// Query server_admin_sessions table for valid session
 		var adminID int
-		var expiresAt int64
 		err = db.QueryRow(`
-			SELECT admin_id, expires_at
+			SELECT admin_id
 			FROM server_admin_sessions
-			WHERE id = ? AND expires_at > strftime('%s', 'now')
-		`, session).Scan(&adminID, &expiresAt)
+			WHERE id = ? AND expires_at > CURRENT_TIMESTAMP
+		`, session).Scan(&adminID)
 
 		if err != nil {
 			// Invalid or expired session - show login
@@ -83,9 +83,6 @@ func RequireAdminAuth() gin.HandlerFunc {
 
 		// Valid session - store admin_id in context for handlers
 		c.Set("admin_id", adminID)
-
-		// Update last_active timestamp
-		db.Exec("UPDATE server_admin_sessions SET last_active = strftime('%s', 'now') WHERE id = ?", session)
 
 		// Session valid - continue to admin panel
 		c.Next()
@@ -106,7 +103,7 @@ func GetDB(c *gin.Context) *sql.DB {
 			return sqlDB
 		}
 	}
-	return nil
+	return database.GetServerDB()
 }
 
 // AdminLoginHandler handles admin login per AI.md PART 18
@@ -139,12 +136,11 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 		// Query users.db server_admin_credentials table for username (AI.md PART 23)
 		var adminID int
 		var passwordHash string
-		var enabled bool
 		err := db.QueryRow(`
-			SELECT id, password, enabled
+			SELECT id, password_hash
 			FROM server_admin_credentials
 			WHERE username = ?
-		`, username).Scan(&adminID, &passwordHash, &enabled)
+		`, username).Scan(&adminID, &passwordHash)
 
 		if err == sql.ErrNoRows {
 			// Admin not found - generic error to prevent enumeration
@@ -162,18 +158,6 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 			// Database error
 			c.HTML(http.StatusInternalServerError, "admin/login.tmpl", gin.H{
 				"error": "An error occurred. Please try again.",
-				"branding": gin.H{
-					"Title": title,
-				},
-				"version": version,
-			})
-			return
-		}
-
-		// Check if admin account is enabled
-		if !enabled {
-			c.HTML(http.StatusForbidden, "admin/login.tmpl", gin.H{
-				"error": "Account disabled. Contact administrator.",
 				"branding": gin.H{
 					"Title": title,
 				},
@@ -211,8 +195,8 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 		// Create session in server_admin_sessions table (AI.md PART 5)
 		expiresAt := time.Now().Unix() + int64(maxAge)
 		_, err = db.Exec(`
-			INSERT INTO server_admin_sessions (id, admin_id, ip_address, user_agent, expires_at, created_at, last_active)
-			VALUES (?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'))
+			INSERT INTO server_admin_sessions (id, admin_id, ip_address, user_agent, expires_at, created_at)
+			VALUES (?, ?, ?, ?, datetime(?, 'unixepoch'), CURRENT_TIMESTAMP)
 		`, sessionToken, adminID, c.ClientIP(), c.Request.UserAgent(), expiresAt)
 
 		if err != nil {
@@ -249,7 +233,7 @@ func AdminLoginHandler(db *sql.DB) gin.HandlerFunc {
 		)
 
 		// Update last_login timestamp
-		db.Exec("UPDATE server_admin_credentials SET last_login = strftime('%s', 'now') WHERE id = ?", adminID)
+		db.Exec("UPDATE server_admin_credentials SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?", adminID)
 
 		// Redirect to admin dashboard
 		c.Redirect(http.StatusFound, adminPath+"/dashboard")

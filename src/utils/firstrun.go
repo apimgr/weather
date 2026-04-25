@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apimgr/weather/src/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -209,7 +210,7 @@ func CreateDefaultServerYML(configPath string, smtpHost string, smtpPort int) er
 				"port":      smtpPort,
 				"username":  "",
 				"password":  "",
-				"from":      "noreply@localhost",
+				"from":      config.DefaultEmailAddress("noreply", nil),
 				"from_name": "Weather Service",
 				"use_tls":   false,
 			},
@@ -225,7 +226,7 @@ func CreateDefaultServerYML(configPath string, smtpHost string, smtpPort int) er
 			},
 			"web": map[string]interface{}{
 				"robots_txt":   "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/v1/admin",
-				"security_txt": "Contact: mailto:security@example.com\nExpires: 2026-12-31T23:59:59.000Z\nPreferred-Languages: en",
+				"security_txt": fmt.Sprintf("Contact: mailto:%s\nExpires: %s\nPreferred-Languages: en", config.DefaultEmailAddress("security", nil), time.Now().AddDate(1, 0, 0).UTC().Format(time.RFC3339)),
 			},
 			"tor": map[string]interface{}{
 				"enabled":    false,

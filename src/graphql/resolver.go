@@ -23,6 +23,7 @@ type Resolver struct {
 	LocationHandler     *handler.LocationHandler
 	NotificationHandler *handler.NotificationHandler
 	AdminHandler        *handler.AdminHandler
+	TorAdminHandler     *handler.TorAdminHandler
 	SettingsHandler     *handler.AdminSettingsHandler
 	SchedulerHandler    *handler.SchedulerHandler
 	EarthquakeHandler   *handler.EarthquakeHandler
@@ -40,6 +41,7 @@ func NewResolver(
 	locationHandler *handler.LocationHandler,
 	notificationHandler *handler.NotificationHandler,
 	adminHandler *handler.AdminHandler,
+	torAdminHandler *handler.TorAdminHandler,
 	settingsHandler *handler.AdminSettingsHandler,
 	schedulerHandler *handler.SchedulerHandler,
 	earthquakeHandler *handler.EarthquakeHandler,
@@ -56,6 +58,7 @@ func NewResolver(
 		LocationHandler:      locationHandler,
 		NotificationHandler:  notificationHandler,
 		AdminHandler:         adminHandler,
+		TorAdminHandler:      torAdminHandler,
 		SettingsHandler:      settingsHandler,
 		SchedulerHandler:     schedulerHandler,
 		EarthquakeHandler:    earthquakeHandler,

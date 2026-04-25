@@ -102,4 +102,4 @@ weather/
 
 ## Reference
 
-For complete details, see AI.md PART 2 (lines 4974-5307), PART 3 (5308-6268), PART 4 (6269-6462)
+For complete details, see AI.md PART 2 (5026-5359), PART 3 (5360-6320), PART 4 (6321-6514)

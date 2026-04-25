@@ -263,7 +263,7 @@ func (h *APIHandler) GetWeather(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, response)
+	RespondNegotiatedData(c, http.StatusOK, response)
 }
 
 // GetWeatherByLocation returns weather for specific location (GET /api/v1/weather/:location)
@@ -297,7 +297,7 @@ func (h *APIHandler) GetWeatherByLocation(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"location": gin.H{
 			"name":        enhanced.Name,
 			"shortName":   enhanced.ShortName,
@@ -460,7 +460,7 @@ func (h *APIHandler) GetForecast(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"location": gin.H{
 			"name":        enhanced.Name,
 			"shortName":   enhanced.ShortName,
@@ -553,7 +553,7 @@ func (h *APIHandler) GetForecastByLocation(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"location": gin.H{
 			"name":        enhanced.Name,
 			"shortName":   enhanced.ShortName,
@@ -615,7 +615,7 @@ func (h *APIHandler) SearchLocations(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"query":   query,
 		"results": results,
 		"meta": gin.H{
@@ -637,7 +637,7 @@ func (h *APIHandler) SearchLocations(c *gin.Context) {
 func (h *APIHandler) GetIP(c *gin.Context) {
 	clientIP := utils.GetClientIP(c)
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ip":        clientIP,
 		"timestamp": utils.Now(),
 		"headers": gin.H{
@@ -675,7 +675,7 @@ func (h *APIHandler) GetLocation(c *gin.Context) {
 		units = "imperial"
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ip": clientIP,
 		"location": gin.H{
 			"city":        enhanced.Name,
@@ -701,7 +701,7 @@ func (h *APIHandler) GetLocation(c *gin.Context) {
 func (h *APIHandler) GetDocsJSON(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"service":     "Weather API",
 		"version":     "2.0.0",
 		"description": "Free weather API with no API key required",
@@ -831,7 +831,7 @@ func (h *APIHandler) GetHistoricalWeather(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"historical": historical,
 		"location": gin.H{
 			"latitude":  coords.Latitude,
@@ -875,7 +875,7 @@ func parseHistoricalDateAPI(dateStr string) (month, day, year int, err error) {
 func (h *APIHandler) GetDocsHTML(c *gin.Context) {
 	hostInfo := utils.GetHostInfo(c)
 
-	c.HTML(http.StatusOK, "page/api_docs.tmpl", gin.H{
+	NegotiateResponse(c, "page/api_docs.tmpl", gin.H{
 		"Title":      "API Documentation - Weather",
 		"HostInfo":   hostInfo,
 		"HideFooter": false,

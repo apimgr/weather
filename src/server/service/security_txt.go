@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/server/model"
 )
 
@@ -27,7 +28,7 @@ func (s *SecurityTxtService) Generate(baseURL string) string {
 	// Contact (required)
 	contact := s.settingsModel.GetString("security.contact", "")
 	if contact == "" {
-		contact = "security@example.com"
+		contact = config.DefaultEmailAddress("security", config.GetGlobalConfig())
 	}
 	// Support multiple contact methods
 	contacts := strings.Split(contact, ",")

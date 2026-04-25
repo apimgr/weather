@@ -3,7 +3,7 @@
 [![Build](https://github.com/apimgr/weather/actions/workflows/build.yml/badge.svg)](https://github.com/apimgr/weather/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/apimgr/weather)](https://github.com/apimgr/weather/releases)
 [![Documentation](https://readthedocs.org/projects/apimgr-weather/badge/?version=latest)](https://apimgr-weather.readthedocs.io)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![License](https://img.shields.io/github/license/apimgr/weather)](LICENSE.md)
 
 ## About
 
@@ -13,7 +13,7 @@ Weather Service combines forecasts, severe weather alerts, earthquakes, hurrican
 
 ## Official Site
 
-https://weather.apimgr.us
+https://wthr.top
 
 ## Features
 
@@ -44,7 +44,7 @@ docker run -d \
 ### Docker Compose
 
 ```bash
-curl -O https://raw.githubusercontent.com/apimgr/weather/main/docker/docker-compose.yml
+curl -q -LSsf -O https://raw.githubusercontent.com/apimgr/weather/main/docker/docker-compose.yml
 docker compose up -d
 ```
 
@@ -52,7 +52,7 @@ docker compose up -d
 
 ```bash
 # Download latest release
-curl -LO https://github.com/apimgr/weather/releases/latest/download/weather-linux-amd64
+curl -q -LSsf -O https://github.com/apimgr/weather/releases/latest/download/weather-linux-amd64
 
 # Make executable and run
 chmod +x weather-linux-amd64
@@ -96,7 +96,7 @@ A companion CLI client is available for interacting with the server API.
 
 ```bash
 # Download latest release
-curl -LO https://github.com/apimgr/weather/releases/latest/download/weather-cli-linux-amd64
+curl -q -LSsf -O https://github.com/apimgr/weather/releases/latest/download/weather-cli-linux-amd64
 chmod +x weather-cli-linux-amd64
 sudo mv weather-cli-linux-amd64 /usr/local/bin/weather-cli
 ```
@@ -104,8 +104,8 @@ sudo mv weather-cli-linux-amd64 /usr/local/bin/weather-cli
 ### Configure
 
 ```bash
-# Connect to server (creates ~/.config/apimgr/weather/cli.yml)
-weather-cli --server https://api.example.com --token YOUR_API_TOKEN
+# Connect to official server (creates ~/.config/apimgr/weather/cli.yml)
+weather-cli --server https://wthr.top --token YOUR_API_TOKEN
 ```
 
 ### Usage
@@ -119,7 +119,7 @@ weather-cli moon
 
 ## Configuration
 
-Configuration is auto-generated on first run. Edit via admin panel at `http://{fqdn}:{port}/admin`.
+Configuration is auto-generated on first run. Edit via admin panel at `https://wthr.top/admin`.
 
 Key settings:
 - `server.address` - Listen address (default: :80)
@@ -146,15 +146,14 @@ cache:
 
 ## API
 
-Full API documentation available at `/openapi` when running. Interactive GraphQL at `/api/v1/graphql`.
+Full API documentation is available at `https://wthr.top/openapi`, with OpenAPI JSON at `https://wthr.top/openapi.json` and GraphQL at `https://wthr.top/api/v1/graphql`.
 
 ### Health Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /healthz` | Comprehensive health check |
-| `GET /readyz` | Readiness probe (Kubernetes) |
-| `GET /livez` | Liveness probe (Kubernetes) |
+| `GET https://wthr.top/healthz` | Frontend health/status route |
+| `GET https://wthr.top/api/v1/healthz` | API health route |
 
 ### Weather Endpoints
 
@@ -196,13 +195,13 @@ Full API documentation available at `/openapi` when running. Interactive GraphQL
 
 ```bash
 # Weather for location
-curl http://localhost/api/v1/weather/Brooklyn,NY
+curl -q -LSsf https://wthr.top/api/v1/weather/Brooklyn,NY
 
 # Severe weather
-curl http://localhost/api/v1/severe-weather
+curl -q -LSsf https://wthr.top/api/v1/severe-weather
 
 # Moon phase
-curl http://localhost/api/v1/moon
+curl -q -LSsf https://wthr.top/api/v1/moon
 ```
 
 ## Other
@@ -218,7 +217,7 @@ curl http://localhost/api/v1/moon
 ### Troubleshooting
 
 - Check logs: `docker logs weather`
-- Health check: `curl http://{fqdn}:{port}/healthz`
+- Health check: `curl -q -LSsf https://wthr.top/healthz`
 - Port in use: `netstat -tulpn | grep :80`
 
 ### Support

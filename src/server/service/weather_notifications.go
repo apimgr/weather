@@ -299,7 +299,7 @@ func (wns *WeatherNotificationService) SendDailyForecast() error {
 	rows, err := database.GetUsersDB().Query(`
 		SELECT DISTINCT ns.user_id, l.id, l.name, l.latitude, l.longitude
 		FROM notification_subscriptions ns
-		JOIN saved_locations l ON l.user_id = ns.user_id
+		JOIN user_saved_locations l ON l.user_id = ns.user_id
 		WHERE ns.subscription_type = 'daily_forecast'
 		  AND ns.enabled = 1
 	`)

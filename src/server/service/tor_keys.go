@@ -56,16 +56,16 @@ func (km *TorKeyManager) ExportKeys() (publicKey, privateKey []byte, err error) 
 
 // ImportKeys imports Tor hidden service keys from raw bytes
 func (km *TorKeyManager) ImportKeys(publicKey, privateKey []byte) error {
-	// Validate key lengths
-	if len(privateKey) != ed25519.PrivateKeySize {
-		return fmt.Errorf("invalid private key length: got %d, want %d", len(privateKey), ed25519.PrivateKeySize)
+	normalizedPrivKey, err := normalizeTorPrivateKey(privateKey)
+	if err != nil {
+		return err
 	}
 	if len(publicKey) != ed25519.PublicKeySize {
 		return fmt.Errorf("invalid public key length: got %d, want %d", len(publicKey), ed25519.PublicKeySize)
 	}
 
 	// Verify key pair consistency
-	pubFromPriv := ed25519.PrivateKey(privateKey).Public().(ed25519.PublicKey)
+	pubFromPriv := normalizedPrivKey.Public().(ed25519.PublicKey)
 	for i := range publicKey {
 		if publicKey[i] != pubFromPriv[i] {
 			return fmt.Errorf("public key does not match private key")
@@ -78,8 +78,9 @@ func (km *TorKeyManager) ImportKeys(publicKey, privateKey []byte) error {
 		return fmt.Errorf("failed to create keys directory: %w", err)
 	}
 
-	// Write keys in Tor format (32-byte header + 32-byte key)
-	if err := km.writePrivateKey(filepath.Join(keysDir, "hs_ed25519_secret_key"), privateKey); err != nil {
+	// Tor stores the 32-byte seed after the header, not the full 64-byte expanded key.
+	privateSeed := normalizedPrivKey.Seed()
+	if err := km.writePrivateKey(filepath.Join(keysDir, "hs_ed25519_secret_key"), privateSeed); err != nil {
 		return fmt.Errorf("failed to write private key: %w", err)
 	}
 
@@ -156,8 +157,8 @@ func (km *TorKeyManager) ImportFromFile(filepath string) error {
 		// Determine if private or public based on header
 		header := string(data[:28])
 		if header == "== ed25519v1-secret: type0" {
-			// Private key - derive public key
-			privKey := ed25519.PrivateKey(key)
+			// Tor private key files store a 32-byte seed after the header.
+			privKey := ed25519.NewKeyFromSeed(key)
 			pubKey := privKey.Public().(ed25519.PublicKey)
 			return km.ImportKeys(pubKey, key)
 		} else if header == "== ed25519v1-public: type0 " {
@@ -174,6 +175,22 @@ func (km *TorKeyManager) ImportFromFile(filepath string) error {
 	}
 
 	return fmt.Errorf("unsupported key file format")
+}
+
+func normalizeTorPrivateKey(privateKey []byte) (ed25519.PrivateKey, error) {
+	switch len(privateKey) {
+	case ed25519.SeedSize:
+		return ed25519.NewKeyFromSeed(privateKey), nil
+	case ed25519.PrivateKeySize:
+		return ed25519.PrivateKey(privateKey), nil
+	default:
+		return nil, fmt.Errorf(
+			"invalid private key length: got %d, want %d-byte seed or %d-byte private key",
+			len(privateKey),
+			ed25519.SeedSize,
+			ed25519.PrivateKeySize,
+		)
+	}
 }
 
 // GetCurrentAddress returns the current .onion address

@@ -1,4 +1,4 @@
-package service
+package i18n
 
 import (
 	"embed"
@@ -28,7 +28,7 @@ func NewI18n(fs embed.FS, defaultLang string) (*I18n, error) {
 	}
 
 	// Load all locale files from embedded FS
-	entries, err := fs.ReadDir("locale")
+	entries, err := fs.ReadDir("common/i18n/locales")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read locale directory: %w", err)
 	}
@@ -39,7 +39,7 @@ func NewI18n(fs embed.FS, defaultLang string) (*I18n, error) {
 		}
 
 		lang := strings.TrimSuffix(entry.Name(), ".json")
-		data, err := fs.ReadFile(fmt.Sprintf("locale/%s", entry.Name()))
+		data, err := fs.ReadFile(fmt.Sprintf("common/i18n/locales/%s", entry.Name()))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read locale file %s: %w", entry.Name(), err)
 		}
@@ -76,8 +76,8 @@ func (i *I18n) T(lang, key string) string {
 		}
 	}
 
-	// Return key if translation not found (helpful for debugging)
-	return fmt.Sprintf("[%s]", key)
+	// AI.md PART 31: return the key itself as the last-resort fallback.
+	return key
 }
 
 // ParseAcceptLanguage parses the Accept-Language header and returns the best match

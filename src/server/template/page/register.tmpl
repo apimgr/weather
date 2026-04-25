@@ -10,11 +10,8 @@
 <body>
     <div class="register-container">
         <div class="register-header">
-            {{ if .isSetup }}
-            <span class="setup-badge">✨ SETUP</span>
-            {{ end }}
             <h1>🌤️ Weather Service</h1>
-            <p>{{ if .isSetup }}Create your admin account{{ else }}Create a new account{{ end }}</p>
+            <p>Create a new account</p>
         </div>
 
         {{ if .error }}
@@ -31,13 +28,13 @@
                        required
                        autofocus
                        minlength="3"
-                       maxlength="20"
-                       pattern="[a-zA-Z0-9_]+"
+                       maxlength="32"
+                       pattern="[a-z][a-z0-9_-]{2,31}"
                        aria-label="Username"
                        aria-required="true"
                        aria-describedby="username-requirements"
                        title="Choose a unique username for your account">
-                <small id="username-requirements">3-20 characters, letters, numbers, and underscores only</small>
+                <small id="username-requirements">3-32 characters, lowercase letters, numbers, underscores, and hyphens. Must start with a letter.</small>
             </div>
 
             <div class="form-group">
@@ -90,18 +87,16 @@
             </div>
 
             <button type="submit"
-                    class="btn-primary {{ if .isSetup }}setup{{ end }}"
-                    aria-label="{{ if .isSetup }}Create administrator account{{ else }}Create user account{{ end }}"
-                    title="{{ if .isSetup }}Create admin account and complete setup{{ else }}Create your weather account{{ end }}">
-                {{ if .isSetup }}Create Admin Account{{ else }}Create Account{{ end }}
+                    class="btn-primary"
+                    aria-label="Create user account"
+                    title="Create your weather account">
+                Create Account
             </button>
         </form>
 
-        {{ if not .isSetup }}
         <div class="form-footer">
             <p>Already have an account? <a href="/auth/login">Sign in here</a></p>
         </div>
-        {{ end }}
 
         <div class="back-link">
             <a href="/">← Back to Weather</a>

@@ -65,6 +65,59 @@
             {{end}}
         </div>
     </div>
+
+    <div class="card profile-card margin-y-md">
+        <div class="card-header">
+            <h2 class="profile-card-header-title">Passkeys</h2>
+        </div>
+        <div class="card-body">
+            {{if .hasPasskeys}}
+                <div class="alert alert-success margin-y-md">
+                    <strong>✓ {{len .passkeys}} passkey{{if ne (len .passkeys) 1}}s are{{else}} is{{end}} registered</strong>
+                    <p class="text-sm margin-y-sm">You can use a passkey as a primary sign-in method or as the second step after entering your password.</p>
+                </div>
+            {{else}}
+                <div class="alert alert-info margin-y-md">
+                    <strong>ℹ No passkeys registered yet</strong>
+                    <p class="text-sm margin-y-sm">Passkeys let you sign in with your device biometrics or security key instead of typing a one-time code.</p>
+                </div>
+            {{end}}
+
+            {{if and .hasPasskeys (lt .recoveryKeysCount 3)}}
+                <div class="alert alert-warning margin-y-md">
+                    <strong>⚠ Low Recovery Keys</strong>
+                    <p class="text-sm margin-y-sm">You have less than 3 recovery keys remaining. Keep fresh keys available in case a passkey device is lost.</p>
+                </div>
+            {{end}}
+
+            <div class="form-group">
+                <label class="form-label" for="newPasskeyName">New Passkey Name</label>
+                <input id="newPasskeyName" class="form-input" type="text" placeholder="My laptop passkey">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="newPasskeyPassword">Confirm Password</label>
+                <input id="newPasskeyPassword" class="form-input" type="password" placeholder="Enter your password to continue">
+            </div>
+            <div class="profile-form-actions">
+                <button type="button" class="btn btn-primary" onclick="registerPasskey()">🔑 Add Passkey</button>
+            </div>
+
+            {{if .hasPasskeys}}
+            <div class="margin-y-md">
+                <h3 class="profile-card-header-title">Registered Passkeys</h3>
+                <div class="info-grid">
+                    {{range .passkeys}}
+                    <div class="info-item">
+                        <div class="info-label">{{.Name}}</div>
+                        <div class="info-value text-comment">Created {{.CreatedAt.Format "2006-01-02 15:04"}}{{if .LastUsedAt}} · Last used {{.LastUsedAt.Format "2006-01-02 15:04"}}{{end}}</div>
+                        <button type="button" class="btn btn-danger margin-y-sm" onclick="deletePasskey({{.ID}}, {{printf "%q" .Name}})">Delete</button>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
 </div>
 
 <!-- 2FA Setup Modal -->
@@ -210,6 +263,51 @@ const API_PATH = '{{.api_path}}';
 let setup2FASecret = '';
 let recoveryKeysList = [];
 
+function bufferToBase64url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function base64urlToBuffer(base64url) {
+    const padded = (base64url + '==='.slice((base64url.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+}
+
+function normalizeCreationOptions(options) {
+    const publicKey = options.publicKey || options;
+    publicKey.challenge = base64urlToBuffer(publicKey.challenge);
+    publicKey.user.id = base64urlToBuffer(publicKey.user.id);
+    if (Array.isArray(publicKey.excludeCredentials)) {
+        publicKey.excludeCredentials = publicKey.excludeCredentials.map((credential) => ({
+            ...credential,
+            id: base64urlToBuffer(credential.id),
+        }));
+    }
+    return publicKey;
+}
+
+function serializeCredential(credential) {
+    return {
+        id: credential.id,
+        rawId: bufferToBase64url(credential.rawId),
+        type: credential.type,
+        response: {
+            attestationObject: bufferToBase64url(credential.response.attestationObject),
+            clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+            transports: credential.response.getTransports ? credential.response.getTransports() : [],
+            publicKeyAlgorithm: credential.response.getPublicKeyAlgorithm ? credential.response.getPublicKeyAlgorithm() : undefined,
+            publicKey: credential.response.getPublicKey ? bufferToBase64url(credential.response.getPublicKey()) : undefined,
+            authenticatorData: credential.response.getAuthenticatorData ? bufferToBase64url(credential.response.getAuthenticatorData()) : undefined,
+        },
+        authenticatorAttachment: credential.authenticatorAttachment || undefined,
+    };
+}
+
 // Enable 2FA Flow
 async function enable2FA() {
     try {
@@ -248,6 +346,81 @@ function nextSetupStep() {
 function prevSetupStep() {
     document.getElementById('setupStep2').style.display = 'none';
     document.getElementById('setupStep1').style.display = 'block';
+}
+
+async function registerPasskey() {
+    if (!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create) {
+        Toast.error('This browser does not support passkeys');
+        return;
+    }
+
+    const name = document.getElementById('newPasskeyName').value.trim();
+    const password = document.getElementById('newPasskeyPassword').value;
+    if (!name || !password) {
+        Toast.error('Passkey name and password are required');
+        return;
+    }
+
+    try {
+        const startResponse = await fetch(API_PATH + '/users/security/passkeys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, password }),
+        });
+        const startPayload = await startResponse.json();
+        if (!startResponse.ok || !startPayload.ok) {
+            throw new Error(startPayload.error || 'Failed to start passkey registration');
+        }
+
+        const credential = await navigator.credentials.create({
+            publicKey: normalizeCreationOptions(startPayload.options),
+        });
+        if (!credential) {
+            throw new Error('Passkey registration was cancelled');
+        }
+
+        const finishResponse = await fetch(API_PATH + '/users/security/passkeys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(serializeCredential(credential)),
+        });
+        const finishPayload = await finishResponse.json();
+        if (!finishResponse.ok || !finishPayload.ok) {
+            throw new Error(finishPayload.error || 'Failed to register passkey');
+        }
+
+        if (finishPayload.recovery_keys) {
+            recoveryKeysList = finishPayload.recovery_keys;
+            document.getElementById('recoveryKeysContainer').innerHTML = recoveryKeysList.map((key) => `<div class="recovery-key">${key}</div>`).join('');
+            document.getElementById('setup2FAModal').style.display = 'flex';
+            document.getElementById('setupStep1').style.display = 'none';
+            document.getElementById('setupStep2').style.display = 'none';
+            document.getElementById('setupStep3').style.display = 'block';
+        } else {
+            window.location.reload();
+        }
+    } catch (error) {
+        Toast.error('Failed to register passkey: ' + error.message);
+    }
+}
+
+async function deletePasskey(passkeyID, name) {
+    if (!confirm(`Delete passkey "${name}"?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(API_PATH + '/users/security/passkeys/' + passkeyID, {
+            method: 'DELETE',
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+            throw new Error(payload.error || 'Failed to delete passkey');
+        }
+        window.location.reload();
+    } catch (error) {
+        Toast.error('Failed to delete passkey: ' + error.message);
+    }
 }
 
 // Verify and enable 2FA

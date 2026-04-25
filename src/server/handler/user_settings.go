@@ -4,6 +4,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ func (h *UserSettingsHandler) ShowAccountSettings(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "page/user/settings.tmpl", utils.TemplateData(c, gin.H{
+	NegotiateResponse(c, "page/user/settings.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Account Settings",
 		"page":        "settings",
 		"settingsTab": "account",
@@ -54,7 +55,7 @@ func (h *UserSettingsHandler) ShowPrivacySettings(c *gin.Context) {
 	// Get user preferences for privacy settings
 	prefs, _ := h.getOrCreatePreferences(user.ID)
 
-	c.HTML(http.StatusOK, "page/user/settings-privacy.tmpl", utils.TemplateData(c, gin.H{
+	NegotiateResponse(c, "page/user/settings-privacy.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Privacy Settings",
 		"page":        "settings",
 		"settingsTab": "privacy",
@@ -75,7 +76,7 @@ func (h *UserSettingsHandler) ShowNotificationSettings(c *gin.Context) {
 	// Get user preferences
 	prefs, _ := h.getOrCreatePreferences(user.ID)
 
-	c.HTML(http.StatusOK, "page/user/settings-notifications.tmpl", utils.TemplateData(c, gin.H{
+	NegotiateResponse(c, "page/user/settings-notifications.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Notification Settings",
 		"page":        "settings",
 		"settingsTab": "notifications",
@@ -96,7 +97,7 @@ func (h *UserSettingsHandler) ShowAppearanceSettings(c *gin.Context) {
 	// Get user preferences
 	prefs, _ := h.getOrCreatePreferences(user.ID)
 
-	c.HTML(http.StatusOK, "page/user/settings-appearance.tmpl", utils.TemplateData(c, gin.H{
+	NegotiateResponse(c, "page/user/settings-appearance.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "Appearance Settings",
 		"page":        "settings",
 		"settingsTab": "appearance",
@@ -117,7 +118,7 @@ func (h *UserSettingsHandler) ShowTokensSettings(c *gin.Context) {
 	// Get user's API tokens
 	tokens, _ := h.getUserTokens(user.ID)
 
-	c.HTML(http.StatusOK, "page/user/settings-tokens.tmpl", utils.TemplateData(c, gin.H{
+	NegotiateResponse(c, "page/user/settings-tokens.tmpl", utils.TemplateData(c, gin.H{
 		"title":       "API Tokens",
 		"page":        "settings",
 		"settingsTab": "tokens",
@@ -183,50 +184,11 @@ func (h *UserSettingsHandler) GetSettings(c *gin.Context) {
 		return
 	}
 
-	// Get user preferences
-	prefs, err := h.getOrCreatePreferences(user.ID)
+	response, err := h.loadSettings(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get preferences"})
 		return
 	}
-
-	// Get extended preferences (privacy, notifications, appearance)
-	extPrefs, _ := h.getExtendedPreferences(user.ID)
-
-	response := UserSettingsResponse{
-		Account: AccountSettings{
-			DisplayName: user.DisplayName,
-			Bio:         user.Bio,
-			Location:    user.Location,
-			Website:     user.Website,
-			Timezone:    user.Timezone,
-			Language:    user.Language,
-			DateFormat:  extPrefs.DateFormat,
-			TimeFormat:  extPrefs.TimeFormat,
-		},
-		Privacy: PrivacySettings{
-			Visibility:    user.Visibility,
-			ShowEmail:     extPrefs.ShowEmail,
-			ShowActivity:  extPrefs.ShowActivity,
-			ShowOrgs:      extPrefs.ShowOrgs,
-			Searchable:    extPrefs.Searchable,
-			OrgVisibility: extPrefs.OrgVisibility,
-		},
-		Notifications: NotificationSettings{
-			EmailSecurity: true, // Always on per AI.md PART 34
-			EmailMentions: prefs.EmailNotifications,
-			EmailUpdates:  extPrefs.EmailUpdates,
-			EmailDigest:   extPrefs.EmailDigest,
-			PushEnabled:   prefs.NotificationsEnabled,
-			PushMentions:  extPrefs.PushMentions,
-		},
-		Appearance: AppearanceSettings{
-			Theme:        prefs.Theme,
-			FontSize:     extPrefs.FontSize,
-			ReduceMotion: extPrefs.ReduceMotion,
-		},
-	}
-
 	c.JSON(http.StatusOK, response)
 }
 
@@ -253,39 +215,111 @@ func (h *UserSettingsHandler) UpdateSettings(c *gin.Context) {
 		return
 	}
 
-	// Update account settings (stored in users table)
-	if req.Account != nil {
-		if err := h.updateAccountSettings(user.ID, req.Account); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update account settings"})
-			return
+	if err := h.applySettingsUpdate(user.ID, &req); err != nil {
+		switch err.Error() {
+		case "bio must be 500 characters or fewer", "theme must be one of: dark, light, auto":
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update settings"})
 		}
+		return
 	}
-
-	// Update privacy settings
-	if req.Privacy != nil {
-		if err := h.updatePrivacySettings(user.ID, req.Privacy); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update privacy settings"})
-			return
-		}
-	}
-
-	// Update notification settings
-	if req.Notifications != nil {
-		if err := h.updateNotificationSettings(user.ID, req.Notifications); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update notification settings"})
-			return
-		}
-	}
-
-	// Update appearance settings
-	if req.Appearance != nil {
-		if err := h.updateAppearanceSettings(user.ID, req.Appearance); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update appearance settings"})
-			return
-		}
-	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "Settings updated successfully"})
+}
+
+// LoadUserSettings loads the live user settings payload used by /api/v1/users/settings.
+func LoadUserSettings(db *sql.DB, userID int64) (*UserSettingsResponse, error) {
+	return NewUserSettingsHandler(db).loadSettings(userID)
+}
+
+// ApplyUserSettingsUpdate applies the same section-based settings update used by PATCH /api/v1/users/settings.
+func ApplyUserSettingsUpdate(db *sql.DB, userID int64, req *UpdateSettingsRequest) error {
+	return NewUserSettingsHandler(db).applySettingsUpdate(userID, req)
+}
+
+func (h *UserSettingsHandler) loadSettings(userID int64) (*UserSettingsResponse, error) {
+	user := &models.User{}
+	err := h.DB.QueryRow(`
+		SELECT id, email, username, display_name, bio, location, website, timezone, language,
+		       role, visibility, is_active, email_verified, created_at, updated_at
+		FROM user_accounts
+		WHERE id = ?
+	`, userID).Scan(
+		&user.ID, &user.Email, &user.Username, &user.DisplayName, &user.Bio, &user.Location,
+		&user.Website, &user.Timezone, &user.Language, &user.Role, &user.Visibility,
+		&user.IsActive, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	prefs, err := h.getOrCreatePreferences(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	extPrefs, err := h.getExtendedPreferences(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserSettingsResponse{
+		Account: AccountSettings{
+			DisplayName: user.DisplayName,
+			Bio:         user.Bio,
+			Location:    user.Location,
+			Website:     user.Website,
+			Timezone:    user.Timezone,
+			Language:    user.Language,
+			DateFormat:  extPrefs.DateFormat,
+			TimeFormat:  extPrefs.TimeFormat,
+		},
+		Privacy: PrivacySettings{
+			Visibility:    user.Visibility,
+			ShowEmail:     extPrefs.ShowEmail,
+			ShowActivity:  extPrefs.ShowActivity,
+			ShowOrgs:      extPrefs.ShowOrgs,
+			Searchable:    extPrefs.Searchable,
+			OrgVisibility: extPrefs.OrgVisibility,
+		},
+		Notifications: NotificationSettings{
+			EmailSecurity: true,
+			EmailMentions: prefs.EmailNotifications,
+			EmailUpdates:  extPrefs.EmailUpdates,
+			EmailDigest:   extPrefs.EmailDigest,
+			PushEnabled:   prefs.NotificationsEnabled,
+			PushMentions:  extPrefs.PushMentions,
+		},
+		Appearance: AppearanceSettings{
+			Theme:        prefs.Theme,
+			FontSize:     extPrefs.FontSize,
+			ReduceMotion: extPrefs.ReduceMotion,
+		},
+	}, nil
+}
+
+func (h *UserSettingsHandler) applySettingsUpdate(userID int64, req *UpdateSettingsRequest) error {
+	if req.Account != nil {
+		if err := h.updateAccountSettings(userID, req.Account); err != nil {
+			return err
+		}
+	}
+	if req.Privacy != nil {
+		if err := h.updatePrivacySettings(userID, req.Privacy); err != nil {
+			return err
+		}
+	}
+	if req.Notifications != nil {
+		if err := h.updateNotificationSettings(userID, req.Notifications); err != nil {
+			return err
+		}
+	}
+	if req.Appearance != nil {
+		if err := h.updateAppearanceSettings(userID, req.Appearance); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ExtendedPreferences stores additional preference fields not in base UserPreferences
@@ -379,7 +413,7 @@ func (h *UserSettingsHandler) getExtendedPreferences(userID int64) (*ExtendedPre
 func (h *UserSettingsHandler) updateAccountSettings(userID int64, settings *AccountSettings) error {
 	// Validate bio length (max 500 chars per AI.md PART 34)
 	if len(settings.Bio) > 500 {
-		return nil // Silently truncate or return error
+		return fmt.Errorf("bio must be 500 characters or fewer")
 	}
 
 	// Validate website URL if provided
@@ -428,7 +462,7 @@ func (h *UserSettingsHandler) updateAppearanceSettings(userID int64, settings *A
 	// Validate theme
 	validThemes := map[string]bool{"dark": true, "light": true, "auto": true}
 	if !validThemes[settings.Theme] {
-		settings.Theme = "dark"
+		return fmt.Errorf("theme must be one of: dark, light, auto")
 	}
 
 	_, err := h.DB.Exec(`

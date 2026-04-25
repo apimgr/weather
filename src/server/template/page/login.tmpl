@@ -75,9 +75,15 @@
                     title="Sign in to access your weather account">Sign In</button>
         </form>
 
+        {{ if .registrationPublic }}
         <div class="form-footer">
             <p>Don't have an account? <a href="/auth/register">Register here</a></p>
         </div>
+        {{ end }}
+
+        {{ if .pendingVerification }}
+        <div class="success-message" role="status" aria-live="polite">✅ Registration successful. Check your email to verify your account before logging in.</div>
+        {{ end }}
 
         <div class="back-link">
             <a href="/">← Back to Weather</a>

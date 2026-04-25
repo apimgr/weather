@@ -6,11 +6,21 @@ package graphql
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
+	"errors"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
+	gqlupload "github.com/99designs/gqlgen/graphql"
+	"github.com/apimgr/weather/src/config"
+	"github.com/apimgr/weather/src/scheduler"
+	"github.com/apimgr/weather/src/server/handler"
 	"github.com/apimgr/weather/src/server/model"
+	"github.com/apimgr/weather/src/server/service"
 	"github.com/apimgr/weather/src/utils"
 )
 
@@ -22,6 +32,22 @@ func (r *aPITokenResolver) ExpiresAt(ctx context.Context, obj *models.APIToken) 
 	return nil, nil
 }
 
+// Token is the resolver for the token field.
+func (r *aPITokenResolver) Token(ctx context.Context, obj *models.APIToken) (*string, error) {
+	if obj.Token == "" {
+		return nil, nil
+	}
+	return &obj.Token, nil
+}
+
+// Name is the resolver for the name field.
+func (r *aPITokenResolver) Name(ctx context.Context, obj *models.APIToken) (*string, error) {
+	if obj.Name == "" {
+		return nil, nil
+	}
+	return &obj.Name, nil
+}
+
 // LastUsedIP is the resolver for the lastUsedIP field.
 func (r *aPITokenResolver) LastUsedIP(ctx context.Context, obj *models.APIToken) (*string, error) {
 	if obj.LastUsedIP.Valid {
@@ -30,45 +56,467 @@ func (r *aPITokenResolver) LastUsedIP(ctx context.Context, obj *models.APIToken)
 	return nil, nil
 }
 
+// RegisterUser is the resolver for the registerUser field.
+func (r *mutationResolver) RegisterUser(ctx context.Context, username string, email string, password string) (*AuthResult, error) {
+	response, err := handler.RegisterAPIUser(r.UsersDB, &handler.APIRegisterRequest{
+		Username: username,
+		Email:    email,
+		Password: password,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLAuthRegisterResponse(response), nil
+}
+
+// LoginUser is the resolver for the loginUser field.
+func (r *mutationResolver) LoginUser(ctx context.Context, identifier string, password string, twoFactorCode *string, recoveryKey *string) (*AuthResult, error) {
+	req := &handler.APILoginRequest{
+		Identifier: identifier,
+		Password:   password,
+	}
+	if twoFactorCode != nil {
+		req.TwoFactorCode = *twoFactorCode
+	}
+	if recoveryKey != nil {
+		req.RecoveryKey = *recoveryKey
+	}
+
+	response, err := handler.LoginAPIUser(r.UsersDB, req, getIPFromContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLAuthLoginResponse(response), nil
+}
+
+// CompleteUserTwoFactor is the resolver for the completeUserTwoFactor field.
+func (r *mutationResolver) CompleteUserTwoFactor(ctx context.Context, sessionToken string, twoFactorCode string) (*AuthResult, error) {
+	response, err := handler.CompleteAPIUserTwoFactor(r.UsersDB, &handler.API2FARequest{
+		SessionToken:  sessionToken,
+		TwoFactorCode: twoFactorCode,
+	}, getIPFromContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLAuthLoginResponse(response), nil
+}
+
+// UseUserRecoveryKey is the resolver for the useUserRecoveryKey field.
+func (r *mutationResolver) UseUserRecoveryKey(ctx context.Context, sessionToken string, recoveryKey string) (*AuthResult, error) {
+	response, err := handler.UseAPIUserRecoveryKey(r.UsersDB, &handler.APIRecoveryUseRequest{
+		SessionToken: sessionToken,
+		RecoveryKey:  recoveryKey,
+	}, getIPFromContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLAuthLoginResponse(response), nil
+}
+
+// LogoutUser is the resolver for the logoutUser field.
+func (r *mutationResolver) LogoutUser(ctx context.Context) (*GenericResponse, error) {
+	session, err := loadGraphQLCurrentUserSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := handler.LogoutCurrentUserSession(r.UsersDB, session); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Logged out successfully"}, nil
+}
+
+// RefreshUserSession is the resolver for the refreshUserSession field.
+func (r *mutationResolver) RefreshUserSession(ctx context.Context) (*AuthResult, error) {
+	session, err := loadGraphQLCurrentUserSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := handler.RefreshCurrentUserSession(r.UsersDB, session, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLAuthLoginResponse(response), nil
+}
+
+// RequestPasswordReset is the resolver for the requestPasswordReset field.
+func (r *mutationResolver) RequestPasswordReset(ctx context.Context, email string) (*GenericResponse, error) {
+	if err := handler.RequestAPIUserPasswordReset(r.UsersDB, &handler.APIPasswordForgotRequest{
+		Email: email,
+	}, &handler.APIPasswordResetContext{
+		ClientIP: getIPFromContext(ctx),
+		FullHost: graphQLRequestBaseURL(ctx),
+	}); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{
+		Success: true,
+		Message: "If an account exists with that email, a password reset link will be sent",
+	}, nil
+}
+
+// ResetUserPassword is the resolver for the resetUserPassword field.
+func (r *mutationResolver) ResetUserPassword(ctx context.Context, token string, password string) (*GenericResponse, error) {
+	if err := handler.ResetAPIUserPassword(r.UsersDB, &handler.APIPasswordResetRequest{
+		Token:    token,
+		Password: password,
+	}); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{
+		Success: true,
+		Message: "Password reset successfully. Please log in with your new password.",
+	}, nil
+}
+
+// VerifyUserEmail is the resolver for the verifyUserEmail field.
+func (r *mutationResolver) VerifyUserEmail(ctx context.Context, token string) (*GenericResponse, error) {
+	if err := handler.VerifyAPIUserEmail(r.UsersDB, &handler.APIVerifyEmailRequest{Token: token}); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Email verified successfully"}, nil
+}
+
+// CompleteUserInvite is the resolver for the completeUserInvite field.
+func (r *mutationResolver) CompleteUserInvite(ctx context.Context, token string, username string, password string) (*UserInviteCompletion, error) {
+	response, err := handler.CompleteAPIUserInvite(r.UsersDB, token, username, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLUserInviteCompletion(response), nil
+}
+
+// CompleteServerInvite is the resolver for the completeServerInvite field.
+func (r *mutationResolver) CompleteServerInvite(ctx context.Context, token string, username string, password string) (*ServerInviteCompletion, error) {
+	response, err := handler.CompleteAPIServerInvite(token, username, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLServerInviteCompletion(response), nil
+}
+
 // UpdateUserProfile is the resolver for the updateUserProfile field.
-func (r *mutationResolver) UpdateUserProfile(ctx context.Context, displayName *string, phone *string) (*models.User, error) {
-	// Get user from context
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+func (r *mutationResolver) UpdateUserProfile(ctx context.Context, displayName *string, phone *string) (*GenericResponse, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	// Update user in database
+	req := &handler.UpdateCurrentUserProfileRequest{}
 	if displayName != nil {
-		_, err := r.ServerDB.Exec("UPDATE users SET display_name = ?, updated_at = ? WHERE id = ?", *displayName, time.Now(), userID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update display name: %w", err)
-		}
+		req.DisplayName = *displayName
 	}
-
 	if phone != nil {
-		_, err := r.ServerDB.Exec("UPDATE users SET phone = ?, updated_at = ? WHERE id = ?", *phone, time.Now(), userID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update phone: %w", err)
+		req.Phone = *phone
+	}
+
+	if err := handler.UpdateCurrentUserProfile(r.UsersDB, int64(userID), req); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Profile updated successfully"}, nil
+}
+
+// UploadUserAvatar is the resolver for the uploadUserAvatar field.
+func (r *mutationResolver) UploadUserAvatar(ctx context.Context, file gqlupload.Upload) (*PublicAvatar, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	avatar, err := handler.UploadCurrentUserAvatar(r.UsersDB, int64(userID), &handler.AvatarUploadRequest{
+		Filename:    strings.TrimSpace(file.Filename),
+		Size:        file.Size,
+		ContentType: strings.TrimSpace(file.ContentType),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PublicAvatar{
+		Type: avatar.Type,
+		Urls: avatar.URLs,
+	}, nil
+}
+
+// UpdateUserAvatar is the resolver for the updateUserAvatar field.
+func (r *mutationResolver) UpdateUserAvatar(ctx context.Context, typeArg string, url *string) (*PublicAvatar, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	req := &handler.UpdateAvatarRequest{Type: strings.TrimSpace(typeArg)}
+	if url != nil {
+		req.URL = strings.TrimSpace(*url)
+	}
+
+	avatar, err := handler.UpdateCurrentUserAvatar(r.UsersDB, int64(userID), req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PublicAvatar{
+		Type: avatar.Type,
+		Urls: avatar.URLs,
+	}, nil
+}
+
+// ResetUserAvatar is the resolver for the resetUserAvatar field.
+func (r *mutationResolver) ResetUserAvatar(ctx context.Context) (*GenericResponse, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	if err := handler.ResetCurrentUserAvatar(r.UsersDB, int64(userID)); err != nil {
+		return nil, fmt.Errorf("failed to reset avatar: %w", err)
+	}
+
+	return &GenericResponse{Success: true, Message: "Avatar reset to Gravatar"}, nil
+}
+
+// ChangeUserPassword is the resolver for the changeUserPassword field.
+func (r *mutationResolver) ChangeUserPassword(ctx context.Context, currentPassword string, newPassword string) (*GenericResponse, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	if err := handler.ChangeCurrentUserPassword(r.UsersDB, int64(userID), &handler.ChangePasswordRequest{
+		CurrentPassword: currentPassword,
+		NewPassword:     newPassword,
+	}); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Password changed successfully"}, nil
+}
+
+// EnableUserTwoFactor is the resolver for the enableUserTwoFactor field.
+func (r *mutationResolver) EnableUserTwoFactor(ctx context.Context, secret string, code string) (*TOTPRecoveryKeys, error) {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := handler.EnableCurrentUserTwoFactor(r.UsersDB, user, secret, code)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLRecoveryKeysResponse(response), nil
+}
+
+// DisableUserTwoFactor is the resolver for the disableUserTwoFactor field.
+func (r *mutationResolver) DisableUserTwoFactor(ctx context.Context, password string) (*GenericResponse, error) {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := handler.DisableCurrentUserTwoFactor(r.UsersDB, user, password); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Two-factor authentication disabled successfully"}, nil
+}
+
+// VerifyUserTwoFactor is the resolver for the verifyUserTwoFactor field.
+func (r *mutationResolver) VerifyUserTwoFactor(ctx context.Context, code string) (*GenericResponse, error) {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := handler.VerifyCurrentUserTwoFactorCode(r.UsersDB, user, code); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Code verified successfully"}, nil
+}
+
+// RegenerateUserRecoveryKeys is the resolver for the regenerateUserRecoveryKeys field.
+func (r *mutationResolver) RegenerateUserRecoveryKeys(ctx context.Context, code string) (*TOTPRecoveryKeys, error) {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := handler.RegenerateCurrentUserRecoveryKeys(r.UsersDB, user, code)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLRecoveryKeysResponse(response), nil
+}
+
+// UpdateUserSettings is the resolver for the updateUserSettings field.
+func (r *mutationResolver) UpdateUserSettings(ctx context.Context, account *AccountSettingsInput, privacy *PrivacySettingsInput, notifications *NotificationSettingsInput, appearance *AppearanceSettingsInput) (*GenericResponse, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	req := &handler.UpdateSettingsRequest{}
+	if account != nil {
+		req.Account = &handler.AccountSettings{
+			DisplayName: account.DisplayName,
+			Bio:         account.Bio,
+			Location:    account.Location,
+			Website:     account.Website,
+			Timezone:    account.Timezone,
+			Language:    account.Language,
+			DateFormat:  account.DateFormat,
+			TimeFormat:  account.TimeFormat,
+		}
+	}
+	if privacy != nil {
+		req.Privacy = &handler.PrivacySettings{
+			Visibility:    privacy.Visibility,
+			ShowEmail:     privacy.ShowEmail,
+			ShowActivity:  privacy.ShowActivity,
+			ShowOrgs:      privacy.ShowOrgs,
+			Searchable:    privacy.Searchable,
+			OrgVisibility: privacy.OrgVisibility,
+		}
+	}
+	if notifications != nil {
+		req.Notifications = &handler.NotificationSettings{
+			EmailSecurity: notifications.EmailSecurity,
+			EmailMentions: notifications.EmailMentions,
+			EmailUpdates:  notifications.EmailUpdates,
+			EmailDigest:   notifications.EmailDigest,
+			PushEnabled:   notifications.PushEnabled,
+			PushMentions:  notifications.PushMentions,
+		}
+	}
+	if appearance != nil {
+		req.Appearance = &handler.AppearanceSettings{
+			Theme:        appearance.Theme,
+			FontSize:     appearance.FontSize,
+			ReduceMotion: appearance.ReduceMotion,
 		}
 	}
 
-	// Fetch updated user
-	user := &models.User{}
-	err := r.ServerDB.QueryRow("SELECT id, username, email, display_name, phone, role, is_active, email_verified, created_at, updated_at FROM users WHERE id = ?", userID).Scan(
-		&user.ID, &user.Username, &user.Email, &user.DisplayName, &user.Phone, &user.Role, &user.IsActive, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	if err := handler.ApplyUserSettingsUpdate(r.UsersDB, int64(userID), req); err != nil {
+		return nil, err
 	}
 
-	return user, nil
+	return &GenericResponse{Success: true, Message: "Settings updated successfully"}, nil
+}
+
+// CreateUserToken is the resolver for the createUserToken field.
+func (r *mutationResolver) CreateUserToken(ctx context.Context, name string, scopes *string, expiresIn *int) (*UserToken, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	var count int
+	if err := r.UsersDB.QueryRow("SELECT COUNT(*) FROM user_tokens WHERE user_id = ?", userID).Scan(&count); err != nil {
+		return nil, fmt.Errorf("failed to count user tokens: %w", err)
+	}
+	if count >= 5 {
+		return nil, fmt.Errorf("maximum 5 tokens per user")
+	}
+
+	token, err := models.GenerateTokenWithPrefix(models.PrefixUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	tokenHash := models.HashToken(token)
+	tokenPrefix := models.GetTokenPrefix(token) + "..."
+	createdAt := time.Now()
+
+	var expiresAt sql.NullTime
+	if expiresIn != nil && *expiresIn > 0 {
+		expiresAt = sql.NullTime{
+			Time:  createdAt.AddDate(0, 0, *expiresIn),
+			Valid: true,
+		}
+	}
+
+	var scopesValue string
+	if scopes != nil {
+		scopesValue = strings.TrimSpace(*scopes)
+	}
+
+	result, err := r.UsersDB.Exec(`
+		INSERT INTO user_tokens (user_id, token_hash, token_prefix, name, scopes, created_at, expires_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, userID, tokenHash, tokenPrefix, strings.TrimSpace(name), scopesValue, createdAt, expiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load created token id: %w", err)
+	}
+
+	return buildGraphQLUserToken(
+		id,
+		strings.TrimSpace(name),
+		tokenPrefix,
+		scopesValue,
+		createdAt,
+		expiresAt,
+		sql.NullTime{},
+		&token,
+	), nil
+}
+
+// RevokeUserToken is the resolver for the revokeUserToken field.
+func (r *mutationResolver) RevokeUserToken(ctx context.Context, id string) (*GenericResponse, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
+	tokenID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token id")
+	}
+
+	result, err := r.UsersDB.Exec("DELETE FROM user_tokens WHERE id = ? AND user_id = ?", tokenID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to revoke token: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify revoked token: %w", err)
+	}
+	if rowsAffected == 0 {
+		return &GenericResponse{Success: false, Message: "Token not found"}, nil
+	}
+
+	return &GenericResponse{Success: true, Message: "Token revoked"}, nil
 }
 
 // CreateSavedLocation is the resolver for the createSavedLocation field.
 func (r *mutationResolver) CreateSavedLocation(ctx context.Context, name string, lat float64, lon float64, country *string, region *string, alerts *bool) (*models.SavedLocation, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
@@ -78,8 +526,8 @@ func (r *mutationResolver) CreateSavedLocation(ctx context.Context, name string,
 	}
 
 	timezone := ""
-	result, err := r.ServerDB.Exec(`
-		INSERT INTO saved_locations (user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at)
+	result, err := r.UsersDB.Exec(`
+		INSERT INTO user_saved_locations (user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`, userID, name, lat, lon, timezone, alertsEnabled, time.Now(), time.Now())
 
@@ -93,9 +541,9 @@ func (r *mutationResolver) CreateSavedLocation(ctx context.Context, name string,
 	}
 
 	location := &models.SavedLocation{}
-	err = r.ServerDB.QueryRow(`
+	err = r.UsersDB.QueryRow(`
 		SELECT id, user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at
-		FROM saved_locations WHERE id = ?
+		FROM user_saved_locations WHERE id = ?
 	`, id).Scan(&location.ID, &location.UserID, &location.Name, &location.Latitude, &location.Longitude, &location.Timezone, &location.AlertsEnabled, &location.CreatedAt, &location.UpdatedAt)
 
 	if err != nil {
@@ -107,29 +555,29 @@ func (r *mutationResolver) CreateSavedLocation(ctx context.Context, name string,
 
 // UpdateSavedLocation is the resolver for the updateSavedLocation field.
 func (r *mutationResolver) UpdateSavedLocation(ctx context.Context, id string, name *string, alerts *bool) (*models.SavedLocation, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
 	if name != nil {
-		_, err := r.ServerDB.Exec("UPDATE saved_locations SET name = ?, updated_at = ? WHERE id = ? AND user_id = ?", *name, time.Now(), id, userID)
+		_, err := r.UsersDB.Exec("UPDATE user_saved_locations SET name = ?, updated_at = ? WHERE id = ? AND user_id = ?", *name, time.Now(), id, userID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update name: %w", err)
 		}
 	}
 
 	if alerts != nil {
-		_, err := r.ServerDB.Exec("UPDATE saved_locations SET alerts_enabled = ?, updated_at = ? WHERE id = ? AND user_id = ?", *alerts, time.Now(), id, userID)
+		_, err := r.UsersDB.Exec("UPDATE user_saved_locations SET alerts_enabled = ?, updated_at = ? WHERE id = ? AND user_id = ?", *alerts, time.Now(), id, userID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update alerts: %w", err)
 		}
 	}
 
 	location := &models.SavedLocation{}
-	err := r.ServerDB.QueryRow(`
+	err := r.UsersDB.QueryRow(`
 		SELECT id, user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at
-		FROM saved_locations WHERE id = ? AND user_id = ?
+		FROM user_saved_locations WHERE id = ? AND user_id = ?
 	`, id, userID).Scan(&location.ID, &location.UserID, &location.Name, &location.Latitude, &location.Longitude, &location.Timezone, &location.AlertsEnabled, &location.CreatedAt, &location.UpdatedAt)
 
 	if err != nil {
@@ -141,12 +589,12 @@ func (r *mutationResolver) UpdateSavedLocation(ctx context.Context, id string, n
 
 // DeleteSavedLocation is the resolver for the deleteSavedLocation field.
 func (r *mutationResolver) DeleteSavedLocation(ctx context.Context, id string) (*GenericResponse, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	result, err := r.ServerDB.Exec("DELETE FROM saved_locations WHERE id = ? AND user_id = ?", id, userID)
+	result, err := r.UsersDB.Exec("DELETE FROM user_saved_locations WHERE id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to delete location: %v", err)}, nil
 	}
@@ -161,13 +609,13 @@ func (r *mutationResolver) DeleteSavedLocation(ctx context.Context, id string) (
 
 // ToggleLocationAlerts is the resolver for the toggleLocationAlerts field.
 func (r *mutationResolver) ToggleLocationAlerts(ctx context.Context, id string) (*models.SavedLocation, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	_, err := r.ServerDB.Exec(`
-		UPDATE saved_locations 
+	_, err := r.UsersDB.Exec(`
+		UPDATE user_saved_locations 
 		SET alerts_enabled = NOT alerts_enabled, updated_at = ? 
 		WHERE id = ? AND user_id = ?
 	`, time.Now(), id, userID)
@@ -177,9 +625,9 @@ func (r *mutationResolver) ToggleLocationAlerts(ctx context.Context, id string) 
 	}
 
 	location := &models.SavedLocation{}
-	err = r.ServerDB.QueryRow(`
+	err = r.UsersDB.QueryRow(`
 		SELECT id, user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at
-		FROM saved_locations WHERE id = ? AND user_id = ?
+		FROM user_saved_locations WHERE id = ? AND user_id = ?
 	`, id, userID).Scan(&location.ID, &location.UserID, &location.Name, &location.Latitude, &location.Longitude, &location.Timezone, &location.AlertsEnabled, &location.CreatedAt, &location.UpdatedAt)
 
 	if err != nil {
@@ -191,46 +639,60 @@ func (r *mutationResolver) ToggleLocationAlerts(ctx context.Context, id string) 
 
 // MarkNotificationRead is the resolver for the markNotificationRead field.
 func (r *mutationResolver) MarkNotificationRead(ctx context.Context, id string) (*models.Notification, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	_, err := r.ServerDB.Exec(`
+	_, err := r.UsersDB.Exec(`
 		UPDATE user_notifications 
-		SET is_read = 1, read_at = ?, updated_at = ? 
+		SET read = 1
 		WHERE id = ? AND user_id = ?
-	`, time.Now(), time.Now(), id, userID)
+	`, id, userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to mark notification as read: %w", err)
 	}
 
 	notification := &models.Notification{}
-	err = r.ServerDB.QueryRow(`
-		SELECT id, user_id, type, title, message, is_read, read_at, created_at, updated_at
+	var notificationUserID int
+	err = r.UsersDB.QueryRow(`
+		SELECT id, user_id, type, display, title, message, read, dismissed, created_at, expires_at
 		FROM user_notifications WHERE id = ? AND user_id = ?
-	`, id, userID).Scan(&notification.ID, &notification.UserID, &notification.Type, &notification.Title, &notification.Message, &notification.IsRead, &notification.ReadAt, &notification.CreatedAt, &notification.UpdatedAt)
+	`, id, userID).Scan(
+		&notification.ID,
+		&notificationUserID,
+		&notification.Type,
+		&notification.Display,
+		&notification.Title,
+		&notification.Message,
+		&notification.Read,
+		&notification.Dismissed,
+		&notification.CreatedAt,
+		&notification.ExpiresAt,
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch notification: %w", err)
 	}
+	notification.UserID = &notificationUserID
+	notification.IsRead = notification.Read
 
 	return notification, nil
 }
 
 // MarkAllNotificationsRead is the resolver for the markAllNotificationsRead field.
 func (r *mutationResolver) MarkAllNotificationsRead(ctx context.Context) (*GenericResponse, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	_, err := r.ServerDB.Exec(`
+	_, err := r.UsersDB.Exec(`
 		UPDATE user_notifications 
-		SET is_read = 1, read_at = ?, updated_at = ? 
-		WHERE user_id = ? AND is_read = 0
-	`, time.Now(), time.Now(), userID)
+		SET read = 1
+		WHERE user_id = ? AND read = 0
+	`, userID)
 
 	if err != nil {
 		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to mark notifications as read: %v", err)}, nil
@@ -241,12 +703,12 @@ func (r *mutationResolver) MarkAllNotificationsRead(ctx context.Context) (*Gener
 
 // DeleteNotification is the resolver for the deleteNotification field.
 func (r *mutationResolver) DeleteNotification(ctx context.Context, id string) (*GenericResponse, error) {
-	userID, ok := ctx.Value("user_id").(int64)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	result, err := r.ServerDB.Exec("DELETE FROM user_notifications WHERE id = ? AND user_id = ?", id, userID)
+	result, err := r.UsersDB.Exec("DELETE FROM user_notifications WHERE id = ? AND user_id = ?", id, userID)
 	if err != nil {
 		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to delete notification: %v", err)}, nil
 	}
@@ -259,45 +721,6 @@ func (r *mutationResolver) DeleteNotification(ctx context.Context, id string) (*
 	return &GenericResponse{Success: true, Message: "Notification deleted successfully"}, nil
 }
 
-// AdminCreateUser is the resolver for the adminCreateUser field.
-func (r *mutationResolver) AdminCreateUser(ctx context.Context, username string, email string, password string, role string) (*models.User, error) {
-	userRole, ok := ctx.Value("user_role").(string)
-	if !ok || userRole != "admin" {
-		return nil, fmt.Errorf("unauthorized: admin access required")
-	}
-
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	result, err := r.ServerDB.Exec(`
-		INSERT INTO users (username, email, password_hash, role, is_active, email_verified, created_at, updated_at)
-		VALUES (?, ?, ?, ?, 1, 0, ?, ?)
-	`, username, email, hashedPassword, role, time.Now(), time.Now())
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-
-	user := &models.User{}
-	err = r.ServerDB.QueryRow(`
-		SELECT id, username, email, display_name, phone, role, is_active, email_verified, created_at, updated_at
-		FROM users WHERE id = ?
-	`, id).Scan(&user.ID, &user.Username, &user.Email, &user.DisplayName, &user.Phone, &user.Role, &user.IsActive, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch user: %w", err)
-	}
-
-	return user, nil
-}
-
 // AdminUpdateUser is the resolver for the adminUpdateUser field.
 func (r *mutationResolver) AdminUpdateUser(ctx context.Context, id string, username *string, email *string, role *string) (*models.User, error) {
 	userRole, ok := ctx.Value("user_role").(string)
@@ -305,37 +728,48 @@ func (r *mutationResolver) AdminUpdateUser(ctx context.Context, id string, usern
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
+	userID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id")
+	}
+
+	userModel := &models.UserModel{DB: r.UsersDB}
+	user, err := userModel.GetByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user: %w", err)
+	}
+
+	updatedUsername := user.Username
 	if username != nil {
-		_, err := r.ServerDB.Exec("UPDATE users SET username = ?, updated_at = ? WHERE id = ?", *username, time.Now(), id)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update username: %w", err)
+		updatedUsername = utils.NormalizeUsername(*username)
+		if err := utils.ValidateUsername(updatedUsername); err != nil {
+			return nil, err
 		}
 	}
 
+	updatedEmail := user.Email
 	if email != nil {
-		_, err := r.ServerDB.Exec("UPDATE users SET email = ?, updated_at = ? WHERE id = ?", *email, time.Now(), id)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update email: %w", err)
+		updatedEmail = utils.NormalizeEmail(*email)
+		if err := utils.ValidateEmail(updatedEmail); err != nil {
+			return nil, err
 		}
 	}
 
-	if role != nil {
-		_, err := r.ServerDB.Exec("UPDATE users SET role = ?, updated_at = ? WHERE id = ?", *role, time.Now(), id)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update role: %w", err)
-		}
+	updatedRole := user.Role
+	if role != nil && strings.TrimSpace(*role) != "" {
+		updatedRole = strings.TrimSpace(*role)
 	}
 
-	user := &models.User{}
-	err := r.ServerDB.QueryRow(`
-		SELECT id, username, email, display_name, phone, role, is_active, email_verified, created_at, updated_at
-		FROM users WHERE id = ?
-	`, id).Scan(&user.ID, &user.Username, &user.Email, &user.DisplayName, &user.Phone, &user.Role, &user.IsActive, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt)
+	if err := userModel.Update(userID, updatedUsername, updatedEmail, updatedRole); err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
 
+	user, err = userModel.GetByID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user: %w", err)
 	}
 
+	user.Email = utils.MaskEmail(user.Email)
 	return user, nil
 }
 
@@ -346,40 +780,227 @@ func (r *mutationResolver) AdminDeleteUser(ctx context.Context, id string) (*Gen
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	result, err := r.ServerDB.Exec("DELETE FROM users WHERE id = ?", id)
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to delete user: %v", err)}, nil
+		return nil, fmt.Errorf("invalid user id")
 	}
 
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
+	userModel := &models.UserModel{DB: r.UsersDB}
+	if _, err := userModel.GetByID(userID); err != nil {
 		return &GenericResponse{Success: false, Message: "User not found"}, nil
+	}
+	if err := userModel.Delete(userID); err != nil {
+		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to delete user: %v", err)}, nil
 	}
 
 	return &GenericResponse{Success: true, Message: "User deleted successfully"}, nil
 }
 
-// AdminUpdateUserPassword is the resolver for the adminUpdateUserPassword field.
-func (r *mutationResolver) AdminUpdateUserPassword(ctx context.Context, id string, password string) (*GenericResponse, error) {
+// AdminCreateUserInvite is the resolver for the adminCreateUserInvite field.
+func (r *mutationResolver) AdminCreateUserInvite(ctx context.Context, username string, email string, role *string, expiresInDays *int) (*UserInvite, error) {
 	userRole, ok := ctx.Value("user_role").(string)
 	if !ok || userRole != "admin" {
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to hash password: %v", err)}, nil
+	normalizedUsername := utils.NormalizeUsername(username)
+	if err := utils.ValidateUsername(normalizedUsername); err != nil {
+		return nil, err
 	}
 
-	_, err = r.ServerDB.Exec("UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?", hashedPassword, time.Now(), id)
-	if err != nil {
-		return &GenericResponse{Success: false, Message: fmt.Sprintf("Failed to update password: %v", err)}, nil
+	normalizedEmail := utils.NormalizeEmail(email)
+	if err := utils.ValidateEmail(normalizedEmail); err != nil {
+		return nil, err
 	}
 
-	// Invalidate all user sessions
-	_, _ = r.ServerDB.Exec("DELETE FROM user_sessions WHERE user_id = ?", id)
+	userModel := &models.UserModel{DB: r.UsersDB}
+	if _, err := userModel.GetByUsername(normalizedUsername); err == nil {
+		return nil, fmt.Errorf("username is already in use")
+	}
+	if _, err := userModel.GetByEmail(normalizedEmail); err == nil {
+		return nil, fmt.Errorf("email is already in use")
+	}
 
-	return &GenericResponse{Success: true, Message: "Password updated successfully"}, nil
+	inviteRole := "user"
+	if role != nil && strings.TrimSpace(*role) != "" {
+		inviteRole = strings.TrimSpace(*role)
+	}
+
+	inviteDays := config.GetUserInviteExpirationDays()
+	if expiresInDays != nil && *expiresInDays > 0 {
+		inviteDays = *expiresInDays
+	}
+
+	inviteModel := &models.UserInviteModel{DB: r.UsersDB}
+	invite, err := inviteModel.CreateInvite(normalizedUsername, normalizedEmail, inviteRole, inviteDays)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildGraphQLUserInvite(invite, ctx), nil
+}
+
+// AdminDeleteUserInvite is the resolver for the adminDeleteUserInvite field.
+func (r *mutationResolver) AdminDeleteUserInvite(ctx context.Context, id string) (*GenericResponse, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	inviteID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid invite id")
+	}
+
+	inviteModel := &models.UserInviteModel{DB: r.UsersDB}
+	if err := inviteModel.DeleteInvite(inviteID); err != nil {
+		return nil, err
+	}
+
+	return &GenericResponse{Success: true, Message: "Invite revoked"}, nil
+}
+
+// AdminInviteServerAdmin is the resolver for the adminInviteServerAdmin field.
+func (r *mutationResolver) AdminInviteServerAdmin(ctx context.Context, email string, expiresIn *string) (*ServerAdminInvite, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	currentAdmin, err := loadGraphQLCurrentAdmin(ctx, r.ServerDB)
+	if err != nil {
+		return nil, err
+	}
+
+	expiration := ""
+	if expiresIn != nil {
+		expiration = strings.TrimSpace(*expiresIn)
+	}
+
+	inviteService := service.NewAdminInviteService(r.ServerDB, "")
+	invite, normalizedExpiration, err := inviteService.CreateInvite(email, int(currentAdmin.ID), expiration)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildGraphQLServerAdminInvite(ctx, invite, normalizedExpiration), nil
+}
+
+// AdminDeleteServerAdmin is the resolver for the adminDeleteServerAdmin field.
+func (r *mutationResolver) AdminDeleteServerAdmin(ctx context.Context, id string) (*GenericResponse, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	currentAdmin, err := loadGraphQLCurrentAdmin(ctx, r.ServerDB)
+	if err != nil {
+		return nil, err
+	}
+
+	adminID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid admin id")
+	}
+
+	if adminID == currentAdmin.ID {
+		return &GenericResponse{Success: false, Message: "You cannot delete your own admin account"}, nil
+	}
+	if adminID == 1 {
+		return &GenericResponse{Success: false, Message: "Primary admin account cannot be deleted"}, nil
+	}
+
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	admin, err := adminModel.GetByID(adminID)
+	if err != nil {
+		return &GenericResponse{Success: false, Message: "Admin not found"}, nil
+	}
+	if admin.IsSuperAdmin && admin.IsActive {
+		otherSuperAdmins, err := countGraphQLOtherActiveSuperAdmins(r.ServerDB, adminID)
+		if err != nil {
+			return nil, err
+		}
+		if otherSuperAdmins == 0 {
+			return &GenericResponse{Success: false, Message: "Cannot delete the last active super admin"}, nil
+		}
+	}
+
+	if err := adminModel.Delete(adminID); err != nil {
+		return nil, fmt.Errorf("failed to delete admin: %w", err)
+	}
+
+	return &GenericResponse{Success: true, Message: "Admin deleted"}, nil
+}
+
+// AdminDisableServerAdmin is the resolver for the adminDisableServerAdmin field.
+func (r *mutationResolver) AdminDisableServerAdmin(ctx context.Context, id string) (*GenericResponse, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	currentAdmin, err := loadGraphQLCurrentAdmin(ctx, r.ServerDB)
+	if err != nil {
+		return nil, err
+	}
+
+	adminID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid admin id")
+	}
+
+	if adminID == currentAdmin.ID {
+		return &GenericResponse{Success: false, Message: "You cannot disable your own admin account"}, nil
+	}
+	if adminID == 1 {
+		return &GenericResponse{Success: false, Message: "Primary admin account cannot be disabled"}, nil
+	}
+
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	admin, err := adminModel.GetByID(adminID)
+	if err != nil {
+		return &GenericResponse{Success: false, Message: "Admin not found"}, nil
+	}
+	if admin.IsSuperAdmin && admin.IsActive {
+		otherSuperAdmins, err := countGraphQLOtherActiveSuperAdmins(r.ServerDB, adminID)
+		if err != nil {
+			return nil, err
+		}
+		if otherSuperAdmins == 0 {
+			return &GenericResponse{Success: false, Message: "Cannot disable the last active super admin"}, nil
+		}
+	}
+
+	if err := adminModel.Update(admin.ID, admin.Username, admin.Email, admin.IsSuperAdmin, false); err != nil {
+		return nil, fmt.Errorf("failed to disable admin: %w", err)
+	}
+
+	return &GenericResponse{Success: true, Message: "Admin disabled"}, nil
+}
+
+// AdminEnableServerAdmin is the resolver for the adminEnableServerAdmin field.
+func (r *mutationResolver) AdminEnableServerAdmin(ctx context.Context, id string) (*GenericResponse, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	adminID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid admin id")
+	}
+
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	admin, err := adminModel.GetByID(adminID)
+	if err != nil {
+		return &GenericResponse{Success: false, Message: "Admin not found"}, nil
+	}
+
+	if err := adminModel.Update(admin.ID, admin.Username, admin.Email, admin.IsSuperAdmin, true); err != nil {
+		return nil, fmt.Errorf("failed to enable admin: %w", err)
+	}
+
+	return &GenericResponse{Success: true, Message: "Admin enabled"}, nil
 }
 
 // AdminUpdateSetting is the resolver for the adminUpdateSetting field.
@@ -389,19 +1010,24 @@ func (r *mutationResolver) AdminUpdateSetting(ctx context.Context, key string, v
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	_, err := r.ServerDB.Exec("UPDATE settings SET value = $1, updated_at = NOW() WHERE key = $2", value, key)
+	result, err := r.ServerDB.Exec(`
+		UPDATE server_config
+		SET value = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE key = ?
+	`, value, key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update setting: %w", err)
 	}
 
-	var setting models.Setting
-	err = r.ServerDB.QueryRow("SELECT id, key, value, description, category, created_at, updated_at FROM settings WHERE key = $1", key).
-		Scan(&setting.ID, &setting.Key, &setting.Value, &setting.Description, &setting.Category, &setting.CreatedAt, &setting.UpdatedAt)
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve updated setting: %w", err)
+		return nil, fmt.Errorf("failed to verify updated setting: %w", err)
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("setting not found: %s", key)
 	}
 
-	return &setting, nil
+	return loadGraphQLSetting(r.ServerDB, key)
 }
 
 // AdminUpdateSettings is the resolver for the adminUpdateSettings field.
@@ -415,12 +1041,23 @@ func (r *mutationResolver) AdminUpdateSettings(ctx context.Context, settings []*
 	failedCount := 0
 
 	for _, setting := range settings {
-		_, err := r.ServerDB.Exec("UPDATE settings SET value = $1, updated_at = NOW() WHERE key = $2", setting.Value, setting.Key)
+		result, err := r.ServerDB.Exec(`
+			UPDATE server_config
+			SET value = ?, updated_at = CURRENT_TIMESTAMP
+			WHERE key = ?
+		`, setting.Value, setting.Key)
 		if err != nil {
 			failedCount++
-		} else {
-			successCount++
+			continue
 		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil || rowsAffected == 0 {
+			failedCount++
+			continue
+		}
+
+		successCount++
 	}
 
 	return &BulkResponse{
@@ -437,59 +1074,58 @@ func (r *mutationResolver) AdminResetSettings(ctx context.Context) (*GenericResp
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	_, err := r.ServerDB.Exec("UPDATE settings SET value = default_value, updated_at = NOW()")
+	settingsModel := &models.SettingsModel{DB: r.ServerDB}
+	backupPath := settingsModel.GetString("backup.location", "/data/backups")
+
+	tx, err := r.ServerDB.Begin()
 	if err != nil {
-		return nil, fmt.Errorf("failed to reset settings: %w", err)
+		return nil, fmt.Errorf("failed to start settings reset: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("DELETE FROM server_config"); err != nil {
+		return nil, fmt.Errorf("failed to clear settings: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit settings reset: %w", err)
+	}
+
+	if err := settingsModel.InitializeDefaults(backupPath); err != nil {
+		return nil, fmt.Errorf("failed to restore default settings: %w", err)
 	}
 
 	return &GenericResponse{Success: true, Message: "All settings reset to defaults"}, nil
 }
 
-// AdminReloadConfig is the resolver for the adminReloadConfig field.
-func (r *mutationResolver) AdminReloadConfig(ctx context.Context) (*GenericResponse, error) {
-	userRole, ok := ctx.Value("user_role").(string)
-	if !ok || userRole != "admin" {
-		return nil, fmt.Errorf("unauthorized: admin access required")
-	}
-
-	// Note: Settings are stored in database and are live-reloaded automatically.
-	// This endpoint is for compatibility - config file changes are also watched via ConfigWatcher.
-	return &GenericResponse{Success: true, Message: "Configuration is live-reloaded automatically from database"}, nil
-}
-
 // AdminGenerateToken is the resolver for the adminGenerateToken field.
-func (r *mutationResolver) AdminGenerateToken(ctx context.Context, name string, expiresIn *int) (*models.APIToken, error) {
+func (r *mutationResolver) AdminGenerateToken(ctx context.Context) (*models.APIToken, error) {
 	userRole, ok := ctx.Value("user_role").(string)
 	if !ok || userRole != "admin" {
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	token, err := models.GenerateSecureToken(32)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
-	prefix := token[:8]
-	hashedToken, err := utils.HashPassword(token)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash token: %w", err)
+	adminID, ok := ctx.Value("admin_id").(int)
+	if !ok || adminID <= 0 {
+		return nil, fmt.Errorf("unauthorized: admin session required")
 	}
 
-	var expiresAt *time.Time
-	if expiresIn != nil && *expiresIn > 0 {
-		exp := time.Now().Add(time.Duration(*expiresIn) * time.Hour)
-		expiresAt = &exp
-	}
-
-	var apiToken models.APIToken
-	err = r.ServerDB.QueryRow(
-		"INSERT INTO api_tokens (name, token, token_prefix, expires_at, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, name, token_prefix, expires_at, created_at, last_used_at, last_used_ip",
-		name, hashedToken, prefix, expiresAt,
-	).Scan(&apiToken.ID, &apiToken.Name, &apiToken.TokenPrefix, &apiToken.ExpiresAt, &apiToken.CreatedAt, &apiToken.LastUsedAt, &apiToken.LastUsedIP)
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	token, err := adminModel.RegenerateAPIToken(int64(adminID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create token: %w", err)
+		return nil, fmt.Errorf("failed to regenerate admin API token: %w", err)
 	}
 
-	return &apiToken, nil
+	admin, err := adminModel.GetByID(int64(adminID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load regenerated admin token metadata: %w", err)
+	}
+
+	return &models.APIToken{
+		ID:          int(admin.ID),
+		Token:       token,
+		TokenPrefix: admin.APITokenPrefix,
+		CreatedAt:   admin.UpdatedAt,
+	}, nil
 }
 
 // AdminRevokeToken is the resolver for the adminRevokeToken field.
@@ -499,14 +1135,18 @@ func (r *mutationResolver) AdminRevokeToken(ctx context.Context, id string) (*Ge
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	result, err := r.ServerDB.Exec("DELETE FROM api_tokens WHERE id = $1", id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to revoke token: %w", err)
+	adminID, ok := ctx.Value("admin_id").(int)
+	if !ok || adminID <= 0 {
+		return nil, fmt.Errorf("unauthorized: admin session required")
 	}
 
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
+	if id != strconv.Itoa(adminID) {
 		return &GenericResponse{Success: false, Message: "Token not found"}, nil
+	}
+
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	if err := adminModel.RevokeAPIToken(int64(adminID)); err != nil {
+		return nil, fmt.Errorf("failed to revoke admin API token: %w", err)
 	}
 
 	return &GenericResponse{Success: true, Message: "Token revoked successfully"}, nil
@@ -519,7 +1159,7 @@ func (r *mutationResolver) AdminClearAuditLogs(ctx context.Context) (*GenericRes
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	_, err := r.ServerDB.Exec("DELETE FROM audit_logs")
+	_, err := r.ServerDB.Exec("DELETE FROM server_audit_log")
 	if err != nil {
 		return nil, fmt.Errorf("failed to clear audit logs: %w", err)
 	}
@@ -534,16 +1174,27 @@ func (r *mutationResolver) AdminEnableTask(ctx context.Context, name string) (*S
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	var task ScheduledTask
-	err := r.ServerDB.QueryRow(
-		"UPDATE scheduled_tasks SET enabled = true WHERE name = $1 RETURNING name, schedule, enabled, last_run, next_run, run_count, error_count, avg_duration",
-		name,
-	).Scan(&task.Name, &task.Schedule, &task.Enabled, &task.LastRun, &task.NextRun, &task.RunCount, &task.ErrorCount, &task.AvgDuration)
+	task, err := r.updateGraphQLScheduledTaskEnabled(name, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to enable task: %w", err)
 	}
 
-	return &task, nil
+	return task, nil
+}
+
+// AdminUpdateTask is the resolver for the adminUpdateTask field.
+func (r *mutationResolver) AdminUpdateTask(ctx context.Context, name string, enabled bool) (*ScheduledTask, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	task, err := r.updateGraphQLScheduledTaskEnabled(name, enabled)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update task: %w", err)
+	}
+
+	return task, nil
 }
 
 // AdminDisableTask is the resolver for the adminDisableTask field.
@@ -553,16 +1204,12 @@ func (r *mutationResolver) AdminDisableTask(ctx context.Context, name string) (*
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	var task ScheduledTask
-	err := r.ServerDB.QueryRow(
-		"UPDATE scheduled_tasks SET enabled = false WHERE name = $1 RETURNING name, schedule, enabled, last_run, next_run, run_count, error_count, avg_duration",
-		name,
-	).Scan(&task.Name, &task.Schedule, &task.Enabled, &task.LastRun, &task.NextRun, &task.RunCount, &task.ErrorCount, &task.AvgDuration)
+	task, err := r.updateGraphQLScheduledTaskEnabled(name, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to disable task: %w", err)
 	}
 
-	return &task, nil
+	return task, nil
 }
 
 // AdminTriggerTask is the resolver for the adminTriggerTask field.
@@ -588,22 +1235,35 @@ func (r *mutationResolver) AdminUpdateChannel(ctx context.Context, typeArg strin
 	}
 
 	if enabled != nil {
-		_, err := r.ServerDB.Exec("UPDATE notification_channels SET enabled = $1 WHERE type = $2", *enabled, typeArg)
+		channelManager := service.NewChannelManager(r.ServerDB)
+		var err error
+		if *enabled {
+			err = channelManager.EnableChannel(typeArg)
+		} else {
+			err = channelManager.DisableChannel(typeArg)
+		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to update channel: %w", err)
+			return nil, fmt.Errorf("failed to update channel state: %w", err)
 		}
 	}
 
-	var channel NotificationChannel
-	err := r.ServerDB.QueryRow(
-		"SELECT type, enabled, config FROM notification_channels WHERE type = $1",
-		typeArg,
-	).Scan(&channel.Type, &channel.Enabled, &channel.Config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve channel: %w", err)
+	if config != nil {
+		configJSON, err := json.Marshal(config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal channel config: %w", err)
+		}
+
+		_, err = r.ServerDB.Exec(`
+			UPDATE notification_channels
+			SET config = ?, updated_at = datetime('now')
+			WHERE channel_type = ?
+		`, string(configJSON), typeArg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update channel config: %w", err)
+		}
 	}
 
-	return &channel, nil
+	return loadGraphQLNotificationChannel(r.ServerDB, typeArg)
 }
 
 // AdminEnableChannel is the resolver for the adminEnableChannel field.
@@ -613,16 +1273,12 @@ func (r *mutationResolver) AdminEnableChannel(ctx context.Context, typeArg strin
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	var channel NotificationChannel
-	err := r.ServerDB.QueryRow(
-		"UPDATE notification_channels SET enabled = true WHERE type = $1 RETURNING type, enabled, config",
-		typeArg,
-	).Scan(&channel.Type, &channel.Enabled, &channel.Config)
-	if err != nil {
+	channelManager := service.NewChannelManager(r.ServerDB)
+	if err := channelManager.EnableChannel(typeArg); err != nil {
 		return nil, fmt.Errorf("failed to enable channel: %w", err)
 	}
 
-	return &channel, nil
+	return loadGraphQLNotificationChannel(r.ServerDB, typeArg)
 }
 
 // AdminDisableChannel is the resolver for the adminDisableChannel field.
@@ -632,28 +1288,48 @@ func (r *mutationResolver) AdminDisableChannel(ctx context.Context, typeArg stri
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	var channel NotificationChannel
-	err := r.ServerDB.QueryRow(
-		"UPDATE notification_channels SET enabled = false WHERE type = $1 RETURNING type, enabled, config",
-		typeArg,
-	).Scan(&channel.Type, &channel.Enabled, &channel.Config)
-	if err != nil {
+	channelManager := service.NewChannelManager(r.ServerDB)
+	if err := channelManager.DisableChannel(typeArg); err != nil {
 		return nil, fmt.Errorf("failed to disable channel: %w", err)
 	}
 
-	return &channel, nil
+	return loadGraphQLNotificationChannel(r.ServerDB, typeArg)
 }
 
 // AdminTestChannel is the resolver for the adminTestChannel field.
-func (r *mutationResolver) AdminTestChannel(ctx context.Context, typeArg string) (*GenericResponse, error) {
+func (r *mutationResolver) AdminTestChannel(ctx context.Context, typeArg string, recipient *string) (*GenericResponse, error) {
 	userRole, ok := ctx.Value("user_role").(string)
 	if !ok || userRole != "admin" {
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	// Notification channel testing is not available via GraphQL
-	// Use REST API endpoint /api/v1/admin/notifications/test/:type instead
-	return &GenericResponse{Success: true, Message: fmt.Sprintf("Channel '%s' test requested", typeArg)}, nil
+	recipientValue, err := r.resolveAdminChannelTestRecipient(ctx, typeArg, recipient)
+	if err != nil {
+		return nil, err
+	}
+
+	channelManager := service.NewChannelManager(r.ServerDB)
+	if typeArg == "email" {
+		smtpService := service.NewSMTPService(r.ServerDB)
+		if err := smtpService.LoadConfig(); err != nil {
+			return nil, fmt.Errorf("failed to load SMTP configuration: %w", err)
+		}
+		channelManager.RegisterChannel(service.NewEmailChannel(smtpService))
+	}
+
+	if err := channelManager.TestChannel(typeArg, recipientValue); err != nil {
+		return nil, fmt.Errorf("failed to send test %s notification: %w", typeArg, err)
+	}
+
+	message := fmt.Sprintf("Test %s notification sent successfully to %s", typeArg, recipientValue)
+	if typeArg == "email" {
+		message = fmt.Sprintf("Test email sent successfully to %s", recipientValue)
+	}
+
+	return &GenericResponse{
+		Success: true,
+		Message: message,
+	}, nil
 }
 
 // AdminInitializeChannels is the resolver for the adminInitializeChannels field.
@@ -663,8 +1339,15 @@ func (r *mutationResolver) AdminInitializeChannels(ctx context.Context) (*Generi
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	// Notification channels are initialized automatically at server startup
-	return &GenericResponse{Success: true, Message: "Notification channels are initialized automatically"}, nil
+	channelManager := service.NewChannelManager(r.ServerDB)
+	if err := channelManager.InitializeChannels(); err != nil {
+		return nil, fmt.Errorf("failed to initialize notification channels: %w", err)
+	}
+
+	return &GenericResponse{
+		Success: true,
+		Message: fmt.Sprintf("Channels initialized successfully (%d registered definitions)", len(service.ChannelRegistry)),
+	}, nil
 }
 
 // AdminAutoDetectSMTP is the resolver for the adminAutoDetectSMTP field.
@@ -674,25 +1357,65 @@ func (r *mutationResolver) AdminAutoDetectSMTP(ctx context.Context) (*SMTPProvid
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	// SMTP auto-detection is not available via GraphQL
-	// Use REST API endpoint /api/v1/admin/email/auto-detect instead
-	return nil, fmt.Errorf("SMTP auto-detection not available via GraphQL - use REST API")
+	smtpService := service.NewSMTPService(r.ServerDB)
+	found, err := smtpService.AutoDetect()
+	if err != nil {
+		return nil, fmt.Errorf("failed to auto-detect SMTP server: %w", err)
+	}
+	if !found {
+		return nil, fmt.Errorf("no SMTP server detected")
+	}
+
+	if err := smtpService.LoadConfig(); err != nil {
+		return nil, fmt.Errorf("failed to load detected SMTP config: %w", err)
+	}
+
+	smtpConfig := smtpService.GetConfig()
+	if smtpConfig == nil || smtpConfig.Host == "" {
+		return nil, fmt.Errorf("detected SMTP configuration is unavailable")
+	}
+
+	providerName := "Detected SMTP"
+	for _, preset := range service.SMTPProviderPresets {
+		if preset.Host == smtpConfig.Host && preset.Port == smtpConfig.Port {
+			providerName = preset.Name
+			break
+		}
+	}
+
+	port, err := strconv.Atoi(smtpConfig.Port)
+	if err != nil {
+		return nil, fmt.Errorf("invalid detected SMTP port %q: %w", smtpConfig.Port, err)
+	}
+
+	return &SMTPProvider{
+		Name:   providerName,
+		Host:   smtpConfig.Host,
+		Port:   port,
+		Secure: smtpConfig.UseTLS,
+	}, nil
 }
 
 // SubmitContactForm is the resolver for the submitContactForm field.
 func (r *mutationResolver) SubmitContactForm(ctx context.Context, name string, email string, subject string, message string) (*ContactSubmission, error) {
-	// Insert the contact submission
-	_, err := r.ServerDB.Exec(
-		"INSERT INTO contact_submissions (name, email, subject, message, ip_address, user_agent, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())",
-		name, email, subject, message, "", "",
-	)
+	if err := ensureGraphQLContactSubmissionsTable(r.ServerDB); err != nil {
+		return nil, fmt.Errorf("failed to prepare contact submission storage: %w", err)
+	}
+
+	requestIP, _ := ctx.Value("request_ip").(string)
+	userAgent, _ := ctx.Value("request_user_agent").(string)
+
+	_, err := r.ServerDB.Exec(`
+		INSERT INTO contact_submissions (name, email, subject, message, ip_address, user_agent)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, name, email, subject, message, strings.TrimSpace(requestIP), strings.TrimSpace(userAgent))
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit contact form: %w", err)
 	}
 
 	return &ContactSubmission{
 		Success: true,
-		Message: "Contact form submitted successfully",
+		Message: "Your message has been saved. We'll respond as soon as possible.",
 	}, nil
 }
 
@@ -703,13 +1426,62 @@ func (r *notificationResolver) ReadAt(ctx context.Context, obj *models.Notificat
 
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (*HealthStatus, error) {
-	// Basic health check
-	msg := "Service is running"
+	initStatus := handler.GetInitStatus()
+	now := time.Now()
+	uptime := now.Sub(initStatus.Started).Round(time.Second).String()
+
+	status := "healthy"
+	message := "Service is running"
+
+	var (
+		dbHealth  *DatabaseHealth
+		dbErrText *string
+	)
+	if r.ServerDB != nil {
+		start := time.Now()
+		err := r.ServerDB.PingContext(ctx)
+		latency := int(time.Since(start).Milliseconds())
+		dbHealth = &DatabaseHealth{
+			Status:  "ok",
+			Latency: &latency,
+		}
+		if err != nil {
+			status = "unhealthy"
+			message = "Database connectivity check failed"
+			errText := err.Error()
+			dbErrText = &errText
+			dbHealth.Status = "error"
+			dbHealth.Error = dbErrText
+		}
+	}
+
+	if status == "healthy" && !handler.IsInitialized() {
+		status = "initializing"
+		message = "Services are still initializing"
+	}
+
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	memoryHealth := &MemoryHealth{
+		Used:       float64(mem.Alloc),
+		Total:      float64(mem.Sys),
+		Percentage: 0,
+	}
+	if mem.Sys > 0 {
+		memoryHealth.Percentage = (float64(mem.Alloc) / float64(mem.Sys)) * 100
+	}
+
 	return &HealthStatus{
-		Status:    "healthy",
-		Message:   &msg,
-		Uptime:    fmt.Sprintf("%v", time.Since(time.Now().Add(-time.Hour*24))),
-		Timestamp: time.Now(),
+		Status:   status,
+		Message:  &message,
+		Database: dbHealth,
+		Memory:   memoryHealth,
+		LocationDatabases: &LocationDatabasesHealth{
+			Countries: &LocationDBStatus{Loaded: initStatus.Countries},
+			Cities:    &LocationDBStatus{Loaded: initStatus.Cities},
+		},
+		Uptime:    uptime,
+		Timestamp: now,
 	}, nil
 }
 
@@ -792,7 +1564,6 @@ func (r *queryResolver) Weather(ctx context.Context, location *string, lat *floa
 		Timestamp: time.Now(),
 	}, nil
 }
-
 
 // Forecast is the resolver for the forecast field.
 func (r *queryResolver) Forecast(ctx context.Context, location *string, lat *float64, lon *float64, days *int) (*Weather, error) {
@@ -1116,36 +1887,61 @@ func (r *queryResolver) LookupCoordinates(ctx context.Context, lat float64, lon 
 
 // Earthquakes is the resolver for the earthquakes field.
 func (r *queryResolver) Earthquakes(ctx context.Context, minMagnitude *float64, limit *int) ([]*Earthquake, error) {
-	// Use the EarthquakeHandler instead of WeatherService
 	if r.EarthquakeHandler == nil {
 		return nil, fmt.Errorf("earthquake service not initialized")
 	}
-	_ = minMagnitude
-	_ = limit
-	// Return empty for now - use REST API /api/v1/earthquakes for earthquake data
-	return []*Earthquake{}, nil
+
+	if minMagnitude != nil && *minMagnitude < 0 {
+		return nil, fmt.Errorf("minMagnitude must be non-negative")
+	}
+
+	if limit != nil && *limit < 0 {
+		return nil, fmt.Errorf("limit must be non-negative")
+	}
+
+	earthquakes, err := r.EarthquakeHandler.ListEarthquakes("all_day", minMagnitude, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLEarthquakes(earthquakes), nil
 }
 
 // Hurricanes is the resolver for the hurricanes field.
 func (r *queryResolver) Hurricanes(ctx context.Context, active *bool) ([]*Hurricane, error) {
-	// Use the HurricaneHandler instead of WeatherService
 	if r.HurricaneHandler == nil {
 		return nil, fmt.Errorf("hurricane service not initialized")
 	}
-	_ = active
-	// Return empty for now - use REST API /api/v1/hurricanes for hurricane data
-	return []*Hurricane{}, nil
+
+	if active != nil && !*active {
+		return nil, fmt.Errorf("inactive hurricanes are not available in the current runtime")
+	}
+
+	storms, err := r.HurricaneHandler.ListActiveStorms()
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLHurricanes(storms), nil
 }
 
 // SevereWeather is the resolver for the severeWeather field.
 func (r *queryResolver) SevereWeather(ctx context.Context, location *string) ([]*SevereWeather, error) {
-	// Use the SevereWeatherHandler instead of WeatherService
 	if r.SevereWeatherHandler == nil {
 		return nil, fmt.Errorf("severe weather service not initialized")
 	}
-	_ = location
-	// Return empty for now - use REST API /api/v1/severe-weather for severe weather data
-	return []*SevereWeather{}, nil
+
+	locationQuery := ""
+	if location != nil {
+		locationQuery = *location
+	}
+
+	data, err := r.SevereWeatherHandler.GetSevereWeatherData(locationQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLSevereWeather(data), nil
 }
 
 // MoonPhase is the resolver for the moonPhase field.
@@ -1195,34 +1991,1061 @@ func (r *queryResolver) MoonPhase(ctx context.Context, date *string) (*MoonPhase
 	}, nil
 }
 
+// PublicUserProfile is the resolver for the publicUserProfile field.
+func (r *queryResolver) PublicUserProfile(ctx context.Context, username string) (*PublicUserProfile, error) {
+	viewerUserID := int64(getUserIDFromContext(ctx))
+
+	profile, err := handler.LoadPublicUserProfile(r.UsersDB, username, viewerUserID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to load public user profile: %w", err)
+	}
+
+	return mapGraphQLPublicUserProfile(profile), nil
+}
+
+// ValidateUserInvite is the resolver for the validateUserInvite field.
+func (r *queryResolver) ValidateUserInvite(ctx context.Context, token string) (*UserInviteValidation, error) {
+	response, err := handler.ValidateAPIUserInvite(r.UsersDB, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLUserInviteValidation(response), nil
+}
+
+// ValidateServerInvite is the resolver for the validateServerInvite field.
+func (r *queryResolver) ValidateServerInvite(ctx context.Context, token string) (*ServerInviteValidation, error) {
+	response, err := handler.ValidateAPIServerInvite(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLServerInviteValidation(response), nil
+}
+
 // CurrentUser is the resolver for the currentUser field.
 func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// CurrentUserAvatar is the resolver for the currentUserAvatar field.
+func (r *queryResolver) CurrentUserAvatar(ctx context.Context) (*PublicAvatar, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized: user not authenticated")
 	}
 
-	var user models.User
-	err := r.UsersDB.QueryRow(
-		"SELECT id, email, username, role, email_verified, two_factor_enabled, created_at, updated_at FROM users WHERE id = $1",
-		userID,
-	).Scan(&user.ID, &user.Email, &user.Username, &user.Role, &user.EmailVerified, &user.TwoFactorEnabled, &user.CreatedAt, &user.UpdatedAt)
+	avatar, err := handler.LoadCurrentUserAvatar(r.UsersDB, int64(userID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current user: %w", err)
+		return nil, fmt.Errorf("failed to load current user avatar: %w", err)
 	}
 
-	return &user, nil
+	return &PublicAvatar{
+		Type: avatar.Type,
+		Urls: avatar.URLs,
+	}, nil
+}
+
+// CurrentUserTwoFactorStatus is the resolver for the currentUserTwoFactorStatus field.
+func (r *queryResolver) CurrentUserTwoFactorStatus(ctx context.Context) (*TOTPStatus, error) {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	status, err := handler.LoadCurrentUserTwoFactorStatus(r.UsersDB, user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load current user two-factor status: %w", err)
+	}
+
+	return mapGraphQLTOTPStatus(status), nil
+}
+
+// CurrentUserTwoFactorSetup is the resolver for the currentUserTwoFactorSetup field.
+func (r *queryResolver) CurrentUserTwoFactorSetup(ctx context.Context) (*TOTPSetup, error) {
+	user, err := loadGraphQLCurrentUserAuth(ctx, r.UsersDB)
+	if err != nil {
+		return nil, err
+	}
+
+	setup, err := handler.PrepareCurrentUserTwoFactorSetup(r.UsersDB, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapGraphQLTOTPSetup(setup), nil
+}
+
+// UserSettings is the resolver for the userSettings field.
+func (r *queryResolver) UserSettings(ctx context.Context) (*UserSettings, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized: user not authenticated")
+	}
+
+	settings, err := handler.LoadUserSettings(r.UsersDB, int64(userID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user settings: %w", err)
+	}
+
+	return mapGraphQLUserSettings(settings), nil
+}
+
+// UserTokens is the resolver for the userTokens field.
+func (r *queryResolver) UserTokens(ctx context.Context) ([]*UserToken, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized: user not authenticated")
+	}
+
+	rows, err := r.UsersDB.Query(`
+		SELECT id, name, token_prefix, scopes, created_at, expires_at, last_used_at
+		FROM user_tokens
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user tokens: %w", err)
+	}
+	defer rows.Close()
+
+	var tokens []*UserToken
+	for rows.Next() {
+		var id int64
+		var name sql.NullString
+		var tokenPrefix string
+		var scopes sql.NullString
+		var createdAt time.Time
+		var expiresAt sql.NullTime
+		var lastUsedAt sql.NullTime
+
+		if err := rows.Scan(&id, &name, &tokenPrefix, &scopes, &createdAt, &expiresAt, &lastUsedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan user token: %w", err)
+		}
+
+		tokens = append(tokens, buildGraphQLUserToken(
+			id,
+			name.String,
+			tokenPrefix,
+			scopes.String,
+			createdAt,
+			expiresAt,
+			lastUsedAt,
+			nil,
+		))
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate user tokens: %w", err)
+	}
+
+	return tokens, nil
+}
+
+func mapGraphQLEarthquakes(items []service.Earthquake) []*Earthquake {
+	earthquakes := make([]*Earthquake, 0, len(items))
+	for _, item := range items {
+		earthquakes = append(earthquakes, mapGraphQLEarthquake(item))
+	}
+	return earthquakes
+}
+
+func mapGraphQLEarthquake(item service.Earthquake) *Earthquake {
+	var depth *float64
+	if item.Depth != 0 {
+		depth = &item.Depth
+	}
+
+	var tsunami *bool
+	if item.Tsunami == 0 || item.Tsunami == 1 {
+		value := item.Tsunami == 1
+		tsunami = &value
+	}
+
+	var url *string
+	if item.URL != "" {
+		url = &item.URL
+	}
+
+	return &Earthquake{
+		ID:        item.ID,
+		Magnitude: item.Magnitude,
+		Location:  item.Place,
+		Depth:     depth,
+		Time:      item.Time,
+		Lat:       item.Latitude,
+		Lon:       item.Longitude,
+		Tsunami:   tsunami,
+		URL:       url,
+	}
+}
+
+func mapGraphQLHurricanes(storms []service.Storm) []*Hurricane {
+	hurricanes := make([]*Hurricane, 0, len(storms))
+	for _, storm := range storms {
+		hurricanes = append(hurricanes, mapGraphQLHurricane(storm))
+	}
+	return hurricanes
+}
+
+func mapGraphQLHurricane(storm service.Storm) *Hurricane {
+	var minPressure *float64
+	if storm.Pressure > 0 {
+		value := float64(storm.Pressure)
+		minPressure = &value
+	}
+
+	var movement *HurricaneMovement
+	if storm.MovementDir != "" || storm.MovementSpeed > 0 {
+		movement = &HurricaneMovement{}
+		if storm.MovementDir != "" {
+			movement.Direction = &storm.MovementDir
+		}
+		if storm.MovementSpeed > 0 {
+			speed := float64(storm.MovementSpeed)
+			movement.Speed = &speed
+		}
+	}
+
+	lastUpdated := parseGraphQLTime(storm.LastUpdate)
+
+	return &Hurricane{
+		ID:           storm.ID,
+		Name:         storm.Name,
+		Category:     hurricaneCategory(storm.WindSpeed),
+		MaxWindSpeed: float64(storm.WindSpeed),
+		MinPressure:  minPressure,
+		Location: &Location{
+			Name:    storm.Name,
+			Country: storm.Basin,
+			Lat:     storm.Latitude,
+			Lon:     storm.Longitude,
+		},
+		Status:      storm.Classification,
+		Movement:    movement,
+		LastUpdated: lastUpdated,
+	}
+}
+
+func mapGraphQLSevereWeather(data *service.SevereWeatherData) []*SevereWeather {
+	if data == nil {
+		return []*SevereWeather{}
+	}
+
+	alerts := make([]service.Alert, 0, len(data.TornadoWarnings)+len(data.SevereStorms)+len(data.WinterStorms)+len(data.FloodWarnings)+len(data.OtherAlerts))
+	alerts = append(alerts, data.TornadoWarnings...)
+	alerts = append(alerts, data.SevereStorms...)
+	alerts = append(alerts, data.WinterStorms...)
+	alerts = append(alerts, data.FloodWarnings...)
+	alerts = append(alerts, data.OtherAlerts...)
+
+	items := make([]*SevereWeather, 0, len(alerts))
+	for _, alert := range alerts {
+		items = append(items, mapGraphQLSevereWeatherAlert(alert))
+	}
+
+	return items
+}
+
+func mapGraphQLSevereWeatherAlert(alert service.Alert) *SevereWeather {
+	description := strings.TrimSpace(alert.Description)
+	if description == "" {
+		description = strings.TrimSpace(alert.Headline)
+	}
+
+	locationName := strings.TrimSpace(alert.AreaDesc)
+	if locationName == "" {
+		locationName = "Unknown area"
+	}
+
+	var instruction *string
+	if value := strings.TrimSpace(alert.Instruction); value != "" {
+		instruction = &value
+	}
+
+	return &SevereWeather{
+		ID:       alert.ID,
+		Type:     alert.Event,
+		Severity: alert.Severity,
+		Location: &Location{
+			Name:    locationName,
+			Country: "Unknown",
+			Lat:     0,
+			Lon:     0,
+		},
+		Effective:   parseGraphQLTime(firstNonEmpty(alert.Effective, alert.Sent)),
+		Expires:     parseGraphQLTime(firstNonEmpty(alert.Expires, alert.Effective, alert.Sent)),
+		Description: description,
+		Instruction: instruction,
+	}
+}
+
+func hurricaneCategory(windSpeed int) int {
+	switch {
+	case windSpeed >= 157:
+		return 5
+	case windSpeed >= 130:
+		return 4
+	case windSpeed >= 111:
+		return 3
+	case windSpeed >= 96:
+		return 2
+	case windSpeed >= 74:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func parseGraphQLTime(value string) time.Time {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return time.Time{}
+	}
+
+	formats := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		time.RFC1123Z,
+		time.RFC1123,
+		time.RFC822Z,
+		time.RFC822,
+		"Mon, 02 Jan 2006 15:04:05 MST",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	}
+
+	for _, format := range formats {
+		if parsed, err := time.Parse(format, value); err == nil {
+			return parsed
+		}
+	}
+
+	return time.Time{}
+}
+
+func buildGraphQLUserToken(id int64, name string, tokenPrefix string, scopes string, createdAt time.Time, expiresAt sql.NullTime, lastUsedAt sql.NullTime, token *string) *UserToken {
+	result := &UserToken{
+		ID:          strconv.FormatInt(id, 10),
+		TokenPrefix: tokenPrefix,
+		CreatedAt:   createdAt,
+		Token:       token,
+	}
+
+	if trimmed := strings.TrimSpace(name); trimmed != "" {
+		result.Name = &trimmed
+	}
+	if trimmed := strings.TrimSpace(scopes); trimmed != "" {
+		result.Scopes = &trimmed
+	}
+	if expiresAt.Valid {
+		result.ExpiresAt = &expiresAt.Time
+	}
+	if lastUsedAt.Valid {
+		result.LastUsedAt = &lastUsedAt.Time
+	}
+
+	return result
+}
+
+func mapGraphQLUserSettings(settings *handler.UserSettingsResponse) *UserSettings {
+	if settings == nil {
+		return nil
+	}
+
+	return &UserSettings{
+		Account: AccountSettings{
+			DisplayName: settings.Account.DisplayName,
+			Bio:         settings.Account.Bio,
+			Location:    settings.Account.Location,
+			Website:     settings.Account.Website,
+			Timezone:    settings.Account.Timezone,
+			Language:    settings.Account.Language,
+			DateFormat:  settings.Account.DateFormat,
+			TimeFormat:  settings.Account.TimeFormat,
+		},
+		Privacy: PrivacySettings{
+			Visibility:    settings.Privacy.Visibility,
+			ShowEmail:     settings.Privacy.ShowEmail,
+			ShowActivity:  settings.Privacy.ShowActivity,
+			ShowOrgs:      settings.Privacy.ShowOrgs,
+			Searchable:    settings.Privacy.Searchable,
+			OrgVisibility: settings.Privacy.OrgVisibility,
+		},
+		Notifications: NotificationSettings{
+			EmailSecurity: settings.Notifications.EmailSecurity,
+			EmailMentions: settings.Notifications.EmailMentions,
+			EmailUpdates:  settings.Notifications.EmailUpdates,
+			EmailDigest:   settings.Notifications.EmailDigest,
+			PushEnabled:   settings.Notifications.PushEnabled,
+			PushMentions:  settings.Notifications.PushMentions,
+		},
+		Appearance: AppearanceSettings{
+			Theme:        settings.Appearance.Theme,
+			FontSize:     settings.Appearance.FontSize,
+			ReduceMotion: settings.Appearance.ReduceMotion,
+		},
+	}
+}
+
+func mapGraphQLPublicUserProfile(profile *handler.PublicUserProfile) *PublicUserProfile {
+	if profile == nil {
+		return nil
+	}
+
+	result := &PublicUserProfile{
+		Username:  profile.Username,
+		Avatar:    PublicAvatar{Type: profile.Avatar.Type, Urls: profile.Avatar.URLs},
+		Verified:  profile.Verified,
+		CreatedAt: profile.CreatedAt,
+	}
+	if trimmed := strings.TrimSpace(profile.DisplayName); trimmed != "" {
+		result.DisplayName = &trimmed
+	}
+	if trimmed := strings.TrimSpace(profile.Bio); trimmed != "" {
+		result.Bio = &trimmed
+	}
+	if trimmed := strings.TrimSpace(profile.Location); trimmed != "" {
+		result.Location = &trimmed
+	}
+	if trimmed := strings.TrimSpace(profile.Website); trimmed != "" {
+		result.Website = &trimmed
+	}
+	return result
+}
+
+func mapGraphQLTOTPStatus(status *handler.TwoFactorStatusResponse) *TOTPStatus {
+	if status == nil {
+		return nil
+	}
+
+	return &TOTPStatus{
+		Enabled:           status.Enabled,
+		RecoveryKeysCount: status.RecoveryKeysCount,
+	}
+}
+
+func mapGraphQLTOTPSetup(setup *handler.TwoFactorSetupResponse) *TOTPSetup {
+	if setup == nil {
+		return nil
+	}
+
+	return &TOTPSetup{
+		Secret:    setup.Secret,
+		QrCode:    setup.QRCode,
+		ManualURL: setup.ManualURL,
+		Account:   setup.Account,
+		Issuer:    setup.Issuer,
+	}
+}
+
+func mapGraphQLRecoveryKeysResponse(response *handler.RecoveryKeysResponse) *TOTPRecoveryKeys {
+	if response == nil {
+		return nil
+	}
+
+	return &TOTPRecoveryKeys{
+		Message:      response.Message,
+		RecoveryKeys: append([]string(nil), response.RecoveryKeys...),
+	}
+}
+
+func mapGraphQLAuthUser(user *handler.AuthUserSummary) *AuthUser {
+	if user == nil {
+		return nil
+	}
+
+	return &AuthUser{
+		ID:       strconv.FormatInt(user.ID, 10),
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     user.Role,
+	}
+}
+
+func mapGraphQLAuthLoginResponse(response *handler.AuthLoginResponse) *AuthResult {
+	if response == nil {
+		return nil
+	}
+
+	result := &AuthResult{
+		RequiresTwoFactor: response.RequiresTwoFactor,
+		User:              mapGraphQLAuthUser(response.User),
+		ExpiresAt:         response.ExpiresAt,
+		RemainingKeys:     response.RemainingKeys,
+	}
+	if trimmed := strings.TrimSpace(response.SessionToken); trimmed != "" {
+		result.SessionToken = &trimmed
+	}
+	if trimmed := strings.TrimSpace(response.Token); trimmed != "" {
+		result.Token = &trimmed
+	}
+	return result
+}
+
+func mapGraphQLAuthRegisterResponse(response *handler.AuthRegisterResponse) *AuthResult {
+	if response == nil {
+		return nil
+	}
+
+	result := &AuthResult{
+		VerificationRequired: response.VerificationRequired,
+		User:                 mapGraphQLAuthUser(response.User),
+	}
+	if trimmed := strings.TrimSpace(response.Token); trimmed != "" {
+		result.Token = &trimmed
+	}
+	return result
+}
+
+func mapGraphQLUserInviteValidation(response *handler.UserInviteValidationResponse) *UserInviteValidation {
+	if response == nil {
+		return nil
+	}
+
+	return &UserInviteValidation{
+		Username:  response.Username,
+		Email:     response.Email,
+		Role:      response.Role,
+		ExpiresAt: response.ExpiresAt,
+	}
+}
+
+func mapGraphQLServerInviteValidation(response *handler.ServerInviteValidationResponse) *ServerInviteValidation {
+	if response == nil {
+		return nil
+	}
+
+	return &ServerInviteValidation{
+		Email:     response.Email,
+		ExpiresAt: response.ExpiresAt,
+	}
+}
+
+func mapGraphQLUserInviteCompletion(response *handler.UserInviteCompletionResponse) *UserInviteCompletion {
+	if response == nil {
+		return nil
+	}
+
+	result := &UserInviteCompletion{
+		User: mapGraphQLAuthUser(response.User),
+	}
+	if trimmed := strings.TrimSpace(response.Message); trimmed != "" {
+		result.Message = &trimmed
+	}
+	if trimmed := strings.TrimSpace(response.Token); trimmed != "" {
+		result.Token = &trimmed
+	}
+	return result
+}
+
+func mapGraphQLServerInviteCompletion(response *handler.ServerInviteCompletionResponse) *ServerInviteCompletion {
+	if response == nil || response.Admin == nil {
+		return nil
+	}
+
+	return &ServerInviteCompletion{
+		Message: response.Message,
+		Admin: &InvitedServerAdmin{
+			ID:       strconv.FormatInt(response.Admin.ID, 10),
+			Username: response.Admin.Username,
+			Email:    response.Admin.Email,
+		},
+	}
+}
+
+func loadGraphQLCurrentUserAuth(ctx context.Context, db *sql.DB) (*models.User, error) {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
+		return nil, fmt.Errorf("unauthorized: user not authenticated")
+	}
+
+	userModel := &models.UserModel{DB: db}
+	user, err := userModel.GetByID(int64(userID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load current user: %w", err)
+	}
+	return user, nil
+}
+
+func loadGraphQLCurrentUserSession(ctx context.Context) (*models.Session, error) {
+	sessionValue := ctx.Value("user_session")
+	session, ok := sessionValue.(*models.Session)
+	if !ok || session == nil {
+		return nil, fmt.Errorf("Session authentication required")
+	}
+	return session, nil
+}
+
+func graphQLRequestBaseURL(ctx context.Context) string {
+	host, _ := ctx.Value("request_host").(string)
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return ""
+	}
+
+	scheme, _ := ctx.Value("request_scheme").(string)
+	scheme = strings.TrimSpace(scheme)
+	if scheme == "" {
+		scheme = "http"
+	}
+
+	return fmt.Sprintf("%s://%s", scheme, host)
+}
+
+func getGraphQLCurrentAdminID(ctx context.Context) (int64, error) {
+	value := ctx.Value("admin_id")
+	switch id := value.(type) {
+	case int:
+		if id > 0 {
+			return int64(id), nil
+		}
+	case int64:
+		if id > 0 {
+			return id, nil
+		}
+	case string:
+		parsed, err := strconv.ParseInt(id, 10, 64)
+		if err == nil && parsed > 0 {
+			return parsed, nil
+		}
+	}
+
+	return 0, fmt.Errorf("unauthorized: admin session required")
+}
+
+func loadGraphQLCurrentAdmin(ctx context.Context, db *sql.DB) (*models.Admin, error) {
+	adminID, err := getGraphQLCurrentAdminID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	adminModel := &models.AdminModel{DB: db}
+	admin, err := adminModel.GetByID(adminID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load admin: %w", err)
+	}
+
+	return admin, nil
+}
+
+func loadGraphQLOnlineAdminUsernames(db *sql.DB) ([]string, error) {
+	rows, err := db.Query(`
+		SELECT DISTINCT sac.username
+		FROM server_admin_credentials sac
+		INNER JOIN server_admin_sessions sas ON sas.admin_id = sac.id
+		WHERE sac.is_active = 1 AND sas.expires_at > CURRENT_TIMESTAMP
+		ORDER BY sac.username ASC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query online admins: %w", err)
+	}
+	defer rows.Close()
+
+	var usernames []string
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, fmt.Errorf("failed to scan online admin username: %w", err)
+		}
+		usernames = append(usernames, username)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate online admin usernames: %w", err)
+	}
+
+	return usernames, nil
+}
+
+func countGraphQLOtherActiveSuperAdmins(db *sql.DB, excludeID int64) (int, error) {
+	var count int
+	err := db.QueryRow(`
+		SELECT COUNT(*)
+		FROM server_admin_credentials
+		WHERE is_super_admin = 1 AND is_active = 1 AND id != ?
+	`, excludeID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count active super admins: %w", err)
+	}
+
+	return count, nil
+}
+
+func buildGraphQLServerAdmin(admin *models.Admin) *ServerAdmin {
+	if admin == nil {
+		return nil
+	}
+
+	return &ServerAdmin{
+		ID:           strconv.FormatInt(admin.ID, 10),
+		Username:     admin.Username,
+		Email:        admin.Email,
+		IsSuperAdmin: admin.IsSuperAdmin,
+		IsActive:     admin.IsActive,
+		CreatedAt:    admin.CreatedAt,
+		UpdatedAt:    admin.UpdatedAt,
+		LastLoginAt:  admin.LastLoginAt,
+	}
+}
+
+func graphQLServerInviteURL(ctx context.Context, token string) string {
+	scheme, _ := ctx.Value("request_scheme").(string)
+	if strings.TrimSpace(scheme) == "" {
+		scheme = "http"
+	}
+
+	host, _ := ctx.Value("request_host").(string)
+	if strings.TrimSpace(host) == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("%s://%s/auth/invite/server/%s", scheme, host, token)
+}
+
+func buildGraphQLServerAdminInvite(ctx context.Context, invite *models.AdminInvite, expiresIn string) *ServerAdminInvite {
+	if invite == nil {
+		return nil
+	}
+
+	return &ServerAdminInvite{
+		Token:     invite.Token,
+		Email:     invite.InvitedEmail,
+		ExpiresAt: invite.ExpiresAt,
+		ExpiresIn: expiresIn,
+		InviteURL: graphQLServerInviteURL(ctx, invite.Token),
+	}
+}
+
+func (r *mutationResolver) updateGraphQLScheduledTaskEnabled(name string, enabled bool) (*ScheduledTask, error) {
+	_, err := r.ServerDB.Exec(`
+		UPDATE server_scheduler_state
+		SET enabled = ?, locked_by = NULL, locked_at = NULL
+		WHERE task_name = ?
+	`, enabled, name)
+	if err != nil {
+		return nil, err
+	}
+
+	task, err := r.loadGraphQLScheduledTask(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
+}
+
+func (r *mutationResolver) loadGraphQLScheduledTask(name string) (*ScheduledTask, error) {
+	return scanGraphQLScheduledTask(r.ServerDB.QueryRow(
+		"SELECT task_name, schedule, enabled, last_run, next_run, run_count, fail_count FROM server_scheduler_state WHERE task_name = ?",
+		name,
+	).Scan)
+}
+
+func scanGraphQLScheduledTask(scan func(dest ...any) error) (*ScheduledTask, error) {
+	var task ScheduledTask
+	var lastRun sql.NullTime
+	var nextRun sql.NullTime
+
+	err := scan(
+		&task.Name,
+		&task.Schedule,
+		&task.Enabled,
+		&lastRun,
+		&nextRun,
+		&task.RunCount,
+		&task.ErrorCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if lastRun.Valid {
+		task.LastRun = &lastRun.Time
+	}
+	if nextRun.Valid {
+		task.NextRun = &nextRun.Time
+	}
+
+	return &task, nil
+}
+
+func loadGraphQLNotificationChannel(db *sql.DB, channelType string) (*NotificationChannel, error) {
+	return scanGraphQLNotificationChannel(db.QueryRow(
+		"SELECT channel_type, enabled, config FROM notification_channels WHERE channel_type = ?",
+		channelType,
+	).Scan)
+}
+
+func scanGraphQLNotificationChannel(scan func(dest ...any) error) (*NotificationChannel, error) {
+	var channel NotificationChannel
+	var rawConfig sql.NullString
+
+	err := scan(&channel.Type, &channel.Enabled, &rawConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	if rawConfig.Valid && strings.TrimSpace(rawConfig.String) != "" {
+		var decoded any
+		if err := json.Unmarshal([]byte(rawConfig.String), &decoded); err == nil {
+			channel.Config = decoded
+		} else {
+			channel.Config = rawConfig.String
+		}
+	}
+
+	return &channel, nil
+}
+
+func loadGraphQLSetting(db *sql.DB, key string) (*models.Setting, error) {
+	return scanGraphQLSetting(db.QueryRow(
+		"SELECT key, value, type, COALESCE(description, ''), updated_at FROM server_config WHERE key = ?",
+		key,
+	).Scan)
+}
+
+func scanGraphQLSetting(scan func(dest ...any) error) (*models.Setting, error) {
+	var setting models.Setting
+	var updatedAt sql.NullTime
+	var description sql.NullString
+
+	err := scan(&setting.Key, &setting.Value, &setting.Type, &description, &updatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	if description.Valid {
+		setting.Description = description.String
+	}
+	if updatedAt.Valid {
+		setting.UpdatedAt = updatedAt.Time
+	}
+
+	return &setting, nil
+}
+
+func mapSchedulerTaskHistory(run scheduler.TaskRun) *TaskHistory {
+	duration := float64(run.Duration)
+	var completedAt *time.Time
+	if !run.EndTime.IsZero() {
+		completedAt = &run.EndTime
+	}
+
+	var errorText *string
+	if strings.TrimSpace(run.Error) != "" {
+		errorCopy := run.Error
+		errorText = &errorCopy
+	}
+
+	return &TaskHistory{
+		TaskName:    run.TaskName,
+		StartedAt:   run.StartTime,
+		CompletedAt: completedAt,
+		Duration:    &duration,
+		Success:     run.Status == "success",
+		Error:       errorText,
+	}
+}
+
+func loadGraphQLRequestStats(serverDB *sql.DB) (*RequestStats, error) {
+	var totalToday int
+	var errorsToday int
+	var lastMinute int
+
+	if err := serverDB.QueryRow(`
+		SELECT COUNT(*) FROM server_audit_log
+		WHERE timestamp >= date('now', 'start of day')
+	`).Scan(&totalToday); err != nil {
+		return nil, err
+	}
+	if err := serverDB.QueryRow(`
+		SELECT COUNT(*) FROM server_audit_log
+		WHERE timestamp >= date('now', 'start of day') AND status = 'error'
+	`).Scan(&errorsToday); err != nil {
+		return nil, err
+	}
+	if err := serverDB.QueryRow(`
+		SELECT COUNT(*) FROM server_audit_log
+		WHERE timestamp >= datetime('now', '-1 minute')
+	`).Scan(&lastMinute); err != nil {
+		return nil, err
+	}
+
+	perSecond := float64(lastMinute) / 60.0
+	return &RequestStats{
+		Total:     totalToday,
+		PerSecond: &perSecond,
+		Errors:    &errorsToday,
+	}, nil
+}
+
+func loadGraphQLDatabaseStats(serverDB, usersDB *sql.DB) (*DatabaseStats, error) {
+	serverSize, serverTables, err := loadGraphQLSQLiteStats(serverDB)
+	if err != nil {
+		return nil, err
+	}
+
+	usersSize := 0.0
+	usersTables := 0
+	if usersDB != nil {
+		usersSize, usersTables, err = loadGraphQLSQLiteStats(usersDB)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	tables := serverTables + usersTables
+	connections := 0
+	if serverDB != nil {
+		connections++
+	}
+	if usersDB != nil && usersDB != serverDB {
+		connections++
+	}
+
+	return &DatabaseStats{
+		Size:        serverSize + usersSize,
+		Tables:      &tables,
+		Connections: &connections,
+	}, nil
+}
+
+func loadGraphQLSQLiteStats(db *sql.DB) (float64, int, error) {
+	if db == nil {
+		return 0, 0, nil
+	}
+
+	var pageCount int64
+	var pageSize int64
+	var tables int
+
+	if err := db.QueryRow("PRAGMA page_count").Scan(&pageCount); err != nil {
+		return 0, 0, err
+	}
+	if err := db.QueryRow("PRAGMA page_size").Scan(&pageSize); err != nil {
+		return 0, 0, err
+	}
+	if err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'").Scan(&tables); err != nil {
+		return 0, 0, err
+	}
+
+	return float64(pageCount * pageSize), tables, nil
+}
+
+func ensureGraphQLContactSubmissionsTable(db *sql.DB) error {
+	if db == nil {
+		return fmt.Errorf("server database unavailable")
+	}
+
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS contact_submissions (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			email TEXT NOT NULL,
+			subject TEXT NOT NULL,
+			message TEXT NOT NULL,
+			ip_address TEXT,
+			user_agent TEXT,
+			status TEXT NOT NULL DEFAULT 'pending',
+			created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+		)
+	`)
+	return err
+}
+
+func (r *mutationResolver) resolveAdminChannelTestRecipient(ctx context.Context, typeArg string, recipient *string) (string, error) {
+	if recipient != nil {
+		trimmed := strings.TrimSpace(*recipient)
+		if trimmed != "" {
+			return trimmed, nil
+		}
+	}
+
+	if typeArg != "email" {
+		return "", fmt.Errorf("channel %q testing requires a recipient", typeArg)
+	}
+
+	smtpService := service.NewSMTPService(r.ServerDB)
+	if err := smtpService.LoadConfig(); err != nil {
+		return "", fmt.Errorf("failed to load SMTP configuration: %w", err)
+	}
+
+	if config := smtpService.GetConfig(); config != nil {
+		recipient := strings.TrimSpace(config.TestRecipient)
+		if recipient != "" {
+			return recipient, nil
+		}
+	}
+
+	if adminID, ok := ctx.Value("admin_id").(int); ok && adminID > 0 {
+		var adminEmail string
+		err := r.ServerDB.QueryRow(`
+			SELECT email
+			FROM server_admin_credentials
+			WHERE id = ? AND is_active = 1
+		`, adminID).Scan(&adminEmail)
+		if err != nil && err != sql.ErrNoRows {
+			return "", fmt.Errorf("failed to load authenticated admin email: %w", err)
+		}
+		adminEmail = strings.TrimSpace(adminEmail)
+		if adminEmail != "" {
+			return adminEmail, nil
+		}
+	}
+
+	if adminEmail, ok := ctx.Value("admin_email").(string); ok {
+		adminEmail = strings.TrimSpace(adminEmail)
+		if adminEmail != "" {
+			return adminEmail, nil
+		}
+	}
+
+	var fallbackEmail string
+	err := r.ServerDB.QueryRow(`
+		SELECT email
+		FROM server_admin_credentials
+		WHERE is_active = 1 AND email IS NOT NULL AND TRIM(email) != ''
+		ORDER BY is_super_admin DESC, id ASC
+		LIMIT 1
+	`).Scan(&fallbackEmail)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("email channel testing requires smtp.test_recipient or an active server admin email")
+		}
+		return "", fmt.Errorf("failed to load fallback admin email: %w", err)
+	}
+
+	return strings.TrimSpace(fallbackEmail), nil
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+
+	return ""
 }
 
 // SavedLocations is the resolver for the savedLocations field.
 func (r *queryResolver) SavedLocations(ctx context.Context) ([]*models.SavedLocation, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized: user not authenticated")
 	}
 
 	rows, err := r.UsersDB.Query(
-		"SELECT id, user_id, name, latitude, longitude, alerts_enabled, created_at, updated_at FROM saved_locations WHERE user_id = $1 ORDER BY created_at DESC",
+		"SELECT id, user_id, name, latitude, longitude, alerts_enabled, created_at, updated_at FROM user_saved_locations WHERE user_id = $1 ORDER BY created_at DESC",
 		userID,
 	)
 	if err != nil {
@@ -1244,14 +3067,14 @@ func (r *queryResolver) SavedLocations(ctx context.Context) ([]*models.SavedLoca
 
 // SavedLocation is the resolver for the savedLocation field.
 func (r *queryResolver) SavedLocation(ctx context.Context, id string) (*models.SavedLocation, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized: user not authenticated")
 	}
 
 	var loc models.SavedLocation
 	err := r.UsersDB.QueryRow(
-		"SELECT id, user_id, name, latitude, longitude, alerts_enabled, created_at, updated_at FROM saved_locations WHERE id = $1 AND user_id = $2",
+		"SELECT id, user_id, name, latitude, longitude, alerts_enabled, created_at, updated_at FROM user_saved_locations WHERE id = $1 AND user_id = $2",
 		id, userID,
 	).Scan(&loc.ID, &loc.UserID, &loc.Name, &loc.Latitude, &loc.Longitude, &loc.AlertsEnabled, &loc.CreatedAt, &loc.UpdatedAt)
 	if err != nil {
@@ -1263,13 +3086,13 @@ func (r *queryResolver) SavedLocation(ctx context.Context, id string) (*models.S
 
 // Notifications is the resolver for the notifications field.
 func (r *queryResolver) Notifications(ctx context.Context) ([]*models.Notification, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized: user not authenticated")
 	}
 
 	rows, err := r.UsersDB.Query(
-		"SELECT id, user_id, type, title, message, read_at, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
+		"SELECT id, user_id, type, display, title, message, read, dismissed, created_at, expires_at FROM user_notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
 		userID,
 	)
 	if err != nil {
@@ -1280,9 +3103,23 @@ func (r *queryResolver) Notifications(ctx context.Context) ([]*models.Notificati
 	var notifications []*models.Notification
 	for rows.Next() {
 		var notif models.Notification
-		if err := rows.Scan(&notif.ID, &notif.UserID, &notif.Type, &notif.Title, &notif.Message, &notif.ReadAt, &notif.CreatedAt); err != nil {
+		var notificationUserID int
+		if err := rows.Scan(
+			&notif.ID,
+			&notificationUserID,
+			&notif.Type,
+			&notif.Display,
+			&notif.Title,
+			&notif.Message,
+			&notif.Read,
+			&notif.Dismissed,
+			&notif.CreatedAt,
+			&notif.ExpiresAt,
+		); err != nil {
 			continue
 		}
+		notif.UserID = &notificationUserID
+		notif.IsRead = notif.Read
 		notifications = append(notifications, &notif)
 	}
 
@@ -1291,14 +3128,14 @@ func (r *queryResolver) Notifications(ctx context.Context) ([]*models.Notificati
 
 // UnreadNotifications is the resolver for the unreadNotifications field.
 func (r *queryResolver) UnreadNotifications(ctx context.Context) (*UnreadCount, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID := getUserIDFromContext(ctx)
+	if userID == 0 {
 		return nil, fmt.Errorf("unauthorized: user not authenticated")
 	}
 
 	var count int
 	err := r.UsersDB.QueryRow(
-		"SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read_at IS NULL",
+		"SELECT COUNT(*) FROM user_notifications WHERE user_id = $1 AND read = 0",
 		userID,
 	).Scan(&count)
 	if err != nil {
@@ -1316,7 +3153,7 @@ func (r *queryResolver) AdminUsers(ctx context.Context) ([]*models.User, error) 
 	}
 
 	rows, err := r.UsersDB.Query(
-		"SELECT id, email, username, role, email_verified, two_factor_enabled, created_at, updated_at FROM users ORDER BY created_at DESC",
+		"SELECT id, email, username, role, email_verified, two_factor_enabled, created_at, updated_at FROM user_accounts ORDER BY created_at DESC",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users: %w", err)
@@ -1329,10 +3166,111 @@ func (r *queryResolver) AdminUsers(ctx context.Context) ([]*models.User, error) 
 		if err := rows.Scan(&user.ID, &user.Email, &user.Username, &user.Role, &user.EmailVerified, &user.TwoFactorEnabled, &user.CreatedAt, &user.UpdatedAt); err != nil {
 			continue
 		}
+		user.Email = utils.MaskEmail(user.Email)
 		users = append(users, &user)
 	}
 
 	return users, nil
+}
+
+// AdminServerAdmins is the resolver for the adminServerAdmins field.
+func (r *queryResolver) AdminServerAdmins(ctx context.Context) (*ServerAdminOverview, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	count, err := adminModel.GetCount()
+	if err != nil {
+		return nil, fmt.Errorf("failed to count admins: %w", err)
+	}
+
+	currentAdmin, err := loadGraphQLCurrentAdmin(ctx, r.ServerDB)
+	if err != nil {
+		return nil, err
+	}
+
+	onlineAdmins, err := loadGraphQLOnlineAdminUsernames(r.ServerDB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load online admins: %w", err)
+	}
+
+	return &ServerAdminOverview{
+		Count:         count,
+		CurrentAdmin:  buildGraphQLServerAdmin(currentAdmin),
+		OnlineAdmins:  onlineAdmins,
+		PrivacyNotice: "Server admin account details are private. You may view your own account and see currently online admin usernames.",
+	}, nil
+}
+
+// AdminServerAdmin is the resolver for the adminServerAdmin field.
+func (r *queryResolver) AdminServerAdmin(ctx context.Context, id string) (*ServerAdmin, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	adminID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid admin id")
+	}
+
+	currentAdmin, err := loadGraphQLCurrentAdmin(ctx, r.ServerDB)
+	if err != nil {
+		return nil, err
+	}
+	if adminID != currentAdmin.ID {
+		return nil, fmt.Errorf("server admin account details are private")
+	}
+
+	return buildGraphQLServerAdmin(currentAdmin), nil
+}
+
+// AdminUserInvites is the resolver for the adminUserInvites field.
+func (r *queryResolver) AdminUserInvites(ctx context.Context) ([]*UserInvite, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	inviteModel := &models.UserInviteModel{DB: r.UsersDB}
+	invites, err := inviteModel.ListInvites()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user invites: %w", err)
+	}
+
+	response := make([]*UserInvite, 0, len(invites))
+	for i := range invites {
+		invite := invites[i]
+		response = append(response, buildGraphQLUserInvite(&invite, ctx))
+	}
+
+	return response, nil
+}
+
+// AdminUserInvite is the resolver for the adminUserInvite field.
+func (r *queryResolver) AdminUserInvite(ctx context.Context, id string) (*UserInvite, error) {
+	userRole, ok := ctx.Value("user_role").(string)
+	if !ok || userRole != "admin" {
+		return nil, fmt.Errorf("unauthorized: admin access required")
+	}
+
+	inviteID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid invite id")
+	}
+
+	inviteModel := &models.UserInviteModel{DB: r.UsersDB}
+	invite, err := inviteModel.GetByID(inviteID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user invite: %w", err)
+	}
+	if invite == nil {
+		return nil, nil
+	}
+
+	return buildGraphQLUserInvite(invite, ctx), nil
 }
 
 // AdminSettings is the resolver for the adminSettings field.
@@ -1343,7 +3281,7 @@ func (r *queryResolver) AdminSettings(ctx context.Context) ([]*models.Setting, e
 	}
 
 	rows, err := r.ServerDB.Query(
-		"SELECT id, key, value, description, category, created_at, updated_at FROM settings ORDER BY category, key",
+		"SELECT key, value, type, COALESCE(description, ''), updated_at FROM server_config ORDER BY key",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get settings: %w", err)
@@ -1352,11 +3290,11 @@ func (r *queryResolver) AdminSettings(ctx context.Context) ([]*models.Setting, e
 
 	var settings []*models.Setting
 	for rows.Next() {
-		var setting models.Setting
-		if err := rows.Scan(&setting.ID, &setting.Key, &setting.Value, &setting.Description, &setting.Category, &setting.CreatedAt, &setting.UpdatedAt); err != nil {
+		setting, err := scanGraphQLSetting(rows.Scan)
+		if err != nil {
 			continue
 		}
-		settings = append(settings, &setting)
+		settings = append(settings, setting)
 	}
 
 	return settings, nil
@@ -1369,16 +3307,12 @@ func (r *queryResolver) AdminSetting(ctx context.Context, key string) (*models.S
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	var setting models.Setting
-	err := r.ServerDB.QueryRow(
-		"SELECT id, key, value, description, category, created_at, updated_at FROM settings WHERE key = $1",
-		key,
-	).Scan(&setting.ID, &setting.Key, &setting.Value, &setting.Description, &setting.Category, &setting.CreatedAt, &setting.UpdatedAt)
+	setting, err := loadGraphQLSetting(r.ServerDB, key)
 	if err != nil {
 		return nil, fmt.Errorf("setting not found: %w", err)
 	}
 
-	return &setting, nil
+	return setting, nil
 }
 
 // AdminTokens is the resolver for the adminTokens field.
@@ -1388,24 +3322,29 @@ func (r *queryResolver) AdminTokens(ctx context.Context) ([]*models.APIToken, er
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	rows, err := r.ServerDB.Query(
-		"SELECT id, name, token_prefix, expires_at, created_at, last_used_at, last_used_ip FROM api_tokens ORDER BY created_at DESC",
-	)
+	adminID, ok := ctx.Value("admin_id").(int)
+	if !ok || adminID <= 0 {
+		return nil, fmt.Errorf("unauthorized: admin session required")
+	}
+
+	adminModel := &models.AdminModel{DB: r.ServerDB}
+	admin, err := adminModel.GetByID(int64(adminID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tokens: %w", err)
-	}
-	defer rows.Close()
-
-	var tokens []*models.APIToken
-	for rows.Next() {
-		var token models.APIToken
-		if err := rows.Scan(&token.ID, &token.Name, &token.TokenPrefix, &token.ExpiresAt, &token.CreatedAt, &token.LastUsedAt, &token.LastUsedIP); err != nil {
-			continue
-		}
-		tokens = append(tokens, &token)
+		return nil, fmt.Errorf("failed to load admin token metadata: %w", err)
 	}
 
-	return tokens, nil
+	if admin.APITokenPrefix == "" {
+		return []*models.APIToken{}, nil
+	}
+
+	return []*models.APIToken{
+		{
+			ID:          int(admin.ID),
+			Token:       "",
+			TokenPrefix: admin.APITokenPrefix,
+			CreatedAt:   admin.UpdatedAt,
+		},
+	}, nil
 }
 
 // AdminAuditLogs is the resolver for the adminAuditLogs field.
@@ -1425,7 +3364,7 @@ func (r *queryResolver) AdminAuditLogs(ctx context.Context, limit *int, offset *
 	}
 
 	rows, err := r.ServerDB.Query(
-		"SELECT id, user_id, action, ip_address, user_agent, created_at FROM audit_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+		"SELECT id, actor_type, actor_id, action, resource_type, resource_id, details, ip_address, user_agent, timestamp FROM server_audit_log ORDER BY timestamp DESC LIMIT ? OFFSET ?",
 		limitVal, offsetVal,
 	)
 	if err != nil {
@@ -1436,8 +3375,36 @@ func (r *queryResolver) AdminAuditLogs(ctx context.Context, limit *int, offset *
 	var logs []*AuditLog
 	for rows.Next() {
 		var log AuditLog
-		if err := rows.Scan(&log.ID, &log.UserID, &log.Action, &log.IP, &log.UserAgent, &log.CreatedAt); err != nil {
+		var actorType sql.NullString
+		var actorID sql.NullString
+		var resourceType sql.NullString
+		var resourceID sql.NullString
+		var details sql.NullString
+		var ip sql.NullString
+		var userAgent sql.NullString
+		if err := rows.Scan(&log.ID, &actorType, &actorID, &log.Action, &resourceType, &resourceID, &details, &ip, &userAgent, &log.CreatedAt); err != nil {
 			continue
+		}
+		if actorType.Valid && actorType.String == "user" && actorID.Valid {
+			if parsedUserID, err := strconv.Atoi(actorID.String); err == nil {
+				log.UserID = &parsedUserID
+			}
+		}
+		if resourceType.Valid {
+			resource := resourceType.String
+			if resourceID.Valid && strings.TrimSpace(resourceID.String) != "" {
+				resource = fmt.Sprintf("%s:%s", resourceType.String, resourceID.String)
+			}
+			log.Resource = &resource
+		}
+		if details.Valid && strings.TrimSpace(details.String) != "" {
+			log.Details = &details.String
+		}
+		if ip.Valid && strings.TrimSpace(ip.String) != "" {
+			log.IP = &ip.String
+		}
+		if userAgent.Valid && strings.TrimSpace(userAgent.String) != "" {
+			log.UserAgent = &userAgent.String
 		}
 		logs = append(logs, &log)
 	}
@@ -1453,15 +3420,67 @@ func (r *queryResolver) AdminStats(ctx context.Context) (*SystemStats, error) {
 	}
 
 	var totalUsers, activeUsers int
-	r.UsersDB.QueryRow("SELECT COUNT(*) FROM users").Scan(&totalUsers)
-	r.UsersDB.QueryRow("SELECT COUNT(*) FROM users WHERE last_login_at > NOW() - INTERVAL '30 days'").Scan(&activeUsers)
+	var adminUsers int
+	var totalLocations int
+	var totalNotifications int
+	var unreadNotifications int
+
+	userModel := &models.UserModel{DB: r.UsersDB}
+	totalUsers, err := userModel.Count()
+	if err != nil {
+		return nil, fmt.Errorf("failed to count users: %w", err)
+	}
+	adminUsers, err = userModel.CountByRole("admin")
+	if err != nil {
+		return nil, fmt.Errorf("failed to count admin users: %w", err)
+	}
+	if err := r.UsersDB.QueryRow("SELECT COUNT(*) FROM user_accounts WHERE last_login_at > datetime('now', '-30 days')").Scan(&activeUsers); err != nil {
+		return nil, fmt.Errorf("failed to count active users: %w", err)
+	}
+	if err := r.UsersDB.QueryRow("SELECT COUNT(*) FROM user_saved_locations").Scan(&totalLocations); err != nil {
+		return nil, fmt.Errorf("failed to count saved locations: %w", err)
+	}
+	if err := r.UsersDB.QueryRow("SELECT COUNT(*) FROM user_notifications").Scan(&totalNotifications); err != nil {
+		return nil, fmt.Errorf("failed to count notifications: %w", err)
+	}
+	if err := r.UsersDB.QueryRow("SELECT COUNT(*) FROM user_notifications WHERE read = 0").Scan(&unreadNotifications); err != nil {
+		return nil, fmt.Errorf("failed to count unread notifications: %w", err)
+	}
+
+	requestStats, err := loadGraphQLRequestStats(r.ServerDB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load request stats: %w", err)
+	}
+
+	databaseStats, err := loadGraphQLDatabaseStats(r.ServerDB, r.UsersDB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load database stats: %w", err)
+	}
+
+	uptime := time.Since(handler.GetInitStatus().Started).Round(time.Second).String()
+	var perUser *float64
+	if totalUsers > 0 {
+		value := float64(totalLocations) / float64(totalUsers)
+		perUser = &value
+	}
 
 	return &SystemStats{
-		Uptime: "24h",
+		Uptime:   uptime,
+		Requests: requestStats,
 		Users: &UserStats{
 			Total:  totalUsers,
 			Active: &activeUsers,
+			Admins: &adminUsers,
 		},
+		Locations: &LocationStats{
+			Total:   totalLocations,
+			PerUser: perUser,
+		},
+		Notifications: &NotificationStats{
+			Total:  totalNotifications,
+			Unread: &unreadNotifications,
+		},
+		Database: databaseStats,
 	}, nil
 }
 
@@ -1473,7 +3492,7 @@ func (r *queryResolver) AdminTasks(ctx context.Context) ([]*ScheduledTask, error
 	}
 
 	rows, err := r.ServerDB.Query(
-		"SELECT name, schedule, enabled, last_run, next_run, run_count, error_count, avg_duration FROM scheduled_tasks ORDER BY name",
+		"SELECT task_name, schedule, enabled, last_run, next_run, run_count, fail_count FROM server_scheduler_state ORDER BY task_name",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tasks: %w", err)
@@ -1482,39 +3501,40 @@ func (r *queryResolver) AdminTasks(ctx context.Context) ([]*ScheduledTask, error
 
 	var tasks []*ScheduledTask
 	for rows.Next() {
-		var task ScheduledTask
-		if err := rows.Scan(&task.Name, &task.Schedule, &task.Enabled, &task.LastRun, &task.NextRun, &task.RunCount, &task.ErrorCount, &task.AvgDuration); err != nil {
+		task, err := scanGraphQLScheduledTask(rows.Scan)
+		if err != nil {
 			continue
 		}
-		tasks = append(tasks, &task)
+		tasks = append(tasks, task)
 	}
 
 	return tasks, nil
 }
 
 // AdminTaskHistory is the resolver for the adminTaskHistory field.
-func (r *queryResolver) AdminTaskHistory(ctx context.Context, name string) ([]*TaskHistory, error) {
+func (r *queryResolver) AdminTaskHistory(ctx context.Context, name string, limit *int) ([]*TaskHistory, error) {
 	userRole, ok := ctx.Value("user_role").(string)
 	if !ok || userRole != "admin" {
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	rows, err := r.ServerDB.Query(
-		"SELECT task_name, started_at, completed_at, duration, success, error FROM task_history WHERE task_name = $1 ORDER BY started_at DESC LIMIT 50",
-		name,
-	)
+	if r.SchedulerHandler == nil || r.SchedulerHandler.Scheduler == nil {
+		return nil, fmt.Errorf("scheduler runtime unavailable")
+	}
+
+	limitValue := 50
+	if limit != nil && *limit > 0 {
+		limitValue = *limit
+	}
+
+	historyRuns, err := r.SchedulerHandler.Scheduler.GetTaskHistory(name, limitValue)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get task history: %w", err)
 	}
-	defer rows.Close()
 
 	var history []*TaskHistory
-	for rows.Next() {
-		var entry TaskHistory
-		if err := rows.Scan(&entry.TaskName, &entry.StartedAt, &entry.CompletedAt, &entry.Duration, &entry.Success, &entry.Error); err != nil {
-			continue
-		}
-		history = append(history, &entry)
+	for _, run := range historyRuns {
+		history = append(history, mapSchedulerTaskHistory(run))
 	}
 
 	return history, nil
@@ -1528,7 +3548,7 @@ func (r *queryResolver) AdminChannels(ctx context.Context) ([]*NotificationChann
 	}
 
 	rows, err := r.ServerDB.Query(
-		"SELECT type, enabled, config FROM notification_channels ORDER BY type",
+		"SELECT channel_type, enabled, config FROM notification_channels ORDER BY channel_type",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get channels: %w", err)
@@ -1537,11 +3557,11 @@ func (r *queryResolver) AdminChannels(ctx context.Context) ([]*NotificationChann
 
 	var channels []*NotificationChannel
 	for rows.Next() {
-		var channel NotificationChannel
-		if err := rows.Scan(&channel.Type, &channel.Enabled, &channel.Config); err != nil {
+		channel, err := scanGraphQLNotificationChannel(rows.Scan)
+		if err != nil {
 			continue
 		}
-		channels = append(channels, &channel)
+		channels = append(channels, channel)
 	}
 
 	return channels, nil
@@ -1554,16 +3574,12 @@ func (r *queryResolver) AdminChannel(ctx context.Context, typeArg string) (*Noti
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	var channel NotificationChannel
-	err := r.ServerDB.QueryRow(
-		"SELECT type, enabled, config FROM notification_channels WHERE type = $1",
-		typeArg,
-	).Scan(&channel.Type, &channel.Enabled, &channel.Config)
+	channel, err := loadGraphQLNotificationChannel(r.ServerDB, typeArg)
 	if err != nil {
 		return nil, fmt.Errorf("channel not found: %w", err)
 	}
 
-	return &channel, nil
+	return channel, nil
 }
 
 // AdminChannelStats is the resolver for the adminChannelStats field.
@@ -1574,12 +3590,27 @@ func (r *queryResolver) AdminChannelStats(ctx context.Context, typeArg string) (
 	}
 
 	var sent, failed int
-	r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE channel = $1 AND status = 'sent'", typeArg).Scan(&sent)
-	r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE channel = $1 AND status = 'failed'", typeArg).Scan(&failed)
+	var lastSent sql.NullTime
+	if err := r.ServerDB.QueryRow(`
+		SELECT
+			COUNT(CASE WHEN state = 'delivered' THEN 1 END),
+			COUNT(CASE WHEN state IN ('failed', 'dead_letter') THEN 1 END),
+			MAX(delivered_at)
+		FROM notification_queue
+		WHERE channel_type = ?
+	`, typeArg).Scan(&sent, &failed, &lastSent); err != nil {
+		return nil, fmt.Errorf("failed to load channel stats: %w", err)
+	}
+
+	var lastSentAt *time.Time
+	if lastSent.Valid {
+		lastSentAt = &lastSent.Time
+	}
 
 	return &ChannelStats{
-		Sent:   sent,
-		Failed: failed,
+		Sent:     sent,
+		Failed:   failed,
+		LastSent: lastSentAt,
 	}, nil
 }
 
@@ -1591,10 +3622,18 @@ func (r *queryResolver) AdminQueueStats(ctx context.Context) (*QueueStats, error
 	}
 
 	var pending, processing, completed, failed int
-	r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE status = 'pending'").Scan(&pending)
-	r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE status = 'processing'").Scan(&processing)
-	r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE status = 'completed'").Scan(&completed)
-	r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE status = 'failed'").Scan(&failed)
+	if err := r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE state IN ('created', 'queued')").Scan(&pending); err != nil {
+		return nil, fmt.Errorf("failed to load pending queue count: %w", err)
+	}
+	if err := r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE state = 'sending'").Scan(&processing); err != nil {
+		return nil, fmt.Errorf("failed to load processing queue count: %w", err)
+	}
+	if err := r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE state = 'delivered'").Scan(&completed); err != nil {
+		return nil, fmt.Errorf("failed to load completed queue count: %w", err)
+	}
+	if err := r.ServerDB.QueryRow("SELECT COUNT(*) FROM notification_queue WHERE state IN ('failed', 'dead_letter')").Scan(&failed); err != nil {
+		return nil, fmt.Errorf("failed to load failed queue count: %w", err)
+	}
 
 	return &QueueStats{
 		Pending:    pending,
@@ -1611,12 +3650,20 @@ func (r *queryResolver) AdminSMTPProviders(ctx context.Context) ([]*SMTPProvider
 		return nil, fmt.Errorf("unauthorized: admin access required")
 	}
 
-	providers := []*SMTPProvider{
-		{Name: "Gmail", Host: "smtp.gmail.com", Port: 587, Secure: true},
-		{Name: "Outlook", Host: "smtp.office365.com", Port: 587, Secure: true},
-		{Name: "Yahoo", Host: "smtp.mail.yahoo.com", Port: 587, Secure: true},
-		{Name: "SendGrid", Host: "smtp.sendgrid.net", Port: 587, Secure: true},
-		{Name: "Mailgun", Host: "smtp.mailgun.org", Port: 587, Secure: true},
+	presets := service.ListProviderPresets()
+	providers := make([]*SMTPProvider, 0, len(presets))
+	for _, preset := range presets {
+		port, err := strconv.Atoi(preset.Port)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SMTP preset port %q for %s: %w", preset.Port, preset.Name, err)
+		}
+
+		providers = append(providers, &SMTPProvider{
+			Name:   preset.Name,
+			Host:   preset.Host,
+			Port:   port,
+			Secure: preset.UseTLS,
+		})
 	}
 
 	return providers, nil
@@ -1685,6 +3732,54 @@ func (r *Resolver) Setting() SettingResolver { return &settingResolver{r} }
 
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
+func buildGraphQLUserInvite(invite *models.UserInvite, ctx context.Context) *UserInvite {
+	if invite == nil {
+		return nil
+	}
+
+	return &UserInvite{
+		ID:        strconv.FormatInt(invite.ID, 10),
+		Token:     invite.Token,
+		Username:  invite.Username,
+		Email:     invite.Email,
+		Role:      invite.Role,
+		CreatedAt: invite.CreatedAt,
+		ExpiresAt: invite.ExpiresAt,
+		MaxUses:   invite.MaxUses,
+		UseCount:  invite.UseCount,
+		UsedAt:    invite.UsedAt,
+		Status:    graphQLUserInviteStatus(invite),
+		InviteURL: graphQLUserInviteURL(ctx, invite.Token),
+	}
+}
+
+func graphQLUserInviteStatus(invite *models.UserInvite) string {
+	if invite == nil {
+		return "pending"
+	}
+	if invite.UsedAt != nil || (invite.MaxUses > 0 && invite.UseCount >= invite.MaxUses) {
+		return "used"
+	}
+	if time.Now().After(invite.ExpiresAt) {
+		return "expired"
+	}
+	return "pending"
+}
+
+func graphQLUserInviteURL(ctx context.Context, token string) string {
+	host, _ := ctx.Value("request_host").(string)
+	if strings.TrimSpace(host) == "" {
+		return ""
+	}
+
+	scheme, _ := ctx.Value("request_scheme").(string)
+	if strings.TrimSpace(scheme) == "" {
+		scheme = "http"
+	}
+
+	return fmt.Sprintf("%s://%s/auth/invite/user/%s", scheme, host, token)
+}
 
 type aPITokenResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }

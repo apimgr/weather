@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/apimgr/weather/src/database"
+	models "github.com/apimgr/weather/src/server/model"
 	"github.com/apimgr/weather/src/server/service"
 
 	"github.com/gin-gonic/gin"
@@ -168,7 +170,39 @@ func (h *AdminSettingsHandler) UpdateSettings(c *gin.Context) {
 
 // ResetSettings resets all settings to defaults
 func (h *AdminSettingsHandler) ResetSettings(c *gin.Context) {
-	// This would reinitialize default settings
+	settingsModel := &models.SettingsModel{DB: database.GetServerDB()}
+	backupPath := settingsModel.GetString("backup.location", "/data/backups")
+
+	tx, err := database.GetServerDB().Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to start settings reset",
+		})
+		return
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("DELETE FROM server_config"); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to clear settings",
+		})
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to commit settings reset",
+		})
+		return
+	}
+
+	if err := settingsModel.InitializeDefaults(backupPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to restore default settings",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Settings reset to defaults",
 	})
@@ -195,8 +229,8 @@ func (h *AdminSettingsHandler) ExportSettings(c *gin.Context) {
 
 	c.Header("Content-Disposition", "attachment; filename=weather-settings.json")
 	c.JSON(http.StatusOK, gin.H{
-		"version":     "1.0.0",
-		"exported_at": "2025-10-18",
+		"version":     readVersion(),
+		"exported_at": time.Now().UTC().Format(time.RFC3339),
 		"settings":    settings,
 	})
 }

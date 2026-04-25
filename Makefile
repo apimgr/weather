@@ -253,4 +253,4 @@ clean:
 # =============================================================================
 i18n-validate:
 	@echo "Validating i18n locale files..."
-	@python3 scripts/i18n-validate.sh src/locale
+	@python3 scripts/i18n-validate.sh src/common/i18n/locales

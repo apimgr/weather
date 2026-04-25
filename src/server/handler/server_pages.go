@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/apimgr/weather/src/config"
@@ -152,7 +153,7 @@ func GetAboutAPI(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 		torEnabled := settingsModel.GetBool("tor.enabled", false)
 		onionAddress := settingsModel.GetString("tor.onion_address", "")
 
-		c.JSON(http.StatusOK, gin.H{
+		RespondNegotiatedData(c, http.StatusOK, gin.H{
 			"title":       cfg.Server.Branding.Title,
 			"description": cfg.Server.Branding.Description,
 			"version":     Version,
@@ -184,7 +185,7 @@ func GetAboutAPI(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 // GetPrivacyAPI returns the privacy policy as JSON (AI.md PART 14: /api/v1/server/privacy)
 func GetPrivacyAPI(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		RespondNegotiatedData(c, http.StatusOK, gin.H{
 			"title":        "Privacy Policy",
 			"last_updated": BuildDate,
 			"data_stored":  true,
@@ -248,14 +249,14 @@ func GetHelpAPI(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 			}
 		}
 
-		c.JSON(http.StatusOK, help)
+		RespondNegotiatedData(c, http.StatusOK, help)
 	}
 }
 
 // GetTermsAPI returns terms of service as JSON (AI.md PART 14: /api/v1/server/terms)
 func GetTermsAPI(db *database.DB, cfg *config.AppConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		RespondNegotiatedData(c, http.StatusOK, gin.H{
 			"title":        "Terms of Service",
 			"last_updated": BuildDate,
 			"sections": []gin.H{
@@ -302,11 +303,17 @@ IP: %s
 User Agent: %s
 Time: %s`, form.Name, form.Email, form.Subject, form.Message, c.ClientIP(), c.Request.UserAgent(), time.Now().Format("2006-01-02 15:04:05"))
 
-			// Get admin email from config
-			cfg, _ := config.LoadConfig()
-			adminEmail := "admin@localhost"
-			if cfg != nil && cfg.Server.Admin.Email != "" {
-				adminEmail = cfg.Server.Admin.Email
+			adminEmail := ""
+			if cfg != nil {
+				adminEmail = strings.TrimSpace(cfg.Server.Admin.Email)
+			}
+			if adminEmail == "" {
+				if err := saveContactToDB(c, form.Name, form.Email, form.Subject, form.Message); err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "Failed to save message"})
+					return
+				}
+				c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Your message has been saved. We'll respond as soon as possible."})
+				return
 			}
 
 			err := smtpService.SendEmail(adminEmail, fmt.Sprintf("Contact: %s", form.Subject), emailBody)

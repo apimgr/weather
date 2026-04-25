@@ -77,6 +77,29 @@ type ComplexityRoot struct {
 		Sunset           func(childComplexity int) int
 	}
 
+	AuthResult struct {
+		ExpiresAt            func(childComplexity int) int
+		RemainingKeys        func(childComplexity int) int
+		RequiresTwoFactor    func(childComplexity int) int
+		SessionToken         func(childComplexity int) int
+		Token                func(childComplexity int) int
+		User                 func(childComplexity int) int
+		VerificationRequired func(childComplexity int) int
+	}
+
+	AuthUser struct {
+		Email    func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Role     func(childComplexity int) int
+		Username func(childComplexity int) int
+	}
+
+	InvitedServerAdmin struct {
+		Email    func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Username func(childComplexity int) int
+	}
+
 	AuditLog struct {
 		Action    func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
@@ -303,6 +326,23 @@ type ComplexityRoot struct {
 		Used       func(childComplexity int) int
 	}
 
+	AccountSettings struct {
+		Bio         func(childComplexity int) int
+		DateFormat  func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		Language    func(childComplexity int) int
+		Location    func(childComplexity int) int
+		TimeFormat  func(childComplexity int) int
+		Timezone    func(childComplexity int) int
+		Website     func(childComplexity int) int
+	}
+
+	AppearanceSettings struct {
+		FontSize     func(childComplexity int) int
+		ReduceMotion func(childComplexity int) int
+		Theme        func(childComplexity int) int
+	}
+
 	MoonPhase struct {
 		Age          func(childComplexity int) int
 		Angle        func(childComplexity int) int
@@ -318,33 +358,59 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AdminAutoDetectSMTP      func(childComplexity int) int
 		AdminClearAuditLogs      func(childComplexity int) int
-		AdminCreateUser          func(childComplexity int, username string, email string, password string, role string) int
+		AdminCreateUserInvite    func(childComplexity int, username string, email string, role *string, expiresInDays *int) int
+		AdminDeleteServerAdmin   func(childComplexity int, id string) int
 		AdminDeleteUser          func(childComplexity int, id string) int
+		AdminDeleteUserInvite    func(childComplexity int, id string) int
+		AdminDisableServerAdmin  func(childComplexity int, id string) int
 		AdminDisableChannel      func(childComplexity int, typeArg string) int
 		AdminDisableTask         func(childComplexity int, name string) int
 		AdminEnableChannel       func(childComplexity int, typeArg string) int
+		AdminEnableServerAdmin   func(childComplexity int, id string) int
 		AdminEnableTask          func(childComplexity int, name string) int
-		AdminGenerateToken       func(childComplexity int, name string, expiresIn *int) int
+		AdminGenerateToken       func(childComplexity int) int
 		AdminInitializeChannels  func(childComplexity int) int
-		AdminReloadConfig        func(childComplexity int) int
+		AdminInviteServerAdmin   func(childComplexity int, email string, expiresIn *string) int
 		AdminResetSettings       func(childComplexity int) int
 		AdminRevokeToken         func(childComplexity int, id string) int
-		AdminTestChannel         func(childComplexity int, typeArg string) int
+		AdminTestChannel         func(childComplexity int, typeArg string, recipient *string) int
 		AdminTriggerTask         func(childComplexity int, name string) int
 		AdminUpdateChannel       func(childComplexity int, typeArg string, enabled *bool, config any) int
 		AdminUpdateSetting       func(childComplexity int, key string, value string) int
 		AdminUpdateSettings      func(childComplexity int, settings []*SettingInput) int
+		AdminUpdateTask         func(childComplexity int, name string, enabled bool) int
 		AdminUpdateUser          func(childComplexity int, id string, username *string, email *string, role *string) int
-		AdminUpdateUserPassword  func(childComplexity int, id string, password string) int
+		CompleteUserTwoFactor   func(childComplexity int, sessionToken string, twoFactorCode string) int
+		CompleteUserInvite      func(childComplexity int, token string, username string, password string) int
+		CompleteServerInvite    func(childComplexity int, token string, username string, password string) int
+		ChangeUserPassword      func(childComplexity int, currentPassword string, newPassword string) int
+		CreateUserToken         func(childComplexity int, name string, scopes *string, expiresIn *int) int
 		CreateSavedLocation      func(childComplexity int, name string, lat float64, lon float64, country *string, region *string, alerts *bool) int
 		DeleteNotification       func(childComplexity int, id string) int
 		DeleteSavedLocation      func(childComplexity int, id string) int
+		DisableUserTwoFactor    func(childComplexity int, password string) int
+		EnableUserTwoFactor     func(childComplexity int, secret string, code string) int
+		LoginUser               func(childComplexity int, identifier string, password string, twoFactorCode *string, recoveryKey *string) int
+		LogoutUser              func(childComplexity int) int
 		MarkAllNotificationsRead func(childComplexity int) int
 		MarkNotificationRead     func(childComplexity int, id string) int
+		RegisterUser            func(childComplexity int, username string, email string, password string) int
+		RegenerateUserRecoveryKeys func(childComplexity int, code string) int
+		RefreshUserSession      func(childComplexity int) int
+		RequestPasswordReset    func(childComplexity int, email string) int
+		ResetUserAvatar         func(childComplexity int) int
+		ResetUserPassword       func(childComplexity int, token string, password string) int
+		RevokeUserToken         func(childComplexity int, id string) int
 		SubmitContactForm        func(childComplexity int, name string, email string, subject string, message string) int
 		ToggleLocationAlerts     func(childComplexity int, id string) int
+		UploadUserAvatar        func(childComplexity int, file graphql.Upload) int
 		UpdateSavedLocation      func(childComplexity int, id string, name *string, alerts *bool) int
+		UpdateUserAvatar         func(childComplexity int, typeArg string, url *string) int
+		UpdateUserSettings       func(childComplexity int, account *AccountSettingsInput, privacy *PrivacySettingsInput, notifications *NotificationSettingsInput, appearance *AppearanceSettingsInput) int
 		UpdateUserProfile        func(childComplexity int, displayName *string, phone *string) int
+		UseUserRecoveryKey      func(childComplexity int, sessionToken string, recoveryKey string) int
+		VerifyUserEmail         func(childComplexity int, token string) int
+		VerifyUserTwoFactor     func(childComplexity int, code string) int
 	}
 
 	Notification struct {
@@ -370,22 +436,91 @@ type ComplexityRoot struct {
 		Unread func(childComplexity int) int
 	}
 
+	NotificationSettings struct {
+		EmailDigest   func(childComplexity int) int
+		EmailMentions func(childComplexity int) int
+		EmailSecurity func(childComplexity int) int
+		EmailUpdates  func(childComplexity int) int
+		PushEnabled   func(childComplexity int) int
+		PushMentions  func(childComplexity int) int
+	}
+
+	PrivacySettings struct {
+		OrgVisibility func(childComplexity int) int
+		Searchable    func(childComplexity int) int
+		ShowActivity  func(childComplexity int) int
+		ShowEmail     func(childComplexity int) int
+		ShowOrgs      func(childComplexity int) int
+		Visibility    func(childComplexity int) int
+	}
+
+	PublicAvatar struct {
+		Type func(childComplexity int) int
+		Urls func(childComplexity int) int
+	}
+
+	PublicUserProfile struct {
+		Avatar      func(childComplexity int) int
+		Bio         func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		Location    func(childComplexity int) int
+		Username    func(childComplexity int) int
+		Verified    func(childComplexity int) int
+		Website     func(childComplexity int) int
+	}
+
+	ServerInviteCompletion struct {
+		Admin   func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
+	ServerInviteValidation struct {
+		Email     func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+	}
+
+	TOTPRecoveryKeys struct {
+		Message      func(childComplexity int) int
+		RecoveryKeys func(childComplexity int) int
+	}
+
+	TOTPSetup struct {
+		Account   func(childComplexity int) int
+		Issuer    func(childComplexity int) int
+		ManualURL func(childComplexity int) int
+		QrCode    func(childComplexity int) int
+		Secret    func(childComplexity int) int
+	}
+
+	TOTPStatus struct {
+		Enabled           func(childComplexity int) int
+		RecoveryKeysCount func(childComplexity int) int
+	}
+
 	Query struct {
 		AdminAuditLogs      func(childComplexity int, limit *int, offset *int) int
 		AdminChannel        func(childComplexity int, typeArg string) int
 		AdminChannelStats   func(childComplexity int, typeArg string) int
 		AdminChannels       func(childComplexity int) int
 		AdminQueueStats     func(childComplexity int) int
+		AdminServerAdmin    func(childComplexity int, id string) int
+		AdminServerAdmins   func(childComplexity int) int
 		AdminSMTPProviders  func(childComplexity int) int
 		AdminSetting        func(childComplexity int, key string) int
 		AdminSettings       func(childComplexity int) int
 		AdminStats          func(childComplexity int) int
-		AdminTaskHistory    func(childComplexity int, name string) int
+		AdminTaskHistory    func(childComplexity int, name string, limit *int) int
 		AdminTasks          func(childComplexity int) int
 		AdminTokens         func(childComplexity int) int
+		AdminUserInvite     func(childComplexity int, id string) int
+		AdminUserInvites    func(childComplexity int) int
 		AdminUsers          func(childComplexity int) int
 		CurrentLocation     func(childComplexity int) int
 		CurrentUser         func(childComplexity int) int
+		CurrentUserAvatar   func(childComplexity int) int
+		CurrentUserTwoFactorSetup func(childComplexity int) int
+		CurrentUserTwoFactorStatus func(childComplexity int) int
 		Earthquakes         func(childComplexity int, minMagnitude *float64, limit *int) int
 		Forecast            func(childComplexity int, location *string, lat *float64, lon *float64, days *int) int
 		Health              func(childComplexity int) int
@@ -395,12 +530,17 @@ type ComplexityRoot struct {
 		LookupCoordinates   func(childComplexity int, lat float64, lon float64) int
 		LookupZipCode       func(childComplexity int, code string) int
 		MoonPhase           func(childComplexity int, date *string) int
+		PublicUserProfile   func(childComplexity int, username string) int
+		ValidateServerInvite func(childComplexity int, token string) int
+		ValidateUserInvite   func(childComplexity int, token string) int
 		Notifications       func(childComplexity int) int
 		SavedLocation       func(childComplexity int, id string) int
 		SavedLocations      func(childComplexity int) int
 		SearchLocations     func(childComplexity int, query string) int
 		SevereWeather       func(childComplexity int, location *string) int
 		UnreadNotifications func(childComplexity int) int
+		UserSettings        func(childComplexity int) int
+		UserTokens          func(childComplexity int) int
 		Weather             func(childComplexity int, location *string, lat *float64, lon *float64) int
 	}
 
@@ -415,6 +555,32 @@ type ComplexityRoot struct {
 		Errors    func(childComplexity int) int
 		PerSecond func(childComplexity int) int
 		Total     func(childComplexity int) int
+	}
+
+	ServerAdmin struct {
+		CreatedAt    func(childComplexity int) int
+		Email        func(childComplexity int) int
+		ID           func(childComplexity int) int
+		IsActive     func(childComplexity int) int
+		IsSuperAdmin func(childComplexity int) int
+		LastLoginAt  func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		Username     func(childComplexity int) int
+	}
+
+	ServerAdminInvite struct {
+		Email     func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+		ExpiresIn func(childComplexity int) int
+		InviteURL func(childComplexity int) int
+		Token     func(childComplexity int) int
+	}
+
+	ServerAdminOverview struct {
+		Count         func(childComplexity int) int
+		CurrentAdmin  func(childComplexity int) int
+		OnlineAdmins  func(childComplexity int) int
+		PrivacyNotice func(childComplexity int) int
 	}
 
 	RequestsHealth struct {
@@ -512,6 +678,13 @@ type ComplexityRoot struct {
 		Count func(childComplexity int) int
 	}
 
+	UserSettings struct {
+		Account       func(childComplexity int) int
+		Appearance    func(childComplexity int) int
+		Notifications func(childComplexity int) int
+		Privacy       func(childComplexity int) int
+	}
+
 	User struct {
 		CreatedAt   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
@@ -536,6 +709,45 @@ type ComplexityRoot struct {
 		Active func(childComplexity int) int
 		Admins func(childComplexity int) int
 		Total  func(childComplexity int) int
+	}
+
+	UserInvite struct {
+		CreatedAt func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		InviteURL func(childComplexity int) int
+		MaxUses   func(childComplexity int) int
+		Role      func(childComplexity int) int
+		Status    func(childComplexity int) int
+		Token     func(childComplexity int) int
+		UseCount  func(childComplexity int) int
+		UsedAt    func(childComplexity int) int
+		Username  func(childComplexity int) int
+	}
+
+	UserInviteCompletion struct {
+		Message func(childComplexity int) int
+		Token   func(childComplexity int) int
+		User    func(childComplexity int) int
+	}
+
+	UserInviteValidation struct {
+		Email     func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+		Role      func(childComplexity int) int
+		Username  func(childComplexity int) int
+	}
+
+	UserToken struct {
+		CreatedAt   func(childComplexity int) int
+		ExpiresAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		LastUsedAt  func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Scopes      func(childComplexity int) int
+		Token       func(childComplexity int) int
+		TokenPrefix func(childComplexity int) int
 	}
 
 	Weather struct {
@@ -578,11 +790,35 @@ type ComplexityRoot struct {
 
 type APITokenResolver interface {
 	ExpiresAt(ctx context.Context, obj *models.APIToken) (*time.Time, error)
+	Name(ctx context.Context, obj *models.APIToken) (*string, error)
+	Token(ctx context.Context, obj *models.APIToken) (*string, error)
 
 	LastUsedIP(ctx context.Context, obj *models.APIToken) (*string, error)
 }
 type MutationResolver interface {
-	UpdateUserProfile(ctx context.Context, displayName *string, phone *string) (*models.User, error)
+	RegisterUser(ctx context.Context, username string, email string, password string) (*AuthResult, error)
+	LoginUser(ctx context.Context, identifier string, password string, twoFactorCode *string, recoveryKey *string) (*AuthResult, error)
+	CompleteUserTwoFactor(ctx context.Context, sessionToken string, twoFactorCode string) (*AuthResult, error)
+	CompleteUserInvite(ctx context.Context, token string, username string, password string) (*UserInviteCompletion, error)
+	CompleteServerInvite(ctx context.Context, token string, username string, password string) (*ServerInviteCompletion, error)
+	UseUserRecoveryKey(ctx context.Context, sessionToken string, recoveryKey string) (*AuthResult, error)
+	LogoutUser(ctx context.Context) (*GenericResponse, error)
+	RefreshUserSession(ctx context.Context) (*AuthResult, error)
+	RequestPasswordReset(ctx context.Context, email string) (*GenericResponse, error)
+	ResetUserPassword(ctx context.Context, token string, password string) (*GenericResponse, error)
+	VerifyUserEmail(ctx context.Context, token string) (*GenericResponse, error)
+	UpdateUserProfile(ctx context.Context, displayName *string, phone *string) (*GenericResponse, error)
+	UploadUserAvatar(ctx context.Context, file graphql.Upload) (*PublicAvatar, error)
+	UpdateUserAvatar(ctx context.Context, typeArg string, url *string) (*PublicAvatar, error)
+	ResetUserAvatar(ctx context.Context) (*GenericResponse, error)
+	ChangeUserPassword(ctx context.Context, currentPassword string, newPassword string) (*GenericResponse, error)
+	EnableUserTwoFactor(ctx context.Context, secret string, code string) (*TOTPRecoveryKeys, error)
+	DisableUserTwoFactor(ctx context.Context, password string) (*GenericResponse, error)
+	VerifyUserTwoFactor(ctx context.Context, code string) (*GenericResponse, error)
+	RegenerateUserRecoveryKeys(ctx context.Context, code string) (*TOTPRecoveryKeys, error)
+	UpdateUserSettings(ctx context.Context, account *AccountSettingsInput, privacy *PrivacySettingsInput, notifications *NotificationSettingsInput, appearance *AppearanceSettingsInput) (*GenericResponse, error)
+	CreateUserToken(ctx context.Context, name string, scopes *string, expiresIn *int) (*UserToken, error)
+	RevokeUserToken(ctx context.Context, id string) (*GenericResponse, error)
 	CreateSavedLocation(ctx context.Context, name string, lat float64, lon float64, country *string, region *string, alerts *bool) (*models.SavedLocation, error)
 	UpdateSavedLocation(ctx context.Context, id string, name *string, alerts *bool) (*models.SavedLocation, error)
 	DeleteSavedLocation(ctx context.Context, id string) (*GenericResponse, error)
@@ -590,24 +826,28 @@ type MutationResolver interface {
 	MarkNotificationRead(ctx context.Context, id string) (*models.Notification, error)
 	MarkAllNotificationsRead(ctx context.Context) (*GenericResponse, error)
 	DeleteNotification(ctx context.Context, id string) (*GenericResponse, error)
-	AdminCreateUser(ctx context.Context, username string, email string, password string, role string) (*models.User, error)
 	AdminUpdateUser(ctx context.Context, id string, username *string, email *string, role *string) (*models.User, error)
 	AdminDeleteUser(ctx context.Context, id string) (*GenericResponse, error)
-	AdminUpdateUserPassword(ctx context.Context, id string, password string) (*GenericResponse, error)
+	AdminCreateUserInvite(ctx context.Context, username string, email string, role *string, expiresInDays *int) (*UserInvite, error)
+	AdminDeleteUserInvite(ctx context.Context, id string) (*GenericResponse, error)
+	AdminInviteServerAdmin(ctx context.Context, email string, expiresIn *string) (*ServerAdminInvite, error)
+	AdminDeleteServerAdmin(ctx context.Context, id string) (*GenericResponse, error)
+	AdminDisableServerAdmin(ctx context.Context, id string) (*GenericResponse, error)
+	AdminEnableServerAdmin(ctx context.Context, id string) (*GenericResponse, error)
 	AdminUpdateSetting(ctx context.Context, key string, value string) (*models.Setting, error)
 	AdminUpdateSettings(ctx context.Context, settings []*SettingInput) (*BulkResponse, error)
 	AdminResetSettings(ctx context.Context) (*GenericResponse, error)
-	AdminReloadConfig(ctx context.Context) (*GenericResponse, error)
-	AdminGenerateToken(ctx context.Context, name string, expiresIn *int) (*models.APIToken, error)
+	AdminGenerateToken(ctx context.Context) (*models.APIToken, error)
 	AdminRevokeToken(ctx context.Context, id string) (*GenericResponse, error)
 	AdminClearAuditLogs(ctx context.Context) (*GenericResponse, error)
+	AdminUpdateTask(ctx context.Context, name string, enabled bool) (*ScheduledTask, error)
 	AdminEnableTask(ctx context.Context, name string) (*ScheduledTask, error)
 	AdminDisableTask(ctx context.Context, name string) (*ScheduledTask, error)
 	AdminTriggerTask(ctx context.Context, name string) (*GenericResponse, error)
 	AdminUpdateChannel(ctx context.Context, typeArg string, enabled *bool, config any) (*NotificationChannel, error)
 	AdminEnableChannel(ctx context.Context, typeArg string) (*NotificationChannel, error)
 	AdminDisableChannel(ctx context.Context, typeArg string) (*NotificationChannel, error)
-	AdminTestChannel(ctx context.Context, typeArg string) (*GenericResponse, error)
+	AdminTestChannel(ctx context.Context, typeArg string, recipient *string) (*GenericResponse, error)
 	AdminInitializeChannels(ctx context.Context) (*GenericResponse, error)
 	AdminAutoDetectSMTP(ctx context.Context) (*SMTPProvider, error)
 	SubmitContactForm(ctx context.Context, name string, email string, subject string, message string) (*ContactSubmission, error)
@@ -629,19 +869,31 @@ type QueryResolver interface {
 	Hurricanes(ctx context.Context, active *bool) ([]*Hurricane, error)
 	SevereWeather(ctx context.Context, location *string) ([]*SevereWeather, error)
 	MoonPhase(ctx context.Context, date *string) (*MoonPhase, error)
+	PublicUserProfile(ctx context.Context, username string) (*PublicUserProfile, error)
+	ValidateUserInvite(ctx context.Context, token string) (*UserInviteValidation, error)
+	ValidateServerInvite(ctx context.Context, token string) (*ServerInviteValidation, error)
 	CurrentUser(ctx context.Context) (*models.User, error)
+	CurrentUserAvatar(ctx context.Context) (*PublicAvatar, error)
+	CurrentUserTwoFactorStatus(ctx context.Context) (*TOTPStatus, error)
+	CurrentUserTwoFactorSetup(ctx context.Context) (*TOTPSetup, error)
+	UserSettings(ctx context.Context) (*UserSettings, error)
+	UserTokens(ctx context.Context) ([]*UserToken, error)
 	SavedLocations(ctx context.Context) ([]*models.SavedLocation, error)
 	SavedLocation(ctx context.Context, id string) (*models.SavedLocation, error)
 	Notifications(ctx context.Context) ([]*models.Notification, error)
 	UnreadNotifications(ctx context.Context) (*UnreadCount, error)
 	AdminUsers(ctx context.Context) ([]*models.User, error)
+	AdminServerAdmins(ctx context.Context) (*ServerAdminOverview, error)
+	AdminServerAdmin(ctx context.Context, id string) (*ServerAdmin, error)
+	AdminUserInvites(ctx context.Context) ([]*UserInvite, error)
+	AdminUserInvite(ctx context.Context, id string) (*UserInvite, error)
 	AdminSettings(ctx context.Context) ([]*models.Setting, error)
 	AdminSetting(ctx context.Context, key string) (*models.Setting, error)
 	AdminTokens(ctx context.Context) ([]*models.APIToken, error)
 	AdminAuditLogs(ctx context.Context, limit *int, offset *int) ([]*AuditLog, error)
 	AdminStats(ctx context.Context) (*SystemStats, error)
 	AdminTasks(ctx context.Context) ([]*ScheduledTask, error)
-	AdminTaskHistory(ctx context.Context, name string) ([]*TaskHistory, error)
+	AdminTaskHistory(ctx context.Context, name string, limit *int) ([]*TaskHistory, error)
 	AdminChannels(ctx context.Context) ([]*NotificationChannel, error)
 	AdminChannel(ctx context.Context, typeArg string) (*NotificationChannel, error)
 	AdminChannelStats(ctx context.Context, typeArg string) (*ChannelStats, error)
@@ -1893,17 +2145,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AdminClearAuditLogs(childComplexity), true
 
-	case "Mutation.adminCreateUser":
-		if e.complexity.Mutation.AdminCreateUser == nil {
+	case "Mutation.adminCreateUserInvite":
+		if e.complexity.Mutation.AdminCreateUserInvite == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_adminCreateUser_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_adminCreateUserInvite_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AdminCreateUser(childComplexity, args["username"].(string), args["email"].(string), args["password"].(string), args["role"].(string)), true
+		return e.complexity.Mutation.AdminCreateUserInvite(childComplexity, args["username"].(string), args["email"].(string), args["role"].(*string), args["expiresInDays"].(*int)), true
+
+	case "Mutation.adminDeleteServerAdmin":
+		if e.complexity.Mutation.AdminDeleteServerAdmin == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_adminDeleteServerAdmin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AdminDeleteServerAdmin(childComplexity, args["id"].(string)), true
 
 	case "Mutation.adminDeleteUser":
 		if e.complexity.Mutation.AdminDeleteUser == nil {
@@ -1916,6 +2180,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AdminDeleteUser(childComplexity, args["id"].(string)), true
+
+	case "Mutation.adminDeleteUserInvite":
+		if e.complexity.Mutation.AdminDeleteUserInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_adminDeleteUserInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AdminDeleteUserInvite(childComplexity, args["id"].(string)), true
+
+	case "Mutation.adminDisableServerAdmin":
+		if e.complexity.Mutation.AdminDisableServerAdmin == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_adminDisableServerAdmin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AdminDisableServerAdmin(childComplexity, args["id"].(string)), true
 
 	case "Mutation.adminDisableChannel":
 		if e.complexity.Mutation.AdminDisableChannel == nil {
@@ -1953,6 +2241,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AdminEnableChannel(childComplexity, args["type"].(string)), true
 
+	case "Mutation.adminEnableServerAdmin":
+		if e.complexity.Mutation.AdminEnableServerAdmin == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_adminEnableServerAdmin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AdminEnableServerAdmin(childComplexity, args["id"].(string)), true
+
 	case "Mutation.adminEnableTask":
 		if e.complexity.Mutation.AdminEnableTask == nil {
 			break
@@ -1970,12 +2270,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Mutation_adminGenerateToken_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AdminGenerateToken(childComplexity, args["name"].(string), args["expiresIn"].(*int)), true
+		return e.complexity.Mutation.AdminGenerateToken(childComplexity), true
 
 	case "Mutation.adminInitializeChannels":
 		if e.complexity.Mutation.AdminInitializeChannels == nil {
@@ -1984,12 +2279,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AdminInitializeChannels(childComplexity), true
 
-	case "Mutation.adminReloadConfig":
-		if e.complexity.Mutation.AdminReloadConfig == nil {
+	case "Mutation.adminInviteServerAdmin":
+		if e.complexity.Mutation.AdminInviteServerAdmin == nil {
 			break
 		}
 
-		return e.complexity.Mutation.AdminReloadConfig(childComplexity), true
+		args, err := ec.field_Mutation_adminInviteServerAdmin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AdminInviteServerAdmin(childComplexity, args["email"].(string), args["expiresIn"].(*string)), true
 
 	case "Mutation.adminResetSettings":
 		if e.complexity.Mutation.AdminResetSettings == nil {
@@ -2020,7 +2320,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AdminTestChannel(childComplexity, args["type"].(string)), true
+		return e.complexity.Mutation.AdminTestChannel(childComplexity, args["type"].(string), args["recipient"].(*string)), true
 
 	case "Mutation.adminTriggerTask":
 		if e.complexity.Mutation.AdminTriggerTask == nil {
@@ -2033,6 +2333,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AdminTriggerTask(childComplexity, args["name"].(string)), true
+
+	case "Mutation.adminUpdateTask":
+		if e.complexity.Mutation.AdminUpdateTask == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_adminUpdateTask_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AdminUpdateTask(childComplexity, args["name"].(string), args["enabled"].(bool)), true
 
 	case "Mutation.adminUpdateChannel":
 		if e.complexity.Mutation.AdminUpdateChannel == nil {
@@ -2081,18 +2393,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AdminUpdateUser(childComplexity, args["id"].(string), args["username"].(*string), args["email"].(*string), args["role"].(*string)), true
-
-	case "Mutation.adminUpdateUserPassword":
-		if e.complexity.Mutation.AdminUpdateUserPassword == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_adminUpdateUserPassword_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AdminUpdateUserPassword(childComplexity, args["id"].(string), args["password"].(string)), true
 
 	case "Mutation.createSavedLocation":
 		if e.complexity.Mutation.CreateSavedLocation == nil {
@@ -2149,6 +2449,109 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MarkNotificationRead(childComplexity, args["id"].(string)), true
 
+	case "Mutation.changeUserPassword":
+		if e.complexity.Mutation.ChangeUserPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changeUserPassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangeUserPassword(childComplexity, args["currentPassword"].(string), args["newPassword"].(string)), true
+
+	case "Mutation.disableUserTwoFactor":
+		if e.complexity.Mutation.DisableUserTwoFactor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_disableUserTwoFactor_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DisableUserTwoFactor(childComplexity, args["password"].(string)), true
+
+	case "Mutation.enableUserTwoFactor":
+		if e.complexity.Mutation.EnableUserTwoFactor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_enableUserTwoFactor_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EnableUserTwoFactor(childComplexity, args["secret"].(string), args["code"].(string)), true
+
+	case "Mutation.resetUserAvatar":
+		if e.complexity.Mutation.ResetUserAvatar == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ResetUserAvatar(childComplexity), true
+
+	case "Mutation.updateUserSettings":
+		if e.complexity.Mutation.UpdateUserSettings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUserSettings_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUserSettings(childComplexity, args["account"].(*AccountSettingsInput), args["privacy"].(*PrivacySettingsInput), args["notifications"].(*NotificationSettingsInput), args["appearance"].(*AppearanceSettingsInput)), true
+
+	case "Mutation.updateUserAvatar":
+		if e.complexity.Mutation.UpdateUserAvatar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUserAvatar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUserAvatar(childComplexity, args["type"].(string), args["url"].(*string)), true
+
+	case "Mutation.uploadUserAvatar":
+		if e.complexity.Mutation.UploadUserAvatar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadUserAvatar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadUserAvatar(childComplexity, args["file"].(graphql.Upload)), true
+
+	case "Mutation.regenerateUserRecoveryKeys":
+		if e.complexity.Mutation.RegenerateUserRecoveryKeys == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_regenerateUserRecoveryKeys_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RegenerateUserRecoveryKeys(childComplexity, args["code"].(string)), true
+
+	case "Mutation.verifyUserTwoFactor":
+		if e.complexity.Mutation.VerifyUserTwoFactor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifyUserTwoFactor_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.VerifyUserTwoFactor(childComplexity, args["code"].(string)), true
+
 	case "Mutation.submitContactForm":
 		if e.complexity.Mutation.SubmitContactForm == nil {
 			break
@@ -2185,6 +2588,128 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateSavedLocation(childComplexity, args["id"].(string), args["name"].(*string), args["alerts"].(*bool)), true
 
+	case "Mutation.registerUser":
+		if e.complexity.Mutation.RegisterUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_registerUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RegisterUser(childComplexity, args["username"].(string), args["email"].(string), args["password"].(string)), true
+
+	case "Mutation.loginUser":
+		if e.complexity.Mutation.LoginUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_loginUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.LoginUser(childComplexity, args["identifier"].(string), args["password"].(string), args["twoFactorCode"].(*string), args["recoveryKey"].(*string)), true
+
+	case "Mutation.completeUserTwoFactor":
+		if e.complexity.Mutation.CompleteUserTwoFactor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeUserTwoFactor_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CompleteUserTwoFactor(childComplexity, args["sessionToken"].(string), args["twoFactorCode"].(string)), true
+
+	case "Mutation.completeUserInvite":
+		if e.complexity.Mutation.CompleteUserInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeUserInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CompleteUserInvite(childComplexity, args["token"].(string), args["username"].(string), args["password"].(string)), true
+
+	case "Mutation.completeServerInvite":
+		if e.complexity.Mutation.CompleteServerInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeServerInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CompleteServerInvite(childComplexity, args["token"].(string), args["username"].(string), args["password"].(string)), true
+
+	case "Mutation.useUserRecoveryKey":
+		if e.complexity.Mutation.UseUserRecoveryKey == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_useUserRecoveryKey_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UseUserRecoveryKey(childComplexity, args["sessionToken"].(string), args["recoveryKey"].(string)), true
+
+	case "Mutation.logoutUser":
+		if e.complexity.Mutation.LogoutUser == nil {
+			break
+		}
+
+		return e.complexity.Mutation.LogoutUser(childComplexity), true
+
+	case "Mutation.refreshUserSession":
+		if e.complexity.Mutation.RefreshUserSession == nil {
+			break
+		}
+
+		return e.complexity.Mutation.RefreshUserSession(childComplexity), true
+
+	case "Mutation.requestPasswordReset":
+		if e.complexity.Mutation.RequestPasswordReset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestPasswordReset_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RequestPasswordReset(childComplexity, args["email"].(string)), true
+
+	case "Mutation.resetUserPassword":
+		if e.complexity.Mutation.ResetUserPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resetUserPassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ResetUserPassword(childComplexity, args["token"].(string), args["password"].(string)), true
+
+	case "Mutation.verifyUserEmail":
+		if e.complexity.Mutation.VerifyUserEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifyUserEmail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.VerifyUserEmail(childComplexity, args["token"].(string)), true
+
 	case "Mutation.updateUserProfile":
 		if e.complexity.Mutation.UpdateUserProfile == nil {
 			break
@@ -2196,6 +2721,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateUserProfile(childComplexity, args["displayName"].(*string), args["phone"].(*string)), true
+
+	case "Mutation.createUserToken":
+		if e.complexity.Mutation.CreateUserToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createUserToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateUserToken(childComplexity, args["name"].(string), args["scopes"].(*string), args["expiresIn"].(*int)), true
+
+	case "Mutation.revokeUserToken":
+		if e.complexity.Mutation.RevokeUserToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeUserToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RevokeUserToken(childComplexity, args["id"].(string)), true
 
 	case "Notification.createdAt":
 		if e.complexity.Notification.CreatedAt == nil {
@@ -2345,6 +2894,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.AdminQueueStats(childComplexity), true
 
+	case "Query.adminServerAdmin":
+		if e.complexity.Query.AdminServerAdmin == nil {
+			break
+		}
+
+		args, err := ec.field_Query_adminServerAdmin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AdminServerAdmin(childComplexity, args["id"].(string)), true
+
+	case "Query.adminServerAdmins":
+		if e.complexity.Query.AdminServerAdmins == nil {
+			break
+		}
+
+		return e.complexity.Query.AdminServerAdmins(childComplexity), true
+
 	case "Query.adminSMTPProviders":
 		if e.complexity.Query.AdminSMTPProviders == nil {
 			break
@@ -2388,7 +2956,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.AdminTaskHistory(childComplexity, args["name"].(string)), true
+		return e.complexity.Query.AdminTaskHistory(childComplexity, args["name"].(string), args["limit"].(*int)), true
 
 	case "Query.adminTasks":
 		if e.complexity.Query.AdminTasks == nil {
@@ -2403,6 +2971,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.AdminTokens(childComplexity), true
+
+	case "Query.adminUserInvite":
+		if e.complexity.Query.AdminUserInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Query_adminUserInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AdminUserInvite(childComplexity, args["id"].(string)), true
+
+	case "Query.adminUserInvites":
+		if e.complexity.Query.AdminUserInvites == nil {
+			break
+		}
+
+		return e.complexity.Query.AdminUserInvites(childComplexity), true
 
 	case "Query.adminUsers":
 		if e.complexity.Query.AdminUsers == nil {
@@ -2424,6 +3011,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CurrentUser(childComplexity), true
+
+	case "Query.currentUserAvatar":
+		if e.complexity.Query.CurrentUserAvatar == nil {
+			break
+		}
+
+		return e.complexity.Query.CurrentUserAvatar(childComplexity), true
+
+	case "Query.currentUserTwoFactorSetup":
+		if e.complexity.Query.CurrentUserTwoFactorSetup == nil {
+			break
+		}
+
+		return e.complexity.Query.CurrentUserTwoFactorSetup(childComplexity), true
+
+	case "Query.currentUserTwoFactorStatus":
+		if e.complexity.Query.CurrentUserTwoFactorStatus == nil {
+			break
+		}
+
+		return e.complexity.Query.CurrentUserTwoFactorStatus(childComplexity), true
+
+	case "Query.userSettings":
+		if e.complexity.Query.UserSettings == nil {
+			break
+		}
+
+		return e.complexity.Query.UserSettings(childComplexity), true
+
+	case "Query.userTokens":
+		if e.complexity.Query.UserTokens == nil {
+			break
+		}
+
+		return e.complexity.Query.UserTokens(childComplexity), true
 
 	case "Query.earthquakes":
 		if e.complexity.Query.Earthquakes == nil {
@@ -2527,6 +3149,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.MoonPhase(childComplexity, args["date"].(*string)), true
+
+	case "Query.publicUserProfile":
+		if e.complexity.Query.PublicUserProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Query_publicUserProfile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PublicUserProfile(childComplexity, args["username"].(string)), true
+
+	case "Query.validateUserInvite":
+		if e.complexity.Query.ValidateUserInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Query_validateUserInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ValidateUserInvite(childComplexity, args["token"].(string)), true
+
+	case "Query.validateServerInvite":
+		if e.complexity.Query.ValidateServerInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Query_validateServerInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ValidateServerInvite(childComplexity, args["token"].(string)), true
 
 	case "Query.notifications":
 		if e.complexity.Query.Notifications == nil {
@@ -2645,6 +3303,125 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RequestStats.Total(childComplexity), true
+
+	case "ServerAdmin.createdAt":
+		if e.complexity.ServerAdmin.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.CreatedAt(childComplexity), true
+
+	case "ServerAdmin.email":
+		if e.complexity.ServerAdmin.Email == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.Email(childComplexity), true
+
+	case "ServerAdmin.id":
+		if e.complexity.ServerAdmin.ID == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.ID(childComplexity), true
+
+	case "ServerAdmin.isActive":
+		if e.complexity.ServerAdmin.IsActive == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.IsActive(childComplexity), true
+
+	case "ServerAdmin.isSuperAdmin":
+		if e.complexity.ServerAdmin.IsSuperAdmin == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.IsSuperAdmin(childComplexity), true
+
+	case "ServerAdmin.lastLoginAt":
+		if e.complexity.ServerAdmin.LastLoginAt == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.LastLoginAt(childComplexity), true
+
+	case "ServerAdmin.updatedAt":
+		if e.complexity.ServerAdmin.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.UpdatedAt(childComplexity), true
+
+	case "ServerAdmin.username":
+		if e.complexity.ServerAdmin.Username == nil {
+			break
+		}
+
+		return e.complexity.ServerAdmin.Username(childComplexity), true
+
+	case "ServerAdminInvite.email":
+		if e.complexity.ServerAdminInvite.Email == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminInvite.Email(childComplexity), true
+
+	case "ServerAdminInvite.expiresAt":
+		if e.complexity.ServerAdminInvite.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminInvite.ExpiresAt(childComplexity), true
+
+	case "ServerAdminInvite.expiresIn":
+		if e.complexity.ServerAdminInvite.ExpiresIn == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminInvite.ExpiresIn(childComplexity), true
+
+	case "ServerAdminInvite.inviteUrl":
+		if e.complexity.ServerAdminInvite.InviteURL == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminInvite.InviteURL(childComplexity), true
+
+	case "ServerAdminInvite.token":
+		if e.complexity.ServerAdminInvite.Token == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminInvite.Token(childComplexity), true
+
+	case "ServerAdminOverview.count":
+		if e.complexity.ServerAdminOverview.Count == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminOverview.Count(childComplexity), true
+
+	case "ServerAdminOverview.currentAdmin":
+		if e.complexity.ServerAdminOverview.CurrentAdmin == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminOverview.CurrentAdmin(childComplexity), true
+
+	case "ServerAdminOverview.onlineAdmins":
+		if e.complexity.ServerAdminOverview.OnlineAdmins == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminOverview.OnlineAdmins(childComplexity), true
+
+	case "ServerAdminOverview.privacyNotice":
+		if e.complexity.ServerAdminOverview.PrivacyNotice == nil {
+			break
+		}
+
+		return e.complexity.ServerAdminOverview.PrivacyNotice(childComplexity), true
 
 	case "RequestsHealth.perSecond":
 		if e.complexity.RequestsHealth.PerSecond == nil {
@@ -3178,6 +3955,488 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserStats.Total(childComplexity), true
 
+	case "UserInvite.createdAt":
+		if e.complexity.UserInvite.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.CreatedAt(childComplexity), true
+
+	case "UserInvite.email":
+		if e.complexity.UserInvite.Email == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.Email(childComplexity), true
+
+	case "UserInvite.expiresAt":
+		if e.complexity.UserInvite.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.ExpiresAt(childComplexity), true
+
+	case "UserInvite.id":
+		if e.complexity.UserInvite.ID == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.ID(childComplexity), true
+
+	case "UserInvite.inviteUrl":
+		if e.complexity.UserInvite.InviteURL == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.InviteURL(childComplexity), true
+
+	case "UserInvite.maxUses":
+		if e.complexity.UserInvite.MaxUses == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.MaxUses(childComplexity), true
+
+	case "UserInvite.role":
+		if e.complexity.UserInvite.Role == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.Role(childComplexity), true
+
+	case "UserInvite.status":
+		if e.complexity.UserInvite.Status == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.Status(childComplexity), true
+
+	case "UserInvite.token":
+		if e.complexity.UserInvite.Token == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.Token(childComplexity), true
+
+	case "UserInvite.useCount":
+		if e.complexity.UserInvite.UseCount == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.UseCount(childComplexity), true
+
+	case "UserInvite.usedAt":
+		if e.complexity.UserInvite.UsedAt == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.UsedAt(childComplexity), true
+
+	case "UserInvite.username":
+		if e.complexity.UserInvite.Username == nil {
+			break
+		}
+
+		return e.complexity.UserInvite.Username(childComplexity), true
+
+	case "AccountSettings.bio":
+		if e.complexity.AccountSettings.Bio == nil {
+			break
+		}
+		return e.complexity.AccountSettings.Bio(childComplexity), true
+
+	case "AccountSettings.dateFormat":
+		if e.complexity.AccountSettings.DateFormat == nil {
+			break
+		}
+		return e.complexity.AccountSettings.DateFormat(childComplexity), true
+
+	case "AccountSettings.displayName":
+		if e.complexity.AccountSettings.DisplayName == nil {
+			break
+		}
+		return e.complexity.AccountSettings.DisplayName(childComplexity), true
+
+	case "AccountSettings.language":
+		if e.complexity.AccountSettings.Language == nil {
+			break
+		}
+		return e.complexity.AccountSettings.Language(childComplexity), true
+
+	case "AccountSettings.location":
+		if e.complexity.AccountSettings.Location == nil {
+			break
+		}
+		return e.complexity.AccountSettings.Location(childComplexity), true
+
+	case "AccountSettings.timeFormat":
+		if e.complexity.AccountSettings.TimeFormat == nil {
+			break
+		}
+		return e.complexity.AccountSettings.TimeFormat(childComplexity), true
+
+	case "AccountSettings.timezone":
+		if e.complexity.AccountSettings.Timezone == nil {
+			break
+		}
+		return e.complexity.AccountSettings.Timezone(childComplexity), true
+
+	case "AccountSettings.website":
+		if e.complexity.AccountSettings.Website == nil {
+			break
+		}
+		return e.complexity.AccountSettings.Website(childComplexity), true
+
+	case "AppearanceSettings.fontSize":
+		if e.complexity.AppearanceSettings.FontSize == nil {
+			break
+		}
+		return e.complexity.AppearanceSettings.FontSize(childComplexity), true
+
+	case "AppearanceSettings.reduceMotion":
+		if e.complexity.AppearanceSettings.ReduceMotion == nil {
+			break
+		}
+		return e.complexity.AppearanceSettings.ReduceMotion(childComplexity), true
+
+	case "AppearanceSettings.theme":
+		if e.complexity.AppearanceSettings.Theme == nil {
+			break
+		}
+		return e.complexity.AppearanceSettings.Theme(childComplexity), true
+
+	case "NotificationSettings.emailDigest":
+		if e.complexity.NotificationSettings.EmailDigest == nil {
+			break
+		}
+		return e.complexity.NotificationSettings.EmailDigest(childComplexity), true
+
+	case "NotificationSettings.emailMentions":
+		if e.complexity.NotificationSettings.EmailMentions == nil {
+			break
+		}
+		return e.complexity.NotificationSettings.EmailMentions(childComplexity), true
+
+	case "NotificationSettings.emailSecurity":
+		if e.complexity.NotificationSettings.EmailSecurity == nil {
+			break
+		}
+		return e.complexity.NotificationSettings.EmailSecurity(childComplexity), true
+
+	case "NotificationSettings.emailUpdates":
+		if e.complexity.NotificationSettings.EmailUpdates == nil {
+			break
+		}
+		return e.complexity.NotificationSettings.EmailUpdates(childComplexity), true
+
+	case "NotificationSettings.pushEnabled":
+		if e.complexity.NotificationSettings.PushEnabled == nil {
+			break
+		}
+		return e.complexity.NotificationSettings.PushEnabled(childComplexity), true
+
+	case "NotificationSettings.pushMentions":
+		if e.complexity.NotificationSettings.PushMentions == nil {
+			break
+		}
+		return e.complexity.NotificationSettings.PushMentions(childComplexity), true
+
+	case "PrivacySettings.orgVisibility":
+		if e.complexity.PrivacySettings.OrgVisibility == nil {
+			break
+		}
+		return e.complexity.PrivacySettings.OrgVisibility(childComplexity), true
+
+	case "PrivacySettings.searchable":
+		if e.complexity.PrivacySettings.Searchable == nil {
+			break
+		}
+		return e.complexity.PrivacySettings.Searchable(childComplexity), true
+
+	case "PrivacySettings.showActivity":
+		if e.complexity.PrivacySettings.ShowActivity == nil {
+			break
+		}
+		return e.complexity.PrivacySettings.ShowActivity(childComplexity), true
+
+	case "PrivacySettings.showEmail":
+		if e.complexity.PrivacySettings.ShowEmail == nil {
+			break
+		}
+		return e.complexity.PrivacySettings.ShowEmail(childComplexity), true
+
+	case "PrivacySettings.showOrgs":
+		if e.complexity.PrivacySettings.ShowOrgs == nil {
+			break
+		}
+		return e.complexity.PrivacySettings.ShowOrgs(childComplexity), true
+
+	case "PrivacySettings.visibility":
+		if e.complexity.PrivacySettings.Visibility == nil {
+			break
+		}
+		return e.complexity.PrivacySettings.Visibility(childComplexity), true
+
+	case "PublicAvatar.type":
+		if e.complexity.PublicAvatar.Type == nil {
+			break
+		}
+		return e.complexity.PublicAvatar.Type(childComplexity), true
+
+	case "PublicAvatar.urls":
+		if e.complexity.PublicAvatar.Urls == nil {
+			break
+		}
+		return e.complexity.PublicAvatar.Urls(childComplexity), true
+
+	case "AuthUser.id":
+		if e.complexity.AuthUser.ID == nil {
+			break
+		}
+		return e.complexity.AuthUser.ID(childComplexity), true
+
+	case "AuthUser.username":
+		if e.complexity.AuthUser.Username == nil {
+			break
+		}
+		return e.complexity.AuthUser.Username(childComplexity), true
+
+	case "AuthUser.email":
+		if e.complexity.AuthUser.Email == nil {
+			break
+		}
+		return e.complexity.AuthUser.Email(childComplexity), true
+
+	case "AuthUser.role":
+		if e.complexity.AuthUser.Role == nil {
+			break
+		}
+		return e.complexity.AuthUser.Role(childComplexity), true
+
+	case "AuthResult.requiresTwoFactor":
+		if e.complexity.AuthResult.RequiresTwoFactor == nil {
+			break
+		}
+		return e.complexity.AuthResult.RequiresTwoFactor(childComplexity), true
+
+	case "AuthResult.verificationRequired":
+		if e.complexity.AuthResult.VerificationRequired == nil {
+			break
+		}
+		return e.complexity.AuthResult.VerificationRequired(childComplexity), true
+
+	case "AuthResult.sessionToken":
+		if e.complexity.AuthResult.SessionToken == nil {
+			break
+		}
+		return e.complexity.AuthResult.SessionToken(childComplexity), true
+
+	case "AuthResult.token":
+		if e.complexity.AuthResult.Token == nil {
+			break
+		}
+		return e.complexity.AuthResult.Token(childComplexity), true
+
+	case "AuthResult.user":
+		if e.complexity.AuthResult.User == nil {
+			break
+		}
+		return e.complexity.AuthResult.User(childComplexity), true
+
+	case "AuthResult.expiresAt":
+		if e.complexity.AuthResult.ExpiresAt == nil {
+			break
+		}
+		return e.complexity.AuthResult.ExpiresAt(childComplexity), true
+
+	case "AuthResult.remainingKeys":
+		if e.complexity.AuthResult.RemainingKeys == nil {
+			break
+		}
+		return e.complexity.AuthResult.RemainingKeys(childComplexity), true
+
+	case "PublicUserProfile.avatar":
+		if e.complexity.PublicUserProfile.Avatar == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.Avatar(childComplexity), true
+
+	case "PublicUserProfile.bio":
+		if e.complexity.PublicUserProfile.Bio == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.Bio(childComplexity), true
+
+	case "PublicUserProfile.createdAt":
+		if e.complexity.PublicUserProfile.CreatedAt == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.CreatedAt(childComplexity), true
+
+	case "PublicUserProfile.displayName":
+		if e.complexity.PublicUserProfile.DisplayName == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.DisplayName(childComplexity), true
+
+	case "PublicUserProfile.location":
+		if e.complexity.PublicUserProfile.Location == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.Location(childComplexity), true
+
+	case "PublicUserProfile.username":
+		if e.complexity.PublicUserProfile.Username == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.Username(childComplexity), true
+
+	case "PublicUserProfile.verified":
+		if e.complexity.PublicUserProfile.Verified == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.Verified(childComplexity), true
+
+	case "PublicUserProfile.website":
+		if e.complexity.PublicUserProfile.Website == nil {
+			break
+		}
+		return e.complexity.PublicUserProfile.Website(childComplexity), true
+
+	case "TOTPRecoveryKeys.message":
+		if e.complexity.TOTPRecoveryKeys.Message == nil {
+			break
+		}
+		return e.complexity.TOTPRecoveryKeys.Message(childComplexity), true
+
+	case "TOTPRecoveryKeys.recoveryKeys":
+		if e.complexity.TOTPRecoveryKeys.RecoveryKeys == nil {
+			break
+		}
+		return e.complexity.TOTPRecoveryKeys.RecoveryKeys(childComplexity), true
+
+	case "TOTPSetup.account":
+		if e.complexity.TOTPSetup.Account == nil {
+			break
+		}
+		return e.complexity.TOTPSetup.Account(childComplexity), true
+
+	case "TOTPSetup.issuer":
+		if e.complexity.TOTPSetup.Issuer == nil {
+			break
+		}
+		return e.complexity.TOTPSetup.Issuer(childComplexity), true
+
+	case "TOTPSetup.manualUrl":
+		if e.complexity.TOTPSetup.ManualURL == nil {
+			break
+		}
+		return e.complexity.TOTPSetup.ManualURL(childComplexity), true
+
+	case "TOTPSetup.qrCode":
+		if e.complexity.TOTPSetup.QrCode == nil {
+			break
+		}
+		return e.complexity.TOTPSetup.QrCode(childComplexity), true
+
+	case "TOTPSetup.secret":
+		if e.complexity.TOTPSetup.Secret == nil {
+			break
+		}
+		return e.complexity.TOTPSetup.Secret(childComplexity), true
+
+	case "TOTPStatus.enabled":
+		if e.complexity.TOTPStatus.Enabled == nil {
+			break
+		}
+		return e.complexity.TOTPStatus.Enabled(childComplexity), true
+
+	case "TOTPStatus.recoveryKeysCount":
+		if e.complexity.TOTPStatus.RecoveryKeysCount == nil {
+			break
+		}
+		return e.complexity.TOTPStatus.RecoveryKeysCount(childComplexity), true
+
+	case "UserSettings.account":
+		if e.complexity.UserSettings.Account == nil {
+			break
+		}
+		return e.complexity.UserSettings.Account(childComplexity), true
+
+	case "UserSettings.appearance":
+		if e.complexity.UserSettings.Appearance == nil {
+			break
+		}
+		return e.complexity.UserSettings.Appearance(childComplexity), true
+
+	case "UserSettings.notifications":
+		if e.complexity.UserSettings.Notifications == nil {
+			break
+		}
+		return e.complexity.UserSettings.Notifications(childComplexity), true
+
+	case "UserSettings.privacy":
+		if e.complexity.UserSettings.Privacy == nil {
+			break
+		}
+		return e.complexity.UserSettings.Privacy(childComplexity), true
+
+	case "UserToken.createdAt":
+		if e.complexity.UserToken.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.UserToken.CreatedAt(childComplexity), true
+
+	case "UserToken.expiresAt":
+		if e.complexity.UserToken.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.UserToken.ExpiresAt(childComplexity), true
+
+	case "UserToken.id":
+		if e.complexity.UserToken.ID == nil {
+			break
+		}
+
+		return e.complexity.UserToken.ID(childComplexity), true
+
+	case "UserToken.lastUsedAt":
+		if e.complexity.UserToken.LastUsedAt == nil {
+			break
+		}
+
+		return e.complexity.UserToken.LastUsedAt(childComplexity), true
+
+	case "UserToken.name":
+		if e.complexity.UserToken.Name == nil {
+			break
+		}
+
+		return e.complexity.UserToken.Name(childComplexity), true
+
+	case "UserToken.scopes":
+		if e.complexity.UserToken.Scopes == nil {
+			break
+		}
+
+		return e.complexity.UserToken.Scopes(childComplexity), true
+
+	case "UserToken.token":
+		if e.complexity.UserToken.Token == nil {
+			break
+		}
+
+		return e.complexity.UserToken.Token(childComplexity), true
+
+	case "UserToken.tokenPrefix":
+		if e.complexity.UserToken.TokenPrefix == nil {
+			break
+		}
+
+		return e.complexity.UserToken.TokenPrefix(childComplexity), true
+
 	case "Weather.alerts":
 		if e.complexity.Weather.Alerts == nil {
 			break
@@ -3478,38 +4737,36 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_adminCreateUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_adminCreateUserInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_adminCreateUser_argsUsername(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_adminCreateUserInvite_argsUsername(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["username"] = arg0
-	arg1, err := ec.field_Mutation_adminCreateUser_argsEmail(ctx, rawArgs)
+	arg1, err := ec.field_Mutation_adminCreateUserInvite_argsEmail(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["email"] = arg1
-	arg2, err := ec.field_Mutation_adminCreateUser_argsPassword(ctx, rawArgs)
+	arg2, err := ec.field_Mutation_adminCreateUserInvite_argsRole(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["password"] = arg2
-	arg3, err := ec.field_Mutation_adminCreateUser_argsRole(ctx, rawArgs)
+	args["role"] = arg2
+	arg3, err := ec.field_Mutation_adminCreateUserInvite_argsExpiresInDays(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["role"] = arg3
+	args["expiresInDays"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_adminCreateUser_argsUsername(
+
+func (ec *executionContext) field_Mutation_adminCreateUserInvite_argsUsername(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
 	_, ok := rawArgs["username"]
 	if !ok {
 		var zeroVal string
@@ -3525,13 +4782,10 @@ func (ec *executionContext) field_Mutation_adminCreateUser_argsUsername(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_adminCreateUser_argsEmail(
+func (ec *executionContext) field_Mutation_adminCreateUserInvite_argsEmail(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
 	_, ok := rawArgs["email"]
 	if !ok {
 		var zeroVal string
@@ -3547,47 +4801,41 @@ func (ec *executionContext) field_Mutation_adminCreateUser_argsEmail(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_adminCreateUser_argsPassword(
+func (ec *executionContext) field_Mutation_adminCreateUserInvite_argsRole(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["password"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-	if tmp, ok := rawArgs["password"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_adminCreateUser_argsRole(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
+) (*string, error) {
 	_, ok := rawArgs["role"]
 	if !ok {
-		var zeroVal string
+		var zeroVal *string
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
 	if tmp, ok := rawArgs["role"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
-	var zeroVal string
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_adminCreateUserInvite_argsExpiresInDays(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	_, ok := rawArgs["expiresInDays"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresInDays"))
+	if tmp, ok := rawArgs["expiresInDays"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
 	return zeroVal, nil
 }
 
@@ -3608,6 +4856,35 @@ func (ec *executionContext) field_Mutation_adminDeleteUser_argsID(
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_adminDeleteUserInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_adminDeleteUserInvite_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_adminDeleteUserInvite_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
 	_, ok := rawArgs["id"]
 	if !ok {
 		var zeroVal string
@@ -3751,65 +5028,6 @@ func (ec *executionContext) field_Mutation_adminEnableTask_argsName(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_adminGenerateToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_adminGenerateToken_argsName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["name"] = arg0
-	arg1, err := ec.field_Mutation_adminGenerateToken_argsExpiresIn(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["expiresIn"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_adminGenerateToken_argsName(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["name"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_adminGenerateToken_argsExpiresIn(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*int, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["expiresIn"]
-	if !ok {
-		var zeroVal *int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresIn"))
-	if tmp, ok := rawArgs["expiresIn"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_adminRevokeToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3842,6 +5060,145 @@ func (ec *executionContext) field_Mutation_adminRevokeToken_argsID(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_adminInviteServerAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_adminInviteServerAdmin_argsEmail(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	arg1, err := ec.field_Mutation_adminInviteServerAdmin_argsExpiresIn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["expiresIn"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_adminInviteServerAdmin_argsEmail(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["email"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+	if tmp, ok := rawArgs["email"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+func (ec *executionContext) field_Mutation_adminInviteServerAdmin_argsExpiresIn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	_, ok := rawArgs["expiresIn"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresIn"))
+	if tmp, ok := rawArgs["expiresIn"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_adminDeleteServerAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_adminDeleteServerAdmin_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_adminDeleteServerAdmin_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_adminDisableServerAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_adminDisableServerAdmin_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_adminDisableServerAdmin_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_adminEnableServerAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_adminEnableServerAdmin_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_adminEnableServerAdmin_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_adminTestChannel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3850,6 +5207,11 @@ func (ec *executionContext) field_Mutation_adminTestChannel_args(ctx context.Con
 		return nil, err
 	}
 	args["type"] = arg0
+	arg1, err := ec.field_Mutation_adminTestChannel_argsRecipient(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["recipient"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_adminTestChannel_argsType(
@@ -3871,6 +5233,27 @@ func (ec *executionContext) field_Mutation_adminTestChannel_argsType(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+func (ec *executionContext) field_Mutation_adminTestChannel_argsRecipient(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["recipient"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("recipient"))
+	if tmp, ok := rawArgs["recipient"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -3903,6 +5286,58 @@ func (ec *executionContext) field_Mutation_adminTriggerTask_argsName(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_adminUpdateTask_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_adminUpdateTask_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := ec.field_Mutation_adminUpdateTask_argsEnabled(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["enabled"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_adminUpdateTask_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+func (ec *executionContext) field_Mutation_adminUpdateTask_argsEnabled(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	_, ok := rawArgs["enabled"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+	if tmp, ok := rawArgs["enabled"]; ok {
+		return ec.unmarshalNBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
 	return zeroVal, nil
 }
 
@@ -4080,65 +5515,6 @@ func (ec *executionContext) field_Mutation_adminUpdateSettings_argsSettings(
 	}
 
 	var zeroVal []*SettingInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_adminUpdateUserPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_adminUpdateUserPassword_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := ec.field_Mutation_adminUpdateUserPassword_argsPassword(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["password"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_adminUpdateUserPassword_argsID(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["id"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_adminUpdateUserPassword_argsPassword(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["password"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-	if tmp, ok := rawArgs["password"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -4749,6 +6125,465 @@ func (ec *executionContext) field_Mutation_updateSavedLocation_argsAlerts(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_registerUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_registerUser_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["username"] = arg0
+	arg1, err := ec.field_Mutation_registerUser_argsEmail(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg1
+	arg2, err := ec.field_Mutation_registerUser_argsPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_registerUser_argsUsername(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_registerUser_argsEmail(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["email"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+	if tmp, ok := rawArgs["email"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_registerUser_argsPassword(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["password"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+	if tmp, ok := rawArgs["password"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_loginUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_loginUser_argsIdentifier(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["identifier"] = arg0
+	arg1, err := ec.field_Mutation_loginUser_argsPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg1
+	arg2, err := ec.field_Mutation_loginUser_argsTwoFactorCode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["twoFactorCode"] = arg2
+	arg3, err := ec.field_Mutation_loginUser_argsRecoveryKey(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["recoveryKey"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_loginUser_argsIdentifier(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["identifier"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("identifier"))
+	if tmp, ok := rawArgs["identifier"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_loginUser_argsPassword(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["password"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+	if tmp, ok := rawArgs["password"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_loginUser_argsTwoFactorCode(ctx context.Context, rawArgs map[string]interface{}) (*string, error) {
+	_, ok := rawArgs["twoFactorCode"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("twoFactorCode"))
+	if tmp, ok := rawArgs["twoFactorCode"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_loginUser_argsRecoveryKey(ctx context.Context, rawArgs map[string]interface{}) (*string, error) {
+	_, ok := rawArgs["recoveryKey"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("recoveryKey"))
+	if tmp, ok := rawArgs["recoveryKey"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserTwoFactor_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_completeUserTwoFactor_argsSessionToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sessionToken"] = arg0
+	arg1, err := ec.field_Mutation_completeUserTwoFactor_argsTwoFactorCode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["twoFactorCode"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserTwoFactor_argsSessionToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["sessionToken"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sessionToken"))
+	if tmp, ok := rawArgs["sessionToken"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserTwoFactor_argsTwoFactorCode(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["twoFactorCode"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("twoFactorCode"))
+	if tmp, ok := rawArgs["twoFactorCode"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_completeUserInvite_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	arg1, err := ec.field_Mutation_completeUserInvite_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["username"] = arg1
+	arg2, err := ec.field_Mutation_completeUserInvite_argsPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserInvite_argsToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["token"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+	if tmp, ok := rawArgs["token"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserInvite_argsUsername(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUserInvite_argsPassword(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["password"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+	if tmp, ok := rawArgs["password"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeServerInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_completeServerInvite_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	arg1, err := ec.field_Mutation_completeServerInvite_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["username"] = arg1
+	arg2, err := ec.field_Mutation_completeServerInvite_argsPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeServerInvite_argsToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["token"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+	if tmp, ok := rawArgs["token"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeServerInvite_argsUsername(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_completeServerInvite_argsPassword(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["password"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+	if tmp, ok := rawArgs["password"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_useUserRecoveryKey_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_useUserRecoveryKey_argsSessionToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["sessionToken"] = arg0
+	arg1, err := ec.field_Mutation_useUserRecoveryKey_argsRecoveryKey(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["recoveryKey"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_useUserRecoveryKey_argsSessionToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["sessionToken"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("sessionToken"))
+	if tmp, ok := rawArgs["sessionToken"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_useUserRecoveryKey_argsRecoveryKey(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["recoveryKey"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("recoveryKey"))
+	if tmp, ok := rawArgs["recoveryKey"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_requestPasswordReset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_requestPasswordReset_argsEmail(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_requestPasswordReset_argsEmail(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["email"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+	if tmp, ok := rawArgs["email"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_resetUserPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_resetUserPassword_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	arg1, err := ec.field_Mutation_resetUserPassword_argsPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_resetUserPassword_argsToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["token"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+	if tmp, ok := rawArgs["token"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_resetUserPassword_argsPassword(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["password"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+	if tmp, ok := rawArgs["password"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyUserEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_verifyUserEmail_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyUserEmail_argsToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["token"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+	if tmp, ok := rawArgs["token"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_updateUserProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4805,6 +6640,460 @@ func (ec *executionContext) field_Mutation_updateUserProfile_argsPhone(
 	}
 
 	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_changeUserPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_changeUserPassword_argsCurrentPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["currentPassword"] = arg0
+	arg1, err := ec.field_Mutation_changeUserPassword_argsNewPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["newPassword"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_changeUserPassword_argsCurrentPassword(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["currentPassword"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("currentPassword"))
+	if tmp, ok := rawArgs["currentPassword"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_changeUserPassword_argsNewPassword(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["newPassword"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("newPassword"))
+	if tmp, ok := rawArgs["newPassword"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_enableUserTwoFactor_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_enableUserTwoFactor_argsSecret(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["secret"] = arg0
+	arg1, err := ec.field_Mutation_enableUserTwoFactor_argsCode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_enableUserTwoFactor_argsSecret(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["secret"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
+	if tmp, ok := rawArgs["secret"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_enableUserTwoFactor_argsCode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["code"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+	if tmp, ok := rawArgs["code"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_disableUserTwoFactor_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_disableUserTwoFactor_argsPassword(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["password"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_disableUserTwoFactor_argsPassword(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["password"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+	if tmp, ok := rawArgs["password"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserAvatar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updateUserAvatar_argsType(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg0
+	arg1, err := ec.field_Mutation_updateUserAvatar_argsURL(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["url"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserAvatar_argsType(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["type"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+	if tmp, ok := rawArgs["type"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserAvatar_argsURL(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	_, ok := rawArgs["url"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+	if tmp, ok := rawArgs["url"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_uploadUserAvatar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_uploadUserAvatar_argsFile(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["file"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_uploadUserAvatar_argsFile(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (graphql.Upload, error) {
+	_, ok := rawArgs["file"]
+	if !ok {
+		var zeroVal graphql.Upload
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+	if tmp, ok := rawArgs["file"]; ok {
+		return ec.unmarshalNUpload2Upload(ctx, tmp)
+	}
+
+	var zeroVal graphql.Upload
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_regenerateUserRecoveryKeys_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_regenerateUserRecoveryKeys_argsCode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_regenerateUserRecoveryKeys_argsCode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["code"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+	if tmp, ok := rawArgs["code"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyUserTwoFactor_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_verifyUserTwoFactor_argsCode(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyUserTwoFactor_argsCode(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["code"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+	if tmp, ok := rawArgs["code"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserSettings_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updateUserSettings_argsAccount(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["account"] = arg0
+	arg1, err := ec.field_Mutation_updateUserSettings_argsPrivacy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["privacy"] = arg1
+	arg2, err := ec.field_Mutation_updateUserSettings_argsNotifications(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["notifications"] = arg2
+	arg3, err := ec.field_Mutation_updateUserSettings_argsAppearance(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["appearance"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserSettings_argsAccount(ctx context.Context, rawArgs map[string]interface{}) (*AccountSettingsInput, error) {
+	_, ok := rawArgs["account"]
+	if !ok {
+		var zeroVal *AccountSettingsInput
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
+	if tmp, ok := rawArgs["account"]; ok {
+		return ec.unmarshalOAccountSettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐAccountSettingsInput(ctx, tmp)
+	}
+	var zeroVal *AccountSettingsInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserSettings_argsPrivacy(ctx context.Context, rawArgs map[string]interface{}) (*PrivacySettingsInput, error) {
+	_, ok := rawArgs["privacy"]
+	if !ok {
+		var zeroVal *PrivacySettingsInput
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
+	if tmp, ok := rawArgs["privacy"]; ok {
+		return ec.unmarshalOPrivacySettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPrivacySettingsInput(ctx, tmp)
+	}
+	var zeroVal *PrivacySettingsInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserSettings_argsNotifications(ctx context.Context, rawArgs map[string]interface{}) (*NotificationSettingsInput, error) {
+	_, ok := rawArgs["notifications"]
+	if !ok {
+		var zeroVal *NotificationSettingsInput
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("notifications"))
+	if tmp, ok := rawArgs["notifications"]; ok {
+		return ec.unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐNotificationSettingsInput(ctx, tmp)
+	}
+	var zeroVal *NotificationSettingsInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserSettings_argsAppearance(ctx context.Context, rawArgs map[string]interface{}) (*AppearanceSettingsInput, error) {
+	_, ok := rawArgs["appearance"]
+	if !ok {
+		var zeroVal *AppearanceSettingsInput
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("appearance"))
+	if tmp, ok := rawArgs["appearance"]; ok {
+		return ec.unmarshalOAppearanceSettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐAppearanceSettingsInput(ctx, tmp)
+	}
+	var zeroVal *AppearanceSettingsInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createUserToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_createUserToken_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
+	arg1, err := ec.field_Mutation_createUserToken_argsScopes(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["scopes"] = arg1
+	arg2, err := ec.field_Mutation_createUserToken_argsExpiresIn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["expiresIn"] = arg2
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createUserToken_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+func (ec *executionContext) field_Mutation_createUserToken_argsScopes(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	_, ok := rawArgs["scopes"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("scopes"))
+	if tmp, ok := rawArgs["scopes"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+func (ec *executionContext) field_Mutation_createUserToken_argsExpiresIn(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	_, ok := rawArgs["expiresIn"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresIn"))
+	if tmp, ok := rawArgs["expiresIn"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_revokeUserToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_revokeUserToken_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_revokeUserToken_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -4896,6 +7185,35 @@ func (ec *executionContext) field_Query_adminAuditLogs_argsOffset(
 	}
 
 	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_adminUserInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_adminUserInvite_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_adminUserInvite_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -4995,6 +7313,35 @@ func (ec *executionContext) field_Query_adminSetting_argsKey(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Query_adminServerAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_adminServerAdmin_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_adminServerAdmin_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_adminTaskHistory_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -5003,6 +7350,11 @@ func (ec *executionContext) field_Query_adminTaskHistory_args(ctx context.Contex
 		return nil, err
 	}
 	args["name"] = arg0
+	arg1, err := ec.field_Query_adminTaskHistory_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_adminTaskHistory_argsName(
@@ -5024,6 +7376,25 @@ func (ec *executionContext) field_Query_adminTaskHistory_argsName(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_adminTaskHistory_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	_, ok := rawArgs["limit"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
 	return zeroVal, nil
 }
 
@@ -5445,6 +7816,86 @@ func (ec *executionContext) field_Query_moonPhase_argsDate(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Query_publicUserProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_publicUserProfile_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["username"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_publicUserProfile_argsUsername(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_validateUserInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_validateUserInvite_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_validateUserInvite_argsToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["token"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+	if tmp, ok := rawArgs["token"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_validateServerInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_validateServerInvite_argsToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["token"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_validateServerInvite_argsToken(ctx context.Context, rawArgs map[string]interface{}) (string, error) {
+	_, ok := rawArgs["token"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+	if tmp, ok := rawArgs["token"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_savedLocation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -5821,21 +8272,18 @@ func (ec *executionContext) _APIToken_token(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
+		return ec.resolvers.APIToken().Token(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_APIToken_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5843,7 +8291,7 @@ func (ec *executionContext) fieldContext_APIToken_token(_ context.Context, field
 		Object:     "APIToken",
 		Field:      field,
 		IsMethod:   false,
-		IsResolver: false,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -5865,7 +8313,7 @@ func (ec *executionContext) _APIToken_name(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return ec.resolvers.APIToken().Name(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5874,9 +8322,9 @@ func (ec *executionContext) _APIToken_name(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_APIToken_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5884,7 +8332,7 @@ func (ec *executionContext) fieldContext_APIToken_name(_ context.Context, field 
 		Object:     "APIToken",
 		Field:      field,
 		IsMethod:   false,
-		IsResolver: false,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -13244,6 +15692,641 @@ func (ec *executionContext) fieldContext_MoonPhase_nextNewMoon(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_registerUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_registerUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().RegisterUser(rctx, fc.Args["username"].(string), fc.Args["email"].(string), fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*AuthResult)
+	fc.Result = res
+	return ec._AuthResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_registerUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "requiresTwoFactor":
+			return ec.fieldContext_AuthResult_requiresTwoFactor(ctx, field)
+		case "verificationRequired":
+			return ec.fieldContext_AuthResult_verificationRequired(ctx, field)
+		case "sessionToken":
+			return ec.fieldContext_AuthResult_sessionToken(ctx, field)
+		case "token":
+			return ec.fieldContext_AuthResult_token(ctx, field)
+		case "user":
+			return ec.fieldContext_AuthResult_user(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_AuthResult_expiresAt(ctx, field)
+		case "remainingKeys":
+			return ec.fieldContext_AuthResult_remainingKeys(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type AuthResult", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_registerUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_loginUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_loginUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().LoginUser(rctx, fc.Args["identifier"].(string), fc.Args["password"].(string), fc.Args["twoFactorCode"].(*string), fc.Args["recoveryKey"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*AuthResult)
+	fc.Result = res
+	return ec._AuthResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_loginUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "requiresTwoFactor":
+			return ec.fieldContext_AuthResult_requiresTwoFactor(ctx, field)
+		case "verificationRequired":
+			return ec.fieldContext_AuthResult_verificationRequired(ctx, field)
+		case "sessionToken":
+			return ec.fieldContext_AuthResult_sessionToken(ctx, field)
+		case "token":
+			return ec.fieldContext_AuthResult_token(ctx, field)
+		case "user":
+			return ec.fieldContext_AuthResult_user(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_AuthResult_expiresAt(ctx, field)
+		case "remainingKeys":
+			return ec.fieldContext_AuthResult_remainingKeys(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type AuthResult", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_loginUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeUserTwoFactor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_completeUserTwoFactor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().CompleteUserTwoFactor(rctx, fc.Args["sessionToken"].(string), fc.Args["twoFactorCode"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*AuthResult)
+	fc.Result = res
+	return ec._AuthResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_completeUserTwoFactor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "requiresTwoFactor":
+			return ec.fieldContext_AuthResult_requiresTwoFactor(ctx, field)
+		case "verificationRequired":
+			return ec.fieldContext_AuthResult_verificationRequired(ctx, field)
+		case "sessionToken":
+			return ec.fieldContext_AuthResult_sessionToken(ctx, field)
+		case "token":
+			return ec.fieldContext_AuthResult_token(ctx, field)
+		case "user":
+			return ec.fieldContext_AuthResult_user(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_AuthResult_expiresAt(ctx, field)
+		case "remainingKeys":
+			return ec.fieldContext_AuthResult_remainingKeys(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type AuthResult", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeUserTwoFactor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeUserInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_completeUserInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().CompleteUserInvite(rctx, fc.Args["token"].(string), fc.Args["username"].(string), fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*UserInviteCompletion)
+	fc.Result = res
+	return ec._UserInviteCompletion(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_completeUserInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "message":
+			return ec.fieldContext_UserInviteCompletion_message(ctx, field)
+		case "token":
+			return ec.fieldContext_UserInviteCompletion_token(ctx, field)
+		case "user":
+			return ec.fieldContext_UserInviteCompletion_user(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type UserInviteCompletion", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeUserInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeServerInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_completeServerInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().CompleteServerInvite(rctx, fc.Args["token"].(string), fc.Args["username"].(string), fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ServerInviteCompletion)
+	fc.Result = res
+	return ec._ServerInviteCompletion(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_completeServerInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "message":
+			return ec.fieldContext_ServerInviteCompletion_message(ctx, field)
+		case "admin":
+			return ec.fieldContext_ServerInviteCompletion_admin(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type ServerInviteCompletion", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeServerInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_useUserRecoveryKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_useUserRecoveryKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().UseUserRecoveryKey(rctx, fc.Args["sessionToken"].(string), fc.Args["recoveryKey"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*AuthResult)
+	fc.Result = res
+	return ec._AuthResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_useUserRecoveryKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "requiresTwoFactor":
+			return ec.fieldContext_AuthResult_requiresTwoFactor(ctx, field)
+		case "verificationRequired":
+			return ec.fieldContext_AuthResult_verificationRequired(ctx, field)
+		case "sessionToken":
+			return ec.fieldContext_AuthResult_sessionToken(ctx, field)
+		case "token":
+			return ec.fieldContext_AuthResult_token(ctx, field)
+		case "user":
+			return ec.fieldContext_AuthResult_user(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_AuthResult_expiresAt(ctx, field)
+		case "remainingKeys":
+			return ec.fieldContext_AuthResult_remainingKeys(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type AuthResult", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_useUserRecoveryKey_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_logoutUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_logoutUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().LogoutUser(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec._GenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_logoutUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "ok":
+			return ec.fieldContext_GenericResponse_success(ctx, field)
+		case "message":
+			return ec.fieldContext_GenericResponse_message(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_refreshUserSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_refreshUserSession(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().RefreshUserSession(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*AuthResult)
+	fc.Result = res
+	return ec._AuthResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_refreshUserSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "requiresTwoFactor":
+			return ec.fieldContext_AuthResult_requiresTwoFactor(ctx, field)
+		case "verificationRequired":
+			return ec.fieldContext_AuthResult_verificationRequired(ctx, field)
+		case "sessionToken":
+			return ec.fieldContext_AuthResult_sessionToken(ctx, field)
+		case "token":
+			return ec.fieldContext_AuthResult_token(ctx, field)
+		case "user":
+			return ec.fieldContext_AuthResult_user(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_AuthResult_expiresAt(ctx, field)
+		case "remainingKeys":
+			return ec.fieldContext_AuthResult_remainingKeys(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type AuthResult", field.Name)
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_requestPasswordReset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_requestPasswordReset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().RequestPasswordReset(rctx, fc.Args["email"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec._GenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_requestPasswordReset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "ok":
+			return ec.fieldContext_GenericResponse_success(ctx, field)
+		case "message":
+			return ec.fieldContext_GenericResponse_message(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_requestPasswordReset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resetUserPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_resetUserPassword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().ResetUserPassword(rctx, fc.Args["token"].(string), fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec._GenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_resetUserPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "ok":
+			return ec.fieldContext_GenericResponse_success(ctx, field)
+		case "message":
+			return ec.fieldContext_GenericResponse_message(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_resetUserPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_verifyUserEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_verifyUserEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().VerifyUserEmail(rctx, fc.Args["token"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec._GenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_verifyUserEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Mutation", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "ok":
+			return ec.fieldContext_GenericResponse_success(ctx, field)
+		case "message":
+			return ec.fieldContext_GenericResponse_message(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_verifyUserEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_updateUserProfile(ctx, field)
 	if err != nil {
@@ -13270,9 +16353,9 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*GenericResponse)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋapimgrᚋweatherᚋsrcᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13283,26 +16366,12 @@ func (ec *executionContext) fieldContext_Mutation_updateUserProfile(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "phone":
-				return ec.fieldContext_User_phone(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "lastLoginAt":
-				return ec.fieldContext_User_lastLoginAt(ctx, field)
+			case "ok":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -13313,6 +16382,678 @@ func (ec *executionContext) fieldContext_Mutation_updateUserProfile(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateUserProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_changeUserPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_changeUserPassword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().ChangeUserPassword(rctx, fc.Args["currentPassword"].(string), fc.Args["newPassword"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_changeUserPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ok":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_changeUserPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_enableUserTwoFactor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_enableUserTwoFactor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().EnableUserTwoFactor(rctx, fc.Args["secret"].(string), fc.Args["code"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*TOTPRecoveryKeys)
+	fc.Result = res
+	return ec.marshalNTOTPRecoveryKeys2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPRecoveryKeys(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_enableUserTwoFactor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "message":
+				return ec.fieldContext_TOTPRecoveryKeys_message(ctx, field)
+			case "recoveryKeys":
+				return ec.fieldContext_TOTPRecoveryKeys_recoveryKeys(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TOTPRecoveryKeys", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_enableUserTwoFactor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_disableUserTwoFactor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_disableUserTwoFactor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().DisableUserTwoFactor(rctx, fc.Args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_disableUserTwoFactor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ok":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_disableUserTwoFactor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateUserAvatar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateUserAvatar(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().UpdateUserAvatar(rctx, fc.Args["type"].(string), fc.Args["url"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*PublicAvatar)
+	fc.Result = res
+	return ec.marshalNPublicAvatar2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicAvatar(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateUserAvatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_PublicAvatar_type(ctx, field)
+			case "urls":
+				return ec.fieldContext_PublicAvatar_urls(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PublicAvatar", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateUserAvatar_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_uploadUserAvatar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_uploadUserAvatar(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().UploadUserAvatar(rctx, fc.Args["file"].(graphql.Upload))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*PublicAvatar)
+	fc.Result = res
+	return ec.marshalNPublicAvatar2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicAvatar(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadUserAvatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_PublicAvatar_type(ctx, field)
+			case "urls":
+				return ec.fieldContext_PublicAvatar_urls(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PublicAvatar", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadUserAvatar_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resetUserAvatar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_resetUserAvatar(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().ResetUserAvatar(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_resetUserAvatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ok":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_regenerateUserRecoveryKeys(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_regenerateUserRecoveryKeys(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().RegenerateUserRecoveryKeys(rctx, fc.Args["code"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*TOTPRecoveryKeys)
+	fc.Result = res
+	return ec.marshalNTOTPRecoveryKeys2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPRecoveryKeys(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_regenerateUserRecoveryKeys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "message":
+				return ec.fieldContext_TOTPRecoveryKeys_message(ctx, field)
+			case "recoveryKeys":
+				return ec.fieldContext_TOTPRecoveryKeys_recoveryKeys(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TOTPRecoveryKeys", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_regenerateUserRecoveryKeys_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_verifyUserTwoFactor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_verifyUserTwoFactor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().VerifyUserTwoFactor(rctx, fc.Args["code"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_verifyUserTwoFactor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ok":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_verifyUserTwoFactor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateUserSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateUserSettings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().UpdateUserSettings(rctx, fc.Args["account"].(*AccountSettingsInput), fc.Args["privacy"].(*PrivacySettingsInput), fc.Args["notifications"].(*NotificationSettingsInput), fc.Args["appearance"].(*AppearanceSettingsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateUserSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ok":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateUserSettings_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createUserToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createUserToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().CreateUserToken(rctx, fc.Args["name"].(string), fc.Args["scopes"].(*string), fc.Args["expiresIn"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*UserToken)
+	fc.Result = res
+	return ec.marshalNUserToken2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserToken(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createUserToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_UserToken_id(ctx, field)
+			case "name":
+				return ec.fieldContext_UserToken_name(ctx, field)
+			case "tokenPrefix":
+				return ec.fieldContext_UserToken_tokenPrefix(ctx, field)
+			case "scopes":
+				return ec.fieldContext_UserToken_scopes(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_UserToken_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_UserToken_expiresAt(ctx, field)
+			case "lastUsedAt":
+				return ec.fieldContext_UserToken_lastUsedAt(ctx, field)
+			case "token":
+				return ec.fieldContext_UserToken_token(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserToken", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createUserToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_revokeUserToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_revokeUserToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().RevokeUserToken(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_revokeUserToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_revokeUserToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -13795,81 +17536,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteNotification(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_adminCreateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_adminCreateUser(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AdminCreateUser(rctx, fc.Args["username"].(string), fc.Args["email"].(string), fc.Args["password"].(string), fc.Args["role"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋapimgrᚋweatherᚋsrcᚋmodelsᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_adminCreateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "phone":
-				return ec.fieldContext_User_phone(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "lastLoginAt":
-				return ec.fieldContext_User_lastLoginAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_adminCreateUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_adminUpdateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_adminUpdateUser(ctx, field)
 	if err != nil {
@@ -14006,8 +17672,8 @@ func (ec *executionContext) fieldContext_Mutation_adminDeleteUser(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_adminUpdateUserPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_adminUpdateUserPassword(ctx, field)
+func (ec *executionContext) _Mutation_adminCreateUserInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminCreateUserInvite(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14019,8 +17685,89 @@ func (ec *executionContext) _Mutation_adminUpdateUserPassword(ctx context.Contex
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AdminUpdateUserPassword(rctx, fc.Args["id"].(string), fc.Args["password"].(string))
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminCreateUserInvite(rctx, fc.Args["username"].(string), fc.Args["email"].(string), fc.Args["role"].(*string), fc.Args["expiresInDays"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*UserInvite)
+	fc.Result = res
+	return ec.marshalNUserInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInvite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_adminCreateUserInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_UserInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_UserInvite_token(ctx, field)
+			case "username":
+				return ec.fieldContext_UserInvite_username(ctx, field)
+			case "email":
+				return ec.fieldContext_UserInvite_email(ctx, field)
+			case "role":
+				return ec.fieldContext_UserInvite_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_UserInvite_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_UserInvite_expiresAt(ctx, field)
+			case "maxUses":
+				return ec.fieldContext_UserInvite_maxUses(ctx, field)
+			case "useCount":
+				return ec.fieldContext_UserInvite_useCount(ctx, field)
+			case "usedAt":
+				return ec.fieldContext_UserInvite_usedAt(ctx, field)
+			case "status":
+				return ec.fieldContext_UserInvite_status(ctx, field)
+			case "inviteUrl":
+				return ec.fieldContext_UserInvite_inviteUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserInvite", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_adminCreateUserInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_adminDeleteUserInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminDeleteUserInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminDeleteUserInvite(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14037,7 +17784,7 @@ func (ec *executionContext) _Mutation_adminUpdateUserPassword(ctx context.Contex
 	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_adminUpdateUserPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_adminDeleteUserInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14060,7 +17807,330 @@ func (ec *executionContext) fieldContext_Mutation_adminUpdateUserPassword(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_adminUpdateUserPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_adminDeleteUserInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_adminInviteServerAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminInviteServerAdmin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminInviteServerAdmin(rctx, fc.Args["email"].(string), fc.Args["expiresIn"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ServerAdminInvite)
+	fc.Result = res
+	return ec.marshalNServerAdminInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdminInvite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_adminInviteServerAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "token":
+				return ec.fieldContext_ServerAdminInvite_token(ctx, field)
+			case "email":
+				return ec.fieldContext_ServerAdminInvite_email(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_ServerAdminInvite_expiresAt(ctx, field)
+			case "expiresIn":
+				return ec.fieldContext_ServerAdminInvite_expiresIn(ctx, field)
+			case "inviteUrl":
+				return ec.fieldContext_ServerAdminInvite_inviteUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServerAdminInvite", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_adminInviteServerAdmin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_adminDeleteServerAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminDeleteServerAdmin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminDeleteServerAdmin(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_adminDeleteServerAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_adminDeleteServerAdmin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_adminDisableServerAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminDisableServerAdmin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminDisableServerAdmin(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_adminDisableServerAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_adminDisableServerAdmin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_adminEnableServerAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminEnableServerAdmin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminEnableServerAdmin(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*GenericResponse)
+	fc.Result = res
+	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_adminEnableServerAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_GenericResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_GenericResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_adminEnableServerAdmin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_adminUpdateTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_adminUpdateTask(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Mutation().AdminUpdateTask(rctx, fc.Args["name"].(string), fc.Args["enabled"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ScheduledTask)
+	fc.Result = res
+	return ec.marshalNScheduledTask2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐScheduledTask(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_adminUpdateTask(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_ScheduledTask_name(ctx, field)
+			case "schedule":
+				return ec.fieldContext_ScheduledTask_schedule(ctx, field)
+			case "enabled":
+				return ec.fieldContext_ScheduledTask_enabled(ctx, field)
+			case "lastRun":
+				return ec.fieldContext_ScheduledTask_lastRun(ctx, field)
+			case "nextRun":
+				return ec.fieldContext_ScheduledTask_nextRun(ctx, field)
+			case "runCount":
+				return ec.fieldContext_ScheduledTask_runCount(ctx, field)
+			case "errorCount":
+				return ec.fieldContext_ScheduledTask_errorCount(ctx, field)
+			case "avgDuration":
+				return ec.fieldContext_ScheduledTask_avgDuration(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ScheduledTask", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_adminUpdateTask_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14251,56 +18321,6 @@ func (ec *executionContext) fieldContext_Mutation_adminResetSettings(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_adminReloadConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_adminReloadConfig(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AdminReloadConfig(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*GenericResponse)
-	fc.Result = res
-	return ec.marshalNGenericResponse2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐGenericResponse(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_adminReloadConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_GenericResponse_success(ctx, field)
-			case "message":
-				return ec.fieldContext_GenericResponse_message(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type GenericResponse", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_adminGenerateToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_adminGenerateToken(ctx, field)
 	if err != nil {
@@ -14315,7 +18335,7 @@ func (ec *executionContext) _Mutation_adminGenerateToken(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AdminGenerateToken(rctx, fc.Args["name"].(string), fc.Args["expiresIn"].(*int))
+		return ec.resolvers.Mutation().AdminGenerateToken(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14365,10 +18385,6 @@ func (ec *executionContext) fieldContext_Mutation_adminGenerateToken(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_adminGenerateToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
 	return fc, nil
 }
 
@@ -14905,7 +18921,7 @@ func (ec *executionContext) _Mutation_adminTestChannel(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AdminTestChannel(rctx, fc.Args["type"].(string))
+		return ec.resolvers.Mutation().AdminTestChannel(rctx, fc.Args["type"].(string), fc.Args["recipient"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16653,6 +20669,190 @@ func (ec *executionContext) fieldContext_Query_moonPhase(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_publicUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_publicUserProfile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().PublicUserProfile(rctx, fc.Args["username"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*PublicUserProfile)
+	fc.Result = res
+	return ec.marshalOPublicUserProfile2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicUserProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_publicUserProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "username":
+				return ec.fieldContext_PublicUserProfile_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_PublicUserProfile_displayName(ctx, field)
+			case "avatar":
+				return ec.fieldContext_PublicUserProfile_avatar(ctx, field)
+			case "bio":
+				return ec.fieldContext_PublicUserProfile_bio(ctx, field)
+			case "location":
+				return ec.fieldContext_PublicUserProfile_location(ctx, field)
+			case "website":
+				return ec.fieldContext_PublicUserProfile_website(ctx, field)
+			case "verified":
+				return ec.fieldContext_PublicUserProfile_verified(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_PublicUserProfile_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PublicUserProfile", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_publicUserProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_validateUserInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_validateUserInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().ValidateUserInvite(rctx, fc.Args["token"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*UserInviteValidation)
+	fc.Result = res
+	return ec._UserInviteValidation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_validateUserInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Query", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "username":
+			return ec.fieldContext_UserInviteValidation_username(ctx, field)
+		case "email":
+			return ec.fieldContext_UserInviteValidation_email(ctx, field)
+		case "role":
+			return ec.fieldContext_UserInviteValidation_role(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_UserInviteValidation_expiresAt(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type UserInviteValidation", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_validateUserInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_validateServerInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_validateServerInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().ValidateServerInvite(rctx, fc.Args["token"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ServerInviteValidation)
+	fc.Result = res
+	return ec._ServerInviteValidation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_validateServerInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "Query", Field: field, IsMethod: true, IsResolver: true, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "email":
+			return ec.fieldContext_ServerInviteValidation_email(ctx, field)
+		case "expiresAt":
+			return ec.fieldContext_ServerInviteValidation_expiresAt(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type ServerInviteValidation", field.Name)
+	}}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_validateServerInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_currentUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_currentUser(ctx, field)
 	if err != nil {
@@ -16712,6 +20912,278 @@ func (ec *executionContext) fieldContext_Query_currentUser(_ context.Context, fi
 				return ec.fieldContext_User_lastLoginAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_currentUserAvatar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_currentUserAvatar(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().CurrentUserAvatar(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*PublicAvatar)
+	fc.Result = res
+	return ec.marshalNPublicAvatar2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicAvatar(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_currentUserAvatar(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_PublicAvatar_type(ctx, field)
+			case "urls":
+				return ec.fieldContext_PublicAvatar_urls(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PublicAvatar", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_currentUserTwoFactorStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_currentUserTwoFactorStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().CurrentUserTwoFactorStatus(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*TOTPStatus)
+	fc.Result = res
+	return ec.marshalNTOTPStatus2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_currentUserTwoFactorStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "enabled":
+				return ec.fieldContext_TOTPStatus_enabled(ctx, field)
+			case "recoveryKeysCount":
+				return ec.fieldContext_TOTPStatus_recoveryKeysCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TOTPStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_currentUserTwoFactorSetup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_currentUserTwoFactorSetup(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().CurrentUserTwoFactorSetup(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*TOTPSetup)
+	fc.Result = res
+	return ec.marshalNTOTPSetup2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPSetup(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_currentUserTwoFactorSetup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "secret":
+				return ec.fieldContext_TOTPSetup_secret(ctx, field)
+			case "qrCode":
+				return ec.fieldContext_TOTPSetup_qrCode(ctx, field)
+			case "manualUrl":
+				return ec.fieldContext_TOTPSetup_manualUrl(ctx, field)
+			case "account":
+				return ec.fieldContext_TOTPSetup_account(ctx, field)
+			case "issuer":
+				return ec.fieldContext_TOTPSetup_issuer(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TOTPSetup", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_userSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_userSettings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().UserSettings(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*UserSettings)
+	fc.Result = res
+	return ec.marshalNUserSettings2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserSettings(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_userSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "account":
+				return ec.fieldContext_UserSettings_account(ctx, field)
+			case "privacy":
+				return ec.fieldContext_UserSettings_privacy(ctx, field)
+			case "notifications":
+				return ec.fieldContext_UserSettings_notifications(ctx, field)
+			case "appearance":
+				return ec.fieldContext_UserSettings_appearance(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserSettings", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_userTokens(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_userTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().UserTokens(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*UserToken)
+	fc.Result = res
+	return ec.marshalNUserToken2ᚕᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserTokenᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_userTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_UserToken_id(ctx, field)
+			case "name":
+				return ec.fieldContext_UserToken_name(ctx, field)
+			case "tokenPrefix":
+				return ec.fieldContext_UserToken_tokenPrefix(ctx, field)
+			case "scopes":
+				return ec.fieldContext_UserToken_scopes(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_UserToken_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_UserToken_expiresAt(ctx, field)
+			case "lastUsedAt":
+				return ec.fieldContext_UserToken_lastUsedAt(ctx, field)
+			case "token":
+				return ec.fieldContext_UserToken_token(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserToken", field.Name)
 		},
 	}
 	return fc, nil
@@ -17027,6 +21499,278 @@ func (ec *executionContext) fieldContext_Query_adminUsers(_ context.Context, fie
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_adminServerAdmins(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminServerAdmins(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().AdminServerAdmins(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ServerAdminOverview)
+	fc.Result = res
+	return ec.marshalNServerAdminOverview2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdminOverview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminServerAdmins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "count":
+				return ec.fieldContext_ServerAdminOverview_count(ctx, field)
+			case "currentAdmin":
+				return ec.fieldContext_ServerAdminOverview_currentAdmin(ctx, field)
+			case "onlineAdmins":
+				return ec.fieldContext_ServerAdminOverview_onlineAdmins(ctx, field)
+			case "privacyNotice":
+				return ec.fieldContext_ServerAdminOverview_privacyNotice(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServerAdminOverview", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_adminServerAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminServerAdmin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().AdminServerAdmin(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ServerAdmin)
+	fc.Result = res
+	return ec.marshalOServerAdmin2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdmin(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminServerAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ServerAdmin_id(ctx, field)
+			case "username":
+				return ec.fieldContext_ServerAdmin_username(ctx, field)
+			case "email":
+				return ec.fieldContext_ServerAdmin_email(ctx, field)
+			case "isSuperAdmin":
+				return ec.fieldContext_ServerAdmin_isSuperAdmin(ctx, field)
+			case "isActive":
+				return ec.fieldContext_ServerAdmin_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ServerAdmin_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ServerAdmin_updatedAt(ctx, field)
+			case "lastLoginAt":
+				return ec.fieldContext_ServerAdmin_lastLoginAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServerAdmin", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_adminServerAdmin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_adminUserInvites(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminUserInvites(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().AdminUserInvites(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*UserInvite)
+	fc.Result = res
+	return ec.marshalNUserInvite2ᚕᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInviteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminUserInvites(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_UserInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_UserInvite_token(ctx, field)
+			case "username":
+				return ec.fieldContext_UserInvite_username(ctx, field)
+			case "email":
+				return ec.fieldContext_UserInvite_email(ctx, field)
+			case "role":
+				return ec.fieldContext_UserInvite_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_UserInvite_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_UserInvite_expiresAt(ctx, field)
+			case "maxUses":
+				return ec.fieldContext_UserInvite_maxUses(ctx, field)
+			case "useCount":
+				return ec.fieldContext_UserInvite_useCount(ctx, field)
+			case "usedAt":
+				return ec.fieldContext_UserInvite_usedAt(ctx, field)
+			case "status":
+				return ec.fieldContext_UserInvite_status(ctx, field)
+			case "inviteUrl":
+				return ec.fieldContext_UserInvite_inviteUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserInvite", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_adminUserInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminUserInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return ec.resolvers.Query().AdminUserInvite(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*UserInvite)
+	fc.Result = res
+	return ec.marshalOUserInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInvite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminUserInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_UserInvite_id(ctx, field)
+			case "token":
+				return ec.fieldContext_UserInvite_token(ctx, field)
+			case "username":
+				return ec.fieldContext_UserInvite_username(ctx, field)
+			case "email":
+				return ec.fieldContext_UserInvite_email(ctx, field)
+			case "role":
+				return ec.fieldContext_UserInvite_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_UserInvite_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_UserInvite_expiresAt(ctx, field)
+			case "maxUses":
+				return ec.fieldContext_UserInvite_maxUses(ctx, field)
+			case "useCount":
+				return ec.fieldContext_UserInvite_useCount(ctx, field)
+			case "usedAt":
+				return ec.fieldContext_UserInvite_usedAt(ctx, field)
+			case "status":
+				return ec.fieldContext_UserInvite_status(ctx, field)
+			case "inviteUrl":
+				return ec.fieldContext_UserInvite_inviteUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserInvite", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_adminUserInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -17422,7 +22166,7 @@ func (ec *executionContext) _Query_adminTaskHistory(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AdminTaskHistory(rctx, fc.Args["name"].(string))
+		return ec.resolvers.Query().AdminTaskHistory(rctx, fc.Args["name"].(string), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19639,9 +24383,9 @@ func (ec *executionContext) _Setting_value(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Setting_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19649,7 +24393,7 @@ func (ec *executionContext) fieldContext_Setting_value(_ context.Context, field 
 		Object:     "Setting",
 		Field:      field,
 		IsMethod:   false,
-		IsResolver: false,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -20486,6 +25230,149 @@ func (ec *executionContext) fieldContext_SystemStats_database(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) fieldContext_ServerAdmin_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type ID does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_isSuperAdmin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Boolean does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Boolean does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdmin_lastLoginAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminInvite_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminInvite_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminInvite_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminInvite_expiresIn(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminInvite_inviteUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminOverview_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminOverview", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Int does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminOverview_currentAdmin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServerAdminOverview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ServerAdmin_id(ctx, field)
+			case "username":
+				return ec.fieldContext_ServerAdmin_username(ctx, field)
+			case "email":
+				return ec.fieldContext_ServerAdmin_email(ctx, field)
+			case "isSuperAdmin":
+				return ec.fieldContext_ServerAdmin_isSuperAdmin(ctx, field)
+			case "isActive":
+				return ec.fieldContext_ServerAdmin_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ServerAdmin_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ServerAdmin_updatedAt(ctx, field)
+			case "lastLoginAt":
+				return ec.fieldContext_ServerAdmin_lastLoginAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServerAdmin", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminOverview_onlineAdmins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminOverview", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_ServerAdminOverview_privacyNotice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "ServerAdminOverview", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
 func (ec *executionContext) _TaskHistory_taskName(ctx context.Context, field graphql.CollectedField, obj *TaskHistory) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TaskHistory_taskName(ctx, field)
 	if err != nil {
@@ -20782,6 +25669,582 @@ func (ec *executionContext) fieldContext_UnreadCount_count(_ context.Context, fi
 			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_AccountSettings_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_bio(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_website(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_language(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_dateFormat(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AccountSettings_timeFormat(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AccountSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_PrivacySettings_visibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PrivacySettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PrivacySettings_showEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PrivacySettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PrivacySettings_showActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PrivacySettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PrivacySettings_showOrgs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PrivacySettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PrivacySettings_searchable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PrivacySettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PrivacySettings_orgVisibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PrivacySettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_NotificationSettings_emailSecurity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "NotificationSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_NotificationSettings_emailMentions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "NotificationSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_NotificationSettings_emailUpdates(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "NotificationSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_NotificationSettings_emailDigest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "NotificationSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_NotificationSettings_pushEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "NotificationSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_NotificationSettings_pushMentions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "NotificationSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_AppearanceSettings_theme(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AppearanceSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AppearanceSettings_fontSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AppearanceSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AppearanceSettings_reduceMotion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AppearanceSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_PublicAvatar_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicAvatar", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicAvatar_urls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicAvatar", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Any does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_AuthUser_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthUser", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type ID does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthUser_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthUser", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthUser_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthUser", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthUser_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthUser", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_requiresTwoFactor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_verificationRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_sessionToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { switch field.Name { case "id": return ec.fieldContext_AuthUser_id(ctx, field); case "username": return ec.fieldContext_AuthUser_username(ctx, field); case "email": return ec.fieldContext_AuthUser_email(ctx, field); case "role": return ec.fieldContext_AuthUser_role(ctx, field) }; return nil, fmt.Errorf("no field named %q was found under type AuthUser", field.Name) }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Time does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_AuthResult_remainingKeys(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "AuthResult", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Int does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_avatar(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { switch field.Name { case "type": return ec.fieldContext_PublicAvatar_type(ctx, field); case "urls": return ec.fieldContext_PublicAvatar_urls(ctx, field) }; return nil, fmt.Errorf("no field named %q was found under type PublicAvatar", field.Name) }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_bio(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_website(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_verified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_PublicUserProfile_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "PublicUserProfile", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Time does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_TOTPStatus_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPStatus", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Boolean does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_TOTPStatus_recoveryKeysCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPStatus", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type Int does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_TOTPSetup_secret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPSetup", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_TOTPSetup_qrCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPSetup", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_TOTPSetup_manualUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPSetup", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_TOTPSetup_account(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPSetup", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_TOTPSetup_issuer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPSetup", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_TOTPRecoveryKeys_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPRecoveryKeys", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type String does not have child fields") }}; return fc, nil }
+func (ec *executionContext) fieldContext_TOTPRecoveryKeys_recoveryKeys(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "TOTPRecoveryKeys", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { return nil, errors.New("field of type [String!]! does not have child fields") }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_UserSettings_account(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "UserSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { switch field.Name { case "displayName": return ec.fieldContext_AccountSettings_displayName(ctx, field); case "bio": return ec.fieldContext_AccountSettings_bio(ctx, field); case "location": return ec.fieldContext_AccountSettings_location(ctx, field); case "website": return ec.fieldContext_AccountSettings_website(ctx, field); case "timezone": return ec.fieldContext_AccountSettings_timezone(ctx, field); case "language": return ec.fieldContext_AccountSettings_language(ctx, field); case "dateFormat": return ec.fieldContext_AccountSettings_dateFormat(ctx, field); case "timeFormat": return ec.fieldContext_AccountSettings_timeFormat(ctx, field) }; return nil, fmt.Errorf("no field named %q was found under type AccountSettings", field.Name) }}; return fc, nil }
+func (ec *executionContext) fieldContext_UserSettings_privacy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "UserSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { switch field.Name { case "visibility": return ec.fieldContext_PrivacySettings_visibility(ctx, field); case "showEmail": return ec.fieldContext_PrivacySettings_showEmail(ctx, field); case "showActivity": return ec.fieldContext_PrivacySettings_showActivity(ctx, field); case "showOrgs": return ec.fieldContext_PrivacySettings_showOrgs(ctx, field); case "searchable": return ec.fieldContext_PrivacySettings_searchable(ctx, field); case "orgVisibility": return ec.fieldContext_PrivacySettings_orgVisibility(ctx, field) }; return nil, fmt.Errorf("no field named %q was found under type PrivacySettings", field.Name) }}; return fc, nil }
+func (ec *executionContext) fieldContext_UserSettings_notifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "UserSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { switch field.Name { case "emailSecurity": return ec.fieldContext_NotificationSettings_emailSecurity(ctx, field); case "emailMentions": return ec.fieldContext_NotificationSettings_emailMentions(ctx, field); case "emailUpdates": return ec.fieldContext_NotificationSettings_emailUpdates(ctx, field); case "emailDigest": return ec.fieldContext_NotificationSettings_emailDigest(ctx, field); case "pushEnabled": return ec.fieldContext_NotificationSettings_pushEnabled(ctx, field); case "pushMentions": return ec.fieldContext_NotificationSettings_pushMentions(ctx, field) }; return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name) }}; return fc, nil }
+func (ec *executionContext) fieldContext_UserSettings_appearance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) { fc = &graphql.FieldContext{Object: "UserSettings", Field: field, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) { switch field.Name { case "theme": return ec.fieldContext_AppearanceSettings_theme(ctx, field); case "fontSize": return ec.fieldContext_AppearanceSettings_fontSize(ctx, field); case "reduceMotion": return ec.fieldContext_AppearanceSettings_reduceMotion(ctx, field) }; return nil, fmt.Errorf("no field named %q was found under type AppearanceSettings", field.Name) }}; return fc, nil }
+
+func (ec *executionContext) fieldContext_UserToken_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type ID does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_tokenPrefix(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_scopes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_lastUsedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) fieldContext_UserToken_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserToken", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_id(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type ID does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_token(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_username(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_username(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_email(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_email(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.Email, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_role(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_role(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_createdAt(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_expiresAt(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_expiresAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.ExpiresAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_maxUses(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_maxUses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.MaxUses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_maxUses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Int does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_useCount(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_useCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.UseCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_useCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Int does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_usedAt(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_usedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.UsedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_usedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_status(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserInvite_inviteUrl(ctx context.Context, field graphql.CollectedField, obj *UserInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserInvite_inviteUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx
+		return obj.InviteURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserInvite_inviteUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{Object: "UserInvite", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}
 	return fc, nil
 }
 
@@ -24652,6 +30115,85 @@ func (ec *executionContext) unmarshalInputSettingInput(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAccountSettingsInput(ctx context.Context, obj interface{}) (AccountSettingsInput, error) {
+	var it AccountSettingsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) { asMap[k] = v }
+	fieldsInOrder := [...]string{"displayName", "bio", "location", "website", "timezone", "language", "dateFormat", "timeFormat"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok { continue }
+		switch k {
+		case "displayName": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.DisplayName = data
+		case "bio": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Bio = data
+		case "location": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Location = data
+		case "website": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("website")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Website = data
+		case "timezone": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timezone")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Timezone = data
+		case "language": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("language")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Language = data
+		case "dateFormat": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateFormat")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.DateFormat = data
+		case "timeFormat": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeFormat")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.TimeFormat = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPrivacySettingsInput(ctx context.Context, obj interface{}) (PrivacySettingsInput, error) {
+	var it PrivacySettingsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) { asMap[k] = v }
+	fieldsInOrder := [...]string{"visibility", "showEmail", "showActivity", "showOrgs", "searchable", "orgVisibility"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok { continue }
+		switch k {
+		case "visibility": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visibility")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Visibility = data
+		case "showEmail": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showEmail")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.ShowEmail = data
+		case "showActivity": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showActivity")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.ShowActivity = data
+		case "showOrgs": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOrgs")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.ShowOrgs = data
+		case "searchable": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("searchable")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.Searchable = data
+		case "orgVisibility": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orgVisibility")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.OrgVisibility = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.Context, obj interface{}) (NotificationSettingsInput, error) {
+	var it NotificationSettingsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) { asMap[k] = v }
+	fieldsInOrder := [...]string{"emailSecurity", "emailMentions", "emailUpdates", "emailDigest", "pushEnabled", "pushMentions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok { continue }
+		switch k {
+		case "emailSecurity": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailSecurity")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.EmailSecurity = data
+		case "emailMentions": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailMentions")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.EmailMentions = data
+		case "emailUpdates": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailUpdates")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.EmailUpdates = data
+		case "emailDigest": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailDigest")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.EmailDigest = data
+		case "pushEnabled": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pushEnabled")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.PushEnabled = data
+		case "pushMentions": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pushMentions")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.PushMentions = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAppearanceSettingsInput(ctx context.Context, obj interface{}) (AppearanceSettingsInput, error) {
+	var it AppearanceSettingsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) { asMap[k] = v }
+	fieldsInOrder := [...]string{"theme", "fontSize", "reduceMotion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok { continue }
+		switch k {
+		case "theme": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("theme")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.Theme = data
+		case "fontSize": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fontSize")); data, err := ec.unmarshalNString2string(ctx, v); if err != nil { return it, err }; it.FontSize = data
+		case "reduceMotion": ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reduceMotion")); data, err := ec.unmarshalNBoolean2bool(ctx, v); if err != nil { return it, err }; it.ReduceMotion = data
+		}
+	}
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -24678,9 +30220,6 @@ func (ec *executionContext) _APIToken(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "token":
 			out.Values[i] = ec._APIToken_token(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "name":
 			out.Values[i] = ec._APIToken_name(ctx, field, obj)
 		case "createdAt":
@@ -26298,9 +31837,163 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "registerUser":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_registerUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "loginUser":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_loginUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completeUserTwoFactor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeUserTwoFactor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completeUserInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeUserInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completeServerInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeServerInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "useUserRecoveryKey":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_useUserRecoveryKey(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "logoutUser":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_logoutUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "refreshUserSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_refreshUserSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requestPasswordReset":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_requestPasswordReset(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resetUserPassword":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resetUserPassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "verifyUserEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_verifyUserEmail(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "updateUserProfile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateUserProfile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "changeUserPassword":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_changeUserPassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "enableUserTwoFactor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_enableUserTwoFactor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disableUserTwoFactor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_disableUserTwoFactor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadUserAvatar":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadUserAvatar(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateUserAvatar":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateUserAvatar(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resetUserAvatar":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resetUserAvatar(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "verifyUserTwoFactor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_verifyUserTwoFactor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "regenerateUserRecoveryKeys":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_regenerateUserRecoveryKeys(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateUserSettings":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateUserSettings(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createUserToken":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createUserToken(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "revokeUserToken":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_revokeUserToken(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -26354,13 +32047,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "adminCreateUser":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_adminCreateUser(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "adminUpdateUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_adminUpdateUser(ctx, field)
@@ -26375,9 +32061,51 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "adminUpdateUserPassword":
+		case "adminCreateUserInvite":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_adminUpdateUserPassword(ctx, field)
+				return ec._Mutation_adminCreateUserInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "adminInviteServerAdmin":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_adminInviteServerAdmin(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "adminDeleteServerAdmin":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_adminDeleteServerAdmin(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "adminDisableServerAdmin":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_adminDisableServerAdmin(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "adminEnableServerAdmin":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_adminEnableServerAdmin(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "adminDeleteUserInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_adminDeleteUserInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "adminUpdateTask":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_adminUpdateTask(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -26399,13 +32127,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "adminResetSettings":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_adminResetSettings(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "adminReloadConfig":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_adminReloadConfig(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -27017,6 +32738,73 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "publicUserProfile":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_publicUserProfile(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "validateUserInvite":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+						res = graphql.Null
+					}
+				}()
+				res = ec._Query_validateUserInvite(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, out)
+				})
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "validateServerInvite":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+						res = graphql.Null
+					}
+				}()
+				res = ec._Query_validateServerInvite(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, out)
+				})
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "currentUser":
 			field := field
 
@@ -27027,6 +32815,116 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_currentUser(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "currentUserAvatar":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_currentUserAvatar(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "currentUserTwoFactorStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_currentUserTwoFactorStatus(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "currentUserTwoFactorSetup":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_currentUserTwoFactorSetup(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "userSettings":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userSettings(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "userTokens":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userTokens(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -27137,6 +33035,88 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminServerAdmins":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminServerAdmins(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminServerAdmin":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminServerAdmin(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminUserInvites":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminUserInvites(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminUserInvite":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminUserInvite(ctx, field)
 				return res
 			}
 
@@ -28380,6 +34360,856 @@ func (ec *executionContext) _UnreadCount(ctx context.Context, sel ast.SelectionS
 
 	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var serverAdminImplementors = []string{"ServerAdmin"}
+
+func (ec *executionContext) _ServerAdmin(ctx context.Context, sel ast.SelectionSet, obj *ServerAdmin) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverAdminImplementors)
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerAdmin")
+		case "id":
+			out.Values[i] = ec.marshalNID2string(ctx, field.Selections, obj.ID)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "username":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Username)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "email":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Email)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "isSuperAdmin":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.IsSuperAdmin)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "isActive":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.IsActive)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "createdAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.CreatedAt)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "updatedAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.UpdatedAt)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "lastLoginAt":
+			out.Values[i] = ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, obj.LastLoginAt)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{Label: label, Path: graphql.GetPath(ctx), FieldSet: dfs, Context: ctx})
+	}
+	return out
+}
+
+var serverAdminInviteImplementors = []string{"ServerAdminInvite"}
+
+func (ec *executionContext) _ServerAdminInvite(ctx context.Context, sel ast.SelectionSet, obj *ServerAdminInvite) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverAdminInviteImplementors)
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerAdminInvite")
+		case "token":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Token)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "email":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Email)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "expiresAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.ExpiresAt)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "expiresIn":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.ExpiresIn)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "inviteUrl":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.InviteURL)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{Label: label, Path: graphql.GetPath(ctx), FieldSet: dfs, Context: ctx})
+	}
+	return out
+}
+
+var serverAdminOverviewImplementors = []string{"ServerAdminOverview"}
+
+func (ec *executionContext) _ServerAdminOverview(ctx context.Context, sel ast.SelectionSet, obj *ServerAdminOverview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverAdminOverviewImplementors)
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerAdminOverview")
+		case "count":
+			out.Values[i] = ec.marshalNInt2int(ctx, field.Selections, obj.Count)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "currentAdmin":
+			out.Values[i] = ec.marshalNServerAdmin2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdmin(ctx, field.Selections, obj.CurrentAdmin)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "onlineAdmins":
+			out.Values[i] = ec.marshalNStringList(ctx, field.Selections, obj.OnlineAdmins)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "privacyNotice":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.PrivacyNotice)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{Label: label, Path: graphql.GetPath(ctx), FieldSet: dfs, Context: ctx})
+	}
+	return out
+}
+
+var authUserImplementors = []string{"AuthUser"}
+var authResultImplementors = []string{"AuthResult"}
+var userInviteValidationImplementors = []string{"UserInviteValidation"}
+var serverInviteValidationImplementors = []string{"ServerInviteValidation"}
+var userInviteCompletionImplementors = []string{"UserInviteCompletion"}
+var invitedServerAdminImplementors = []string{"InvitedServerAdmin"}
+var serverInviteCompletionImplementors = []string{"ServerInviteCompletion"}
+var userSettingsImplementors = []string{"UserSettings"}
+var accountSettingsImplementors = []string{"AccountSettings"}
+var privacySettingsImplementors = []string{"PrivacySettings"}
+var notificationSettingsImplementors = []string{"NotificationSettings"}
+var appearanceSettingsImplementors = []string{"AppearanceSettings"}
+var publicAvatarImplementors = []string{"PublicAvatar"}
+var publicUserProfileImplementors = []string{"PublicUserProfile"}
+var totpStatusImplementors = []string{"TOTPStatus"}
+var totpSetupImplementors = []string{"TOTPSetup"}
+var totpRecoveryKeysImplementors = []string{"TOTPRecoveryKeys"}
+
+func (ec *executionContext) _AuthUser(ctx context.Context, sel ast.SelectionSet, obj *AuthUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, authUserImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthUser")
+		case "id":
+			out.Values[i] = ec.marshalNID2string(ctx, field.Selections, obj.ID)
+		case "username":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Username)
+		case "email":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Email)
+		case "role":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Role)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) _AuthResult(ctx context.Context, sel ast.SelectionSet, obj *AuthResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, authResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthResult")
+		case "requiresTwoFactor":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.RequiresTwoFactor)
+		case "verificationRequired":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.VerificationRequired)
+		case "sessionToken":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.SessionToken)
+		case "token":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Token)
+		case "user":
+			if obj.User == nil {
+				out.Values[i] = graphql.Null
+			} else {
+				out.Values[i] = ec._AuthUser(ctx, field.Selections, obj.User)
+			}
+		case "expiresAt":
+			out.Values[i] = ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, obj.ExpiresAt)
+		case "remainingKeys":
+			out.Values[i] = ec.marshalOInt2ᚖint(ctx, field.Selections, obj.RemainingKeys)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null && field.Name != "sessionToken" && field.Name != "token" && field.Name != "user" && field.Name != "expiresAt" && field.Name != "remainingKeys" {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) _UserInviteValidation(ctx context.Context, sel ast.SelectionSet, obj *UserInviteValidation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userInviteValidationImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserInviteValidation")
+		case "username":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Username)
+		case "email":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Email)
+		case "role":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Role)
+		case "expiresAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.ExpiresAt)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) _ServerInviteValidation(ctx context.Context, sel ast.SelectionSet, obj *ServerInviteValidation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverInviteValidationImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerInviteValidation")
+		case "email":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Email)
+		case "expiresAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.ExpiresAt)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) _UserInviteCompletion(ctx context.Context, sel ast.SelectionSet, obj *UserInviteCompletion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userInviteCompletionImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserInviteCompletion")
+		case "message":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Message)
+		case "token":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Token)
+		case "user":
+			if obj.User == nil {
+				out.Values[i] = graphql.Null
+			} else {
+				out.Values[i] = ec._AuthUser(ctx, field.Selections, obj.User)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null && field.Name != "message" && field.Name != "token" && field.Name != "user" {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) _InvitedServerAdmin(ctx context.Context, sel ast.SelectionSet, obj *InvitedServerAdmin) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invitedServerAdminImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvitedServerAdmin")
+		case "id":
+			out.Values[i] = ec.marshalNID2string(ctx, field.Selections, obj.ID)
+		case "username":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Username)
+		case "email":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Email)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) _ServerInviteCompletion(ctx context.Context, sel ast.SelectionSet, obj *ServerInviteCompletion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverInviteCompletionImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerInviteCompletion")
+		case "message":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Message)
+		case "admin":
+			if obj.Admin == nil {
+				out.Values[i] = graphql.Null
+			} else {
+				out.Values[i] = ec._InvitedServerAdmin(ctx, field.Selections, obj.Admin)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null {
+			out.Invalids++
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+func (ec *executionContext) fieldContext_UserInviteValidation_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteValidation", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_UserInviteValidation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteValidation", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_UserInviteValidation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteValidation", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_UserInviteValidation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteValidation", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_ServerInviteValidation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "ServerInviteValidation", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_ServerInviteValidation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "ServerInviteValidation", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type Time does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_UserInviteCompletion_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteCompletion", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_UserInviteCompletion_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteCompletion", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_UserInviteCompletion_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "UserInviteCompletion", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "id":
+			return ec.fieldContext_AuthUser_id(ctx, field)
+		case "username":
+			return ec.fieldContext_AuthUser_username(ctx, field)
+		case "email":
+			return ec.fieldContext_AuthUser_email(ctx, field)
+		case "role":
+			return ec.fieldContext_AuthUser_role(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type AuthUser", field.Name)
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_InvitedServerAdmin_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "InvitedServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type ID does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_InvitedServerAdmin_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "InvitedServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_InvitedServerAdmin_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "InvitedServerAdmin", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_ServerInviteCompletion_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "ServerInviteCompletion", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		return nil, errors.New("field of type String does not have child fields")
+	}}, nil
+}
+
+func (ec *executionContext) fieldContext_ServerInviteCompletion_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return &graphql.FieldContext{Object: "ServerInviteCompletion", Field: field, IsMethod: false, IsResolver: false, Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+		switch field.Name {
+		case "id":
+			return ec.fieldContext_InvitedServerAdmin_id(ctx, field)
+		case "username":
+			return ec.fieldContext_InvitedServerAdmin_username(ctx, field)
+		case "email":
+			return ec.fieldContext_InvitedServerAdmin_email(ctx, field)
+		}
+		return nil, fmt.Errorf("no field named %q was found under type InvitedServerAdmin", field.Name)
+	}}, nil
+}
+
+func (ec *executionContext) _AccountSettings(ctx context.Context, sel ast.SelectionSet, obj *AccountSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountSettingsImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountSettings")
+		case "displayName":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.DisplayName)
+		case "bio":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Bio)
+		case "location":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Location)
+		case "website":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Website)
+		case "timezone":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Timezone)
+		case "language":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Language)
+		case "dateFormat":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.DateFormat)
+		case "timeFormat":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.TimeFormat)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _PrivacySettings(ctx context.Context, sel ast.SelectionSet, obj *PrivacySettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, privacySettingsImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PrivacySettings")
+		case "visibility":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Visibility)
+		case "showEmail":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.ShowEmail)
+		case "showActivity":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.ShowActivity)
+		case "showOrgs":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.ShowOrgs)
+		case "searchable":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.Searchable)
+		case "orgVisibility":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.OrgVisibility)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _NotificationSettings(ctx context.Context, sel ast.SelectionSet, obj *NotificationSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, notificationSettingsImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NotificationSettings")
+		case "emailSecurity":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.EmailSecurity)
+		case "emailMentions":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.EmailMentions)
+		case "emailUpdates":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.EmailUpdates)
+		case "emailDigest":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.EmailDigest)
+		case "pushEnabled":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.PushEnabled)
+		case "pushMentions":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.PushMentions)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _AppearanceSettings(ctx context.Context, sel ast.SelectionSet, obj *AppearanceSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appearanceSettingsImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppearanceSettings")
+		case "theme":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Theme)
+		case "fontSize":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.FontSize)
+		case "reduceMotion":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.ReduceMotion)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _PublicAvatar(ctx context.Context, sel ast.SelectionSet, obj *PublicAvatar) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, publicAvatarImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PublicAvatar")
+		case "type":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Type)
+		case "urls":
+			out.Values[i] = ec.marshalOAny2interface(ctx, field.Selections, obj.Urls)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _PublicUserProfile(ctx context.Context, sel ast.SelectionSet, obj *PublicUserProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, publicUserProfileImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PublicUserProfile")
+		case "username":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Username)
+		case "displayName":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.DisplayName)
+		case "avatar":
+			out.Values[i] = ec.marshalNPublicAvatar2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicAvatar(ctx, field.Selections, obj.Avatar)
+		case "bio":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Bio)
+		case "location":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Location)
+		case "website":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Website)
+		case "verified":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.Verified)
+		case "createdAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.CreatedAt)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _TOTPStatus(ctx context.Context, sel ast.SelectionSet, obj *TOTPStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, totpStatusImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TOTPStatus")
+		case "enabled":
+			out.Values[i] = ec.marshalNBoolean2bool(ctx, field.Selections, obj.Enabled)
+		case "recoveryKeysCount":
+			out.Values[i] = ec.marshalNInt2int(ctx, field.Selections, obj.RecoveryKeysCount)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _TOTPSetup(ctx context.Context, sel ast.SelectionSet, obj *TOTPSetup) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, totpSetupImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TOTPSetup")
+		case "secret":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Secret)
+		case "qrCode":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.QrCode)
+		case "manualUrl":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.ManualURL)
+		case "account":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Account)
+		case "issuer":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Issuer)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _TOTPRecoveryKeys(ctx context.Context, sel ast.SelectionSet, obj *TOTPRecoveryKeys) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, totpRecoveryKeysImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TOTPRecoveryKeys")
+		case "message":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.Message)
+		case "recoveryKeys":
+			out.Values[i] = ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, obj.RecoveryKeys)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.SelectionSet, obj *UserSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userSettingsImplementors)
+	out := graphql.NewFieldSet(fields)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserSettings")
+		case "account":
+			out.Values[i] = ec.marshalNAccountSettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐAccountSettings(ctx, field.Selections, obj.Account)
+		case "privacy":
+			out.Values[i] = ec.marshalNPrivacySettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐPrivacySettings(ctx, field.Selections, obj.Privacy)
+		case "notifications":
+			out.Values[i] = ec.marshalNNotificationSettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐNotificationSettings(ctx, field.Selections, obj.Notifications)
+		case "appearance":
+			out.Values[i] = ec.marshalNAppearanceSettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐAppearanceSettings(ctx, field.Selections, obj.Appearance)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+		if out.Values[i] == graphql.Null { out.Invalids++ }
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 { return graphql.Null }
+	return out
+}
+
+var userInviteImplementors = []string{"UserInvite"}
+
+var userTokenImplementors = []string{"UserToken"}
+
+func (ec *executionContext) _UserToken(ctx context.Context, sel ast.SelectionSet, obj *UserToken) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userTokenImplementors)
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserToken")
+		case "id":
+			out.Values[i] = ec.marshalNID2string(ctx, field.Selections, obj.ID)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "name":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Name)
+		case "tokenPrefix":
+			out.Values[i] = ec.marshalNString2string(ctx, field.Selections, obj.TokenPrefix)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "scopes":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Scopes)
+		case "createdAt":
+			out.Values[i] = ec.marshalNTime2timeᚐTime(ctx, field.Selections, obj.CreatedAt)
+			if out.Values[i] == graphql.Null { out.Invalids++ }
+		case "expiresAt":
+			out.Values[i] = ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, obj.ExpiresAt)
+		case "lastUsedAt":
+			out.Values[i] = ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, obj.LastUsedAt)
+		case "token":
+			out.Values[i] = ec.marshalOString2ᚖstring(ctx, field.Selections, obj.Token)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{Label: label, Path: graphql.GetPath(ctx), FieldSet: dfs, Context: ctx})
+	}
+	return out
+}
+
+func (ec *executionContext) _UserInvite(ctx context.Context, sel ast.SelectionSet, obj *UserInvite) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userInviteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserInvite")
+		case "id":
+			out.Values[i] = ec._UserInvite_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "token":
+			out.Values[i] = ec._UserInvite_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "username":
+			out.Values[i] = ec._UserInvite_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._UserInvite_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "role":
+			out.Values[i] = ec._UserInvite_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._UserInvite_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._UserInvite_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxUses":
+			out.Values[i] = ec._UserInvite_maxUses(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "useCount":
+			out.Values[i] = ec._UserInvite_useCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "usedAt":
+			out.Values[i] = ec._UserInvite_usedAt(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._UserInvite_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inviteUrl":
+			out.Values[i] = ec._UserInvite_inviteUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 	for label, dfs := range deferred {
 		ec.processDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
@@ -29936,6 +36766,54 @@ func (ec *executionContext) marshalNRequestStats2ᚖgithubᚗcomᚋapimgrᚋweat
 	return ec._RequestStats(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNServerAdmin2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdmin(ctx context.Context, sel ast.SelectionSet, v *ServerAdmin) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServerAdmin(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOServerAdmin2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdmin(ctx context.Context, sel ast.SelectionSet, v *ServerAdmin) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ServerAdmin(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNServerAdminInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdminInvite(ctx context.Context, sel ast.SelectionSet, v *ServerAdminInvite) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServerAdminInvite(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNServerAdminOverview2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐServerAdminOverview(ctx context.Context, sel ast.SelectionSet, v *ServerAdminOverview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServerAdminOverview(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStringList(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+		if ret[i] == graphql.Null {
+			return graphql.Null
+		}
+	}
+	return ret
+}
+
 func (ec *executionContext) marshalNSMTPProvider2ᚕᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐSMTPProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*SMTPProvider) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -30186,6 +37064,38 @@ func (ec *executionContext) unmarshalNSettingInput2ᚖgithubᚗcomᚋapimgrᚋwe
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOAccountSettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐAccountSettingsInput(ctx context.Context, v interface{}) (*AccountSettingsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAccountSettingsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOAppearanceSettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐAppearanceSettingsInput(ctx context.Context, v interface{}) (*AppearanceSettingsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAppearanceSettingsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐNotificationSettingsInput(ctx context.Context, v interface{}) (*NotificationSettingsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputNotificationSettingsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOPrivacySettingsInput2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPrivacySettingsInput(ctx context.Context, v interface{}) (*PrivacySettingsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPrivacySettingsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNSevereWeather2ᚕᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐSevereWeatherᚄ(ctx context.Context, sel ast.SelectionSet, v []*SevereWeather) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -30350,6 +37260,208 @@ func (ec *executionContext) marshalNUnreadCount2ᚖgithubᚗcomᚋapimgrᚋweath
 		return graphql.Null
 	}
 	return ec._UnreadCount(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserInvite2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInvite(ctx context.Context, sel ast.SelectionSet, v UserInvite) graphql.Marshaler {
+	return ec._UserInvite(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccountSettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐAccountSettings(ctx context.Context, sel ast.SelectionSet, v AccountSettings) graphql.Marshaler {
+	return ec._AccountSettings(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAppearanceSettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐAppearanceSettings(ctx context.Context, sel ast.SelectionSet, v AppearanceSettings) graphql.Marshaler {
+	return ec._AppearanceSettings(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNotificationSettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v NotificationSettings) graphql.Marshaler {
+	return ec._NotificationSettings(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPrivacySettings2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐPrivacySettings(ctx context.Context, sel ast.SelectionSet, v PrivacySettings) graphql.Marshaler {
+	return ec._PrivacySettings(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPublicAvatar2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicAvatar(ctx context.Context, sel ast.SelectionSet, v PublicAvatar) graphql.Marshaler {
+	return ec._PublicAvatar(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPublicAvatar2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicAvatar(ctx context.Context, sel ast.SelectionSet, v *PublicAvatar) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PublicAvatar(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPublicUserProfile2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐPublicUserProfile(ctx context.Context, sel ast.SelectionSet, v *PublicUserProfile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PublicUserProfile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTOTPStatus2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPStatus(ctx context.Context, sel ast.SelectionSet, v *TOTPStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TOTPStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTOTPSetup2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPSetup(ctx context.Context, sel ast.SelectionSet, v *TOTPSetup) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TOTPSetup(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTOTPRecoveryKeys2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐTOTPRecoveryKeys(ctx context.Context, sel ast.SelectionSet, v *TOTPRecoveryKeys) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TOTPRecoveryKeys(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserSettings2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserSettings(ctx context.Context, sel ast.SelectionSet, v *UserSettings) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserSettings(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserToken2githubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserToken(ctx context.Context, sel ast.SelectionSet, v UserToken) graphql.Marshaler {
+	return ec._UserToken(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserToken2ᚕᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserTokenᚄ(ctx context.Context, sel ast.SelectionSet, v []*UserToken) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{Index: &i, Result: &v[i]}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUserToken2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserToken(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUserToken2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserToken(ctx context.Context, sel ast.SelectionSet, v *UserToken) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserToken(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserToken2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserToken(ctx context.Context, sel ast.SelectionSet, v *UserToken) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserToken(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserInvite2ᚕᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInviteᚄ(ctx context.Context, sel ast.SelectionSet, v []*UserInvite) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUserInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInvite(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUserInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInvite(ctx context.Context, sel ast.SelectionSet, v *UserInvite) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserInvite(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserInvite2ᚖgithubᚗcomᚋapimgrᚋweatherᚋgraphᚐUserInvite(ctx context.Context, sel ast.SelectionSet, v *UserInvite) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserInvite(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋapimgrᚋweatherᚋsrcᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
@@ -30592,6 +37704,44 @@ func (ec *executionContext) marshalN__DirectiveLocation2ᚕstringᚄ(ctx context
 	return ret
 }
 
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{Index: &i, Result: &v[i]}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+	}
+	wg.Wait()
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+	return ret
+}
+
 func (ec *executionContext) marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx context.Context, sel ast.SelectionSet, v introspection.EnumValue) graphql.Marshaler {
 	return ec.___EnumValue(ctx, sel, &v)
 }
@@ -30726,6 +37876,11 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpload2Upload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

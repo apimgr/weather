@@ -31,6 +31,36 @@ func NewEarthquakeHandler(es *service.EarthquakeService, ws *service.WeatherServ
 	}
 }
 
+// ListEarthquakes returns earthquake data for non-HTTP callers such as GraphQL.
+func (h *EarthquakeHandler) ListEarthquakes(feedType string, minMagnitude *float64, limit *int) ([]service.Earthquake, error) {
+	if h == nil || h.earthquakeService == nil {
+		return nil, fmt.Errorf("earthquake service not initialized")
+	}
+
+	if feedType == "" {
+		feedType = "all_day"
+	}
+
+	collection, err := h.earthquakeService.GetEarthquakes(feedType)
+	if err != nil {
+		return nil, err
+	}
+
+	earthquakes := make([]service.Earthquake, 0, len(collection.Earthquakes))
+	for _, eq := range collection.Earthquakes {
+		if minMagnitude != nil && eq.Magnitude < *minMagnitude {
+			continue
+		}
+		earthquakes = append(earthquakes, eq)
+	}
+
+	if limit != nil && *limit > 0 && len(earthquakes) > *limit {
+		earthquakes = earthquakes[:*limit]
+	}
+
+	return earthquakes, nil
+}
+
 // HandleEarthquakes serves the earthquake interface
 func (h *EarthquakeHandler) HandleEarthquakes(c *gin.Context) {
 	// Check if services are initialized
@@ -238,13 +268,11 @@ func (h *EarthquakeHandler) HandleEarthquakeAPI(c *gin.Context) {
 
 	earthquakes, err := h.earthquakeService.GetEarthquakes(feedType)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		RespondError(c, http.StatusInternalServerError, ErrInternal, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, earthquakes)
+	RespondNegotiatedData(c, http.StatusOK, earthquakes)
 }
 
 // HandleEarthquakeByIDAPI serves JSON data for a specific earthquake by ID
@@ -261,10 +289,7 @@ func (h *EarthquakeHandler) HandleEarthquakeAPI(c *gin.Context) {
 func (h *EarthquakeHandler) HandleEarthquakeByIDAPI(c *gin.Context) {
 	earthquakeID := c.Param("id")
 	if earthquakeID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"ok":    false,
-			"error": "Earthquake ID required",
-		})
+		RespondError(c, http.StatusBadRequest, ErrInvalidInput, "Earthquake ID required")
 		return
 	}
 
@@ -291,14 +316,11 @@ func (h *EarthquakeHandler) HandleEarthquakeByIDAPI(c *gin.Context) {
 	}
 
 	if earthquake == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"ok":    false,
-			"error": "Earthquake not found",
-		})
+		NotFound(c, "Earthquake not found")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ok":         true,
 		"earthquake": earthquake,
 	})

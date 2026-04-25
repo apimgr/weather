@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
 )
 
@@ -245,10 +246,7 @@ Disallow: /api/
 Sitemap: {app_url}/sitemap.xml`, Type: "text", Description: "robots.txt content - {app_url} will be replaced with actual URL"},
 
 		// security.txt (RFC 9116)
-		"web.security_txt": {Value: `Contact: mailto:security@example.com
-Expires: 2026-12-31T23:59:59Z
-Preferred-Languages: en
-Canonical: {app_url}/.well-known/security.txt`, Type: "text", Description: "security.txt content (RFC 9116) - {app_url} will be replaced with actual URL"},
+		"web.security_txt": {Value: fmt.Sprintf("Contact: mailto:%s\nExpires: %s\nPreferred-Languages: en\nCanonical: {app_url}/.well-known/security.txt", config.DefaultEmailAddress("security", config.GetGlobalConfig()), time.Now().AddDate(1, 0, 0).UTC().Format(time.RFC3339)), Type: "text", Description: "security.txt content (RFC 9116) - {app_url} will be replaced with actual URL"},
 
 		// Features
 		"features.registration_enabled": {Value: "true", Type: "boolean", Description: "Allow new users to register accounts"},

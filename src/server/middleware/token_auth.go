@@ -101,6 +101,7 @@ func TokenAuthMiddleware(serverDB, usersDB *sql.DB) gin.HandlerFunc {
 				return
 			}
 			c.Set("admin", admin)
+			c.Set("db", serverDB)
 			c.Set("auth_type", "admin_token")
 
 		case TokenTypeUser:

@@ -97,4 +97,4 @@ strconv.ParseBool(value)  // Only handles true/false/1/0/t/f — too restrictive
 
 ## Reference
 
-For complete details, see AI.md PART 5 (lines 6463-8374), PART 6 (8375-8982), PART 12 (15636-16762)
+For complete details, see AI.md PART 5 (6515-8437), PART 6 (8438-9063), PART 12 (15704-16830)

@@ -524,6 +524,20 @@ func (m *AdminModel) RegenerateAPIToken(id int64) (string, error) {
 	return apiToken, nil
 }
 
+// RevokeAPIToken clears the stored API token for an admin.
+func (m *AdminModel) RevokeAPIToken(id int64) error {
+	_, err := database.GetServerDB().Exec(`
+		UPDATE server_admin_credentials
+		SET api_token_hash = NULL, api_token_prefix = NULL, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`, id)
+	if err != nil {
+		return fmt.Errorf("failed to revoke API token: %w", err)
+	}
+
+	return nil
+}
+
 // Delete removes an admin account
 // Per TEMPLATE.md PART 22: Cannot delete the last super admin
 func (m *AdminModel) Delete(id int64) error {
@@ -624,17 +638,19 @@ type AdminInviteModel struct {
 	DB *sql.DB
 }
 
-// CreateInvite creates a new admin invite token
-// TEMPLATE.md PART 22: 15-minute expiry REQUIRED
-func (m *AdminInviteModel) CreateInvite(email string, invitedBy int64) (*AdminInvite, error) {
+// CreateInvite creates a new admin invite token.
+func (m *AdminInviteModel) CreateInvite(email string, invitedBy int64, expiresIn time.Duration) (*AdminInvite, error) {
 	// Generate secure invite token
 	token, err := GenerateInviteToken()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate invite token: %w", err)
 	}
 
-	// TEMPLATE.md PART 22: MUST expire after 15 minutes
-	expiresAt := time.Now().Add(15 * time.Minute)
+	if expiresIn <= 0 {
+		return nil, fmt.Errorf("invite expiration must be greater than zero")
+	}
+
+	expiresAt := time.Now().Add(expiresIn)
 
 	result, err := database.GetServerDB().Exec(`
 		INSERT INTO server_admin_invites (token, invited_email, invited_by, created_at, expires_at)
@@ -778,7 +794,7 @@ func (m *AdminSessionModel) CreateSession(adminID int64, ipAddress, userAgent st
 
 	expiresAt := time.Now().Add(duration)
 
-	result, err := database.GetServerDB().Exec(`
+	_, err = database.GetServerDB().Exec(`
 		INSERT INTO server_admin_sessions (id, admin_id, ip_address, user_agent, created_at, expires_at)
 		VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
 	`, sessionID, adminID, ipAddress, userAgent, expiresAt)
@@ -787,13 +803,8 @@ func (m *AdminSessionModel) CreateSession(adminID int64, ipAddress, userAgent st
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session ID: %w", err)
-	}
-
 	return &AdminSession{
-		ID:         id,
+		ID:         0,
 		AdminID:    adminID,
 		SessionID:  sessionID,
 		IPAddress:  ipAddress,

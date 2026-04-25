@@ -27,7 +27,7 @@ type LocationModel struct {
 // Create creates a new saved location
 func (m *LocationModel) Create(userID int, name string, latitude, longitude float64, timezone string) (*SavedLocation, error) {
 	result, err := m.DB.Exec(`
-		INSERT INTO saved_locations (user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at)
+		INSERT INTO user_saved_locations (user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`, userID, name, latitude, longitude, timezone, true, time.Now(), time.Now())
 
@@ -50,7 +50,7 @@ func (m *LocationModel) GetByID(id int) (*SavedLocation, error) {
 
 	err := m.DB.QueryRow(`
 		SELECT id, user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at
-		FROM saved_locations WHERE id = ?
+		FROM user_saved_locations WHERE id = ?
 	`, id).Scan(&location.ID, &location.UserID, &location.Name, &location.Latitude,
 		&location.Longitude, &timezone, &location.AlertsEnabled, &location.CreatedAt, &location.UpdatedAt)
 
@@ -72,7 +72,7 @@ func (m *LocationModel) GetByID(id int) (*SavedLocation, error) {
 func (m *LocationModel) GetByUserID(userID int) ([]*SavedLocation, error) {
 	rows, err := m.DB.Query(`
 		SELECT id, user_id, name, latitude, longitude, timezone, alerts_enabled, created_at, updated_at
-		FROM saved_locations WHERE user_id = ?
+		FROM user_saved_locations WHERE user_id = ?
 		ORDER BY created_at DESC
 	`, userID)
 	if err != nil {
@@ -101,7 +101,7 @@ func (m *LocationModel) GetByUserID(userID int) ([]*SavedLocation, error) {
 // Update updates a location
 func (m *LocationModel) Update(id int, name string, latitude, longitude float64, timezone string, alertsEnabled bool) error {
 	_, err := m.DB.Exec(`
-		UPDATE saved_locations
+		UPDATE user_saved_locations
 		SET name = ?, latitude = ?, longitude = ?, timezone = ?, alerts_enabled = ?, updated_at = ?
 		WHERE id = ?
 	`, name, latitude, longitude, timezone, alertsEnabled, time.Now(), id)
@@ -111,7 +111,7 @@ func (m *LocationModel) Update(id int, name string, latitude, longitude float64,
 // ToggleAlerts toggles alerts for a location
 func (m *LocationModel) ToggleAlerts(id int, enabled bool) error {
 	_, err := m.DB.Exec(`
-		UPDATE saved_locations SET alerts_enabled = ?, updated_at = ?
+		UPDATE user_saved_locations SET alerts_enabled = ?, updated_at = ?
 		WHERE id = ?
 	`, enabled, time.Now(), id)
 	return err
@@ -119,13 +119,13 @@ func (m *LocationModel) ToggleAlerts(id int, enabled bool) error {
 
 // Delete deletes a location
 func (m *LocationModel) Delete(id int) error {
-	_, err := m.DB.Exec("DELETE FROM saved_locations WHERE id = ?", id)
+	_, err := m.DB.Exec("DELETE FROM user_saved_locations WHERE id = ?", id)
 	return err
 }
 
 // Count returns the number of locations for a user
 func (m *LocationModel) Count(userID int) (int, error) {
 	var count int
-	err := m.DB.QueryRow("SELECT COUNT(*) FROM saved_locations WHERE user_id = ?", userID).Scan(&count)
+	err := m.DB.QueryRow("SELECT COUNT(*) FROM user_saved_locations WHERE user_id = ?", userID).Scan(&count)
 	return count, err
 }

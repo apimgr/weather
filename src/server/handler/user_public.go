@@ -45,13 +45,15 @@ type AvatarInfo struct {
 	URLs map[string]string `json:"urls"`
 }
 
-// GetPublicProfile returns a public user profile
-// Route: GET /api/v1/public/users/:username
-// Per AI.md PART 34: Private profiles return 404 (not 403) to prevent existence leakage
-func (h *UserPublicHandler) GetPublicProfile(c *gin.Context) {
-	username := strings.ToLower(c.Param("username"))
+// LoadPublicUserProfile returns the same public profile payload used by GET /api/v1/public/users/:username.
+func LoadPublicUserProfile(db *sql.DB, username string, viewerUserID int64) (*PublicUserProfile, error) {
+	h := NewUserPublicHandler(db)
+	return h.loadPublicProfile(username, viewerUserID)
+}
 
-	// Query user from database
+func (h *UserPublicHandler) loadPublicProfile(username string, viewerUserID int64) (*PublicUserProfile, error) {
+	username = strings.ToLower(strings.TrimSpace(username))
+
 	var user struct {
 		ID            int64
 		Username      string
@@ -77,7 +79,37 @@ func (h *UserPublicHandler) GetPublicProfile(c *gin.Context) {
 		&user.Bio, &user.Location, &user.Website, &user.Visibility,
 		&user.AvatarType, &user.AvatarURL, &user.EmailVerified, &user.CreatedAt,
 	)
+	if err != nil {
+		return nil, err
+	}
 
+	if user.Visibility == "private" && viewerUserID != user.ID {
+		return nil, sql.ErrNoRows
+	}
+
+	return &PublicUserProfile{
+		Username:    user.Username,
+		DisplayName: user.DisplayName.String,
+		Avatar:      buildAvatarInfo(user.Email, user.AvatarType, user.AvatarURL),
+		Bio:         user.Bio.String,
+		Location:    user.Location.String,
+		Website:     user.Website.String,
+		Verified:    user.EmailVerified,
+		CreatedAt:   user.CreatedAt,
+	}, nil
+}
+
+// GetPublicProfile returns a public user profile
+// Route: GET /api/v1/public/users/:username
+// Per AI.md PART 34: Private profiles return 404 (not 403) to prevent existence leakage
+func (h *UserPublicHandler) GetPublicProfile(c *gin.Context) {
+	username := strings.ToLower(c.Param("username"))
+	var viewerUserID int64
+	if currentUser, ok := middleware.GetCurrentUser(c); ok {
+		viewerUserID = currentUser.ID
+	}
+
+	profile, err := h.loadPublicProfile(username, viewerUserID)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -85,59 +117,6 @@ func (h *UserPublicHandler) GetPublicProfile(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
-	}
-
-	// Per AI.md PART 34: Private profiles return 404 to prevent existence leakage
-	if user.Visibility == "private" {
-		// Check if requester is the user themselves
-		currentUser, ok := middleware.GetCurrentUser(c)
-		if !ok || currentUser.ID != user.ID {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-			return
-		}
-	}
-
-	// Build avatar info
-	avatarType := "gravatar"
-	if user.AvatarType.Valid && user.AvatarType.String != "" {
-		avatarType = user.AvatarType.String
-	}
-
-	avatarURLs := make(map[string]string)
-	switch avatarType {
-	case "gravatar":
-		avatarURLs["256"] = GetGravatarURL(user.Email, 256)
-		avatarURLs["128"] = GetGravatarURL(user.Email, 128)
-		avatarURLs["64"] = GetGravatarURL(user.Email, 64)
-		avatarURLs["32"] = GetGravatarURL(user.Email, 32)
-	case "url":
-		if user.AvatarURL.Valid {
-			avatarURLs["original"] = user.AvatarURL.String
-		}
-	case "upload":
-		if user.AvatarURL.Valid {
-			// For uploaded avatars, we'd have multiple size variants
-			base := user.AvatarURL.String
-			avatarURLs["original"] = base
-			avatarURLs["256"] = base // In production, these would be different files
-			avatarURLs["128"] = base
-			avatarURLs["64"] = base
-			avatarURLs["32"] = base
-		}
-	}
-
-	profile := PublicUserProfile{
-		Username:    user.Username,
-		DisplayName: user.DisplayName.String,
-		Avatar: AvatarInfo{
-			Type: avatarType,
-			URLs: avatarURLs,
-		},
-		Bio:       user.Bio.String,
-		Location:  user.Location.String,
-		Website:   user.Website.String,
-		Verified:  user.EmailVerified,
-		CreatedAt: user.CreatedAt,
 	}
 
 	c.JSON(http.StatusOK, profile)
@@ -151,10 +130,174 @@ func GetGravatarURL(email string, size int) string {
 	return fmt.Sprintf("https://www.gravatar.com/avatar/%x?s=%d&d=identicon", hash, size)
 }
 
+func buildAvatarInfo(email string, avatarType sql.NullString, avatarURL sql.NullString) AvatarInfo {
+	aType := "gravatar"
+	if avatarType.Valid && avatarType.String != "" {
+		aType = avatarType.String
+	}
+
+	urls := make(map[string]string)
+	switch aType {
+	case "gravatar":
+		urls["256"] = GetGravatarURL(email, 256)
+		urls["128"] = GetGravatarURL(email, 128)
+		urls["64"] = GetGravatarURL(email, 64)
+		urls["32"] = GetGravatarURL(email, 32)
+	case "url":
+		if avatarURL.Valid {
+			urls["original"] = avatarURL.String
+		}
+	case "upload":
+		if avatarURL.Valid {
+			base := avatarURL.String
+			urls["original"] = base
+			urls["256"] = base
+			urls["128"] = base
+			urls["64"] = base
+			urls["32"] = base
+		}
+	}
+
+	return AvatarInfo{
+		Type: aType,
+		URLs: urls,
+	}
+}
+
 // AvatarResponse represents the response for avatar endpoints
 type AvatarResponse struct {
 	Type string            `json:"type"`
 	URLs map[string]string `json:"urls"`
+}
+
+// AvatarUploadRequest represents avatar upload metadata shared by REST and GraphQL.
+type AvatarUploadRequest struct {
+	Filename    string
+	Size        int64
+	ContentType string
+}
+
+// LoadCurrentUserAvatar returns the same avatar payload used by GET /api/v1/users/avatar.
+func LoadCurrentUserAvatar(db *sql.DB, userID int64) (*AvatarResponse, error) {
+	h := NewUserPublicHandler(db)
+	return h.loadCurrentUserAvatar(userID)
+}
+
+// UpdateCurrentUserAvatar applies the same avatar update used by PATCH /api/v1/users/avatar.
+func UpdateCurrentUserAvatar(db *sql.DB, userID int64, req *UpdateAvatarRequest) (*AvatarResponse, error) {
+	h := NewUserPublicHandler(db)
+	if err := h.updateCurrentUserAvatar(userID, req); err != nil {
+		return nil, err
+	}
+	return h.loadCurrentUserAvatar(userID)
+}
+
+// ResetCurrentUserAvatar applies the same avatar reset used by DELETE /api/v1/users/avatar.
+func ResetCurrentUserAvatar(db *sql.DB, userID int64) error {
+	h := NewUserPublicHandler(db)
+	return h.resetCurrentUserAvatar(userID)
+}
+
+// UploadCurrentUserAvatar applies the same avatar upload used by POST /api/v1/users/avatar.
+func UploadCurrentUserAvatar(db *sql.DB, userID int64, upload *AvatarUploadRequest) (*AvatarResponse, error) {
+	h := NewUserPublicHandler(db)
+	if err := h.uploadCurrentUserAvatar(userID, upload); err != nil {
+		return nil, err
+	}
+	return h.loadCurrentUserAvatar(userID)
+}
+
+func (h *UserPublicHandler) loadCurrentUserAvatar(userID int64) (*AvatarResponse, error) {
+	var avatarType, avatarURL sql.NullString
+	var email string
+
+	err := h.DB.QueryRow(`
+		SELECT email, avatar_type, avatar_url
+		FROM user_accounts WHERE id = ?
+	`, userID).Scan(&email, &avatarType, &avatarURL)
+	if err != nil {
+		return nil, err
+	}
+
+	avatar := buildAvatarInfo(email, avatarType, avatarURL)
+	return &AvatarResponse{
+		Type: avatar.Type,
+		URLs: avatar.URLs,
+	}, nil
+}
+
+func (h *UserPublicHandler) updateCurrentUserAvatar(userID int64, req *UpdateAvatarRequest) error {
+	if req == nil {
+		return fmt.Errorf("invalid request")
+	}
+
+	if req.Type != "gravatar" && req.Type != "url" {
+		return fmt.Errorf("avatar type must be one of: gravatar, url")
+	}
+
+	if req.Type == "url" {
+		if strings.TrimSpace(req.URL) == "" {
+			return fmt.Errorf("URL is required for url avatar type")
+		}
+		if !strings.HasPrefix(req.URL, "https://") {
+			return fmt.Errorf("avatar URL must use HTTPS")
+		}
+	}
+
+	var avatarURL sql.NullString
+	if req.Type == "url" {
+		avatarURL = sql.NullString{String: strings.TrimSpace(req.URL), Valid: true}
+	}
+
+	_, err := h.DB.Exec(`
+		UPDATE user_accounts
+		SET avatar_type = ?, avatar_url = ?, updated_at = ?
+		WHERE id = ?
+	`, req.Type, avatarURL, time.Now(), userID)
+	return err
+}
+
+func (h *UserPublicHandler) resetCurrentUserAvatar(userID int64) error {
+	_, err := h.DB.Exec(`
+		UPDATE user_accounts
+		SET avatar_type = 'gravatar', avatar_url = NULL, updated_at = ?
+		WHERE id = ?
+	`, time.Now(), userID)
+	return err
+}
+
+func (h *UserPublicHandler) uploadCurrentUserAvatar(userID int64, upload *AvatarUploadRequest) error {
+	if upload == nil {
+		return fmt.Errorf("No file uploaded")
+	}
+
+	if upload.Size > 2*1024*1024 {
+		return fmt.Errorf("File too large (max 2MB)")
+	}
+
+	contentType := strings.TrimSpace(upload.ContentType)
+	allowedTypes := map[string]bool{
+		"image/png":                true,
+		"image/jpeg":               true,
+		"image/gif":                true,
+		"image/webp":               true,
+		"image/bmp":                true,
+		"image/svg+xml":            true,
+		"image/x-icon":             true,
+		"image/vnd.microsoft.icon": true,
+	}
+	if !allowedTypes[contentType] {
+		return fmt.Errorf("Invalid image type")
+	}
+
+	avatarURL := fmt.Sprintf("/uploads/avatars/user_%d.%s", userID, getExtension(contentType))
+
+	_, err := h.DB.Exec(`
+		UPDATE user_accounts
+		SET avatar_type = 'upload', avatar_url = ?, updated_at = ?
+		WHERE id = ?
+	`, avatarURL, time.Now(), userID)
+	return err
 }
 
 // GetCurrentUserAvatar returns the current user's avatar info
@@ -166,49 +309,13 @@ func (h *UserPublicHandler) GetCurrentUserAvatar(c *gin.Context) {
 		return
 	}
 
-	// Get avatar info from database
-	var avatarType, avatarURL sql.NullString
-	var email string
-	err := h.DB.QueryRow(`
-		SELECT email, avatar_type, avatar_url
-		FROM user_accounts WHERE id = ?
-	`, user.ID).Scan(&email, &avatarType, &avatarURL)
-
+	response, err := h.loadCurrentUserAvatar(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get avatar info"})
 		return
 	}
 
-	aType := "gravatar"
-	if avatarType.Valid && avatarType.String != "" {
-		aType = avatarType.String
-	}
-
-	avatarURLs := make(map[string]string)
-	switch aType {
-	case "gravatar":
-		avatarURLs["256"] = GetGravatarURL(email, 256)
-		avatarURLs["128"] = GetGravatarURL(email, 128)
-		avatarURLs["64"] = GetGravatarURL(email, 64)
-		avatarURLs["32"] = GetGravatarURL(email, 32)
-	case "url":
-		if avatarURL.Valid {
-			avatarURLs["original"] = avatarURL.String
-		}
-	case "upload":
-		if avatarURL.Valid {
-			avatarURLs["original"] = avatarURL.String
-			avatarURLs["256"] = avatarURL.String
-			avatarURLs["128"] = avatarURL.String
-			avatarURLs["64"] = avatarURL.String
-			avatarURLs["32"] = avatarURL.String
-		}
-	}
-
-	c.JSON(http.StatusOK, AvatarResponse{
-		Type: aType,
-		URLs: avatarURLs,
-	})
+	c.JSON(http.StatusOK, response)
 }
 
 // UpdateAvatarRequest represents a request to update avatar settings
@@ -232,37 +339,17 @@ func (h *UserPublicHandler) UpdateAvatarSettings(c *gin.Context) {
 		return
 	}
 
-	// Validate URL if type is "url"
-	if req.Type == "url" {
-		if req.URL == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "URL is required for url avatar type"})
-			return
-		}
-		// Per AI.md PART 34: Avatar URL must use HTTPS
-		if !strings.HasPrefix(req.URL, "https://") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Avatar URL must use HTTPS"})
-			return
-		}
-	}
-
-	var avatarURL sql.NullString
-	if req.Type == "url" {
-		avatarURL = sql.NullString{String: req.URL, Valid: true}
-	}
-
-	_, err := h.DB.Exec(`
-		UPDATE user_accounts
-		SET avatar_type = ?, avatar_url = ?, updated_at = ?
-		WHERE id = ?
-	`, req.Type, avatarURL, time.Now(), user.ID)
-
+	response, err := UpdateCurrentUserAvatar(h.DB, user.ID, &req)
 	if err != nil {
+		if err.Error() == "avatar type must be one of: gravatar, url" || err.Error() == "URL is required for url avatar type" || err.Error() == "avatar URL must use HTTPS" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update avatar"})
 		return
 	}
 
-	// Return updated avatar info
-	h.GetCurrentUserAvatar(c)
+	c.JSON(http.StatusOK, response)
 }
 
 // ResetAvatar resets the user's avatar to Gravatar
@@ -274,13 +361,7 @@ func (h *UserPublicHandler) ResetAvatar(c *gin.Context) {
 		return
 	}
 
-	_, err := h.DB.Exec(`
-		UPDATE user_accounts
-		SET avatar_type = 'gravatar', avatar_url = NULL, updated_at = ?
-		WHERE id = ?
-	`, time.Now(), user.ID)
-
-	if err != nil {
+	if err := h.resetCurrentUserAvatar(user.ID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reset avatar"})
 		return
 	}
@@ -304,55 +385,23 @@ func (h *UserPublicHandler) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// Per AI.md PART 34: Max file size 2MB
-	if file.Size > 2*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File too large (max 2MB)"})
-		return
-	}
-
-	// Validate content type
-	contentType := file.Header.Get("Content-Type")
-	allowedTypes := map[string]bool{
-		"image/png":              true,
-		"image/jpeg":             true,
-		"image/gif":              true,
-		"image/webp":             true,
-		"image/bmp":              true,
-		"image/svg+xml":          true,
-		"image/x-icon":           true,
-		"image/vnd.microsoft.icon": true,
-	}
-	if !allowedTypes[contentType] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image type"})
-		return
-	}
-
-	// For now, we'll store a placeholder URL since actual file storage
-	// depends on the server's upload directory configuration
-	// In production, this would save to disk and generate size variants
-	avatarURL := fmt.Sprintf("/uploads/avatars/user_%d.%s", user.ID, getExtension(contentType))
-
-	_, err = h.DB.Exec(`
-		UPDATE user_accounts
-		SET avatar_type = 'upload', avatar_url = ?, updated_at = ?
-		WHERE id = ?
-	`, avatarURL, time.Now(), user.ID)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save avatar"})
-		return
-	}
-
-	c.JSON(http.StatusOK, AvatarResponse{
-		Type: "upload",
-		URLs: map[string]string{
-			"original": avatarURL,
-			"256":      avatarURL,
-			"128":      avatarURL,
-			"64":       avatarURL,
-			"32":       avatarURL,
-		},
+	response, err := UploadCurrentUserAvatar(h.DB, user.ID, &AvatarUploadRequest{
+		Filename:    file.Filename,
+		Size:        file.Size,
+		ContentType: file.Header.Get("Content-Type"),
 	})
+	if err != nil {
+		switch err.Error() {
+		case "No file uploaded", "File too large (max 2MB)", "Invalid image type":
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save avatar"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // getExtension returns file extension for content type
@@ -381,6 +430,45 @@ type ChangePasswordRequest struct {
 	NewPassword     string `json:"new_password" binding:"required,min=8"`
 }
 
+// ChangeCurrentUserPassword applies the same password change used by POST /api/v1/users/security/password.
+func ChangeCurrentUserPassword(db *sql.DB, userID int64, req *ChangePasswordRequest) error {
+	h := NewUserPublicHandler(db)
+	return h.changeCurrentUserPassword(userID, req)
+}
+
+func (h *UserPublicHandler) changeCurrentUserPassword(userID int64, req *ChangePasswordRequest) error {
+	if req == nil {
+		return fmt.Errorf("invalid request")
+	}
+
+	var passwordHash string
+	err := h.DB.QueryRow(`SELECT password_hash FROM user_accounts WHERE id = ?`, userID).Scan(&passwordHash)
+	if err != nil {
+		return fmt.Errorf("failed to verify current password")
+	}
+
+	valid, err := utils.VerifyPassword(req.CurrentPassword, passwordHash)
+	if err != nil || !valid {
+		return fmt.Errorf("current password is incorrect")
+	}
+
+	newHash, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash new password")
+	}
+
+	_, err = h.DB.Exec(`
+		UPDATE user_accounts
+		SET password_hash = ?, updated_at = ?
+		WHERE id = ?
+	`, newHash, time.Now(), userID)
+	if err != nil {
+		return fmt.Errorf("failed to update password")
+	}
+
+	return nil
+}
+
 // ChangePassword allows authenticated user to change their password
 // Route: POST /api/v1/users/security/password
 func (h *UserPublicHandler) ChangePassword(c *gin.Context) {
@@ -396,37 +484,12 @@ func (h *UserPublicHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	// Get current password hash
-	var passwordHash string
-	err := h.DB.QueryRow(`SELECT password_hash FROM user_accounts WHERE id = ?`, user.ID).Scan(&passwordHash)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify current password"})
-		return
-	}
-
-	// Verify current password using Argon2id per AI.md PART 34
-	valid, err := utils.VerifyPassword(req.CurrentPassword, passwordHash)
-	if err != nil || !valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Current password is incorrect"})
-		return
-	}
-
-	// Hash new password with Argon2id per AI.md (NEVER bcrypt)
-	newHash, err := utils.HashPassword(req.NewPassword)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash new password"})
-		return
-	}
-
-	// Update password
-	_, err = h.DB.Exec(`
-		UPDATE user_accounts
-		SET password_hash = ?, updated_at = ?
-		WHERE id = ?
-	`, newHash, time.Now(), user.ID)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+	if err := h.changeCurrentUserPassword(user.ID, &req); err != nil {
+		if err.Error() == "current password is incorrect" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Current password is incorrect"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

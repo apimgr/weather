@@ -27,8 +27,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/apimgr/weather/src/cli"
+	"github.com/apimgr/weather/src/common/i18n"
 	"github.com/apimgr/weather/src/config"
 	"github.com/apimgr/weather/src/database"
+	appgraphql "github.com/apimgr/weather/src/graphql"
 	"github.com/apimgr/weather/src/mode"
 	"github.com/apimgr/weather/src/paths"
 	"github.com/apimgr/weather/src/scheduler"
@@ -41,7 +43,7 @@ import (
 	"github.com/apimgr/weather/src/utils"
 )
 
-//go:embed locale/*.json
+//go:embed common/i18n/locales/*.json
 var localesFS embed.FS
 
 // getDefaultListenAddress auto-detects IPv6 support and returns dual-stack (::) or IPv4-only (0.0.0.0)
@@ -373,7 +375,7 @@ func main() {
 		}
 	}
 
-	// Check if this is first run (no users created yet)
+	// Check if this is first run (no server admins created yet)
 	hasNoUsers, err := db.IsFirstRun()
 	if err != nil {
 		appLogger.Error("Warning: Could not check first run status: %v", err)
@@ -381,8 +383,8 @@ func main() {
 		hasNoUsers = false
 	}
 	if hasNoUsers {
-		appLogger.Printf("No users found - please create an admin account at /auth/register")
-		fmt.Printf("🆕 No users found - please create an admin account at /auth/register\n")
+		appLogger.Printf("No server admins found - complete setup at /%s", cfg.GetAdminPath())
+		fmt.Printf("🆕 No server admins found - complete setup at /%s\n", cfg.GetAdminPath())
 	}
 
 	// Handle status flag
@@ -482,7 +484,7 @@ func main() {
 	r.StaticFS("/static", http.FS(staticSubFS))
 
 	// Initialize i18n service (TEMPLATE.md PART 29 - NON-NEGOTIABLE)
-	i18nService, err := service.NewI18n(localesFS, "en")
+	i18nService, err := i18n.NewI18n(localesFS, "en")
 	if err != nil {
 		log.Fatalf("Failed to initialize i18n: %v", err)
 	}
@@ -862,10 +864,15 @@ func main() {
 
 	// Create auth handlers
 	authHandler := &handler.AuthHandler{DB: db.DB}
+	authAPIHandler := handler.NewAuthAPIHandler(db.DB)
 	twoFAHandler := &handler.TwoFactorHandler{DB: db.DB}
+	passkeyHandler := handler.NewPasskeyHandler(db.DB)
 	setupHandler := &handler.SetupHandler{DB: db.DB}
 	dashboardHandler := &handler.DashboardHandler{DB: db.DB}
 	adminHandler := &handler.AdminHandler{DB: db.DB}
+	serverDB := database.GetServerDB()
+	adminInviteService := service.NewAdminInviteService(serverDB, "")
+	userInviteModel := &models.UserInviteModel{DB: database.GetUsersDB()}
 	locationHandler := &handler.LocationHandler{
 		DB:               db.DB,
 		WeatherService:   weatherService,
@@ -891,6 +898,11 @@ func main() {
 	notificationAPIHandler := &handler.NotificationAPIHandlers{
 		NotificationService: notificationService,
 		WSHub:               wsHub,
+	}
+
+	adminSettingsHandler := &handler.AdminSettingsHandler{
+		DB:                  db.DB,
+		NotificationService: notificationService,
 	}
 
 	// Legacy notification handler (for email notifications only)
@@ -933,9 +945,6 @@ func main() {
 
 	// Create user public handler (AI.md PART 34: Public profiles, avatars)
 	userPublicHandler := handler.NewUserPublicHandler(db.DB)
-
-	// Create domain handler (TEMPLATE.md PART 34: Custom domain support)
-	domainHandler := handler.NewDomainHandlers(db.DB, appLogger)
 
 	// Get port configuration using comprehensive port manager
 	// Priority: 1) Database saved ports, 2) Config file port, 3) PORT env variable, 4) Random port
@@ -1064,14 +1073,8 @@ func main() {
 	// Set build info for handler package
 	handler.SetBuildInfo(Version, BuildDate, CommitID)
 
-	// Health check endpoints (Kubernetes standard)
-	r.GET("/healthz", handler.ComprehensiveHealthCheck(db, port, httpsPort, sslManager))
-	r.GET("/health", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/healthz")
-	})
-	r.GET("/readyz", handler.ReadinessCheck)
-	r.GET("/livez", handler.LivenessCheck)
-	r.GET("/healthz/setup", setupHandler.GetSetupStatus)
+	// Health check endpoints
+	r.GET("/healthz", handler.HealthCheck(db, startTime))
 
 	// Prometheus metrics endpoint (TEMPLATE.md required - optional auth)
 	r.GET("/metrics", handler.PrometheusMetrics())
@@ -1211,7 +1214,7 @@ func main() {
 
 	// Password reset routes (public)
 	r.GET("/auth/password/forgot", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/forgot_password.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/forgot_password.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Forgot Password",
 		}))
 	})
@@ -1219,7 +1222,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "If an account with that email exists, a reset link has been sent"})
 	})
 	r.GET("/auth/password/reset", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/reset_password.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/reset_password.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Reset Password",
 			"token": c.Query("token"),
 		}))
@@ -1278,7 +1281,7 @@ func main() {
 
 	// Two-factor authentication routes (public)
 	r.GET("/auth/2fa", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/two_factor.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/two_factor.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Two-Factor Authentication",
 		}))
 	})
@@ -1288,14 +1291,14 @@ func main() {
 
 	// Passkey authentication routes (public)
 	r.GET("/auth/passkey", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/passkey.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/passkey.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Passkey Authentication",
 		}))
 	})
 
 	// Username recovery routes (public)
 	r.GET("/auth/username/forgot", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/forgot_username.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/forgot_username.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Forgot Username",
 		}))
 	})
@@ -1305,7 +1308,7 @@ func main() {
 
 	// Recovery key usage route (public)
 	r.GET("/auth/recovery/use", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/recovery_key.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/recovery_key.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Use Recovery Key",
 		}))
 	})
@@ -1313,18 +1316,240 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "Recovery key accepted"})
 	})
 
+	renderServerInvitePage := func(c *gin.Context, status int, data gin.H) {
+		payload := gin.H{
+			"title": "Server Admin Invite",
+		}
+		for key, value := range data {
+			payload[key] = value
+		}
+		c.HTML(status, "page/server_invite.tmpl", utils.TemplateData(c, payload))
+	}
+
+	renderUserInvitePage := func(c *gin.Context, status int, data gin.H) {
+		payload := gin.H{
+			"title": "User Invite",
+		}
+		for key, value := range data {
+			payload[key] = value
+		}
+		c.HTML(status, "page/user_invite.tmpl", utils.TemplateData(c, payload))
+	}
+
 	// Invite routes (public - token validates)
 	r.GET("/auth/invite/server/:code", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/server_invite.tmpl", utils.TemplateData(c, gin.H{
-			"title": "Server Admin Invite",
-			"code":  c.Param("code"),
-		}))
+		invite, err := adminInviteService.VerifyInvite(c.Param("code"))
+		if err != nil {
+			renderServerInvitePage(c, http.StatusGone, gin.H{
+				"error": err.Error(),
+				"code":  c.Param("code"),
+			})
+			return
+		}
+
+		renderServerInvitePage(c, http.StatusOK, gin.H{
+			"code":       invite.Token,
+			"email":      invite.InvitedEmail,
+			"expires_at": invite.ExpiresAt,
+		})
+	})
+	r.POST("/auth/invite/server/:code", func(c *gin.Context) {
+		token := c.Param("code")
+		invite, err := adminInviteService.VerifyInvite(token)
+		if err != nil {
+			renderServerInvitePage(c, http.StatusGone, gin.H{
+				"error": err.Error(),
+				"code":  token,
+			})
+			return
+		}
+
+		var req struct {
+			Username        string `form:"username" binding:"required,min=3"`
+			Password        string `form:"password" binding:"required,min=8"`
+			ConfirmPassword string `form:"confirm_password" binding:"required"`
+		}
+		if err := c.ShouldBind(&req); err != nil {
+			renderServerInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"email":      invite.InvitedEmail,
+				"expires_at": invite.ExpiresAt,
+				"username":   req.Username,
+				"error":      "Invalid form submission",
+			})
+			return
+		}
+
+		if req.Password != req.ConfirmPassword {
+			renderServerInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"email":      invite.InvitedEmail,
+				"expires_at": invite.ExpiresAt,
+				"username":   req.Username,
+				"error":      "Passwords do not match",
+			})
+			return
+		}
+
+		if _, err := adminInviteService.AcceptInvite(token, req.Username, req.Password); err != nil {
+			renderServerInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"email":      invite.InvitedEmail,
+				"expires_at": invite.ExpiresAt,
+				"username":   req.Username,
+				"error":      err.Error(),
+			})
+			return
+		}
+
+		c.Redirect(http.StatusSeeOther, "/auth/login?invite=accepted")
 	})
 	r.GET("/auth/invite/user/:code", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/user_invite.tmpl", utils.TemplateData(c, gin.H{
-			"title": "User Invite",
-			"code":  c.Param("code"),
-		}))
+		invite, err := userInviteModel.VerifyInvite(c.Param("code"))
+		if err != nil {
+			renderUserInvitePage(c, http.StatusGone, gin.H{
+				"error": err.Error(),
+				"code":  c.Param("code"),
+			})
+			return
+		}
+
+		renderUserInvitePage(c, http.StatusOK, gin.H{
+			"code":       invite.Token,
+			"username":   invite.Username,
+			"email":      invite.Email,
+			"role":       invite.Role,
+			"expires_at": invite.ExpiresAt,
+		})
+	})
+	r.POST("/auth/invite/user/:code", func(c *gin.Context) {
+		token := c.Param("code")
+		invite, err := userInviteModel.VerifyInvite(token)
+		if err != nil {
+			renderUserInvitePage(c, http.StatusGone, gin.H{
+				"error": err.Error(),
+				"code":  token,
+			})
+			return
+		}
+
+		var req struct {
+			Username        string `form:"username" binding:"required,min=3"`
+			Password        string `form:"password" binding:"required,min=8"`
+			ConfirmPassword string `form:"confirm_password" binding:"required"`
+		}
+		if err := c.ShouldBind(&req); err != nil {
+			renderUserInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Invalid form submission",
+			})
+			return
+		}
+
+		if req.Password != req.ConfirmPassword {
+			renderUserInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Passwords do not match",
+			})
+			return
+		}
+
+		username := utils.NormalizeUsername(req.Username)
+		if err := utils.ValidateUsername(username); err != nil {
+			renderUserInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      err.Error(),
+			})
+			return
+		}
+
+		if invite.Username != "" && username != utils.NormalizeUsername(invite.Username) {
+			renderUserInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"username":   invite.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Invite username does not match",
+			})
+			return
+		}
+
+		userModel := &models.UserModel{DB: db.DB}
+		user, err := userModel.Create(username, invite.Email, req.Password, invite.Role)
+		if err != nil {
+			renderUserInvitePage(c, http.StatusBadRequest, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Failed to create account",
+			})
+			return
+		}
+
+		if _, err := database.GetUsersDB().Exec(`UPDATE user_accounts SET email_verified = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, user.ID); err != nil {
+			renderUserInvitePage(c, http.StatusInternalServerError, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Failed to finalize account",
+			})
+			return
+		}
+
+		if err := userInviteModel.MarkUsed(token, user.ID); err != nil {
+			renderUserInvitePage(c, http.StatusInternalServerError, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Failed to finalize invite",
+			})
+			return
+		}
+
+		sessionModel := &models.SessionModel{DB: db.DB}
+		session, err := sessionModel.Create(user.ID, 2592000)
+		if err != nil {
+			renderUserInvitePage(c, http.StatusInternalServerError, gin.H{
+				"code":       token,
+				"username":   req.Username,
+				"email":      invite.Email,
+				"role":       invite.Role,
+				"expires_at": invite.ExpiresAt,
+				"error":      "Account created but failed to log in",
+			})
+			return
+		}
+
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     middleware.SessionCookieName,
+			Value:    session.ID,
+			Path:     "/",
+			MaxAge:   2592000,
+			HttpOnly: true,
+			Secure:   c.Request.TLS != nil,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		c.Redirect(http.StatusSeeOther, "/users/dashboard")
 	})
 
 	// OIDC authentication routes (public)
@@ -1540,22 +1765,6 @@ func main() {
 		adminRoutes.GET("/server/notifications", adminNotificationsHandler.ShowNotificationSettings)
 		adminRoutes.GET("/server/network/geoip", adminGeoIPHandler.ShowGeoIPSettings)
 
-		// Custom domains management page under /server/ (TEMPLATE.md PART 34)
-		adminRoutes.GET("/server/domains", func(c *gin.Context) {
-			// Get all domains from database
-			domainModel := &models.DomainModel{DB: db.DB}
-			domains, err := domainModel.List(nil)
-			if err != nil {
-				appLogger.Error("Failed to list domains: %v", err)
-				domains = []*models.Domain{}
-			}
-
-			c.HTML(http.StatusOK, "admin-domains", utils.TemplateData(c, gin.H{
-				"title":   "Custom Domains",
-				"page":    "domains",
-				"Domains": domains,
-			}))
-		})
 		// Root-level admin routes (per spec: only dashboard, profile, notifications at root)
 		// /{admin_path}/profile - Admin's own profile
 		adminRoutes.GET("/profile", func(c *gin.Context) {
@@ -1634,12 +1843,145 @@ func main() {
 			}))
 		})
 
+		renderAdminUserInvitesPage := func(c *gin.Context, status int, data gin.H) {
+			invites, err := userInviteModel.ListInvites()
+			if err != nil {
+				c.HTML(http.StatusInternalServerError, "page/error.tmpl", utils.TemplateData(c, gin.H{
+					"title":   "User Invites",
+					"message": "Failed to load user invites",
+				}))
+				return
+			}
+
+			scheme := c.GetHeader("X-Forwarded-Proto")
+			if scheme == "" {
+				if c.Request.TLS != nil {
+					scheme = "https"
+				} else {
+					scheme = "http"
+				}
+			}
+
+			inviteRows := make([]gin.H, 0, len(invites))
+			for _, invite := range invites {
+				statusLabel := "pending"
+				if invite.UsedAt != nil || (invite.MaxUses > 0 && invite.UseCount >= invite.MaxUses) {
+					statusLabel = "used"
+				} else if time.Now().After(invite.ExpiresAt) {
+					statusLabel = "expired"
+				}
+
+				inviteRows = append(inviteRows, gin.H{
+					"id":         invite.ID,
+					"token":      invite.Token,
+					"username":   invite.Username,
+					"email":      invite.Email,
+					"role":       invite.Role,
+					"expires_at": invite.ExpiresAt,
+					"used_at":    invite.UsedAt,
+					"status":     statusLabel,
+					"invite_url": fmt.Sprintf("%s://%s/auth/invite/user/%s", scheme, c.Request.Host, invite.Token),
+				})
+			}
+
+			payload := gin.H{
+				"title":                  "User Invites - Admin",
+				"page":                   "users-invites",
+				"invites":                inviteRows,
+				"invite_expiration_days": config.GetUserInviteExpirationDays(),
+			}
+			for key, value := range data {
+				payload[key] = value
+			}
+
+			c.HTML(status, "admin/admin_user_invites.tmpl", utils.TemplateData(c, payload))
+		}
+
 		// /{admin_path}/server/users/invites - User invites
 		adminRoutes.GET("/server/users/invites", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin/admin_user_invites.tmpl", utils.TemplateData(c, gin.H{
-				"title": "User Invites - Admin",
-				"page":  "users-invites",
-			}))
+			renderAdminUserInvitesPage(c, http.StatusOK, gin.H{})
+		})
+		adminRoutes.POST("/server/users/invites", func(c *gin.Context) {
+			var req struct {
+				Username      string `form:"username" binding:"required,min=3"`
+				Email         string `form:"email" binding:"required,email"`
+				Role          string `form:"role"`
+				ExpiresInDays int    `form:"expires_in_days"`
+			}
+			if err := c.ShouldBind(&req); err != nil {
+				renderAdminUserInvitesPage(c, http.StatusBadRequest, gin.H{
+					"error":   "Invalid form submission",
+					"form":    req,
+				})
+				return
+			}
+
+			username := utils.NormalizeUsername(req.Username)
+			if err := utils.ValidateUsername(username); err != nil {
+				renderAdminUserInvitesPage(c, http.StatusBadRequest, gin.H{
+					"error": err.Error(),
+					"form":  req,
+				})
+				return
+			}
+
+			email := utils.NormalizeEmail(req.Email)
+			if err := utils.ValidateEmail(email); err != nil {
+				renderAdminUserInvitesPage(c, http.StatusBadRequest, gin.H{
+					"error": err.Error(),
+					"form":  req,
+				})
+				return
+			}
+
+			userModel := &models.UserModel{DB: db.DB}
+			if _, err := userModel.GetByUsername(username); err == nil {
+				renderAdminUserInvitesPage(c, http.StatusBadRequest, gin.H{
+					"error": "Username is already in use",
+					"form":  req,
+				})
+				return
+			}
+			if _, err := userModel.GetByEmail(email); err == nil {
+				renderAdminUserInvitesPage(c, http.StatusBadRequest, gin.H{
+					"error": "Email is already in use",
+					"form":  req,
+				})
+				return
+			}
+
+			role := strings.TrimSpace(req.Role)
+			if role == "" {
+				role = "user"
+			}
+
+			expiresInDays := req.ExpiresInDays
+			if expiresInDays <= 0 {
+				expiresInDays = config.GetUserInviteExpirationDays()
+			}
+
+			invite, err := userInviteModel.CreateInvite(username, email, role, expiresInDays)
+			if err != nil {
+				renderAdminUserInvitesPage(c, http.StatusBadRequest, gin.H{
+					"error": err.Error(),
+					"form":  req,
+				})
+				return
+			}
+
+			scheme := c.GetHeader("X-Forwarded-Proto")
+			if scheme == "" {
+				if c.Request.TLS != nil {
+					scheme = "https"
+				} else {
+					scheme = "http"
+				}
+			}
+
+			renderAdminUserInvitesPage(c, http.StatusOK, gin.H{
+				"message":    "User invite created",
+				"invite_url": fmt.Sprintf("%s://%s/auth/invite/user/%s", scheme, c.Request.Host, invite.Token),
+			})
 		})
 
 		// /{admin_path}/server/moderation/users - User moderation
@@ -1728,7 +2070,7 @@ func main() {
 
 	// User profile page (per AI.md PART 14: /users/ is plural)
 	r.GET("/users/profile", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "page/user/profile.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "page/user/profile.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Profile",
 			"page":  "profile",
 		}))
@@ -1736,10 +2078,11 @@ func main() {
 
 	// User security settings page (per AI.md PART 14: /users/ is plural)
 	r.GET("/users/security", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.ShowSecurityPage)
+	r.GET("/users/security/passkeys", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), twoFAHandler.ShowSecurityPage)
 
 	// User notification preferences page (per AI.md PART 14: /users/ is plural)
 	r.GET("/users/preferences", middleware.RequireAuth(db.DB), middleware.BlockAdminFromUserRoutes(), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user_preferences.tmpl", utils.TemplateData(c, gin.H{
+		handler.NegotiateResponse(c, "user_preferences.tmpl", utils.TemplateData(c, gin.H{
 			"title": "Preferences",
 			"page":  "preferences",
 		}))
@@ -1799,14 +2142,13 @@ func main() {
 			hostInfo := utils.GetHostInfo(c)
 			apiBase := hostInfo.FullHost + cfg.GetAPIPath()
 			adminBase := hostInfo.FullHost + cfg.GetAdminAPIPath()
-			c.JSON(http.StatusOK, gin.H{
+			handler.RespondNegotiatedData(c, http.StatusOK, gin.H{
 				"version": cfg.GetAPIVersion(),
 				"endpoints": []string{
 					apiBase + "/users",
 					apiBase + "/locations",
 					apiBase + "/users/notifications",
 					adminBase,
-					adminBase + "/domains",
 					apiBase + "/weather",
 					apiBase + "/weather/:location",
 					apiBase + "/forecasts",
@@ -1827,7 +2169,7 @@ func main() {
 
 	// Public blocklist endpoint (no auth required)
 	apiV1.GET("/blocklist", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		handler.RespondNegotiatedData(c, http.StatusOK, gin.H{
 			"blocklist": utils.UsernameBlocklist,
 			"count":     utils.GetBlocklistSize(),
 			"public":    utils.IsBlocklistPublic(),
@@ -1843,13 +2185,14 @@ func main() {
 	apiV1.POST("/server/contact", handler.HandleContactFormSubmission(db, cfg))
 
 	// Auth API routes per AI.md PART 33
-	authAPIHandler := handler.NewAuthAPIHandler(db.DB)
 	authAPI := apiV1.Group("/auth")
 	{
 		// Public auth endpoints (no auth required)
 		authAPI.POST("/register", authAPIHandler.HandleAPIRegister)
 		authAPI.POST("/login", authAPIHandler.HandleAPILogin)
 		authAPI.POST("/2fa", authAPIHandler.HandleAPI2FA)
+		authAPI.POST("/passkey/challenge", passkeyHandler.BeginPasskeyChallenge)
+		authAPI.POST("/passkey/verify", passkeyHandler.VerifyPasskey)
 		authAPI.POST("/recovery/use", authAPIHandler.HandleAPIRecoveryUse)
 		authAPI.POST("/password/forgot", authAPIHandler.HandleAPIPasswordForgot)
 		authAPI.POST("/password/reset", authAPIHandler.HandleAPIPasswordReset)
@@ -1858,6 +2201,8 @@ func main() {
 		// User invite endpoints (no auth required - token validates)
 		authAPI.GET("/invite/user/:token", authAPIHandler.HandleAPIUserInviteValidate)
 		authAPI.POST("/invite/user/:token", authAPIHandler.HandleAPIUserInviteComplete)
+		authAPI.GET("/invite/server/:token", authAPIHandler.HandleAPIServerInviteValidate)
+		authAPI.POST("/invite/server/:token", authAPIHandler.HandleAPIServerInviteComplete)
 
 		// Protected auth endpoints (require auth)
 		authAPI.POST("/logout", middleware.RequireAuth(db.DB), authAPIHandler.HandleAPILogout)
@@ -1894,6 +2239,9 @@ func main() {
 		usersAPI.POST("/security/2fa/disable", twoFAHandler.DisableTwoFactor)
 		usersAPI.POST("/security/2fa/verify", twoFAHandler.VerifyTwoFactorCode)
 		usersAPI.POST("/security/recovery/regenerate", twoFAHandler.RegenerateRecoveryKeys)
+		usersAPI.GET("/security/passkeys", passkeyHandler.ListPasskeys)
+		usersAPI.POST("/security/passkeys", passkeyHandler.RegisterPasskey)
+		usersAPI.DELETE("/security/passkeys/:passkey_id", passkeyHandler.DeletePasskey)
 
 		// Password change per AI.md PART 34
 		usersAPI.POST("/security/password", userPublicHandler.ChangePassword)
@@ -1944,12 +2292,150 @@ func main() {
 	// Admin API routes (require admin role + stricter rate limiting)
 	// AI.md: Admin API at /api/{api_version}/{admin_path}/
 	adminAPI := apiV1.Group("/" + cfg.GetAdminPath())
-	adminAPI.Use(middleware.RequireAuth(db.DB))
-	adminAPI.Use(middleware.RequireAdmin())
+	adminAPI.Use(middleware.TokenAuthMiddleware(database.GetServerDB(), db.DB))
 	adminAPI.Use(middleware.AdminRateLimitMiddleware())
 	// Log all admin API actions
 	adminAPI.Use(middleware.AuditLogger(db.DB))
 	{
+		adminModel := &models.AdminModel{DB: serverDB}
+
+		getCurrentAdmin := func(c *gin.Context) (*models.Admin, bool) {
+			adminValue, exists := c.Get("admin")
+			if !exists {
+				c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": "Not authenticated"})
+				return nil, false
+			}
+
+			admin, ok := adminValue.(*models.Admin)
+			if !ok || admin == nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": "Invalid admin context"})
+				return nil, false
+			}
+
+			return admin, true
+		}
+
+		loadAdminPreferences := func(adminID int64) (*models.AdminPreferences, error) {
+			if _, err := serverDB.Exec(`
+				INSERT INTO server_admin_preferences (admin_id, theme, language, timezone, notifications_enabled, email_notifications, created_at, updated_at)
+				SELECT ?, 'auto', 'en', 'UTC', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+				WHERE NOT EXISTS (
+					SELECT 1 FROM server_admin_preferences WHERE admin_id = ?
+				)
+			`, adminID, adminID); err != nil {
+				return nil, fmt.Errorf("failed to ensure admin preferences: %w", err)
+			}
+
+			prefs := &models.AdminPreferences{}
+			err := serverDB.QueryRow(`
+				SELECT id, admin_id, theme, language, timezone, notifications_enabled, email_notifications, created_at, updated_at
+				FROM server_admin_preferences
+				WHERE admin_id = ?
+			`, adminID).Scan(
+				&prefs.ID,
+				&prefs.AdminID,
+				&prefs.Theme,
+				&prefs.Language,
+				&prefs.Timezone,
+				&prefs.NotificationsEnabled,
+				&prefs.EmailNotifications,
+				&prefs.CreatedAt,
+				&prefs.UpdatedAt,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load admin preferences: %w", err)
+			}
+
+			return prefs, nil
+		}
+
+		getOnlineAdminUsernames := func() ([]string, error) {
+			rows, err := serverDB.Query(`
+				SELECT DISTINCT sac.username
+				FROM server_admin_credentials sac
+				INNER JOIN server_admin_sessions sas ON sas.admin_id = sac.id
+				WHERE sac.is_active = 1 AND sas.expires_at > CURRENT_TIMESTAMP
+				ORDER BY sac.username ASC
+			`)
+			if err != nil {
+				return nil, fmt.Errorf("failed to query online admins: %w", err)
+			}
+			defer rows.Close()
+
+			var usernames []string
+			for rows.Next() {
+				var username string
+				if err := rows.Scan(&username); err != nil {
+					return nil, fmt.Errorf("failed to scan online admin username: %w", err)
+				}
+				usernames = append(usernames, username)
+			}
+
+			if err := rows.Err(); err != nil {
+				return nil, fmt.Errorf("failed to iterate online admin usernames: %w", err)
+			}
+
+			return usernames, nil
+		}
+
+		countOtherActiveSuperAdmins := func(excludeID int64) (int, error) {
+			var count int
+			err := serverDB.QueryRow(`
+				SELECT COUNT(*)
+				FROM server_admin_credentials
+				WHERE is_super_admin = 1 AND is_active = 1 AND id != ?
+			`, excludeID).Scan(&count)
+			if err != nil {
+				return 0, fmt.Errorf("failed to count active super admins: %w", err)
+			}
+
+			return count, nil
+		}
+
+		maskAdminToken := func(prefix string) string {
+			if prefix == "" {
+				return ""
+			}
+
+			return prefix + "****"
+		}
+
+		buildInviteURL := func(c *gin.Context, token string) string {
+			scheme := c.GetHeader("X-Forwarded-Proto")
+			if scheme == "" {
+				if c.Request.TLS != nil {
+					scheme = "https"
+				} else {
+					scheme = "http"
+				}
+			}
+
+			return fmt.Sprintf("%s://%s/auth/invite/server/%s", scheme, c.Request.Host, token)
+		}
+
+		buildUserInviteURL := func(c *gin.Context, token string) string {
+			scheme := c.GetHeader("X-Forwarded-Proto")
+			if scheme == "" {
+				if c.Request.TLS != nil {
+					scheme = "https"
+				} else {
+					scheme = "http"
+				}
+			}
+
+			return fmt.Sprintf("%s://%s/auth/invite/user/%s", scheme, c.Request.Host, token)
+		}
+
+		userInviteStatus := func(invite models.UserInvite) string {
+			if invite.UsedAt != nil || (invite.MaxUses > 0 && invite.UseCount >= invite.MaxUses) {
+				return "used"
+			}
+			if time.Now().After(invite.ExpiresAt) {
+				return "expired"
+			}
+			return "pending"
+		}
+
 		// Setup API per spec: /api/{api_version}/{admin_path}/server/setup/
 		adminAPI.GET("/server/setup", setupHandler.GetSetupStatus)
 		adminAPI.POST("/server/setup/verify", func(c *gin.Context) {
@@ -1977,17 +2463,140 @@ func main() {
 		// Server management API - all under /server/ per spec
 		// User management
 		adminAPI.GET("/server/users", adminHandler.ListUsers)
-		adminAPI.POST("/server/users", adminHandler.CreateUser)
 		adminAPI.PUT("/server/users/:id", adminHandler.UpdateUser)
 		adminAPI.DELETE("/server/users/:id", adminHandler.DeleteUser)
-		adminAPI.PUT("/server/users/:id/password", adminHandler.UpdateUserPassword)
+		adminAPI.GET("/server/users/invites", func(c *gin.Context) {
+			invites, err := userInviteModel.ListInvites()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load user invites"})
+				return
+			}
+
+			responseInvites := make([]gin.H, 0, len(invites))
+			for _, invite := range invites {
+				responseInvites = append(responseInvites, gin.H{
+					"id":         invite.ID,
+					"token":      invite.Token,
+					"username":   invite.Username,
+					"email":      invite.Email,
+					"role":       invite.Role,
+					"expires_at": invite.ExpiresAt,
+					"used_at":    invite.UsedAt,
+					"status":     userInviteStatus(invite),
+				})
+			}
+
+			c.JSON(http.StatusOK, gin.H{"ok": true, "invites": responseInvites})
+		})
+		adminAPI.POST("/server/users/invites", func(c *gin.Context) {
+			if _, ok := getCurrentAdmin(c); !ok {
+				return
+			}
+
+			var req struct {
+				Username       string `json:"username" binding:"required,min=3"`
+				Email          string `json:"email" binding:"required,email"`
+				Role           string `json:"role"`
+				ExpiresInDays  int    `json:"expires_in_days"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+				return
+			}
+
+			username := utils.NormalizeUsername(req.Username)
+			if err := utils.ValidateUsername(username); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			email := utils.NormalizeEmail(req.Email)
+			if err := utils.ValidateEmail(email); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			if _, err := (&models.UserModel{DB: db.DB}).GetByUsername(username); err == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Username is already in use"})
+				return
+			}
+
+			if _, err := (&models.UserModel{DB: db.DB}).GetByEmail(email); err == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Email is already in use"})
+				return
+			}
+
+			expiresInDays := req.ExpiresInDays
+			if expiresInDays <= 0 {
+				expiresInDays = config.GetUserInviteExpirationDays()
+			}
+
+			role := strings.TrimSpace(req.Role)
+			if role == "" {
+				role = "user"
+			}
+
+			invite, err := userInviteModel.CreateInvite(username, email, role, expiresInDays)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":             true,
+				"message":        "User invite created",
+				"invite":         invite,
+				"invite_url":     buildUserInviteURL(c, invite.Token),
+				"expires_in_days": expiresInDays,
+			})
+		})
+		adminAPI.GET("/server/users/invites/:id", func(c *gin.Context) {
+			if _, ok := getCurrentAdmin(c); !ok {
+				return
+			}
+
+			id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invite ID"})
+				return
+			}
+
+			invite, err := userInviteModel.GetByID(id)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load invite"})
+				return
+			}
+			if invite == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Invite not found"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":     true,
+				"invite": invite,
+				"status": userInviteStatus(*invite),
+			})
+		})
+		adminAPI.DELETE("/server/users/invites/:id", func(c *gin.Context) {
+			if _, ok := getCurrentAdmin(c); !ok {
+				return
+			}
+
+			id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invite ID"})
+				return
+			}
+
+			if err := userInviteModel.DeleteInvite(id); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke invite"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Invite revoked"})
+		})
 
 		// Settings management
-		adminSettingsHandler := &handler.AdminSettingsHandler{
-			DB:                  db.DB,
-			// TEMPLATE.md Part 25: Send notifications on settings changes
-			NotificationService: notificationService,
-		}
 		adminAPI.GET("/server/settings", adminHandler.ListSettings)
 		adminAPI.PATCH("/server/settings", adminSettingsHandler.UpdateSettings)
 		adminAPI.GET("/server/settings/:key", adminHandler.GetSetting)
@@ -2140,23 +2749,9 @@ func main() {
 		})
 
 		// Admin status and health endpoints
-		adminAPI.GET("/server/status", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  "online",
-				"version": Version,
-				"uptime":  time.Since(startTime).String(),
-			})
-		})
-
-		adminAPI.GET("/server/health", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"healthy":      true,
-				"database":     "connected",
-				"cache":        "available",
-				"disk_space":   "adequate",
-				"last_checked": time.Now().Format(time.RFC3339),
-			})
-		})
+		adminServerStatusHandler := handler.AdminServerStatus(db, port, httpsPort, sslManager)
+		adminAPI.GET("/server/status", adminServerStatusHandler)
+		adminAPI.GET("/server/health", adminServerStatusHandler)
 
 		// Server restart per spec: POST /server/restart
 		adminAPI.POST("/server/restart", func(c *gin.Context) {
@@ -2193,77 +2788,430 @@ func main() {
 
 		// Admin profile per spec: /api/{api_version}/{admin_path}/profile/
 		adminAPI.GET("/profile", func(c *gin.Context) {
-			user, _ := c.Get("user")
-			c.JSON(http.StatusOK, gin.H{"profile": user})
-		})
-		adminAPI.PATCH("/profile", func(c *gin.Context) {
-			var update map[string]interface{}
-			if err := c.ShouldBindJSON(&update); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Profile updated"})
+
+			profile := *admin
+			profile.PasswordHash = ""
+			profile.APITokenPrefix = ""
+
+			c.JSON(http.StatusOK, gin.H{"ok": true, "profile": profile})
 		})
-		adminAPI.POST("/profile/password", func(c *gin.Context) {
+		adminAPI.PATCH("/profile", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
 			var req struct {
-				CurrentPassword string `json:"current_password" binding:"required"`
-				NewPassword     string `json:"new_password" binding:"required"`
+				Username *string `json:"username"`
+				Email    *string `json:"email"`
 			}
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Password changed"})
-		})
-		adminAPI.GET("/profile/token", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"token": "****", "created_at": ""})
-		})
-		adminAPI.POST("/profile/token", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "API token regenerated"})
-		})
-		adminAPI.GET("/profile/preferences", func(c *gin.Context) {
-			settingsModel := &models.SettingsModel{DB: db.DB}
-			c.JSON(http.StatusOK, gin.H{
-				"theme":         settingsModel.GetString("admin.theme", "dark"),
-				"language":      settingsModel.GetString("admin.language", "en"),
-				"timezone":      settingsModel.GetString("admin.timezone", "UTC"),
-				"notifications": settingsModel.GetBool("admin.notifications", true),
-			})
-		})
-		adminAPI.PATCH("/profile/preferences", func(c *gin.Context) {
-			var prefs map[string]interface{}
-			if err := c.ShouldBindJSON(&prefs); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-				return
-			}
-			settingsModel := &models.SettingsModel{DB: db.DB}
-			for key, value := range prefs {
-				if err := settingsModel.Set("admin."+key, fmt.Sprintf("%v", value), "string"); err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update %s: %v", key, err)})
+
+			username := admin.Username
+			email := admin.Email
+
+			if req.Username != nil {
+				username = utils.NormalizeUsername(*req.Username)
+				if err := utils.ValidateUsername(username); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 					return
 				}
 			}
-			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Preferences updated"})
+
+			if req.Email != nil {
+				email = utils.NormalizeEmail(*req.Email)
+				if err := utils.ValidateEmail(email); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+			}
+
+			if req.Username == nil && req.Email == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "No profile fields provided"})
+				return
+			}
+
+			if err := adminModel.Update(admin.ID, username, email); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
+				return
+			}
+
+			updatedAdmin, err := adminModel.GetByID(admin.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load updated profile"})
+				return
+			}
+
+			updatedAdmin.PasswordHash = ""
+			updatedAdmin.APITokenPrefix = ""
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":      true,
+				"message": "Profile updated",
+				"profile": updatedAdmin,
+			})
+		})
+		adminAPI.POST("/profile/password", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			var req struct {
+				CurrentPassword string `json:"current_password" binding:"required"`
+				NewPassword     string `json:"new_password" binding:"required"`
+				ConfirmPassword string `json:"confirm_password" binding:"required"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+				return
+			}
+
+			if req.NewPassword != req.ConfirmPassword {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Passwords do not match"})
+				return
+			}
+
+			if len(req.NewPassword) < 8 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
+				return
+			}
+
+			fullAdmin, err := adminModel.GetByID(admin.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify current password"})
+				return
+			}
+
+			valid, err := models.VerifyPassword(req.CurrentPassword, fullAdmin.PasswordHash)
+			if err != nil || !valid {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Current password is incorrect"})
+				return
+			}
+
+			if err := adminModel.UpdatePassword(admin.ID, req.NewPassword); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Password changed successfully"})
+		})
+		adminAPI.GET("/profile/token", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":    true,
+				"token": maskAdminToken(admin.APITokenPrefix),
+			})
+		})
+		adminAPI.POST("/profile/token", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			newToken, err := adminModel.RegenerateAPIToken(admin.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "Failed to regenerate API token"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":      true,
+				"message": "API token regenerated successfully",
+				"token":   newToken,
+			})
+		})
+		adminAPI.GET("/profile/preferences", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			prefs, err := loadAdminPreferences(admin.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load preferences"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"ok": true, "preferences": prefs})
+		})
+		adminAPI.PATCH("/profile/preferences", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			currentPrefs, err := loadAdminPreferences(admin.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load current preferences"})
+				return
+			}
+
+			var req struct {
+				Theme                *string `json:"theme"`
+				Language             *string `json:"language"`
+				Timezone             *string `json:"timezone"`
+				NotificationsEnabled *bool   `json:"notifications_enabled"`
+				EmailNotifications   *bool   `json:"email_notifications"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+				return
+			}
+
+			theme := currentPrefs.Theme
+			language := currentPrefs.Language
+			timezone := currentPrefs.Timezone
+			notificationsEnabled := currentPrefs.NotificationsEnabled
+			emailNotifications := currentPrefs.EmailNotifications
+
+			if req.Theme != nil {
+				switch *req.Theme {
+				case "auto", "light", "dark":
+					theme = *req.Theme
+				default:
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid theme"})
+					return
+				}
+			}
+
+			if req.Language != nil {
+				language = strings.TrimSpace(*req.Language)
+				if language == "" {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Language cannot be empty"})
+					return
+				}
+			}
+
+			if req.Timezone != nil {
+				timezone = strings.TrimSpace(*req.Timezone)
+				if timezone == "" {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Timezone cannot be empty"})
+					return
+				}
+			}
+
+			if req.NotificationsEnabled != nil {
+				notificationsEnabled = *req.NotificationsEnabled
+			}
+
+			if req.EmailNotifications != nil {
+				emailNotifications = *req.EmailNotifications
+			}
+
+			if _, err := serverDB.Exec(`
+				UPDATE server_admin_preferences
+				SET theme = ?, language = ?, timezone = ?, notifications_enabled = ?, email_notifications = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE admin_id = ?
+			`, theme, language, timezone, notificationsEnabled, emailNotifications, admin.ID); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update preferences"})
+				return
+			}
+
+			updatedPrefs, err := loadAdminPreferences(admin.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load updated preferences"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":          true,
+				"message":     "Preferences updated",
+				"preferences": updatedPrefs,
+			})
 		})
 
 		// Server admins per spec: /api/{api_version}/{admin_path}/server/admins/
 		adminAPI.GET("/server/admins", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"admins": []gin.H{}})
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			count, err := adminModel.GetCount()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count admins"})
+				return
+			}
+
+			onlineAdmins, err := getOnlineAdminUsernames()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load online admins"})
+				return
+			}
+
+			currentAdmin := *admin
+			currentAdmin.PasswordHash = ""
+			currentAdmin.APITokenPrefix = ""
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":             true,
+				"count":          count,
+				"current_admin":  currentAdmin,
+				"online_admins":  onlineAdmins,
+				"privacy_notice": "Other admin account details are not exposed",
+			})
 		})
 		adminAPI.GET("/server/admins/:id", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"admin": gin.H{"id": c.Param("id")}})
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid admin ID"})
+				return
+			}
+
+			if id != admin.ID {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Other admin account details are private"})
+				return
+			}
+
+			profile := *admin
+			profile.PasswordHash = ""
+			profile.APITokenPrefix = ""
+
+			c.JSON(http.StatusOK, gin.H{"ok": true, "admin": profile})
 		})
 		adminAPI.DELETE("/server/admins/:id", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid admin ID"})
+				return
+			}
+
+			if id == admin.ID {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete your own account"})
+				return
+			}
+
+			if id == 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Primary admin cannot be deleted"})
+				return
+			}
+
+			if err := adminModel.Delete(id); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
 			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Admin deleted"})
 		})
 		adminAPI.POST("/server/admins/:id/disable", func(c *gin.Context) {
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid admin ID"})
+				return
+			}
+
+			if id == admin.ID {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot disable your own account"})
+				return
+			}
+
+			if id == 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Primary admin cannot be disabled"})
+				return
+			}
+
+			targetAdmin, err := adminModel.GetByID(id)
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Admin not found"})
+				return
+			}
+
+			if targetAdmin.IsSuperAdmin {
+				otherSuperAdmins, err := countOtherActiveSuperAdmins(id)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate admin hierarchy"})
+					return
+				}
+				if otherSuperAdmins == 0 {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot disable the last active super admin"})
+					return
+				}
+			}
+
+			if err := adminModel.Update(id, targetAdmin.Username, targetAdmin.Email, targetAdmin.IsSuperAdmin, false); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to disable admin"})
+				return
+			}
+
 			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Admin disabled"})
 		})
 		adminAPI.POST("/server/admins/:id/enable", func(c *gin.Context) {
+			id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid admin ID"})
+				return
+			}
+
+			targetAdmin, err := adminModel.GetByID(id)
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Admin not found"})
+				return
+			}
+
+			if err := adminModel.Update(id, targetAdmin.Username, targetAdmin.Email, targetAdmin.IsSuperAdmin, true); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enable admin"})
+				return
+			}
+
 			c.JSON(http.StatusOK, gin.H{"ok": true, "message": "Admin enabled"})
 		})
 		adminAPI.POST("/server/admins/invite", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"ok": true, "invite_url": ""})
+			admin, ok := getCurrentAdmin(c)
+			if !ok {
+				return
+			}
+
+			var req struct {
+				Email     string `json:"email" binding:"required,email"`
+				ExpiresIn string `json:"expires_in"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+				return
+			}
+
+			invite, expiresIn, err := adminInviteService.CreateInvite(req.Email, int(admin.ID), req.ExpiresIn)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok":         true,
+				"message":    "Admin invite created",
+				"token":      invite.Token,
+				"email":      invite.InvitedEmail,
+				"expires_at": invite.ExpiresAt,
+				"expires_in": expiresIn,
+				"invite_url": buildInviteURL(c, invite.Token),
+			})
 		})
 
 		// WebUI Notification API routes - Admin (root-level since notifications is a root admin path)
@@ -2354,17 +3302,6 @@ func main() {
 			emailTemplateAPI.POST("/:name/reset", emailTemplateHandler.ImportTemplate)
 			emailTemplateAPI.POST("/:name/preview", emailTemplateHandler.TestTemplate)
 		}
-
-		// Custom domain management under /server/ (TEMPLATE.md PART 34)
-		adminAPI.GET("/server/domains", domainHandler.ListDomains)
-		adminAPI.GET("/server/domains/:id", domainHandler.GetDomain)
-		adminAPI.POST("/server/domains", domainHandler.CreateDomain)
-		adminAPI.GET("/server/domains/:id/verification", domainHandler.GetVerificationToken)
-		adminAPI.PUT("/server/domains/:id/verify", domainHandler.VerifyDomain)
-		adminAPI.PUT("/server/domains/:id/activate", domainHandler.ActivateDomain)
-		adminAPI.PUT("/server/domains/:id/deactivate", domainHandler.DeactivateDomain)
-		adminAPI.PUT("/server/domains/:id/ssl", domainHandler.UpdateSSL)
-		adminAPI.DELETE("/server/domains/:id", domainHandler.DeleteDomain)
 
 		// System logs management (already under /server/logs)
 		logsAPI := adminAPI.Group("/server/logs")
@@ -2460,7 +3397,7 @@ func main() {
 			"documentation":   "http://" + c.Request.Host + "/docs",
 			"openapi":         "http://" + c.Request.Host + "/openapi.json",
 			"swagger":         "http://" + c.Request.Host + "/openapi",
-			"graphql":         "http://" + c.Request.Host + cfg.GetAPIPath() + "/graphql",
+			"graphql":         "http://" + c.Request.Host + "/graphql",
 		})
 	})
 
@@ -2518,7 +3455,7 @@ func main() {
 				"features": gin.H{
 					"clustering": false,
 					"tor":        cfg.Server.Tor.Enabled,
-					"webauthn":   false,
+					"webauthn":   true,
 					"oauth":      []string{},
 				},
 			},
@@ -2537,22 +3474,36 @@ func main() {
 	})
 
 	// GraphQL API (AI.md PART 14)
-	// AI.md: Never hardcode v1 - use cfg.GetAPIPath()
-	graphqlHandler, err := handler.InitGraphQL()
-	if err != nil {
-		log.Printf("Failed to initialize GraphQL: %v", err)
-		fmt.Printf("⚠️  Failed to initialize GraphQL: %v\n", err)
-	} else {
-		graphqlPath := cfg.GetAPIPath() + "/graphql"
-		// GraphQL endpoint at /api/{api_version}/graphql per AI.md PART 14
-		r.POST(graphqlPath, handler.GraphQLHandler(graphqlHandler))
-		// GET for GraphiQL UI
-		r.GET(graphqlPath, handler.GraphQLHandler(graphqlHandler))
-		// GraphiQL UI at /graphql (redirects to playground)
-		r.GET("/graphql", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, graphqlPath) })
-		appLogger.Printf("GraphQL API enabled at %s", graphqlPath)
-		fmt.Printf("✅ GraphQL API enabled at %s\n", graphqlPath)
-	}
+	graphqlResolver := appgraphql.NewResolver(
+		dualDB.Server,
+		dualDB.Users,
+		weatherService,
+		apiHandler,
+		authHandler,
+		locationHandler,
+		notificationHandler,
+		adminHandler,
+		torAdminHandler,
+		adminSettingsHandler,
+		schedulerHandler,
+		earthquakeHandler,
+		hurricaneHandler,
+		severeWeatherHandler,
+		moonHandler,
+	)
+	graphqlServer := appgraphql.NewServer(graphqlResolver)
+
+	// Root-level endpoint required by AI.md PART 14.
+	r.POST("/graphql", appgraphql.GraphQLHandler(graphqlServer))
+	r.GET("/graphql", appgraphql.PlaygroundHandler("/graphql"))
+
+	// Temporary compatibility alias while remaining GraphQL consumers are updated.
+	graphqlAliasPath := cfg.GetAPIPath() + "/graphql"
+	r.POST(graphqlAliasPath, appgraphql.GraphQLHandler(graphqlServer))
+	r.GET(graphqlAliasPath, func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/graphql") })
+
+	appLogger.Printf("GraphQL API enabled at /graphql")
+	fmt.Printf("✅ GraphQL API enabled at /graphql\n")
 
 	// HTML documentation page at /docs
 	r.GET("/docs", apiHandler.GetDocsHTML)

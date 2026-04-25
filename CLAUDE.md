@@ -89,9 +89,9 @@ On EVERY new conversation or after "context compacted" message:
 
 ## Current Project State
 [AI updates this section as work progresses]
-- Last read AI.md: 2026-02-18 (PART 0-5 + full re-sync from TEMPLATE.md)
-- Current task: AI.md re-synced from TEMPLATE.md, placeholders replaced, rules regenerated
-- Completed: Notification bell fix, registration redirect fix (→ /users), AI.md re-synced, .claude/rules/*.md (14 files) regenerated, TODO.AI.md updated
+- Last read AI.md: 2026-04-18 (PART 0-5 after fresh TEMPLATE.md sync)
+- Current task: Refresh AI.md from TEMPLATE.md, replace project placeholders, restore required `.claude/rules/*.md`, and refresh TODO tracking again
+- Completed: Notification bell fix, registration redirect fix (→ /users), theme CSS renamed to `common.css` with spec `--color-*` variables, AI.md refreshed again
 - New in PART 31 (i18n): `?lang=` query param + cookie persistence, `make i18n-validate` build-time validation
 - Status: Feature-complete v1.0.0 - all core weather features, PART 34 multi-user, 19 scheduled tasks, 7 locales
 - Official site: https://wthr.top

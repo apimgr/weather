@@ -86,7 +86,7 @@ func (h *MoonHandler) HandleMoonAPI(c *gin.Context) {
 		"sun": sunData,
 	}
 
-	c.JSON(http.StatusOK, moonData)
+	RespondNegotiatedData(c, http.StatusOK, moonData)
 }
 
 // HandleMoonCalendarAPI handles GET /api/v1/moon/calendar
@@ -147,7 +147,7 @@ func (h *MoonHandler) HandleMoonCalendarAPI(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ok": true,
 		"location": gin.H{
 			"name":      enhanced.Name,
@@ -195,7 +195,7 @@ func (h *MoonHandler) HandleSunAPI(c *gin.Context) {
 
 	sunData := h.calculateSunTimes(coords.Latitude, coords.Longitude, date)
 
-	c.JSON(http.StatusOK, gin.H{
+	RespondNegotiatedData(c, http.StatusOK, gin.H{
 		"ok": true,
 		"location": gin.H{
 			"name":        enhanced.Name,
@@ -227,10 +227,7 @@ func (h *MoonHandler) getLocationFromRequest(c *gin.Context) (*service.Coordinat
 		latFloat, err1 := strconv.ParseFloat(lat, 64)
 		lonFloat, err2 := strconv.ParseFloat(lon, 64)
 		if err1 != nil || err2 != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"ok":    false,
-				"error": "Invalid coordinates format",
-			})
+			RespondError(c, http.StatusBadRequest, ErrInvalidInput, "Invalid coordinates format")
 			return nil, nil, err1
 		}
 		coords = &service.Coordinates{
@@ -240,10 +237,7 @@ func (h *MoonHandler) getLocationFromRequest(c *gin.Context) (*service.Coordinat
 	} else if location != "" {
 		coords, err = h.weatherService.ParseAndResolveLocation(location, clientIP)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"ok":    false,
-				"error": err.Error(),
-			})
+			RespondError(c, http.StatusBadRequest, ErrInvalidInput, err.Error())
 			return nil, nil, err
 		}
 	} else {
@@ -265,10 +259,7 @@ func (h *MoonHandler) getLocationFromRequest(c *gin.Context) (*service.Coordinat
 		if coords == nil {
 			coords, err = h.weatherService.GetCoordinatesFromIP(clientIP)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"ok":    false,
-					"error": "Could not determine location",
-				})
+				RespondError(c, http.StatusInternalServerError, ErrInternal, "Could not determine location")
 				return nil, nil, err
 			}
 		}

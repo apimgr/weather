@@ -8,6 +8,7 @@
 
 scalar Time
 scalar Any
+scalar Upload
 
 # ============================================================================
 # HEALTH & STATUS TYPES
@@ -301,28 +302,6 @@ type MoonPhase {
   nextNewMoon: Time
 }
 
-type MoonCalendar {
-  year: Int!
-  month: Int!
-  days: [MoonCalendarDay!]!
-}
-
-type MoonCalendarDay {
-  date: String!
-  phase: String!
-  illumination: Float!
-  icon: String
-  age: Float
-}
-
-type SunTimes {
-  sunrise: String
-  sunset: String
-  solarNoon: String
-  dayLength: String
-  note: String
-}
-
 # ============================================================================
 # USER TYPES
 # ============================================================================
@@ -339,12 +318,84 @@ type User {
   lastLoginAt: Time
 }
 
-type UserProfile {
+type PublicAvatar {
+  type: String!
+  urls: Any!
+}
+
+type PublicUserProfile {
+  username: String!
+  displayName: String
+  avatar: PublicAvatar!
+  bio: String
+  location: String
+  website: String
+  verified: Boolean!
+  createdAt: Time!
+}
+
+type TOTPStatus {
+  enabled: Boolean!
+  recoveryKeysCount: Int!
+}
+
+type TOTPSetup {
+  secret: String!
+  qrCode: String!
+  manualUrl: String!
+  account: String!
+  issuer: String!
+}
+
+type TOTPRecoveryKeys {
+  message: String!
+  recoveryKeys: [String!]!
+}
+
+type AuthUser {
   id: ID!
   username: String!
   email: String!
-  phone: String
-  displayName: String
+  role: String!
+}
+
+type AuthResult {
+  requiresTwoFactor: Boolean!
+  verificationRequired: Boolean!
+  sessionToken: String
+  token: String
+  user: AuthUser
+  expiresAt: Time
+  remainingKeys: Int
+}
+
+type UserInviteValidation {
+  username: String!
+  email: String!
+  role: String!
+  expiresAt: Time!
+}
+
+type ServerInviteValidation {
+  email: String!
+  expiresAt: Time!
+}
+
+type UserInviteCompletion {
+  message: String
+  token: String
+  user: AuthUser
+}
+
+type InvitedServerAdmin {
+  id: ID!
+  username: String!
+  email: String!
+}
+
+type ServerInviteCompletion {
+  message: String!
+  admin: InvitedServerAdmin!
 }
 
 # ============================================================================
@@ -383,6 +434,94 @@ type UnreadCount {
   count: Int!
 }
 
+type UserToken {
+  id: ID!
+  name: String
+  tokenPrefix: String!
+  scopes: String
+  createdAt: Time!
+  expiresAt: Time
+  lastUsedAt: Time
+  token: String
+}
+
+type UserSettings {
+  account: AccountSettings!
+  privacy: PrivacySettings!
+  notifications: NotificationSettings!
+  appearance: AppearanceSettings!
+}
+
+type AccountSettings {
+  displayName: String!
+  bio: String!
+  location: String!
+  website: String!
+  timezone: String!
+  language: String!
+  dateFormat: String!
+  timeFormat: String!
+}
+
+type PrivacySettings {
+  visibility: String!
+  showEmail: Boolean!
+  showActivity: Boolean!
+  showOrgs: Boolean!
+  searchable: Boolean!
+  orgVisibility: Boolean!
+}
+
+type NotificationSettings {
+  emailSecurity: Boolean!
+  emailMentions: Boolean!
+  emailUpdates: Boolean!
+  emailDigest: String!
+  pushEnabled: Boolean!
+  pushMentions: Boolean!
+}
+
+type AppearanceSettings {
+  theme: String!
+  fontSize: String!
+  reduceMotion: Boolean!
+}
+
+input AccountSettingsInput {
+  displayName: String!
+  bio: String!
+  location: String!
+  website: String!
+  timezone: String!
+  language: String!
+  dateFormat: String!
+  timeFormat: String!
+}
+
+input PrivacySettingsInput {
+  visibility: String!
+  showEmail: Boolean!
+  showActivity: Boolean!
+  showOrgs: Boolean!
+  searchable: Boolean!
+  orgVisibility: Boolean!
+}
+
+input NotificationSettingsInput {
+  emailSecurity: Boolean!
+  emailMentions: Boolean!
+  emailUpdates: Boolean!
+  emailDigest: String!
+  pushEnabled: Boolean!
+  pushMentions: Boolean!
+}
+
+input AppearanceSettingsInput {
+  theme: String!
+  fontSize: String!
+  reduceMotion: Boolean!
+}
+
 # ============================================================================
 # ADMIN TYPES
 # ============================================================================
@@ -398,7 +537,7 @@ type Setting {
 
 type APIToken {
   id: ID!
-  token: String!
+  token: String
   name: String
   createdAt: Time!
   expiresAt: Time
@@ -510,259 +649,6 @@ type SMTPProvider {
 }
 
 # ============================================================================
-# 2FA/TOTP TYPES
-# ============================================================================
-
-type TOTPSetup {
-  secret: String!
-  qrCode: String!
-  recoveryCodes: [String!]!
-}
-
-type TOTPStatus {
-  enabled: Boolean!
-  verified: Boolean!
-}
-
-# ============================================================================
-# USER PREFERENCES TYPES
-# ============================================================================
-
-type UserPreference {
-  key: String!
-  value: String!
-  updatedAt: Time!
-}
-
-type UserSubscription {
-  id: ID!
-  type: String!
-  enabled: Boolean!
-  config: Any
-}
-
-# ============================================================================
-# DATABASE OPERATIONS TYPES
-# ============================================================================
-
-type DatabaseConnectionTest {
-  ok: Boolean!
-  latency: Int
-  error: String
-}
-
-type DatabaseOptimizeResult {
-  ok: Boolean!
-  tablesOptimized: Int
-  duration: Float
-}
-
-# ============================================================================
-# BACKUP TYPES
-# ============================================================================
-
-type Backup {
-  id: ID!
-  filename: String!
-  size: Int!
-  createdAt: Time!
-  type: String!
-}
-
-type BackupDownload {
-  url: String!
-  expiresAt: Time!
-}
-
-# ============================================================================
-# EMAIL TEMPLATE TYPES
-# ============================================================================
-
-type EmailTemplate {
-  id: ID!
-  name: String!
-  subject: String!
-  body: String!
-  variables: [String!]
-  createdAt: Time!
-  updatedAt: Time!
-}
-
-type EmailTemplatePreview {
-  subject: String!
-  body: String!
-}
-
-# ============================================================================
-# NOTIFICATION METRICS TYPES
-# ============================================================================
-
-type NotificationMetricsSummary {
-  total: Int!
-  successful: Int!
-  failed: Int!
-  pending: Int!
-  averageDeliveryTime: Float
-}
-
-type ChannelMetrics {
-  type: String!
-  sent: Int!
-  failed: Int!
-  successRate: Float!
-  avgDeliveryTime: Float
-}
-
-type NotificationError {
-  timestamp: Time!
-  channel: String!
-  error: String!
-  retryCount: Int
-}
-
-type NotificationHealth {
-  healthy: Boolean!
-  issues: [String!]
-}
-
-# ============================================================================
-# TOR MANAGEMENT TYPES
-# ============================================================================
-
-type TorStatus {
-  enabled: Boolean!
-  running: Boolean!
-  onionAddress: String
-  version: String
-}
-
-type TorHealth {
-  healthy: Boolean!
-  uptime: String
-  circuitsBuilt: Int
-}
-
-type VanityGenerationStatus {
-  running: Boolean!
-  pattern: String
-  progress: Float
-  estimatedTimeRemaining: Int
-}
-
-type TorKeys {
-  privateKey: String!
-  publicKey: String!
-}
-
-# ============================================================================
-# WEB SETTINGS TYPES
-# ============================================================================
-
-type WebSettings {
-  robotsTxt: String!
-  securityTxt: String!
-}
-
-# ============================================================================
-# LOGS TYPES
-# ============================================================================
-
-type LogEntry {
-  timestamp: Time!
-  level: String!
-  message: String!
-  source: String
-  metadata: Any
-}
-
-type LogStats {
-  total: Int!
-  byLevel: Any
-  bySource: Any
-  size: Int!
-}
-
-type ArchivedLog {
-  filename: String!
-  size: Int!
-  createdAt: Time!
-  compressed: Boolean!
-}
-
-# ============================================================================
-# SSL/TLS TYPES
-# ============================================================================
-
-type SSLStatus {
-  enabled: Boolean!
-  autoRenew: Boolean!
-  certificate: SSLCertificate
-}
-
-type SSLCertificate {
-  domain: String!
-  issuer: String!
-  validFrom: Time!
-  validUntil: Time!
-  daysRemaining: Int!
-}
-
-type DNSRecord {
-  name: String!
-  type: String!
-  value: String!
-  ttl: Int
-}
-
-type SSLTestResult {
-  valid: Boolean!
-  grade: String
-  issues: [String!]
-}
-
-# ============================================================================
-# METRICS CONFIGURATION TYPES
-# ============================================================================
-
-type MetricsConfig {
-  enabled: Boolean!
-  endpoint: String!
-  includeSystem: Boolean!
-  token: String
-}
-
-type MetricDefinition {
-  name: String!
-  type: String!
-  description: String
-  enabled: Boolean!
-}
-
-# ============================================================================
-# LOGGING CONFIGURATION TYPES
-# ============================================================================
-
-type LogFormat {
-  name: String!
-  format: String!
-  enabled: Boolean!
-}
-
-type Fail2banConfig {
-  enabled: Boolean!
-  maxRetry: Int!
-  findTime: Int!
-  banTime: Int!
-}
-
-type SyslogConfig {
-  enabled: Boolean!
-  host: String!
-  port: Int!
-  protocol: String!
-}
-
-# ============================================================================
 # CONTACT FORM TYPES
 # ============================================================================
 
@@ -778,6 +664,47 @@ type ContactSubmission {
 type GenericResponse {
   ok: Boolean!
   message: String!
+}
+
+type UserInvite {
+  id: ID!
+  token: String!
+  username: String!
+  email: String!
+  role: String!
+  createdAt: Time!
+  expiresAt: Time!
+  maxUses: Int!
+  useCount: Int!
+  usedAt: Time
+  status: String!
+  inviteUrl: String!
+}
+
+type ServerAdmin {
+  id: ID!
+  username: String!
+  email: String!
+  isSuperAdmin: Boolean!
+  isActive: Boolean!
+  createdAt: Time!
+  updatedAt: Time!
+  lastLoginAt: Time
+}
+
+type ServerAdminOverview {
+  count: Int!
+  currentAdmin: ServerAdmin!
+  onlineAdmins: [String!]!
+  privacyNotice: String!
+}
+
+type ServerAdminInvite {
+  token: String!
+  email: String!
+  expiresAt: Time!
+  expiresIn: String!
+  inviteUrl: String!
 }
 
 type BulkResponse {
@@ -809,17 +736,20 @@ type Query {
 
   # Natural Disasters
   earthquakes(minMagnitude: Float, limit: Int): [Earthquake!]!
-  earthquake(id: String!): Earthquake
   hurricanes(active: Boolean): [Hurricane!]!
-  hurricane(id: String!): Hurricane
   severeWeather(location: String): [SevereWeather!]!
-  severeWeatherAlert(id: String!): SevereWeather
   moonPhase(date: String): MoonPhase!
-  moonCalendar(year: Int, month: Int, location: String): MoonCalendar!
-  sunTimes(location: String, date: String): SunTimes!
+  publicUserProfile(username: String!): PublicUserProfile
+  validateUserInvite(token: String!): UserInviteValidation!
+  validateServerInvite(token: String!): ServerInviteValidation!
 
   # User Endpoints (require authentication)
   currentUser: User!
+  currentUserAvatar: PublicAvatar!
+  currentUserTwoFactorStatus: TOTPStatus!
+  currentUserTwoFactorSetup: TOTPSetup!
+  userSettings: UserSettings!
+  userTokens: [UserToken!]!
 
   # Saved Locations (require authentication)
   savedLocations: [SavedLocation!]!
@@ -831,74 +761,23 @@ type Query {
 
   # Admin Endpoints (require admin)
   adminUsers: [User!]!
+  adminServerAdmins: ServerAdminOverview!
+  adminServerAdmin(id: ID!): ServerAdmin
+  adminUserInvites: [UserInvite!]!
+  adminUserInvite(id: ID!): UserInvite
   adminSettings: [Setting!]!
   adminSetting(key: String!): Setting
   adminTokens: [APIToken!]!
   adminAuditLogs(limit: Int, offset: Int): [AuditLog!]!
   adminStats: SystemStats!
   adminTasks: [ScheduledTask!]!
-  adminTaskHistory(name: String!): [TaskHistory!]!
+  adminTaskHistory(name: String!, limit: Int): [TaskHistory!]!
   adminChannels: [NotificationChannel!]!
   adminChannel(type: String!): NotificationChannel
   adminChannelStats(type: String!): ChannelStats
   adminQueueStats: QueueStats!
   adminSMTPProviders: [SMTPProvider!]!
 
-  # 2FA/TOTP Queries
-  totp2FAStatus: TOTPStatus!
-
-  # User Preferences Queries
-  userPreferences: [UserPreference!]!
-  userPreference(key: String!): UserPreference
-  userSubscriptions: [UserSubscription!]!
-
-  # Database Operations
-  adminDatabaseTest: DatabaseConnectionTest!
-
-  # Backup Operations
-  adminBackups: [Backup!]!
-  adminBackup(id: ID!): Backup
-
-  # Email Templates
-  adminEmailTemplates: [EmailTemplate!]!
-  adminEmailTemplate(id: ID!): EmailTemplate
-  adminEmailTemplateVariables(id: ID!): [String!]!
-  adminEmailTemplatePreview(id: ID!, data: Any): EmailTemplatePreview!
-
-  # Notification Metrics
-  adminNotificationMetricsSummary: NotificationMetricsSummary!
-  adminNotificationChannelMetrics: [ChannelMetrics!]!
-  adminNotificationRecentErrors(limit: Int): [NotificationError!]!
-  adminNotificationHealth: NotificationHealth!
-
-  # Tor Management
-  adminTorStatus: TorStatus!
-  adminTorHealth: TorHealth!
-  adminTorVanityStatus: VanityGenerationStatus
-
-  # Web Settings
-  adminWebSettings: WebSettings!
-
-  # Logs Management
-  adminLogs(type: String!, limit: Int, offset: Int): [LogEntry!]!
-  adminAuditLogsSearch(query: String!, limit: Int): [AuditLog!]!
-  adminAuditLogsStats: LogStats!
-  adminLogStats(type: String!): LogStats!
-  adminArchivedLogs: [ArchivedLog!]!
-
-  # SSL/TLS Management
-  adminSSLStatus: SSLStatus!
-  adminSSLDNSRecords(domain: String!): [DNSRecord!]!
-  adminSSLTest: SSLTestResult!
-
-  # Metrics Configuration
-  adminMetricsConfig: MetricsConfig!
-  adminMetricsList: [MetricDefinition!]!
-
-  # Logging Configuration
-  adminLogFormats: [LogFormat!]!
-  adminFail2banConfig: Fail2banConfig
-  adminSyslogConfig: SyslogConfig
 }
 
 # ============================================================================
@@ -906,8 +785,36 @@ type Query {
 # ============================================================================
 
 type Mutation {
+  registerUser(username: String!, email: String!, password: String!): AuthResult!
+  loginUser(identifier: String!, password: String!, twoFactorCode: String, recoveryKey: String): AuthResult!
+  completeUserTwoFactor(sessionToken: String!, twoFactorCode: String!): AuthResult!
+  useUserRecoveryKey(sessionToken: String!, recoveryKey: String!): AuthResult!
+  logoutUser: GenericResponse!
+  refreshUserSession: AuthResult!
+  requestPasswordReset(email: String!): GenericResponse!
+  resetUserPassword(token: String!, password: String!): GenericResponse!
+  verifyUserEmail(token: String!): GenericResponse!
+  completeUserInvite(token: String!, username: String!, password: String!): UserInviteCompletion!
+  completeServerInvite(token: String!, username: String!, password: String!): ServerInviteCompletion!
+
   # User Mutations
-  updateUserProfile(displayName: String, phone: String): User!
+  updateUserProfile(displayName: String, phone: String): GenericResponse!
+  uploadUserAvatar(file: Upload!): PublicAvatar!
+  updateUserAvatar(type: String!, url: String): PublicAvatar!
+  resetUserAvatar: GenericResponse!
+  changeUserPassword(currentPassword: String!, newPassword: String!): GenericResponse!
+  enableUserTwoFactor(secret: String!, code: String!): TOTPRecoveryKeys!
+  disableUserTwoFactor(password: String!): GenericResponse!
+  verifyUserTwoFactor(code: String!): GenericResponse!
+  regenerateUserRecoveryKeys(code: String!): TOTPRecoveryKeys!
+  updateUserSettings(
+    account: AccountSettingsInput
+    privacy: PrivacySettingsInput
+    notifications: NotificationSettingsInput
+    appearance: AppearanceSettingsInput
+  ): GenericResponse!
+  createUserToken(name: String!, scopes: String, expiresIn: Int): UserToken!
+  revokeUserToken(id: ID!): GenericResponse!
 
   # Saved Locations Mutations
   createSavedLocation(name: String!, lat: Float!, lon: Float!, country: String, region: String, alerts: Boolean): SavedLocation!
@@ -921,25 +828,29 @@ type Mutation {
   deleteNotification(id: ID!): GenericResponse!
 
   # Admin User Mutations
-  adminCreateUser(username: String!, email: String!, password: String!, role: String!): User!
   adminUpdateUser(id: ID!, username: String, email: String, role: String): User!
   adminDeleteUser(id: ID!): GenericResponse!
-  adminUpdateUserPassword(id: ID!, password: String!): GenericResponse!
+  adminCreateUserInvite(username: String!, email: String!, role: String, expiresInDays: Int): UserInvite!
+  adminDeleteUserInvite(id: ID!): GenericResponse!
+  adminInviteServerAdmin(email: String!, expiresIn: String): ServerAdminInvite!
+  adminDeleteServerAdmin(id: ID!): GenericResponse!
+  adminDisableServerAdmin(id: ID!): GenericResponse!
+  adminEnableServerAdmin(id: ID!): GenericResponse!
 
   # Admin Settings Mutations
   adminUpdateSetting(key: String!, value: String!): Setting!
   adminUpdateSettings(settings: [SettingInput!]!): BulkResponse!
   adminResetSettings: GenericResponse!
-  adminReloadConfig: GenericResponse!
 
   # Admin Token Mutations
-  adminGenerateToken(name: String!, expiresIn: Int): APIToken!
+  adminGenerateToken: APIToken!
   adminRevokeToken(id: ID!): GenericResponse!
 
   # Admin Audit Mutations
   adminClearAuditLogs: GenericResponse!
 
   # Admin Task Mutations
+  adminUpdateTask(name: String!, enabled: Boolean!): ScheduledTask!
   adminEnableTask(name: String!): ScheduledTask!
   adminDisableTask(name: String!): ScheduledTask!
   adminTriggerTask(name: String!): GenericResponse!
@@ -948,90 +859,13 @@ type Mutation {
   adminUpdateChannel(type: String!, enabled: Boolean, config: Any): NotificationChannel!
   adminEnableChannel(type: String!): NotificationChannel!
   adminDisableChannel(type: String!): NotificationChannel!
-  adminTestChannel(type: String!): GenericResponse!
+  adminTestChannel(type: String!, recipient: String): GenericResponse!
   adminInitializeChannels: GenericResponse!
   adminAutoDetectSMTP: SMTPProvider
 
   # Contact Form
   submitContactForm(name: String!, email: String!, subject: String!, message: String!): ContactSubmission!
 
-  # 2FA/TOTP Mutations
-  setup2FA: TOTPSetup!
-  enable2FA(code: String!): GenericResponse!
-  disable2FA(code: String!): GenericResponse!
-  verify2FACode(code: String!): GenericResponse!
-  regenerate2FARecoveryCodes: [String!]!
-
-  # User Preferences Mutations
-  updateUserPreference(key: String!, value: String!): UserPreference!
-  createUserPreference(key: String!, value: String!): UserPreference!
-  deleteUserPreference(key: String!): GenericResponse!
-  createUserSubscription(type: String!, config: Any): UserSubscription!
-  updateUserSubscription(id: ID!, enabled: Boolean, config: Any): UserSubscription!
-
-  # Database Operations
-  adminDatabaseOptimize: DatabaseOptimizeResult!
-  adminDatabaseVacuum: GenericResponse!
-  adminDatabaseClearCache: GenericResponse!
-
-  # Backup Operations
-  adminCreateBackup: Backup!
-  adminRestoreBackup(id: ID!): GenericResponse!
-  adminDownloadBackup(id: ID!): BackupDownload!
-  adminDeleteBackup(id: ID!): GenericResponse!
-
-  # Email Templates
-  adminCreateEmailTemplate(name: String!, subject: String!, body: String!): EmailTemplate!
-  adminUpdateEmailTemplate(id: ID!, subject: String, body: String): EmailTemplate!
-  adminDeleteEmailTemplate(id: ID!): GenericResponse!
-  adminCloneEmailTemplate(id: ID!, name: String!): EmailTemplate!
-  adminInitializeEmailTemplates: GenericResponse!
-  adminTestEmailTemplate(id: ID!, recipient: String!): GenericResponse!
-
-  # Tor Management
-  adminTorEnable: GenericResponse!
-  adminTorDisable: GenericResponse!
-  adminTorRegenerate: TorStatus!
-  adminTorGenerateVanity(pattern: String!): GenericResponse!
-  adminTorCancelVanity: GenericResponse!
-  adminTorApplyVanity: GenericResponse!
-  adminTorImportKeys(privateKey: String!, publicKey: String!): GenericResponse!
-  adminTorExportKeys: TorKeys!
-
-  # Web Settings
-  adminUpdateRobotsTxt(content: String!): GenericResponse!
-  adminUpdateSecurityTxt(content: String!): GenericResponse!
-
-  # Logs Management
-  adminDownloadLogs(type: String!): BackupDownload!
-  adminDownloadAuditLogs: BackupDownload!
-  adminRotateLogs(type: String!): GenericResponse!
-  adminClearLogs(type: String!): GenericResponse!
-
-  # SSL/TLS Management
-  adminSSLObtainCertificate(domain: String!): GenericResponse!
-  adminSSLRenewCertificate: GenericResponse!
-  adminSSLStartAutoRenewal: GenericResponse!
-  adminSSLVerifyCertificate: SSLTestResult!
-  adminSSLUpdateSettings(autoRenew: Boolean, email: String): GenericResponse!
-  adminSSLExportCertificate: BackupDownload!
-  adminSSLImportCertificate(cert: String!, key: String!): GenericResponse!
-  adminSSLRevokeCertificate: GenericResponse!
-  adminSSLSecurityScan: SSLTestResult!
-
-  # Metrics Configuration
-  adminUpdateMetricsConfig(enabled: Boolean, endpoint: String, includeSystem: Boolean, token: String): MetricsConfig!
-  adminCreateMetric(name: String!, type: String!, description: String): MetricDefinition!
-  adminDeleteMetric(name: String!): GenericResponse!
-  adminToggleMetric(name: String!): MetricDefinition!
-  adminExportMetrics: BackupDownload!
-
-  # Logging Configuration
-  adminUpdateLogFormats(formats: [LogFormatInput!]!): GenericResponse!
-  adminUpdateFail2banConfig(enabled: Boolean, maxRetry: Int, findTime: Int, banTime: Int): Fail2banConfig!
-  adminUpdateSyslogConfig(enabled: Boolean, host: String, port: Int, protocol: String): SyslogConfig!
-  adminTestLogFormat(name: String!): GenericResponse!
-  adminExportLogs(type: String!): BackupDownload!
 }
 
 # ============================================================================
@@ -1041,10 +875,4 @@ type Mutation {
 input SettingInput {
   key: String!
   value: String!
-}
-
-input LogFormatInput {
-  name: String!
-  format: String!
-  enabled: Boolean!
 }

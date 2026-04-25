@@ -60,8 +60,7 @@ func initTestDualDB(t *testing.T) (*database.DualDB, func()) {
 	return dualDB, cleanup
 }
 
-// TestCompleteSetupFlow tests the entire user setup flow end-to-end
-// Note: This test only tests JSON API endpoints, not HTML templates
+// TestCompleteSetupFlow tests the admin setup wizard account step end-to-end.
 func TestCompleteSetupFlow(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -71,54 +70,13 @@ func TestCompleteSetupFlow(t *testing.T) {
 
 	// Create router
 	r := gin.New()
-	setupHandler := &handler.SetupHandler{DB: dualDB.Users}
+	setupHandler := &handler.SetupHandler{DB: dualDB.Server}
 
-	// Setup routes (only POST routes for JSON API testing)
-	setupRoutes := r.Group("/users/setup")
-	{
-		setupRoutes.POST("/register", setupHandler.CreateUser)
-		setupRoutes.POST("/admin", setupHandler.CreateAdmin)
-	}
+	// Setup route for the admin account step
+	r.POST("/admin/server/setup", setupHandler.CreateAdmin)
 
-	// Step 2: Create first user
-	var userCookies []*http.Cookie
-	t.Run("2. Create first user", func(t *testing.T) {
-		payload := map[string]string{
-			"username": "firstuser",
-			"email":    "user@example.com",
-			"password": "UserPass123",
-		}
-		jsonData, _ := json.Marshal(payload)
-
-		req := httptest.NewRequest("POST", "/users/setup/register", bytes.NewBuffer(jsonData))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		r.ServeHTTP(w, req)
-
-		// Accept 200 or 201 for successful creation
-		if w.Code != http.StatusOK && w.Code != http.StatusCreated {
-			t.Fatalf("Failed to create first user: %s", w.Body.String())
-		}
-
-		// Save cookies for next request
-		userCookies = w.Result().Cookies()
-
-		var response map[string]interface{}
-		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
-			t.Fatalf("Failed to parse response: %v", err)
-		}
-
-		// Check for user object in response (indicates success)
-		if _, hasUser := response["user"]; !hasUser {
-			if success, ok := response["success"].(bool); !ok || !success {
-				t.Logf("Response: %v", response)
-			}
-		}
-	})
-
-	// Step 3: Create administrator
-	t.Run("3. Create administrator", func(t *testing.T) {
+	// Step 1: Create administrator
+	t.Run("1. Create administrator", func(t *testing.T) {
 		payload := map[string]string{
 			"username": "administrator",
 			"email":    "admin@example.com",
@@ -127,13 +85,10 @@ func TestCompleteSetupFlow(t *testing.T) {
 		}
 		jsonData, _ := json.Marshal(payload)
 
-		req := httptest.NewRequest("POST", "/users/setup/admin", bytes.NewBuffer(jsonData))
+		req := httptest.NewRequest("POST", "/admin/server/setup", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
-
-		// Add user cookies from previous step
-		for _, cookie := range userCookies {
-			req.AddCookie(cookie)
-		}
+		req.Header.Set("Accept", "application/json")
+		req.AddCookie(&http.Cookie{Name: "setup_token_verified", Value: "true"})
 
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
@@ -157,17 +112,16 @@ func TestCompleteSetupFlow(t *testing.T) {
 		}
 	})
 
-	// Step 4: Verify users were created
-	t.Run("4. Verify users in database", func(t *testing.T) {
-		var userCount int
-		err := dualDB.Users.QueryRow("SELECT COUNT(*) FROM user_accounts").Scan(&userCount)
+	// Step 2: Verify admin was created
+	t.Run("2. Verify admin in database", func(t *testing.T) {
+		var adminCount int
+		err := dualDB.Server.QueryRow("SELECT COUNT(*) FROM server_admin_credentials").Scan(&adminCount)
 		if err != nil {
-			t.Fatalf("Failed to query users: %v", err)
+			t.Fatalf("Failed to query admins: %v", err)
 		}
 
-		// Check that we have at least 1 user created
-		if userCount < 1 {
-			t.Errorf("Expected at least 1 user, got %d", userCount)
+		if adminCount != 1 {
+			t.Errorf("Expected 1 admin, got %d", adminCount)
 		}
 	})
 }
@@ -180,8 +134,8 @@ func TestAdminSetupValidation(t *testing.T) {
 	defer cleanup()
 
 	r := gin.New()
-	setupHandler := &handler.SetupHandler{DB: dualDB.Users}
-	r.POST("/users/setup/admin", setupHandler.CreateAdmin)
+	setupHandler := &handler.SetupHandler{DB: dualDB.Server}
+	r.POST("/admin/server/setup", setupHandler.CreateAdmin)
 
 	tests := []struct {
 		name       string
@@ -242,8 +196,10 @@ func TestAdminSetupValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonData, _ := json.Marshal(tt.payload)
-			req := httptest.NewRequest("POST", "/users/setup/admin", bytes.NewBuffer(jsonData))
+			req := httptest.NewRequest("POST", "/admin/server/setup", bytes.NewBuffer(jsonData))
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Accept", "application/json")
+			req.AddCookie(&http.Cookie{Name: "setup_token_verified", Value: "true"})
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)

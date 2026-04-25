@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+// Helper function to get user ID from context.
+func getUserIDFromContext(ctx context.Context) int {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return 0
+	}
+	return userID
+}
+
 // Helper function to get user ID from context with error handling
 func getUserIDFromContextWithError(ctx context.Context) (int, error) {
 	userID, ok := ctx.Value("user_id").(int)
@@ -16,6 +25,11 @@ func getUserIDFromContextWithError(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("unauthorized: user not found in context")
 	}
 	return userID, nil
+}
+
+// Helper function to check if user is admin.
+func isAdmin(ctx context.Context) bool {
+	return isAdminFromContext(ctx)
 }
 
 // Helper function to check if user is admin
